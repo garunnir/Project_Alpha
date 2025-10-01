@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 8e565fa14d503174faed48022ccbcd83
   m_currentHash:
     serializedVersion: 2
-    Hash: 243197c9cdb119b0f6312aea017ef871
+    Hash: 06a3cc17bf7d69378ff3b619ec149f20
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -101,6 +101,7 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - Tiles
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: ba531d8980ebd2444b1abc212d580131, type: 2}
@@ -108,10 +109,9 @@ MonoBehaviour:
   m_CertificateHandlerType:
     m_AssemblyName: 
     m_ClassName: 
-  m_ActivePlayerDataBuilderIndex: 3
+  m_ActivePlayerDataBuilderIndex: 2
   m_DataBuilders:
   - {fileID: 11400000, guid: 6a414c5b8e8035645bebd88245d716d5, type: 2}
-  - {fileID: 11400000, guid: 39d0cb5ab3aef1e4e8735de8cb9ed7d2, type: 2}
   - {fileID: 11400000, guid: 1f537cca01e3b874ca88b458bebd78d2, type: 2}
   - {fileID: 11400000, guid: 22bd57a5b2c95a04992b7e029caec2c3, type: 2}
   m_ActiveProfileId: e62c61404c84fe843830b49bb23a012a
