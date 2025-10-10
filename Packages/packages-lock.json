@@ -94,7 +94,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "2.4.1",
+      "version": "2.4.2",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -104,7 +104,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.5.1",
+      "version": "1.6.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
