@@ -3,6 +3,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
+using UnityEditor;
 
 [System.Serializable]
 public class TileSaveData
@@ -108,6 +109,7 @@ public class MultiLayerTilemapToJson : MonoBehaviour
     // JSON 파일에서 맵을 읽어 Tilemap에 배치
     public void LoadMapFromJson(string json)
     {
+        tilemaps.RemoveAll(item => item == null);
         // 기존 타일 모두 삭제
         foreach (var tilemap in tilemaps)
             tilemap.ClearAllTiles();
@@ -125,7 +127,10 @@ public class MultiLayerTilemapToJson : MonoBehaviour
             }
             if (tilemaps[tile.layer] == null)
             {
-                GameObject obj = new GameObject("Tilemap_Layer" + tile.layer, typeof(Tilemap), typeof(TilemapRenderer));
+                GameObject obj = new GameObject("Tilemap_Layer" + tile.layer, typeof(Tilemap));
+                TilemapRenderer tilemapRenderer=obj.AddComponent<TilemapRenderer>();
+                tilemapRenderer.sortOrder=TilemapRenderer.SortOrder.TopRight;
+                obj.transform.parent = this.transform;
                 tilemaps[tile.layer] = obj.GetComponent<Tilemap>();
             }
 

@@ -2,8 +2,6 @@
 namespace Garunnir.Runtime.ScriptableObject
 {
     using UnityEngine;
-    using System.Collections;
-    using System.Collections.Generic;
     using PixelCrushers.DialogueSystem;
     using System.Text;
 #if UNITY_EDITOR
@@ -43,12 +41,12 @@ namespace Garunnir.Runtime.ScriptableObject
             log.AppendLine(value);
         }
     }
-
-#if UNITY_EDITOR
     public class NamingAttribute : PropertyAttribute
     {
         public NamingAttribute() { }
     }
+#if UNITY_EDITOR
+
     [CustomPropertyDrawer(typeof(NamingAttribute))]
     public class DrawButton : PropertyDrawer
     {
