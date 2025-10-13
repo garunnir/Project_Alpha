@@ -15,16 +15,16 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 8e565fa14d503174faed48022ccbcd83
   m_SerializeEntries:
-  - m_GUID: 6e87ff8bb06048943855c2577798bf59
-    m_Address: Assets/Resources_moved/Tiles Palette
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Tiles
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 805b89987e685644c998b0f18d651b6f
     m_Address: Assets/Dist/SOData
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 95cbe493380781e418a0f3eea9e8b337
+    m_Address: Tiles Palette
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tiles
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: d3c8b28ad1e00d040b7d77f78b1148f1, type: 2}

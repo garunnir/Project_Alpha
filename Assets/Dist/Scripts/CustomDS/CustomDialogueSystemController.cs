@@ -19,7 +19,7 @@ public class CustomDialogueSystemController : DialogueSystemController
     {
         if (m_instance == null)
         {
-            m_instance = FindObjectOfType<CustomDialogueSystemController>();
+            m_instance = FindAnyObjectByType<CustomDialogueSystemController>();
         }
         else
         {

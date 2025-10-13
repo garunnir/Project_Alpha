@@ -7,7 +7,7 @@ public class Singleton<T> : MonoBehaviour where T : class
     {
         if (_instance == null)
         {
-            T findinst = FindObjectOfType(typeof(T)) as T;
+            T findinst = FindAnyObjectByType(typeof(T)) as T;
             if (findinst == null)
             {
                 Debug.Log(typeof(T).Name);

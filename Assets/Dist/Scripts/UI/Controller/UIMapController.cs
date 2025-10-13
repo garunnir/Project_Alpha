@@ -61,9 +61,9 @@ public class UIMapController : MonoBehaviour
 
     private void Awake()
     {
-        dialogueSystemController = FindObjectOfType<CustomDialogueSystemController>();
+        dialogueSystemController = FindAnyObjectByType<CustomDialogueSystemController>();
         MapEntered += Map_FindCharInMap;
-        if (FindObjectOfType<GameManager>())
+        if (FindAnyObjectByType<GameManager>())
             GameManager.Instance.GetResourceManager().ResourceLoadDoneEvent += () =>
             {
                 dialogueSystemController.Init();

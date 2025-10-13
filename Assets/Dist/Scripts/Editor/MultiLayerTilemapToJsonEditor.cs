@@ -1,14 +1,14 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(MultiLayerTilemapToJson))]
+[CustomEditor(typeof(TilemapSerializer))]
 public class MultiLayerTilemapToJsonEditor : Editor
 {
     public override void OnInspectorGUI()
 
     {
         DrawDefaultInspector();
-        var tilemapScript = (MultiLayerTilemapToJson)target;
+        var tilemapScript = (TilemapSerializer)target;
         EditorGUILayout.Space();
 
         if (GUILayout.Button("자식 Tilemap 자동 할당"))

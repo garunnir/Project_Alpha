@@ -151,7 +151,7 @@ namespace Garunnir
         {
             if (GetResourceManager() == null) return;
 
-            GetResourceManager().ResourceLoadDoneEvent += () => FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
+            GetResourceManager().ResourceLoadDoneEvent += () => FindAnyObjectByType<DialogueSystemTrigger>()?.OnUse();
             GetResourceManager().LoadAllImg();
             //로드시 시간이 걸리는 데이터들을 미리 로드한다.
             //만들어진 캐릭터 프로필사진들을 로드한다.

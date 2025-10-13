@@ -3,7 +3,6 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
-using UnityEditor;
 
 [System.Serializable]
 public class TileSaveData
@@ -18,18 +17,24 @@ public class TileSaveDataArray
     public TileSaveData[] tiles;
 }
 
-public class MultiLayerTilemapToJson : MonoBehaviour
+public class TilemapSerializer : MonoBehaviour
 {
+    public List<Tilemap> tilemaps = new List<Tilemap>(); // Inspector에서 Layer0~Layer4 할당
+
+    [Header("저장/불러오기용 JSON 파일 경로 (예: Assets/TilemapData.json)")]
+    public string jsonFilePath = "Assets/TilemapData.json";
 
     // Addressables 타일 캐시 (라벨 기반)
     private Dictionary<string, TileBase> tileCache = new Dictionary<string, TileBase>();
     private bool tilesLoaded = false;
+    
 
     // 'Tiles' 라벨로 모든 타일을 미리 로드 (최초 1회만)
     public void PreloadAllTilesFromLabel()
     {
         if (tilesLoaded) return;
-        var handle = Addressables.LoadAssetsAsync<TileBase>("Tiles", tile => {
+        var handle = Addressables.LoadAssetsAsync<TileBase>("Tiles", tile =>
+        {
             if (!tileCache.ContainsKey(tile.name))
                 tileCache[tile.name] = tile;
         });
@@ -60,10 +65,8 @@ public class MultiLayerTilemapToJson : MonoBehaviour
         return null;
     }
 
-    [Header("저장/불러오기용 JSON 파일 경로 (예: Assets/TilemapData.json)")]
-    public string jsonFilePath = "Assets/TilemapData.json";
 
-    public List<Tilemap> tilemaps = new List<Tilemap>(); // Inspector에서 Layer0~Layer4 할당
+
 
     // 이 오브젝트의 자식 Tilemap만 자동으로 찾음
     public void AutoAssignTilemapsFromChildren()

@@ -1,15 +1,4 @@
 {
-	"servers": {
-		"unityMCPadd": {
-			"type": "stdio",
-			"command": "C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Links\\\\uv.exe",
-			"args": [
-				"run",
-				"--directory",
-				"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\UnityMCP\\\\UnityMcpServer\\\\src",
-				"server.py"
-			]
-		}
-	},
-	"inputs": []
+	"inputs": [],
+	"servers": {}
 }
