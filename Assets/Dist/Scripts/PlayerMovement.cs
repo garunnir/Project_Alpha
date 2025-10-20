@@ -12,7 +12,7 @@ public class PlayerMovement : MonoBehaviour
 	public float inertia = 0.9f;
 
 	[Header("Collision")]
-	public float skin = 0.02f;              // 벽에 바짝 붙을 때 여유
+	public float _baseSkin = 0.02f;              // 벽에 바짝 붙을 때 여유
 	public LayerMask collisionMask = ~0;    // 검사할 레이어
 	public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
 
@@ -75,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
 		lastDesiredMove = desiredMove;
 		lastP1 = p1; lastP2 = p2;
 		lastWorldRadius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, lastWorldRadius, desiredMove.normalized, hits, distance + skin, collisionMask, triggerInteraction);
+		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, lastWorldRadius, desiredMove.normalized, hits, distance + _baseSkin, collisionMask, triggerInteraction);
 		lastHitCount = hitCount;
 
 		if (hitCount == 0)
@@ -88,10 +88,10 @@ public class PlayerMovement : MonoBehaviour
 		// 가장 가까운 유효 히트 찾기 (자기 자신 무시)
 		RaycastHit? nearest = null;
 		float minDist = float.PositiveInfinity;
-		for (int i = 0; i < hitCount; i++)
+		for (int i = 0; i < hitCount; i++) 
 		{
 			var h = hits[i];
-			if (h.collider == null) continue;
+			if (h.collider == null||h.collider.gameObject == gameObject) continue;
 			// 레이어 필터(안전) — CapsuleCastNonAlloc에 이미 적용되지만 추가 필터링 안전장치
 			if (((1 << h.collider.gameObject.layer) & collisionMask.value) == 0) continue;
 			if (h.distance < minDist && h.distance >= 0f)
@@ -123,7 +123,7 @@ public class PlayerMovement : MonoBehaviour
 		if (slide.sqrMagnitude > Mathf.Epsilon)
 		{
 			float slideDist = slide.magnitude;
-			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, hits, slideDist + skin, collisionMask, triggerInteraction);
+			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, hits, slideDist + _baseSkin, collisionMask, triggerInteraction);
 			bool slideBlocked = false;
 			for (int i = 0; i < slideHits; i++)
 			{
@@ -141,7 +141,7 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		// 슬라이드도 막히면, 가능한 거리만큼 이동(히트 이전의 거리 - skin)
-		float moveAllowed = Mathf.Max(0f, minDist - skin);
+		float moveAllowed = Mathf.Max(0f, minDist - _baseSkin);
 		if (moveAllowed > 0f)
 		{
 			Vector3 partial = desiredMove.normalized * moveAllowed;
@@ -181,7 +181,7 @@ public class PlayerMovement : MonoBehaviour
 		if (lastHitCount >= 0)
 		{
 			Gizmos.color = gizmoCastColor;
-			Gizmos.DrawLine(lastP1, lastP1 + lastDesiredMove.normalized * (lastDesiredMove.magnitude + skin));
+			Gizmos.DrawLine(lastP1, lastP1 + lastDesiredMove.normalized * (lastDesiredMove.magnitude + _baseSkin));
 
 			// 히트 포인트들
 			for (int i = 0; i < lastHitCount; i++)

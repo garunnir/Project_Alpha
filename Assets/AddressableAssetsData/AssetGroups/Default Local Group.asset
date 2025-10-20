@@ -20,12 +20,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 95cbe493380781e418a0f3eea9e8b337
-    m_Address: Tiles Palette
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Tiles
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: d3c8b28ad1e00d040b7d77f78b1148f1, type: 2}
   m_SchemaSet:
