@@ -7,6 +7,7 @@ public class PlayerMovement : MonoBehaviour
 	public float moveSpeed = 5f;
 	public float sprintMultiplier = 2f;
 	public float acceleration = 10f;
+	public Camera refCam;
 	[Tooltip("관성(감쇠) 계수. 0에 가까울수록 미끄러지듯 멈춤, 1에 가까울수록 즉시 멈춤")]
 	[Range(0f, 1f)]
 	public float inertia = 0.9f;
@@ -43,12 +44,40 @@ public class PlayerMovement : MonoBehaviour
 		// 물리 기반 이동 시 회전은 외부로부터 고정하는 것이 일반적입니다.
 		rb.freezeRotation = true;
 	}
+	public Vector3 MoveByCameraRelativeInput()
+	{
+		// 카메라 기준 입력을 월드 XZ 평면으로 변환하여 반환합니다.
+		// 반환값: (x: 월드 X 축 방향 속도비, y: 월드 Z 축 방향 속도비)
+		// 카메라의 피치(tilt)는 무시하고 수평 성분만 사용합니다.
+
+		float inputH = Input.GetAxisRaw("Horizontal");
+		float inputV = Input.GetAxisRaw("Vertical");
+
+		// 카메라가 없으면 기본 월드 입력을 반환
+		Camera camera = refCam;
+		camera ??= Camera.main;
+		if (camera == null)
+			return new Vector3(inputH, 0, inputV);
+
+		Transform camT = camera.transform;
+
+		// 카메라의 수평(지면에 투영된) 전방/우측 벡터 계산
+		Vector3 camForward = Vector3.ProjectOnPlane(camT.forward, Vector3.up).normalized;
+		Vector3 camRight = Vector3.ProjectOnPlane(camT.right, Vector3.up).normalized;
+
+		// 카메라 기준 입력을 월드 방향으로 변환
+		Vector3 worldDir = camRight * inputH + camForward * inputV;
+
+		// 대각선 입력 시 속도 보정(크기 > 1인 경우 정규화)
+		if (worldDir.sqrMagnitude > 1f)
+			worldDir = worldDir.normalized;
+
+		return new Vector3(worldDir.x, 0,worldDir.z);
+	}
 
 	void FixedUpdate()
 	{
-		// 입력 (월드 XZ 평면 기준)
-		Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
-		Vector3 moveDir = input.normalized;
+		Vector3 moveDir = MoveByCameraRelativeInput();
 
 		float speed = moveSpeed * ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? sprintMultiplier : 1f);
 		Vector3 targetVel = moveDir * speed;

@@ -48,12 +48,7 @@ namespace IsoBuilder
         }
 }
 
-static readonly Dictionary<ObjType, IFloorObjParser> Parsers = new()
-{
-    [ObjType.Wall] = new WallParser(),
-    [ObjType.Door] = new DoorParser(),
-    [ObjType.Window] = new WindowParser(),
-};
+
     // BuildingData: intermediate ScriptableObject produced by the importer
     [CreateAssetMenu(fileName = "BuildingData", menuName = "IsoBuilder/Building Data", order = 11)]
     public class BuildingData : ScriptableObject
