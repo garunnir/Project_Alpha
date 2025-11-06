@@ -1,7 +1,4 @@
 using UnityEditor;
-using UnityEditor.Compilation;
-using UnityEngine;
-using System;
 
 public static class InspectorLockToggle
 {
