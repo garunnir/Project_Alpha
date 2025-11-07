@@ -13,6 +13,7 @@ public class PlayerMovement : MonoBehaviour
 	public float inertia = 0.9f;
 
 	[Header("Collision")]
+	public float climbAllowance = 0.3f;      // 오를 수 있는 낮은 둔덕 높이
 	public float _baseSkin = 0.02f;              // 벽에 바짝 붙을 때 여유
 	public LayerMask collisionMask = ~0;    // 검사할 레이어
 	public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
@@ -97,7 +98,7 @@ public class PlayerMovement : MonoBehaviour
 		Vector3 up = transform.up;
 		float halfHeight = Mathf.Max(0f, (capsule.height * 0.5f) - capsule.radius);
 		Vector3 p1 = worldCenter + up * halfHeight;
-		Vector3 p2 = worldCenter - up * halfHeight;
+		Vector3 p2 = worldCenter - up * (halfHeight - climbAllowance);//낮은둔덕은 올라갈수있게 한다.
 
 		float distance = desiredMove.magnitude;
 		//GC를 줄이는 NonAlloc 버전 사용하여 스윕
@@ -139,6 +140,7 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		RaycastHit hit = nearest.Value;
+		Debug.Log(nearest.Value.collider.name);
 		// nearest 히트 index 저장 (for gizmos)
 		for (int i = 0; i < hitCount; i++)
 		{
@@ -158,13 +160,16 @@ public class PlayerMovement : MonoBehaviour
 			{
 				if (hits[i].collider == null) continue;
 				if (((1 << hits[i].collider.gameObject.layer) & collisionMask.value) == 0) continue;
-				slideBlocked = true; break;
+				slideBlocked = true;
+				Debug.Log("PlayerMovement: Slide blocked by " + hits[i].collider.name);	
+				break;
 			}
 
 			if (!slideBlocked)
 			{
 				lastSlide = slide;
 				rb.MovePosition(rb.position + slide);
+				Debug.Log("PlayerMovement: Sliding");
 				return;
 			}
 		}
