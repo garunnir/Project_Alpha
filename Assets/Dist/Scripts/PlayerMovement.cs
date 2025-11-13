@@ -21,6 +21,7 @@ public class PlayerMovement : MonoBehaviour
 	Rigidbody rb;
 	CapsuleCollider capsule;
 	Vector3 currentVelocity = Vector3.zero;
+	Vector3 desiredMove;
 
 	// 재사용할 히트 배열 (NonAlloc)
 	RaycastHit[] hits = new RaycastHit[8];
@@ -89,7 +90,7 @@ public class PlayerMovement : MonoBehaviour
 			currentVelocity *= inertia;
 		}
 
-		Vector3 desiredMove = currentVelocity * Time.fixedDeltaTime;
+		desiredMove = currentVelocity * Time.fixedDeltaTime;
 		if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
 			return;
 
@@ -140,14 +141,13 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		RaycastHit hit = nearest.Value;
-		Debug.Log(nearest.Value.collider.name);
 		// nearest 히트 index 저장 (for gizmos)
 		for (int i = 0; i < hitCount; i++)
 		{
 			if (hits[i].collider == hit.collider && Mathf.Approximately(hits[i].distance, hit.distance)) { lastNearestIndex = i; break; }
 		}
 
-		// 충돌면의 노멀을 이용해 슬라이딩 벡터 계산
+		// 충돌면의 노멀을 이용해 슬라이딩 벡터 계산 미끄럼타기 위함
 		Vector3 slide = Vector3.ProjectOnPlane(desiredMove, hit.normal);
 
 		// 슬라이드 방향으로 이동 가능한지 검사
@@ -158,7 +158,7 @@ public class PlayerMovement : MonoBehaviour
 			bool slideBlocked = false;
 			for (int i = 0; i < slideHits; i++)
 			{
-				if (hits[i].collider == null) continue;
+				if (hits[i].collider == null||hits[i].collider.gameObject == gameObject) continue;
 				if (((1 << hits[i].collider.gameObject.layer) & collisionMask.value) == 0) continue;
 				slideBlocked = true;
 				Debug.Log("PlayerMovement: Slide blocked by " + hits[i].collider.name);	
@@ -210,6 +210,8 @@ public class PlayerMovement : MonoBehaviour
 		Gizmos.DrawWireSphere(cp2, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y));
 		Gizmos.DrawLine(cp1 + transform.right * capsule.radius, cp2 + transform.right * capsule.radius);
 		Gizmos.DrawLine(cp1 - transform.right * capsule.radius, cp2 - transform.right * capsule.radius);
+		Gizmos.color = Color.skyBlue;
+		Gizmos.DrawWireSphere(transform.position+desiredMove, 0.01f);
 
 		// 캐스트 시각화
 		if (lastHitCount >= 0)
