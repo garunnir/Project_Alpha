@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Garunnir;
-
 public class UIManager : MonoBehaviour
 {
     Rect m_resolutionUpperRect;
@@ -16,6 +15,7 @@ public class UIManager : MonoBehaviour
     public RawImage GetBackground() => m_Background;
     [SerializeField] UIController m_Controller;
     #endregion
+
     public void Init()
     {
         m_resolutionUpperRect = m_upperWindowRect.rect;

@@ -1,11 +1,14 @@
+using PixelCrushers;
 using UnityEngine;
-
-[RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
+using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.Video;
+[RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider), typeof(CharacterState))]
 public class PlayerMovement : MonoBehaviour
 {
 	[Header("Movement")]
-	public float moveSpeed = 5f;
-	public float sprintMultiplier = 2f;
+	public float _moveSpeed = 5f;
+	public float _sprintMultiplier = 2f;
 	public float acceleration = 10f;
 	public Camera refCam;
 	[Tooltip("관성(감쇠) 계수. 0에 가까울수록 미끄러지듯 멈춤, 1에 가까울수록 즉시 멈춤")]
@@ -18,10 +21,11 @@ public class PlayerMovement : MonoBehaviour
 	public LayerMask collisionMask = ~0;    // 검사할 레이어
 	public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
 
-	Rigidbody rb;
-	CapsuleCollider capsule;
-	Vector3 currentVelocity = Vector3.zero;
-	Vector3 desiredMove;
+	Rigidbody _rb;
+	CapsuleCollider _capsule;
+	Vector3 _desiredMove;
+	Vector3 moveDir;
+	bool _isRun = false;
 
 	// 재사용할 히트 배열 (NonAlloc)
 	RaycastHit[] hits = new RaycastHit[8];
@@ -35,25 +39,42 @@ public class PlayerMovement : MonoBehaviour
 
 	// 마지막 스윕 데이터 (OnDrawGizmos에서 읽음)
 	int lastHitCount = 0;
-	Vector3 lastP1, lastP2, lastDesiredMove, lastSlide;
+	Vector3 lastP1, lastDesiredMove, lastSlide;
 	float lastWorldRadius = 0f;
 	int lastNearestIndex = -1;
+	private CharacterState _characterState; 
 
 	void Awake()
 	{
-		rb = GetComponent<Rigidbody>();
-		capsule = GetComponent<CapsuleCollider>();
+		_rb = GetComponent<Rigidbody>();
+		_capsule = GetComponent<CapsuleCollider>();
+		_characterState = GetComponent<CharacterState>();
 		// 물리 기반 이동 시 회전은 외부로부터 고정하는 것이 일반적입니다.
-		rb.freezeRotation = true;
+		_rb.freezeRotation = true;
 	}
-	public Vector3 MoveByCameraRelativeInput()
+
+	#region Input System Callbacks
+	public void OnMove(InputAction.CallbackContext context)
+	{
+		Vector2 position = context.ReadValue<Vector2>();
+		moveDir = MoveByCameraRelativeInput(position);
+	}
+
+	public void OnRun(InputAction.CallbackContext context)
+	{
+		_isRun = context.ReadValue<float>() == 1 ? true : false;
+		Debug.Log("PlayerMovement: isRun = " + _isRun);
+	}
+	#endregion
+
+	public Vector3 MoveByCameraRelativeInput(Vector2 move)
 	{
 		// 카메라 기준 입력을 월드 XZ 평면으로 변환하여 반환합니다.
 		// 반환값: (x: 월드 X 축 방향 속도비, y: 월드 Z 축 방향 속도비)
 		// 카메라의 피치(tilt)는 무시하고 수평 성분만 사용합니다.
 
-		float inputH = Input.GetAxisRaw("Horizontal");
-		float inputV = Input.GetAxisRaw("Vertical");
+		float inputH = move.x;
+		float inputV = move.y;
 
 		// 카메라가 없으면 기본 월드 입력을 반환
 		Camera camera = refCam;
@@ -74,55 +95,60 @@ public class PlayerMovement : MonoBehaviour
 		if (worldDir.sqrMagnitude > 1f)
 			worldDir = worldDir.normalized;
 
-		return new Vector3(worldDir.x, 0,worldDir.z);
+		return new Vector3(worldDir.x, 0, worldDir.z);
 	}
-
-	void FixedUpdate()
+	Vector3 _currentVelocity;
+ 	private Vector3 CalNextMoveDir(float moveSpeed,ref Vector3 currentVelocity)
 	{
-		Vector3 moveDir = MoveByCameraRelativeInput();
-
-		float speed = moveSpeed * ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? sprintMultiplier : 1f);
-		Vector3 targetVel = moveDir * speed;
+		Vector3 targetVel = moveDir * moveSpeed;
+		// 다음 프레임의 이동 방향과 속도를 계산합니다.
 		currentVelocity = Vector3.MoveTowards(currentVelocity, targetVel, acceleration * Time.fixedDeltaTime);
 
 		if (moveDir.sqrMagnitude <= Mathf.Epsilon)
 		{
 			currentVelocity *= inertia;
 		}
+		Vector3 desiredMove = currentVelocity * Time.fixedDeltaTime;
+		return desiredMove;
+	}
+	void FixedUpdate()
+	{
+		float speed = _moveSpeed * (_isRun ? _sprintMultiplier : 1f);
 
-		desiredMove = currentVelocity * Time.fixedDeltaTime;
-		if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
+		_desiredMove = CalNextMoveDir(speed, ref _currentVelocity);
+		_characterState.UpdateState(_desiredMove);
+		if (_desiredMove.sqrMagnitude <= Mathf.Epsilon)
 			return;
 
 		// 캡슐 캐스트를 위한 월드 좌표 두 점 계산 (캡슐의 중심 기준)
-		Vector3 worldCenter = transform.TransformPoint(capsule.center);
+		Vector3 worldCenter = transform.TransformPoint(_capsule.center);
 		Vector3 up = transform.up;
-		float halfHeight = Mathf.Max(0f, (capsule.height * 0.5f) - capsule.radius);
+		float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
 		Vector3 p1 = worldCenter + up * halfHeight;
 		Vector3 p2 = worldCenter - up * (halfHeight - climbAllowance);//낮은둔덕은 올라갈수있게 한다.
 
-		float distance = desiredMove.magnitude;
+		float distance = _desiredMove.magnitude;
 		//GC를 줄이는 NonAlloc 버전 사용하여 스윕
-		lastDesiredMove = desiredMove;
-		lastP1 = p1; lastP2 = p2;
-		lastWorldRadius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, lastWorldRadius, desiredMove.normalized, hits, distance + _baseSkin, collisionMask, triggerInteraction);
+		lastDesiredMove = _desiredMove;
+		lastP1 = p1; 
+		lastWorldRadius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, lastWorldRadius, _desiredMove.normalized, hits, distance + _baseSkin, collisionMask, triggerInteraction);
 		lastHitCount = hitCount;
 
 		if (hitCount == 0)
 		{
 			// 장애물이 없으면 이동
-			rb.MovePosition(rb.position + desiredMove);
+			_rb.MovePosition(_rb.position + _desiredMove);
 			return;
 		}
 
 		// 가장 가까운 유효 히트 찾기 (자기 자신 무시)
 		RaycastHit? nearest = null;
 		float minDist = float.PositiveInfinity;
-		for (int i = 0; i < hitCount; i++) 
+		for (int i = 0; i < hitCount; i++)
 		{
 			var h = hits[i];
-			if (h.collider == null||h.collider.gameObject == gameObject) continue;
+			if (h.collider == null || h.collider.gameObject == gameObject) continue;
 			// 레이어 필터(안전) — CapsuleCastNonAlloc에 이미 적용되지만 추가 필터링 안전장치
 			if (((1 << h.collider.gameObject.layer) & collisionMask.value) == 0) continue;
 			if (h.distance < minDist && h.distance >= 0f)
@@ -136,7 +162,7 @@ public class PlayerMovement : MonoBehaviour
 		{
 			lastNearestIndex = -1;
 			// 필터링 후 충돌 없음 -> 이동
-			rb.MovePosition(rb.position + desiredMove);
+			_rb.MovePosition(_rb.position + _desiredMove);
 			return;
 		}
 
@@ -148,27 +174,27 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		// 충돌면의 노멀을 이용해 슬라이딩 벡터 계산 미끄럼타기 위함
-		Vector3 slide = Vector3.ProjectOnPlane(desiredMove, hit.normal);
+		Vector3 slide = Vector3.ProjectOnPlane(_desiredMove, hit.normal);
 
 		// 슬라이드 방향으로 이동 가능한지 검사
 		if (slide.sqrMagnitude > Mathf.Epsilon)
 		{
 			float slideDist = slide.magnitude;
-			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, hits, slideDist + _baseSkin, collisionMask, triggerInteraction);
+			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, hits, slideDist + _baseSkin, collisionMask, triggerInteraction);
 			bool slideBlocked = false;
 			for (int i = 0; i < slideHits; i++)
 			{
-				if (hits[i].collider == null||hits[i].collider.gameObject == gameObject) continue;
+				if (hits[i].collider == null || hits[i].collider.gameObject == gameObject) continue;
 				if (((1 << hits[i].collider.gameObject.layer) & collisionMask.value) == 0) continue;
 				slideBlocked = true;
-				Debug.Log("PlayerMovement: Slide blocked by " + hits[i].collider.name);	
+				Debug.Log("PlayerMovement: Slide blocked by " + hits[i].collider.name);
 				break;
 			}
 
 			if (!slideBlocked)
 			{
 				lastSlide = slide;
-				rb.MovePosition(rb.position + slide);
+				_rb.MovePosition(_rb.position + slide);
 				Debug.Log("PlayerMovement: Sliding");
 				return;
 			}
@@ -178,13 +204,13 @@ public class PlayerMovement : MonoBehaviour
 		float moveAllowed = Mathf.Max(0f, minDist - _baseSkin);
 		if (moveAllowed > 0f)
 		{
-			Vector3 partial = desiredMove.normalized * moveAllowed;
-			rb.MovePosition(rb.position + partial);
+			Vector3 partial = _desiredMove.normalized * moveAllowed;
+			_rb.MovePosition(_rb.position + partial);
 		}
 		else
 		{
 			// 거의 붙어있으면 정지
-			rb.MovePosition(rb.position);
+			_rb.MovePosition(_rb.position);
 			Debug.LogError("PlayerMovement: Stuck!");
 		}
 	}
@@ -194,24 +220,25 @@ public class PlayerMovement : MonoBehaviour
 		if (!drawGizmos) return;
 
 		// 기본 캡슐 (현재 transform 기준)
-		if (capsule == null) {
-			capsule = GetComponent<CapsuleCollider>();
-			if (capsule == null) return;
+		if (_capsule == null)
+		{
+			_capsule = GetComponent<CapsuleCollider>();
+			if (_capsule == null) return;
 		}
 
 		Gizmos.color = gizmoCapsuleColor;
-		Vector3 wc = transform.TransformPoint(capsule.center);
+		Vector3 wc = transform.TransformPoint(_capsule.center);
 		Vector3 up = transform.up;
-		float halfH = Mathf.Max(0f, (capsule.height * 0.5f) - capsule.radius);
+		float halfH = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
 		Vector3 cp1 = wc + up * halfH;
 		Vector3 cp2 = wc - up * halfH;
 		// 단순한 시각화: 양 끝에 와이어구 그리기
-		Gizmos.DrawWireSphere(cp1, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y));
-		Gizmos.DrawWireSphere(cp2, capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y));
-		Gizmos.DrawLine(cp1 + transform.right * capsule.radius, cp2 + transform.right * capsule.radius);
-		Gizmos.DrawLine(cp1 - transform.right * capsule.radius, cp2 - transform.right * capsule.radius);
+		Gizmos.DrawWireSphere(cp1, _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y));
+		Gizmos.DrawWireSphere(cp2, _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y));
+		Gizmos.DrawLine(cp1 + transform.right * _capsule.radius, cp2 + transform.right * _capsule.radius);
+		Gizmos.DrawLine(cp1 - transform.right * _capsule.radius, cp2 - transform.right * _capsule.radius);
 		Gizmos.color = Color.skyBlue;
-		Gizmos.DrawWireSphere(transform.position+desiredMove, 0.01f);
+		Gizmos.DrawWireSphere(transform.position + _desiredMove, 0.01f);
 
 		// 캐스트 시각화
 		if (lastHitCount >= 0)
