@@ -45,6 +45,7 @@ namespace UIManagement
         // 상호작용 힌트 UI 처리
         if (data == null) return;
         _interactionCommandUI.Show("E", (data as Interactable).HintText);
+        _currentOwner = data;
     }
     public T Get<T>() where T : UI
     {
