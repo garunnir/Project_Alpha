@@ -53,6 +53,7 @@ public class PlayerMovement : MonoBehaviour
 		_rb.freezeRotation = true;
 	}
 
+
 	#region Input System Callbacks
 	public void OnMove(InputAction.CallbackContext context)
 	{
