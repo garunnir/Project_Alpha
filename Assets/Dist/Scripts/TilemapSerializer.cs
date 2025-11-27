@@ -1,154 +1,163 @@
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine;
-using UnityEngine.Tilemaps;
+using System.IO;
+using System;
 using System.Collections.Generic;
 
-[System.Serializable]
-public class TileSaveData
+public class TileMapSerializer : MonoBehaviour
 {
-    public int x, y, layer;
-    public string tileType;
-}
+    [Header("Where to save/read the map file")]
+    public string fileName = "map01.json";      // 파일 이름
+    public bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
 
-[System.Serializable]
-public class TileSaveDataArray
-{
-    public TileSaveData[] tiles;
-}
+    [Header("Prefab DB for loading")]
+    public TilePrefabDB prefabDB;
 
-public class TilemapSerializer : MonoBehaviour
-{
-    public List<Tilemap> tilemaps = new List<Tilemap>(); // Inspector에서 Layer0~Layer4 할당
+    [Header("Grid / World Settings")]
+    public float cellSize = 1f;                 // 그리드 셀 월드 크기
 
-    [Header("저장/불러오기용 JSON 파일 경로 (예: Assets/TilemapData.json)")]
-    public string jsonFilePath = "Assets/TilemapData.json";
+    string GetFullPath()
+    {
+        if (usePersistentPath)
+        {
+            return Path.Combine(Application.persistentDataPath, fileName);
+        }
+        else
+        {
+            // 프로젝트 루트 기준 편의용 (에디터에서만)
+            return Path.Combine(Application.dataPath, "..", fileName);
+        }
+    }
 
-    // Addressables 타일 캐시 (라벨 기반)
-    private Dictionary<string, TileBase> tileCache = new Dictionary<string, TileBase>();
-    private bool tilesLoaded = false;
+    // === Serialize: 씬 → JSON 파일 ===
+    [ContextMenu("Save Map To JSON")]
+    public void SaveMap()
+    {
+        var tileInfos = FindObjectsOfType<TileInfo>(true);
+
+        TileMapData mapData = new TileMapData();
+        mapData.tiles.Clear();
+
+        foreach (var info in tileInfos)
+        {
+            // 혹시 월드에서 그리드 역산해야 하면:
+            // info.CaptureGridFromWorld(cellSize);
+
+            TileData td = new TileData
+            {
+                x      = info.gridPos.x,
+                y      = info.gridPos.y,
+                z      = info.gridPos.z,
+                sizeX  = info.size.x,
+                sizeY  = info.size.y,
+                sizeZ  = info.size.z,
+                prefabId = info.prefabId
+            };
+
+            mapData.tiles.Add(td);
+        }
+
+        string json = JsonUtility.ToJson(mapData, true);
+
+        string fullPath = GetFullPath();
+        File.WriteAllText(fullPath, json);
+
+        Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapData.tiles.Count})");
+    }
+
+    // === Deserialize: JSON 파일 → 씬 ===
+    [ContextMenu("Load Map From JSON")]
+    public void LoadMap()
+    {
+        string fullPath = GetFullPath();
+        if (!File.Exists(fullPath))
+        {
+            Debug.LogWarning($"Map file not found: {fullPath}");
+            return;
+        }
+
+        string json = File.ReadAllText(fullPath);
+        TileMapData mapData = JsonUtility.FromJson<TileMapData>(json);
+
+        if (mapData == null || mapData.tiles == null)
+        {
+            Debug.LogWarning("Map data is null or invalid.");
+            return;
+        }
+
+        // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
+        ClearExistingTiles();
+
+        foreach (var td in mapData.tiles)
+        {
+            GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(td.prefabId) : null;
+
+            if (prefab == null)
+            {
+                Debug.LogWarning($"No prefab for id: {td.prefabId}");
+                continue;
+            }
+
+            // Anchor 기준 월드 좌표
+            Vector3 worldPos = new Vector3(
+                td.x * cellSize,
+                td.y * cellSize,
+                td.z * cellSize
+            );
+
+            var go = Instantiate(prefab, worldPos, Quaternion.identity, this.transform);
+
+            var info = go.GetComponent<TileInfo>();
+            if (info == null)
+            {
+                info = go.AddComponent<TileInfo>();
+            }
+
+            info.gridPos = new Vector3(td.x, td.y, td.z);
+            info.size    = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ);
+            info.prefabId = td.prefabId;
+
+            // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
+            // e.g. info.ApplyGridToWorld(cellSize);
+        }
+
+        Debug.Log($"TileMap loaded from: {fullPath} (tiles: {mapData.tiles.Count})");
+    }
+
+    void ClearExistingTiles()
+    {
+        var tileInfos = FindObjectsOfType<TileInfo>(true);
+
+        // 타일만 날린다고 가정 (이 스크립트가 붙은 오브젝트는 남김)
+        foreach (var info in tileInfos)
+        {
+            if (info != null)
+            {
+                // 본인 자신(TileMapSerializer의 GameObject) 밑에 있는지만 보고 날릴 수도 있음
+                DestroyImmediate(info.gameObject);
+            }
+        }
+    }
     
+}
 
-    // 'Tiles' 라벨로 모든 타일을 미리 로드 (최초 1회만)
-    public void PreloadAllTilesFromLabel()
-    {
-        if (tilesLoaded) return;
-        var handle = Addressables.LoadAssetsAsync<TileBase>("Tiles", tile =>
-        {
-            if (!tileCache.ContainsKey(tile.name))
-                tileCache[tile.name] = tile;
-        });
-        handle.WaitForCompletion();
-        tilesLoaded = true;
-    }
+// 한 타일(Anchor 기준)의 순수 데이터 구조
+[Serializable]
+public class TileData
+{
+    public float x;
+    public float y;
+    public float z;
 
-    // 캐시에서 타일 찾기
-    private TileBase GetTileFromCache(string name)
-    {
-        if (!tilesLoaded) PreloadAllTilesFromLabel();
-        tileCache.TryGetValue(name, out var tile);
-        return tile;
-    }
+    public int sizeX;
+    public int sizeY;
+    public int sizeZ;
 
-    // Addressables로 타일 비동기 로드 및 캐싱
-    private TileBase LoadTileAddressable(string key)
-    {
-        if (tileCache.TryGetValue(key, out var cached))
-            return cached;
-        var handle = Addressables.LoadAssetAsync<TileBase>(key);
-        handle.WaitForCompletion();
-        if (handle.Status == AsyncOperationStatus.Succeeded)
-        {
-            tileCache[key] = handle.Result;
-            return handle.Result;
-        }
-        return null;
-    }
+    public string prefabId;
+}
 
-
-
-
-    // 이 오브젝트의 자식 Tilemap만 자동으로 찾음
-    public void AutoAssignTilemapsFromChildren()
-    {
-        tilemaps.Clear();
-        foreach (Transform child in transform)
-        {
-            var tm = child.GetComponent<Tilemap>();
-            if (tm != null)
-                tilemaps.Add(tm);
-        }
-        // 레이어 순서 보장: 이름에 숫자가 있으면 정렬
-        tilemaps.Sort((a, b) => a.gameObject.name.CompareTo(b.gameObject.name));
-    }
-
-    // 모든 레이어의 타일 정보를 JSON으로 변환
-    public string AllTilemapsToJson()
-    {
-        var allTiles = new List<TileSaveData>();
-        for (int i = 0; i < tilemaps.Count; i++)
-        {
-            var tilemap = tilemaps[i];
-            var bounds = tilemap.cellBounds;
-            foreach (var pos in bounds.allPositionsWithin)
-            {
-                TileBase tile = tilemap.GetTile(pos);
-                if (tile != null)
-                {
-                    allTiles.Add(new TileSaveData
-                    {
-                        x = pos.x,
-                        y = pos.y,
-                        layer = i,
-                        tileType = tile.name
-                    });
-                }
-            }
-        }
-        TileSaveDataArray wrapper = new TileSaveDataArray { tiles = allTiles.ToArray() };
-        return JsonUtility.ToJson(wrapper, true);
-    }
-
-    // JSON 파일에서 맵을 읽어 Tilemap에 배치
-    public void LoadMapFromJson(string json)
-    {
-        tilemaps.RemoveAll(item => item == null);
-        // 기존 타일 모두 삭제
-        foreach (var tilemap in tilemaps)
-            tilemap.ClearAllTiles();
-
-        TileSaveDataArray wrapper = JsonUtility.FromJson<TileSaveDataArray>(json);
-        if (wrapper == null || wrapper.tiles == null) return;
-
-        foreach (var tile in wrapper.tiles)
-        {
-            if (tile.layer < 0) continue;
-            // 인덱스 접근 보장: 부족하면 null로 채움
-            while (tile.layer >= tilemaps.Count)
-            {
-                tilemaps.Add(null);
-            }
-            if (tilemaps[tile.layer] == null)
-            {
-                GameObject obj = new GameObject("Tilemap_Layer" + tile.layer, typeof(Tilemap));
-                TilemapRenderer tilemapRenderer=obj.AddComponent<TilemapRenderer>();
-                tilemapRenderer.sortOrder=TilemapRenderer.SortOrder.TopRight;
-                obj.transform.parent = this.transform;
-                tilemaps[tile.layer] = obj.GetComponent<Tilemap>();
-            }
-
-            var tilemap = tilemaps[tile.layer];
-            if (tilemap == null) continue;
-            // 'Tiles' 라벨로 미리 로드된 캐시에서 타일 찾기
-            TileBase tileAsset = GetTileFromCache(tile.tileType);
-            if (tileAsset != null)
-            {
-                tilemap.SetTile(new Vector3Int(tile.x, tile.y, 0), tileAsset);
-            }
-            else
-            {
-                Debug.LogWarning($"타일 에셋을 찾을 수 없습니다: {tile.tileType} (Layer {tile.layer} at {tile.x},{tile.y})");
-            }
-        }
-    }
+// 맵 전체 데이터
+[Serializable]
+public class TileMapData
+{
+    public List<TileData> tiles = new List<TileData>();
 }
