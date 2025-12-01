@@ -34,6 +34,9 @@ namespace IsoTilemap
             foreach (var tile in mapData.tiles)
             {
                 if (tile.tileType == (byte)TileInfo.TileType.Wall)
+
+
+                
                 {
                     wallTiles.Add(tile);
                 }
@@ -43,7 +46,9 @@ namespace IsoTilemap
         [ContextMenu("Save Map To JSON")]
         public void SaveMap()
         {
-            var tileInfos = FindObjectsOfType<TileInfo>(true);
+            // FindObjectsOfType(T) is obsolete in newer Unity versions.
+            // Use FindObjectsByType and explicitly include inactive objects for the same behavior.
+            var tileInfos = UnityEngine.Object.FindObjectsByType<TileInfo>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
 
             TileMapData mapData = new TileMapData();
             mapData.tiles.Clear();
@@ -112,9 +117,9 @@ namespace IsoTilemap
 
                 // Anchor 기준 월드 좌표
                 Vector3 worldPos = new Vector3(
-                    td.x * cellSize,
+                    td.x * cellSize+0.5f * cellSize,
                     td.y * cellSize,
-                    td.z * cellSize
+                    td.z * cellSize+0.5f * cellSize
                 );
 
                 var go = Instantiate(prefab, worldPos, Quaternion.identity, this.transform);
@@ -125,7 +130,7 @@ namespace IsoTilemap
                     info = go.AddComponent<TileInfo>();
                 }
 
-                info.gridPos = new Vector3(td.x, td.y, td.z);
+                info.gridPos = new Vector3Int(td.x, td.y, td.z);
                 info.size = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ);
                 info.prefabId = td.prefabId;
                 info.tileType = (TileInfo.TileType)td.tileType;
@@ -140,7 +145,8 @@ namespace IsoTilemap
 
         void ClearExistingTiles()
         {
-            var tileInfos = FindObjectsOfType<TileInfo>(true);
+            // FindObjectsByType: include inactive so we match the previous behavior of FindObjectsOfType(true).
+            var tileInfos = UnityEngine.Object.FindObjectsByType<TileInfo>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
 
             // 타일만 날린다고 가정 (이 스크립트가 붙은 오브젝트는 남김)
             foreach (var info in tileInfos)
@@ -159,9 +165,9 @@ namespace IsoTilemap
     [Serializable]
     public class TileData
     {
-        public float x;
-        public float y;
-        public float z;
+        public int x;
+        public int y;
+        public int z;
 
         public int sizeX;
         public int sizeY;

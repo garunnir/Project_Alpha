@@ -14,7 +14,7 @@ namespace IsoTilemap
             Obstacle=3
         }
         [Header("Grid Anchor Position (xyz)")]
-        public Vector3 gridPos;          // gx, gy, gz
+        public Vector3Int gridPos;          // gx, gy, gz
 
         [Header("Tile Size in Grid Units")]
         public Vector3Int size = Vector3Int.one; // 1x1x1, 2x1x1 등 (x,y,z 방향)
@@ -22,12 +22,19 @@ namespace IsoTilemap
         [Header("Prefab Identity")]
         public string prefabId;             // 어떤 프리팹/타입인지 식별용
 
-        [Header("Tile Type")]
-        public TileType tileType = TileType.none;
+    [Header("Tile Type")]
+    public TileType tileType = TileType.none;
+
+    [Header("Gizmo (Grid) Settings")]
+    [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
+    public float gizmoCellSize = 1f;
+    [Tooltip("기즈모 그리드 선을 그릴지 여부")]
+    public bool drawGizmoGrid = true;
+    public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
 
         private void Reset()
         {
-            gridPos = transform.position;
+            gridPos = ConvertWorldToGrid(transform.position);
             // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
 #if UNITY_EDITOR
             var source = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
@@ -35,27 +42,72 @@ namespace IsoTilemap
             prefabId = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
 #endif
         }
-        // 그리드 → 월드 변환 (지금은 1:1이라 가정, 필요하면 수정)
 
-        public void ApplyGridToWorld(float cellSize = 1f)
+        private Vector3Int ConvertWorldToGrid(Vector3 worldPos)
         {
-            var p = new Vector3(
-                gridPos.x * cellSize,
-                gridPos.y * cellSize,
-                gridPos.z * cellSize
+            // worldPos에서 그리드 좌표로 변환합니다. 현재 셀 크기 1:1 가정을 사용합니다.
+            // 필요하면 cellSize를 파라미터로 추가하여 비율을 적용하세요.
+            Vector3 p = worldPos;
+            return new Vector3Int(
+                Mathf.RoundToInt(p.x-0.5f),
+                Mathf.RoundToInt(p.y),
+                Mathf.RoundToInt(p.z-0.5f)
             );
-            transform.position = p;
         }
 
-        // 이미 배치된 오브젝트에서 월드→그리드 역변환 (원하면 사용)
-        public void CaptureGridFromWorld(float cellSize = 1f)
+        // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
+        // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
+        // - 높이(size.y)에 맞춘 와이어 박스를 함께 표시합니다.
+        private void OnDrawGizmosSelected()
         {
-            var p = transform.position / cellSize;
-            gridPos = new Vector3Int(
-                Mathf.RoundToInt(p.x),
-                Mathf.RoundToInt(p.y),
-                Mathf.RoundToInt(p.z)
-            );
+            if (!drawGizmoGrid) return;
+
+            // 셀 크기
+            float cs = Mathf.Max(0.0001f, gizmoCellSize);
+
+            Vector3 anchor = transform.position- new Vector3(0.5f, 0f, 0.5f);
+
+            int sx = Mathf.Max(1, size.x);
+            int sy = Mathf.Max(1, size.y);
+            int sz = Mathf.Max(1, size.z);
+
+            Gizmos.color = gizmoGridColor;
+
+            // 수평 그리드 라인 (XZ 평면)
+            // X 방향 라인들
+            for (int ix = 0; ix <= sx; ix++)
+            {
+                Vector3 a = anchor + new Vector3(ix * cs, 0f, 0f);
+                Vector3 b = anchor + new Vector3(ix * cs, 0f, sz * cs);
+                Gizmos.DrawLine(a, b);
+            }
+
+            // Z 방향 라인들
+            for (int iz = 0; iz <= sz; iz++)
+            {
+                Vector3 a = anchor + new Vector3(0f, 0f, iz * cs);
+                Vector3 b = anchor + new Vector3(sx * cs, 0f, iz * cs);
+                Gizmos.DrawLine(a, b);
+            }
+
+            // 높이에 따른 수직선 및 와이어 박스
+            Vector3 boxCenter = anchor + new Vector3((sx * cs) * 0.5f, (sy * cs) * 0.5f, (sz * cs) * 0.5f);
+            Vector3 boxSize = new Vector3(sx * cs, sy * cs, sz * cs);
+            Gizmos.DrawWireCube(boxCenter, boxSize);
+
+            // 모서리에서 위로 올라가는 수직선 (시각적 강조)
+            Vector3[] corners = new Vector3[4]
+            {
+                anchor + new Vector3(0f, 0f, 0f),
+                anchor + new Vector3(sx * cs, 0f, 0f),
+                anchor + new Vector3(sx * cs, 0f, sz * cs),
+                anchor + new Vector3(0f, 0f, sz * cs)
+            };
+
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Gizmos.DrawLine(corners[i], corners[i] + Vector3.up * (sy * cs));
+            }
         }
     }
 }

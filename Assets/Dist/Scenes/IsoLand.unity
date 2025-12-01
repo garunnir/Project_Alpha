@@ -186,12 +186,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -275,12 +280,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -314,12 +324,17 @@ PrefabInstance:
     - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 6578024302159193148, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
@@ -487,12 +502,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -576,12 +596,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -935,12 +960,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -1249,12 +1279,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -1738,12 +1773,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -1827,12 +1867,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -1866,12 +1911,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -2005,12 +2055,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2184,12 +2239,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2273,12 +2333,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -2356,18 +2421,33 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
+      propertyPath: size.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: size.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
       propertyPath: prefabId
       value: Floor/Floor
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2541,12 +2621,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2630,12 +2715,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2719,12 +2809,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -2995,12 +3090,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3084,12 +3184,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3173,12 +3278,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -3262,12 +3372,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -3351,12 +3466,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -3440,12 +3560,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3529,12 +3654,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3618,12 +3748,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3799,12 +3934,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -3888,12 +4028,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -3977,12 +4122,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -4066,12 +4216,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -4155,12 +4310,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -4194,12 +4354,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -4338,12 +4503,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -4427,12 +4597,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -4516,12 +4691,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -4605,12 +4785,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -4734,12 +4919,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -4873,12 +5063,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -5457,12 +5652,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -5546,12 +5746,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -5635,12 +5840,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -5724,12 +5934,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -5813,12 +6028,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -6206,12 +6426,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -6385,12 +6610,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -6474,12 +6704,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -6563,12 +6798,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -6742,12 +6982,17 @@ PrefabInstance:
     - target: {fileID: 1084752910379265445, guid: 0a9cc9b261c968a41b72aad56e69a6af,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 1084752910379265445, guid: 0a9cc9b261c968a41b72aad56e69a6af,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1084752910379265445, guid: 0a9cc9b261c968a41b72aad56e69a6af,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2502377816984249760, guid: 0a9cc9b261c968a41b72aad56e69a6af,
         type: 3}
@@ -6921,12 +7166,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -7010,12 +7260,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7099,12 +7354,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7188,12 +7448,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7277,12 +7542,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7366,12 +7636,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7545,12 +7820,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7806,12 +8086,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -7985,12 +8270,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -8074,12 +8364,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -8253,12 +8548,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -8342,12 +8642,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -8431,12 +8736,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -8520,12 +8830,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -8655,12 +8970,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -8924,12 +9244,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -9193,12 +9518,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -9282,12 +9612,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -9371,12 +9706,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -9410,12 +9750,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -9995,12 +10340,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -10069,12 +10419,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -10308,12 +10663,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -10487,12 +10847,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -10651,12 +11016,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -10800,12 +11170,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -10839,12 +11214,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -11228,12 +11608,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -11600,12 +11985,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -11689,12 +12079,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -11778,12 +12173,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -11867,12 +12267,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -12046,12 +12451,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -12330,12 +12740,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -12479,12 +12894,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -12568,12 +12988,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -12732,12 +13157,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -12881,12 +13311,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -12970,12 +13405,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -13059,12 +13499,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -13291,12 +13736,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -13544,12 +13994,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -13633,12 +14088,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -13994,12 +14454,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -14083,12 +14548,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -14122,12 +14592,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -14294,12 +14769,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -14470,12 +14950,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -14559,12 +15044,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -14648,12 +15138,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -14737,12 +15232,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -15006,12 +15506,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -15080,12 +15585,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -15319,12 +15829,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -15358,12 +15873,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -15587,12 +16107,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -15676,12 +16201,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -15934,12 +16464,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -16023,12 +16558,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -16225,12 +16765,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -16347,12 +16892,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -16436,12 +16986,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -16525,12 +17080,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -16654,12 +17214,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -16973,12 +17538,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -17152,12 +17722,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -17272,12 +17847,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -17451,12 +18031,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -17630,12 +18215,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -17842,12 +18432,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -18021,12 +18616,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -18200,12 +18800,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -18289,12 +18894,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -18378,12 +18988,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -18819,12 +19434,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -20030,12 +20650,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -20179,12 +20804,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -20268,12 +20898,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -20357,12 +20992,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -20446,12 +21086,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -20788,12 +21433,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -20862,12 +21512,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -21011,12 +21666,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -21465,12 +22125,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -21734,12 +22399,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -21823,12 +22493,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -21912,12 +22587,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -22001,12 +22681,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -22090,12 +22775,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -22179,12 +22869,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -22529,12 +23224,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -22603,12 +23303,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -22752,12 +23457,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -22841,12 +23551,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -22961,12 +23676,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -23050,12 +23770,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -23139,12 +23864,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -23318,12 +24048,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23407,12 +24142,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23496,12 +24236,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23585,12 +24330,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23674,12 +24424,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -23853,12 +24608,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23942,12 +24702,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -23981,12 +24746,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -24120,12 +24890,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -24209,12 +24984,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -24248,12 +25028,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -24337,12 +25122,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -24476,12 +25266,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -24565,12 +25360,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -24654,12 +25454,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 7.5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -24728,12 +25533,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -24827,12 +25637,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -24966,12 +25781,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -25539,12 +26359,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -25918,12 +26743,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -26151,12 +26981,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -26406,12 +27241,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 5.5
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -26445,12 +27285,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -26584,12 +27429,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -26658,12 +27508,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -26897,12 +27752,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -26986,12 +27846,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -5.5
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -27125,12 +27990,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -27364,12 +28234,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -27484,12 +28359,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -27663,12 +28543,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -28674,12 +29559,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -28718,12 +29608,17 @@ PrefabInstance:
     - target: {fileID: 6128106980270474524, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 6128106980270474524, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6128106980270474524, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 6202581747814701985, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
         type: 3}
@@ -29036,12 +29931,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -29165,12 +30065,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -29489,12 +30394,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -29700,12 +30610,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -29789,12 +30704,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -29968,12 +30888,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -30042,12 +30967,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -30191,12 +31121,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 1.5
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -30280,12 +31215,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -30745,12 +31685,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 6.5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -30834,12 +31779,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -30873,12 +31823,17 @@ PrefabInstance:
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.x
-      value: 3.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: gridPos.z
-      value: 3.5
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -31192,12 +32147,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -5.5
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -31266,12 +32226,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -31505,12 +32470,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -6.5
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -31855,12 +32825,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: 0.5
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -32094,12 +33069,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -4.5
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -32183,12 +33163,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 4.5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -32272,12 +33257,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -32438,12 +33428,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: -1.5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -32472,12 +33467,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -3.5
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -32701,12 +33701,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: 2.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -32790,12 +33795,17 @@ PrefabInstance:
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.x
-      value: 2.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
       propertyPath: gridPos.z
-      value: -7.5
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2284035406974926978, guid: 1a5cedd84fe866d46885007563312eff,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff,
         type: 3}
@@ -33059,12 +34069,17 @@ PrefabInstance:
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
       propertyPath: gridPos.z
-      value: -2.5
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
@@ -33133,12 +34148,17 @@ PrefabInstance:
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.z
-      value: -1.5
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 5353027929205706227, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -33232,12 +34252,17 @@ PrefabInstance:
     - target: {fileID: 130001639802113226, guid: d7d1fe6fd5da5074d947e01087f96417,
         type: 3}
       propertyPath: gridPos.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 130001639802113226, guid: d7d1fe6fd5da5074d947e01087f96417,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 130001639802113226, guid: d7d1fe6fd5da5074d947e01087f96417,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 204153081134551671, guid: d7d1fe6fd5da5074d947e01087f96417,
         type: 3}
@@ -33321,12 +34346,17 @@ PrefabInstance:
     - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
       propertyPath: gridPos.x
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
       propertyPath: gridPos.z
-      value: -0.5
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6363939938502310529, guid: 7750082aef184184aae64824ffd2f53e,
+        type: 3}
+      propertyPath: m_EditorClassIdentifier
+      value: DistScript::IsoTilemap.TileInfo
       objectReference: {fileID: 0}
     - target: {fileID: 6578024302159193148, guid: 7750082aef184184aae64824ffd2f53e,
         type: 3}
