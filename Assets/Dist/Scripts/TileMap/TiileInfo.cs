@@ -73,23 +73,6 @@ namespace IsoTilemap
 
             Gizmos.color = gizmoGridColor;
 
-            // 수평 그리드 라인 (XZ 평면)
-            // X 방향 라인들
-            for (int ix = 0; ix <= sx; ix++)
-            {
-                Vector3 a = anchor + new Vector3(ix * cs, 0f, 0f);
-                Vector3 b = anchor + new Vector3(ix * cs, 0f, sz * cs);
-                Gizmos.DrawLine(a, b);
-            }
-
-            // Z 방향 라인들
-            for (int iz = 0; iz <= sz; iz++)
-            {
-                Vector3 a = anchor + new Vector3(0f, 0f, iz * cs);
-                Vector3 b = anchor + new Vector3(sx * cs, 0f, iz * cs);
-                Gizmos.DrawLine(a, b);
-            }
-
             // 높이에 따른 수직선 및 와이어 박스
             Vector3 boxCenter = anchor + new Vector3((sx * cs) * 0.5f, (sy * cs) * 0.5f, (sz * cs) * 0.5f);
             Vector3 boxSize = new Vector3(sx * cs, sy * cs, sz * cs);
@@ -103,11 +86,6 @@ namespace IsoTilemap
                 anchor + new Vector3(sx * cs, 0f, sz * cs),
                 anchor + new Vector3(0f, 0f, sz * cs)
             };
-
-            for (int i = 0; i < corners.Length; i++)
-            {
-                Gizmos.DrawLine(corners[i], corners[i] + Vector3.up * (sy * cs));
-            }
         }
     }
 }
