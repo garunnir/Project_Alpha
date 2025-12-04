@@ -17,15 +17,18 @@ namespace IsoTilemap
             get { return _runtimeData; }
             set { _runtimeData = value; }
         }
+        private HashSet<Vector3Int> _cachedCurrentRoomID;//이미 계산된 타일이면 건너뜀.
+        private List<TileInfo> _cachedtiles;
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-
+            
         }
         private bool IsWallEligibleForHiding(TileInfo.TileType type)
         {
             return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
         }
+        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
         private void DebugGizmos(HashSet<Vector3Int> visitedCells)
         {
 
@@ -65,7 +68,10 @@ namespace IsoTilemap
 
             var occupancy = _runtimeData.tiles;
             Vector3Int start = playerCellPos;
-
+            if (_cachedCurrentRoomID != null && _cachedCurrentRoomID.Contains(start))
+            {
+                return _cachedtiles;
+            }
             var resultSet = new HashSet<TileInfo>();
 
             // 시작 셀이 점유되어 있고, 그 점유물이 Wall/Obstacle이면 인접한 빈칸을 찾아 시작점으로 삼음
@@ -75,7 +81,7 @@ namespace IsoTilemap
                 foreach (var t in startList)
                 {
                     if (t == null) continue;
-                    if (t.tileType == TileInfo.TileType.Wall || t.tileType == TileInfo.TileType.Obstacle)
+                    if (IsWallEligibleForHiding(t.tileType))
                     { hasBlocking = true; break; }
                 }
 
@@ -163,8 +169,11 @@ namespace IsoTilemap
                 }
             }
                         DebugGizmos(visited);
-
-            return new List<TileInfo>(resultSet);
+            List<TileInfo> result = new List<TileInfo>(resultSet);
+            _cachedCurrentRoomID = visited.ToHashSet();
+            _cachedtiles = result;
+            return result;
         }
+
     }
 }

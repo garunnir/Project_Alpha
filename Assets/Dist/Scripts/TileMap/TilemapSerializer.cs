@@ -12,8 +12,8 @@ namespace IsoTilemap
         public bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
 
 
-
-public TileMapVisualizer _visualizer;
+        [SerializeField] private TileMapRuntime _tileMapData;
+        [SerializeField] private TileMapVisualizer _visualizer;
         void Awake()
         {
             _visualizer = GetComponent<TileMapVisualizer>();
@@ -30,20 +30,7 @@ public TileMapVisualizer _visualizer;
                 return Path.Combine(Application.dataPath, "..", fileName);
             }
         }
-        private void ExtractWallData(TileMapData mapData)
-        {
-            List<TileData> wallTiles = new List<TileData>();
-            foreach (var tile in mapData.tiles)
-            {
-                if (tile.tileType == (byte)TileInfo.TileType.Wall)
 
-
-                
-                {
-                    wallTiles.Add(tile);
-                }
-            }
-        }
         // === Serialize: 씬 → JSON 파일 ===
         [ContextMenu("Save Map To JSON")]
         public void SaveMap()
@@ -81,7 +68,6 @@ public TileMapVisualizer _visualizer;
             File.WriteAllText(fullPath, json);
 
             Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapData.tiles.Count})");
-            ExtractWallData(mapData);
         }
 
         // === Deserialize: JSON 파일 → 씬 ===

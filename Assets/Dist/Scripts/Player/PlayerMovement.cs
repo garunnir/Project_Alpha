@@ -7,41 +7,41 @@ using UnityEngine.Video;
 public class PlayerMovement : MonoBehaviour
 {
 	[Header("Movement")]
-	public float _moveSpeed = 5f;
-	public float _sprintMultiplier = 2f;
-	public float acceleration = 10f;
-	public Camera refCam;
+    [SerializeField] private float _moveSpeed = 5f;
+	[SerializeField] private float _sprintMultiplier = 2f;
+    [SerializeField] private float _acceleration = 10f;
+    [SerializeField] private Camera _refCam;
 	[Tooltip("관성(감쇠) 계수. 0에 가까울수록 미끄러지듯 멈춤, 1에 가까울수록 즉시 멈춤")]
 	[Range(0f, 1f)]
-	public float inertia = 0.9f;
+    [SerializeField] private float _inertia = 0.9f;
 
 	[Header("Collision")]
-	public float climbAllowance = 0.3f;      // 오를 수 있는 낮은 둔덕 높이
-	public float _baseSkin = 0.02f;              // 벽에 바짝 붙을 때 여유
-	public LayerMask collisionMask = ~0;    // 검사할 레이어
-	public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
+    [SerializeField] private float _climbAllowance = 0.3f;      // 오를 수 있는 낮은 둔덕 높이
+	[SerializeField] private float _baseSkin = 0.02f;              // 벽에 바짝 붙을 때 여유
+    [SerializeField] private LayerMask _collisionMask = ~0;    // 검사할 레이어
+    [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;
 
 	Rigidbody _rb;
 	CapsuleCollider _capsule;
 	Vector3 _desiredMove;
-	Vector3 moveDir;
+	Vector3 _moveDir;
 	bool _isRun = false;
 
 	// 재사용할 히트 배열 (NonAlloc)
-	RaycastHit[] hits = new RaycastHit[8];
+	RaycastHit[] _hits = new RaycastHit[8];
 
 	[Header("Gizmos")]
-	public bool drawGizmos = true;
-	public Color gizmoCapsuleColor = new Color(0f, 0.6f, 1f, 0.25f);
-	public Color gizmoCastColor = Color.yellow;
-	public Color gizmoHitColor = Color.red;
-	public Color gizmoSlideColor = Color.green;
+    [SerializeField] private bool _drawGizmos = true;
+	[SerializeField] private Color _gizmoCapsuleColor = new Color(0f, 0.6f, 1f, 0.25f);
+	[SerializeField] private Color _gizmoCastColor = Color.yellow;
+	[SerializeField] private Color _gizmoHitColor = Color.red;
+	[SerializeField] private Color _gizmoSlideColor = Color.green;
 
 	// 마지막 스윕 데이터 (OnDrawGizmos에서 읽음)
-	int lastHitCount = 0;
-	Vector3 lastP1, lastDesiredMove, lastSlide;
-	float lastWorldRadius = 0f;
-	int lastNearestIndex = -1;
+	int _lastHitCount = 0;
+	Vector3 _lastP1, _lastDesiredMove, _lastSlide;
+	float _lastWorldRadius = 0f;
+	int _lastNearestIndex = -1;
 	private CharacterState _characterState; 
 
 	void Awake()
@@ -58,7 +58,7 @@ public class PlayerMovement : MonoBehaviour
 	public void OnMove(InputAction.CallbackContext context)
 	{
 		Vector2 position = context.ReadValue<Vector2>();
-		moveDir = MoveByCameraRelativeInput(position);
+		_moveDir = MoveByCameraRelativeInput(position);
 	}
 
 	public void OnRun(InputAction.CallbackContext context)
@@ -78,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
 		float inputV = move.y;
 
 		// 카메라가 없으면 기본 월드 입력을 반환
-		Camera camera = refCam;
+		Camera camera = _refCam;
 		camera ??= Camera.main;
 		if (camera == null)
 			return new Vector3(inputH, 0, inputV);
@@ -101,13 +101,13 @@ public class PlayerMovement : MonoBehaviour
 	Vector3 _currentVelocity;
  	private Vector3 CalNextMoveDir(float moveSpeed,ref Vector3 currentVelocity)
 	{
-		Vector3 targetVel = moveDir * moveSpeed;
+		Vector3 targetVel = _moveDir * moveSpeed;
 		// 다음 프레임의 이동 방향과 속도를 계산합니다.
-		currentVelocity = Vector3.MoveTowards(currentVelocity, targetVel, acceleration * Time.fixedDeltaTime);
+		currentVelocity = Vector3.MoveTowards(currentVelocity, targetVel, _acceleration * Time.fixedDeltaTime);
 
-		if (moveDir.sqrMagnitude <= Mathf.Epsilon)
+		if (_moveDir.sqrMagnitude <= Mathf.Epsilon)
 		{
-			currentVelocity *= inertia;
+			currentVelocity *= _inertia;
 		}
 		Vector3 desiredMove = currentVelocity * Time.fixedDeltaTime;
 		return desiredMove;
@@ -118,6 +118,7 @@ public class PlayerMovement : MonoBehaviour
 
 		_desiredMove = CalNextMoveDir(speed, ref _currentVelocity);
 		_characterState.UpdateState(_desiredMove);
+        _characterState.UpdateGridPos(transform.position);
 		if (_desiredMove.sqrMagnitude <= Mathf.Epsilon)
 			return;
 
@@ -126,15 +127,15 @@ public class PlayerMovement : MonoBehaviour
 		Vector3 up = transform.up;
 		float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
 		Vector3 p1 = worldCenter + up * halfHeight;
-		Vector3 p2 = worldCenter - up * (halfHeight - climbAllowance);//낮은둔덕은 올라갈수있게 한다.
+		Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);//낮은둔덕은 올라갈수있게 한다.
 
 		float distance = _desiredMove.magnitude;
 		//GC를 줄이는 NonAlloc 버전 사용하여 스윕
-		lastDesiredMove = _desiredMove;
-		lastP1 = p1; 
-		lastWorldRadius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, lastWorldRadius, _desiredMove.normalized, hits, distance + _baseSkin, collisionMask, triggerInteraction);
-		lastHitCount = hitCount;
+		_lastDesiredMove = _desiredMove;
+		_lastP1 = p1; 
+		_lastWorldRadius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+		int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, _lastWorldRadius, _desiredMove.normalized, _hits, distance + _baseSkin, _collisionMask, _triggerInteraction);
+		_lastHitCount = hitCount;
 
 		if (hitCount == 0)
 		{
@@ -148,10 +149,10 @@ public class PlayerMovement : MonoBehaviour
 		float minDist = float.PositiveInfinity;
 		for (int i = 0; i < hitCount; i++)
 		{
-			var h = hits[i];
+			var h = _hits[i];
 			if (h.collider == null || h.collider.gameObject == gameObject) continue;
 			// 레이어 필터(안전) — CapsuleCastNonAlloc에 이미 적용되지만 추가 필터링 안전장치
-			if (((1 << h.collider.gameObject.layer) & collisionMask.value) == 0) continue;
+			if (((1 << h.collider.gameObject.layer) & _collisionMask.value) == 0) continue;
 			if (h.distance < minDist && h.distance >= 0f)
 			{
 				minDist = h.distance;
@@ -161,7 +162,7 @@ public class PlayerMovement : MonoBehaviour
 
 		if (!nearest.HasValue)
 		{
-			lastNearestIndex = -1;
+			_lastNearestIndex = -1;
 			// 필터링 후 충돌 없음 -> 이동
 			_rb.MovePosition(_rb.position + _desiredMove);
 			return;
@@ -171,7 +172,7 @@ public class PlayerMovement : MonoBehaviour
 		// nearest 히트 index 저장 (for gizmos)
 		for (int i = 0; i < hitCount; i++)
 		{
-			if (hits[i].collider == hit.collider && Mathf.Approximately(hits[i].distance, hit.distance)) { lastNearestIndex = i; break; }
+			if (_hits[i].collider == hit.collider && Mathf.Approximately(_hits[i].distance, hit.distance)) { _lastNearestIndex = i; break; }
 		}
 
 		// 충돌면의 노멀을 이용해 슬라이딩 벡터 계산 미끄럼타기 위함
@@ -181,20 +182,20 @@ public class PlayerMovement : MonoBehaviour
 		if (slide.sqrMagnitude > Mathf.Epsilon)
 		{
 			float slideDist = slide.magnitude;
-			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, hits, slideDist + _baseSkin, collisionMask, triggerInteraction);
+			int slideHits = Physics.CapsuleCastNonAlloc(p1, p2, _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), slide.normalized, _hits, slideDist + _baseSkin, _collisionMask, _triggerInteraction);
 			bool slideBlocked = false;
 			for (int i = 0; i < slideHits; i++)
 			{
-				if (hits[i].collider == null || hits[i].collider.gameObject == gameObject) continue;
-				if (((1 << hits[i].collider.gameObject.layer) & collisionMask.value) == 0) continue;
+				if (_hits[i].collider == null || _hits[i].collider.gameObject == gameObject) continue;
+				if (((1 << _hits[i].collider.gameObject.layer) & _collisionMask.value) == 0) continue;
 				slideBlocked = true;
-				Debug.Log("PlayerMovement: Slide blocked by " + hits[i].collider.name);
+				Debug.Log("PlayerMovement: Slide blocked by " + _hits[i].collider.name);
 				break;
 			}
 
 			if (!slideBlocked)
 			{
-				lastSlide = slide;
+				_lastSlide = slide;
 				_rb.MovePosition(_rb.position + slide);
 				Debug.Log("PlayerMovement: Sliding");
 				return;
@@ -218,7 +219,7 @@ public class PlayerMovement : MonoBehaviour
 
 	void OnDrawGizmos()
 	{
-		if (!drawGizmos) return;
+		if (!_drawGizmos) return;
 
 		// 기본 캡슐 (현재 transform 기준)
 		if (_capsule == null)
@@ -227,7 +228,7 @@ public class PlayerMovement : MonoBehaviour
 			if (_capsule == null) return;
 		}
 
-		Gizmos.color = gizmoCapsuleColor;
+		Gizmos.color = _gizmoCapsuleColor;
 		Vector3 wc = transform.TransformPoint(_capsule.center);
 		Vector3 up = transform.up;
 		float halfH = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
@@ -242,17 +243,17 @@ public class PlayerMovement : MonoBehaviour
 		Gizmos.DrawWireSphere(transform.position + _desiredMove, 0.01f);
 
 		// 캐스트 시각화
-		if (lastHitCount >= 0)
+		if (_lastHitCount >= 0)
 		{
-			Gizmos.color = gizmoCastColor;
-			Gizmos.DrawLine(lastP1, lastP1 + lastDesiredMove.normalized * (lastDesiredMove.magnitude + _baseSkin));
+			Gizmos.color = _gizmoCastColor;
+			Gizmos.DrawLine(_lastP1, _lastP1 + _lastDesiredMove.normalized * (_lastDesiredMove.magnitude + _baseSkin));
 
 			// 히트 포인트들
-			for (int i = 0; i < lastHitCount; i++)
+			for (int i = 0; i < _lastHitCount; i++)
 			{
-				var h = hits[i];
+				var h = _hits[i];
 				if (h.collider == null) continue;
-				Gizmos.color = (i == lastNearestIndex) ? gizmoHitColor : new Color(1f, 0.5f, 0.2f, 1f);
+				Gizmos.color = (i == _lastNearestIndex) ? _gizmoHitColor : new Color(1f, 0.5f, 0.2f, 1f);
 				Gizmos.DrawSphere(h.point, 0.05f);
 				// 노멀
 				Gizmos.color = Color.magenta;
@@ -260,10 +261,10 @@ public class PlayerMovement : MonoBehaviour
 			}
 
 			// 슬라이드 벡터
-			if (lastSlide.sqrMagnitude > 0f)
+			if (_lastSlide.sqrMagnitude > 0f)
 			{
-				Gizmos.color = gizmoSlideColor;
-				Gizmos.DrawLine(transform.position, transform.position + lastSlide);
+				Gizmos.color = _gizmoSlideColor;
+				Gizmos.DrawLine(transform.position, transform.position + _lastSlide);
 			}
 		}
 	}

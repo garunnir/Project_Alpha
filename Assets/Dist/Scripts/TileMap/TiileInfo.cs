@@ -34,7 +34,7 @@ namespace IsoTilemap
 
         private void Reset()
         {
-            gridPos = ConvertWorldToGrid(transform.position);
+            gridPos = TileHelper.ConvertWorldToGrid(transform.position);
             // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
 #if UNITY_EDITOR
             var source = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
@@ -43,17 +43,7 @@ namespace IsoTilemap
 #endif
         }
 
-        private Vector3Int ConvertWorldToGrid(Vector3 worldPos)
-        {
-            // worldPos에서 그리드 좌표로 변환합니다. 현재 셀 크기 1:1 가정을 사용합니다.
-            // 필요하면 cellSize를 파라미터로 추가하여 비율을 적용하세요.
-            Vector3 p = worldPos;
-            return new Vector3Int(
-                Mathf.RoundToInt(p.x-0.5f),
-                Mathf.RoundToInt(p.y),
-                Mathf.RoundToInt(p.z-0.5f)
-            );
-        }
+
 
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
         // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,

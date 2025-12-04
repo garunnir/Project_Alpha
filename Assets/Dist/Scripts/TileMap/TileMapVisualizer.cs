@@ -7,7 +7,8 @@ namespace IsoTilemap
         public TilePrefabDB prefabDB;
 
         [Header("Grid / World Settings")]
-        public float cellSize = 1f;                 // 그리드 셀 월드 크기
+        public float cellSize = 1f;                 
+        // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
@@ -31,11 +32,8 @@ namespace IsoTilemap
                 }
 
                 // Anchor 기준 월드 좌표
-                Vector3 worldPos = new Vector3(
-                    td.x * cellSize + 0.5f * cellSize,
-                    td.y * cellSize,
-                    td.z * cellSize + 0.5f * cellSize
-                );
+                Vector3Int gridPos = new Vector3Int(td.x, td.y, td.z);
+                Vector3 worldPos = TileHelper.ConvertGridToWorldPos(gridPos, cellSize);
 
                 var go = Instantiate(prefab, worldPos, Quaternion.identity, this.transform);
 
@@ -45,7 +43,7 @@ namespace IsoTilemap
                     info = go.AddComponent<TileInfo>();
                 }
 
-                info.gridPos = new Vector3Int(td.x, td.y, td.z);
+                info.gridPos = gridPos;
                 info.size = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ);
                 info.prefabId = td.prefabId;
                 info.tileType = (TileInfo.TileType)td.tileType;
