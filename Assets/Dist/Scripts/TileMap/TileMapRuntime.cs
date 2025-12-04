@@ -26,7 +26,33 @@ namespace IsoTilemap
         {
             return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
         }
+        private void DebugGizmos(HashSet<Vector3Int> visitedCells)
+        {
+
+            //이웃하지 않는 셀을 표시
+            var cellList = visitedCells.ToList();
+            var tryDirs = new Vector3Int[] { Vector3Int.right,Vector3Int.back, Vector3Int.left,Vector3Int.forward };
+            for(int i = 0; i < cellList.Count; i++)
+            {
+                var target=cellList[i];
+                foreach(var dir in tryDirs)
+                {
+                    var neighbor = new Vector3Int(target.x + dir.x, target.y, target.z + dir.z);
+                    if(!visitedCells.Contains(neighbor))
+                    {
+                        //다음블록과의 중심을 기준으로 표시선을 그린다
+                        Vector3 dirv= neighbor - target;
+                        dirv=new Vector3(-dirv.z,0,dirv.x).normalized;//수직 벡터
+                        Vector3 midPoint = new Vector3((target.x + neighbor.x) * 0.5f, target.y, (target.z + neighbor.z) * 0.5f);
+                        Vector3 startline= midPoint - dirv * 0.5f;
+                        Vector3 endline= midPoint + dirv * 0.5f;
+                        Debug.DrawLine(startline,endline, Color.red);
+                    }
+                }
+            }
+        }
       
+      //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
         public List<TileInfo> GetHideWallTiles(Vector3Int playerCellPos)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
@@ -136,6 +162,7 @@ namespace IsoTilemap
                     }
                 }
             }
+                        DebugGizmos(visited);
 
             return new List<TileInfo>(resultSet);
         }
