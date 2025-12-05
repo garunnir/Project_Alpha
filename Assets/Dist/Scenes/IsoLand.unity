@@ -5454,6 +5454,8 @@ GameObject:
   m_Component:
   - component: {fileID: 305037486}
   - component: {fileID: 305037487}
+  - component: {fileID: 305037489}
+  - component: {fileID: 305037488}
   m_Layer: 0
   m_Name: 3D test
   m_TagString: Untagged
@@ -5494,6 +5496,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::TileMapSerializer
   fileName: map01.json
   usePersistentPath: 1
+--- !u!114 &305037488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 305037485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f919f13c6cfecd640a1a32c941d23c46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapRuntime
+--- !u!114 &305037489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 305037485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa2fc7bccdba920468f098d485231a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
   prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
   cellSize: 1
 --- !u!1 &305086254
@@ -12615,6 +12641,7 @@ GameObject:
   - component: {fileID: 798652877}
   - component: {fileID: 798652879}
   - component: {fileID: 798652880}
+  - component: {fileID: 798652881}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -12681,6 +12708,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
   fileName: map01.json
   usePersistentPath: 1
+--- !u!114 &798652881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 798652876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa2fc7bccdba920468f098d485231a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
   prefabDB: {fileID: 0}
   cellSize: 1
 --- !u!4 &805241905 stripped
@@ -19032,6 +19071,7 @@ GameObject:
   - component: {fileID: 1383865917}
   - component: {fileID: 1383865918}
   - component: {fileID: 1383865919}
+  - component: {fileID: 1383865920}
   m_Layer: 0
   m_Name: PlayerCharacter
   m_TagString: Untagged
@@ -19069,20 +19109,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::PlayerMovement
   _moveSpeed: 5
   _sprintMultiplier: 2
-  acceleration: 2
-  refCam: {fileID: 64710673}
-  inertia: 0.9
-  climbAllowance: 0.3
+  _acceleration: 10
+  _refCam: {fileID: 0}
+  _inertia: 0.9
+  _climbAllowance: 0.3
   _baseSkin: 0.02
-  collisionMask:
+  _collisionMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  triggerInteraction: 1
-  drawGizmos: 1
-  gizmoCapsuleColor: {r: 0, g: 0.6, b: 1, a: 0.25}
-  gizmoCastColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  gizmoHitColor: {r: 1, g: 0, b: 0, a: 1}
-  gizmoSlideColor: {r: 0, g: 1, b: 0, a: 1}
+  _triggerInteraction: 1
+  _drawGizmos: 1
+  _gizmoCapsuleColor: {r: 0, g: 0.6, b: 1, a: 0.25}
+  _gizmoCastColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  _gizmoHitColor: {r: 1, g: 0, b: 0, a: 1}
+  _gizmoSlideColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!136 &1383865914
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -19278,6 +19318,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1519f1585a69634483a7553acc7e0f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterState
+--- !u!114 &1383865920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1383865911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f16376cf86bf4e149b7731e82b3ce72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterVisibilityBroadcaster
+  _tileMapRuntime: {fileID: 305037488}
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0
@@ -27111,6 +27164,7 @@ GameObject:
   - component: {fileID: 1766887523}
   - component: {fileID: 1766887522}
   - component: {fileID: 1766887521}
+  - component: {fileID: 1766887524}
   m_Layer: 0
   m_Name: Gridx2
   m_TagString: Untagged
@@ -27149,8 +27203,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
   fileName: map01.json
   usePersistentPath: 1
-  prefabDB: {fileID: 0}
-  cellSize: 1
 --- !u!114 &1766887522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27175,6 +27227,20 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 2
   m_CellSwizzle: 0
+--- !u!114 &1766887524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1766887519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa2fc7bccdba920468f098d485231a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
+  prefabDB: {fileID: 0}
+  cellSize: 1
 --- !u!1001 &1772656997
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33297,6 +33363,7 @@ GameObject:
   - component: {fileID: 2099596724}
   - component: {fileID: 2099596723}
   - component: {fileID: 2099596722}
+  - component: {fileID: 2099596725}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -33336,8 +33403,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
   fileName: map01.json
   usePersistentPath: 1
-  prefabDB: {fileID: 0}
-  cellSize: 1
 --- !u!114 &2099596723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33362,6 +33427,20 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 2
   m_CellSwizzle: 0
+--- !u!114 &2099596725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099596720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa2fc7bccdba920468f098d485231a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
+  prefabDB: {fileID: 0}
+  cellSize: 1
 --- !u!1001 &2100545828
 PrefabInstance:
   m_ObjectHideFlags: 0

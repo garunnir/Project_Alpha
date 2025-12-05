@@ -1,3 +1,6 @@
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
@@ -7,20 +10,20 @@ namespace IsoTilemap
         public TilePrefabDB prefabDB;
 
         [Header("Grid / World Settings")]
-        public float cellSize = 1f;                 
+        public float cellSize = 1f;
         // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+
+        public event Action<Dictionary<Vector3Int,List<TileInfo>>> TileMapBuilded;
+        void Awake()
         {
-
         }
-
 
         public void BuildVisualFromData(TileMapData data)
         {
             // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
             ClearExistingTiles();
-
+            Dictionary<Vector3Int,List<TileInfo>> runtimeInfos=new Dictionary<Vector3Int, List<TileInfo>>();
             foreach (var td in data.tiles)
             {
                 GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(td.prefabId) : null;
@@ -48,9 +51,18 @@ namespace IsoTilemap
                 info.prefabId = td.prefabId;
                 info.tileType = (TileInfo.TileType)td.tileType;
 
+                if (runtimeInfos.ContainsKey(gridPos))
+                {
+                    runtimeInfos[gridPos].Add(info);
+                }
+                else
+                {
+                    runtimeInfos.Add(gridPos, new List<TileInfo>());
+                }
                 // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
                 // e.g. info.ApplyGridToWorld(cellSize);
             }
+            TileMapBuilded?.Invoke(runtimeInfos);
         }
         void ClearExistingTiles()
         {

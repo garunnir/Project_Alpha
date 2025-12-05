@@ -5,11 +5,6 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-    //[Serializable]
-    //public class TileMapData
-    //{
-    //    public List<TileData> tiles = new List<TileData>();
-    //}
     // 한 타일(Anchor 기준)의 순수 데이터 구조
     [Serializable]
     public class TileData

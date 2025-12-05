@@ -1,3 +1,4 @@
+// Recompile at 2025-12-05 오후 1:39:49
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using PixelCrushers.DialogueSystem.SequencerCommands;

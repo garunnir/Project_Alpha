@@ -2,21 +2,23 @@ using UnityEngine;
 using System.IO;
 using System;
 using System.Collections.Generic;
+
 namespace IsoTilemap
 {
-    [RequireComponent(typeof(TileMapVisualizer))]
+    [RequireComponent(typeof(TileMapVisualizer),typeof(TileMapRuntime))]
     public class TileMapSerializer : MonoBehaviour
     {
         [Header("Where to save/read the map file")]
-        public string fileName = "map01.json";      // 파일 이름
-        public bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
+        [SerializeField] private string fileName = "map01.json";      // 파일 이름
+        [SerializeField] private bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
 
 
-        [SerializeField] private TileMapRuntime _tileMapData;
-        [SerializeField] private TileMapVisualizer _visualizer;
+        private TileMapRuntime _tileMapData;
+        private TileMapVisualizer _visualizer;
         void Awake()
         {
             _visualizer = GetComponent<TileMapVisualizer>();
+            _tileMapData = GetComponent<TileMapRuntime>();
         }
         string GetFullPath()
         {
@@ -30,10 +32,10 @@ namespace IsoTilemap
                 return Path.Combine(Application.dataPath, "..", fileName);
             }
         }
-
+#if UNITY_EDITOR
         // === Serialize: 씬 → JSON 파일 ===
-        [ContextMenu("Save Map To JSON")]
-        public void SaveMap()
+        [SerializeField,ContextMenu("Save Map To JSON")]
+        private void SaveMapInEditor()
         {
             // FindObjectsOfType(T) is obsolete in newer Unity versions.
             // Use FindObjectsByType and explicitly include inactive objects for the same behavior.
@@ -69,7 +71,41 @@ namespace IsoTilemap
 
             Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapData.tiles.Count})");
         }
+#endif
+        //런타임에 사용한다.
+        public void SaveMap()
+        {
+            var mapData = _tileMapData.GetRuntimeData();
+            TileMapData mapDatas = new TileMapData();
+            foreach (var item in mapData.tiles.Values)
+            {
+                foreach (var info in item)
+                {
+                    TileData td = new TileData
+                    {
+                        x = info.gridPos.x,
+                        y = info.gridPos.y,
+                        z = info.gridPos.z,
+                        sizeX = info.size.x,
+                        sizeY = info.size.y,
+                        sizeZ = info.size.z,
+                        prefabId = info.prefabId,
+                        tileType = (byte)info.tileType
+                    };
 
+                    mapDatas.tiles.Add(td);
+
+                }
+            }
+
+
+            string json = JsonUtility.ToJson(mapDatas, true);
+
+            string fullPath = GetFullPath();
+            File.WriteAllText(fullPath, json);
+
+            Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count})");
+        }
         // === Deserialize: JSON 파일 → 씬 ===
         [ContextMenu("Load Map From JSON")]
         public void LoadMap()
@@ -89,12 +125,15 @@ namespace IsoTilemap
                 Debug.LogWarning("Map data is null or invalid.");
                 return;
             }
-
             _visualizer.BuildVisualFromData(mapData);
-
         }
 
  
 
+    }
+    [Serializable]
+    public class TileMapData
+    {
+        public List<TileData> tiles = new List<TileData>();
     }
 }

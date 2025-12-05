@@ -9,14 +9,34 @@ namespace IsoTilemap
     //런타임에만 사용된다.
     //타일이 생성 삭제될때 반드시 갱신되어야 함
     // 맵 전체 데이터
+    [RequireComponent(typeof(TileMapVisualizer))]
     public class TileMapRuntime : MonoBehaviour
     {
         private TileMapRuntimeData _runtimeData;
-        public TileMapRuntimeData RuntimeData
+        private TileMapVisualizer _visualizer;
+        private void Awake()
         {
-            get { return _runtimeData; }
-            set { _runtimeData = value; }
+            _visualizer = GetComponent<TileMapVisualizer>();
         }
+        private void OnEnable()
+        {
+            _visualizer.TileMapBuilded += UpdateRuntimeData;
+        }
+        private void OnDisable()
+        {
+            _visualizer.TileMapBuilded -= UpdateRuntimeData;
+        }
+        public TileMapRuntimeData GetRuntimeData() { return _runtimeData; }
+        public void UpdateRuntimeData(TileMapRuntimeData runtimeData)
+        {
+            _runtimeData = runtimeData;
+        }
+        public void UpdateRuntimeData(Dictionary<Vector3Int,List<TileInfo>> keyValuePairs)
+        {
+            if(_runtimeData == null)_runtimeData = new TileMapRuntimeData();
+            _runtimeData.tiles = keyValuePairs;
+        }
+
         private HashSet<Vector3Int> _cachedCurrentRoomID;//이미 계산된 타일이면 건너뜀.
         private List<TileInfo> _cachedtiles;
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -54,9 +74,22 @@ namespace IsoTilemap
                 }
             }
         }
-      
-      //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
-        public List<TileInfo> GetHideWallTiles(Vector3Int playerCellPos)
+
+        private List<TileInfo> GetBelowWall(HashSet<Vector3Int> visitedGridPositions,HashSet<TileInfo> walls)
+        {
+            //방을 구성하는 벽들을 가져온다.
+            //하단의 벽을 구분해서 가져온다.
+            List<TileInfo> belowWalls = new List<TileInfo>();
+            foreach (var wall in walls)
+            {
+                //벽 자신 기준으로 위와 왼쪽의 공간이 방의 구성요소일경우 아래에 있는 벽으로 간주한다.
+                if (visitedGridPositions.Contains(wall.gridPos+Vector3Int.forward)|| visitedGridPositions.Contains(wall.gridPos + Vector3Int.left))
+                    belowWalls.Add(wall);
+            }
+            return belowWalls;
+        }
+        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
+        public List<TileInfo> GetWallsOfRoomTiles(Vector3Int playerCellPos)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
             // 2D(XZ) flood-fill을 수행하여 플레이어가 닿을 수 있는 빈 공간을 찾습니다.
@@ -66,8 +99,9 @@ namespace IsoTilemap
             if (_runtimeData == null || _runtimeData.tiles == null)
                 return new List<TileInfo>();
 
-            var occupancy = _runtimeData.tiles;
+            var alltiles = _runtimeData.tiles;
             Vector3Int start = playerCellPos;
+            //이미 계산된구역이면 재계산하지 않음. 이 효력은 다른 구역으로 이동하면 사라짐
             if (_cachedCurrentRoomID != null && _cachedCurrentRoomID.Contains(start))
             {
                 return _cachedtiles;
@@ -75,7 +109,7 @@ namespace IsoTilemap
             var resultSet = new HashSet<TileInfo>();
 
             // 시작 셀이 점유되어 있고, 그 점유물이 Wall/Obstacle이면 인접한 빈칸을 찾아 시작점으로 삼음
-            if (occupancy.TryGetValue(start, out var startList))
+            if (alltiles.TryGetValue(start, out var startList))
             {
                 bool hasBlocking = false;
                 foreach (var t in startList)
@@ -95,12 +129,12 @@ namespace IsoTilemap
                     {
                         var n = new Vector3Int(start.x + d.x, start.y, start.z + d.z);
                         //벽 타일이나 오브젝트 타일이 없는 빈칸을 찾음
-                        if (!occupancy[n].Any(x=>IsWallEligibleForHiding(x.tileType))) { start = n; found = true; break; }
+                        if (!alltiles[n].Any(x=>IsWallEligibleForHiding(x.tileType))) { start = n; found = true; break; }
                     }
                     if (!found)
                     {
-                        occupancy.TryGetValue(start+Vector3Int.right, out var rightlist);
-                        occupancy.TryGetValue(start+Vector3Int.back, out var backlist);
+                        alltiles.TryGetValue(start+Vector3Int.right, out var rightlist);
+                        alltiles.TryGetValue(start+Vector3Int.back, out var backlist);
                         var hidelist = new List<TileInfo>();
                         if(rightlist!=null)
                         {
@@ -149,7 +183,7 @@ namespace IsoTilemap
                     var nx = new Vector3Int(cur.x + d.x, playerCellPos.y, cur.z + d.z);
                     if (visited.Contains(nx)) continue;
 
-                    if (occupancy.TryGetValue(nx, out var list))
+                    if (alltiles.TryGetValue(nx, out var list))
                     {
                         // 점유된 셀: 포함된 타일들 중 Wall인 경우 결과에 추가
                         foreach (var t in list)
@@ -170,6 +204,7 @@ namespace IsoTilemap
             }
                         DebugGizmos(visited);
             List<TileInfo> result = new List<TileInfo>(resultSet);
+            result=GetBelowWall(visited, result.ToHashSet());
             _cachedCurrentRoomID = visited.ToHashSet();
             _cachedtiles = result;
             return result;
