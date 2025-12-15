@@ -46,7 +46,7 @@ public class PlayerInteractionController : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, _interactDistance, _interactableMask))
         {
             var interactable = hit.collider.GetComponentInParent<IInteractable>();
-    Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
+            if(Config.DebugMode.PlayerInteraction) Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
             if (interactable != null)
             {
                 // 타겟 변경 감지
@@ -74,7 +74,7 @@ public class PlayerInteractionController : MonoBehaviour
 
         _currentTarget = newTarget;
         _currentTarget.OnFocus(gameObject);
-        Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
+        if(Config.DebugMode.PlayerInteraction) Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
         // 여기서 UI에 displayName, hintText 띄우는 것도 가능
     }
 
@@ -82,7 +82,7 @@ public class PlayerInteractionController : MonoBehaviour
     {
         _currentTarget.OnUnfocus(gameObject);
         _currentTarget = null;
-        Debug.Log ("Unfocused");
+        if(Config.DebugMode.PlayerInteraction) Debug.Log ("Unfocused");
         // UI 숨기기 등
     }
     private void OnDrawGizmosSelected()

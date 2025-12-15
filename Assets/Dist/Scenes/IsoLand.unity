@@ -1443,7 +1443,6 @@ GameObject:
   m_Component:
   - component: {fileID: 64710674}
   - component: {fileID: 64710673}
-  - component: {fileID: 64710672}
   m_Layer: 0
   m_Name: IsoCam
   m_TagString: Untagged
@@ -1451,14 +1450,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &64710672
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64710671}
-  m_Enabled: 1
 --- !u!20 &64710673
 Camera:
   m_ObjectHideFlags: 0
@@ -1625,7 +1616,6 @@ GameObject:
   m_Component:
   - component: {fileID: 72996959}
   - component: {fileID: 72996958}
-  - component: {fileID: 72996957}
   m_Layer: 0
   m_Name: TopCam
   m_TagString: Untagged
@@ -1633,14 +1623,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &72996957
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 72996956}
-  m_Enabled: 1
 --- !u!20 &72996958
 Camera:
   m_ObjectHideFlags: 0
@@ -1907,6 +1889,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -3786,7 +3773,6 @@ GameObject:
   m_Component:
   - component: {fileID: 210656669}
   - component: {fileID: 210656668}
-  - component: {fileID: 210656667}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -3794,14 +3780,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!81 &210656667
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210656666}
-  m_Enabled: 1
 --- !u!20 &210656668
 Camera:
   m_ObjectHideFlags: 0
@@ -3868,6 +3846,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 30, y: 45, z: 0}
+--- !u!1 &217030177
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 217030178}
+  - component: {fileID: 217030179}
+  m_Layer: 0
+  m_Name: Tester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &217030178
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217030177}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -527.38965, y: -12.0345, z: -0.025}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1012867334}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &217030179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217030177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30a16de4bd81814e8bd847f951d905d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TestRunner
+  _serializer: {fileID: 305037487}
 --- !u!1001 &222328543
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4350,6 +4373,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -4915,6 +4943,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -9775,6 +9808,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: 2
       objectReference: {fileID: 0}
@@ -10293,12 +10331,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 641276771}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -526, y: -12.9763, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1012867334}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &648114892
 PrefabInstance:
@@ -10441,6 +10479,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -11041,6 +11084,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -11236,6 +11284,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -12642,6 +12695,7 @@ GameObject:
   - component: {fileID: 798652879}
   - component: {fileID: 798652880}
   - component: {fileID: 798652881}
+  - component: {fileID: 798652882}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -12722,6 +12776,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
   prefabDB: {fileID: 0}
   cellSize: 1
+--- !u!114 &798652882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 798652876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f919f13c6cfecd640a1a32c941d23c46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapRuntime
 --- !u!4 &805241905 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6202581747814701985, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
@@ -12775,6 +12841,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -13192,6 +13263,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -14345,7 +14421,6 @@ GameObject:
   m_Component:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
-  - component: {fileID: 963194226}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -14353,14 +14428,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &963194226
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
 --- !u!20 &963194227
 Camera:
   m_ObjectHideFlags: 0
@@ -14630,6 +14697,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: 2
       objectReference: {fileID: 0}
@@ -14738,6 +14810,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 641276774}
+  - {fileID: 217030178}
   - {fileID: 525082049}
   - {fileID: 1569324472}
   m_Father: {fileID: 0}
@@ -15623,6 +15697,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: -4
       objectReference: {fileID: 0}
@@ -15908,6 +15987,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -17249,6 +17333,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -19110,7 +19199,7 @@ MonoBehaviour:
   _moveSpeed: 5
   _sprintMultiplier: 2
   _acceleration: 10
-  _refCam: {fileID: 0}
+  _refCam: {fileID: 64710673}
   _inertia: 0.9
   _climbAllowance: 0.3
   _baseSkin: 0.02
@@ -20702,6 +20791,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -21561,6 +21655,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -23355,6 +23454,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -24798,6 +24902,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: -2
       objectReference: {fileID: 0}
@@ -25080,6 +25189,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -25171,6 +25285,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -25585,6 +25704,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -25686,6 +25810,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -27165,6 +27294,7 @@ GameObject:
   - component: {fileID: 1766887522}
   - component: {fileID: 1766887521}
   - component: {fileID: 1766887524}
+  - component: {fileID: 1766887525}
   m_Layer: 0
   m_Name: Gridx2
   m_TagString: Untagged
@@ -27241,6 +27371,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
   prefabDB: {fileID: 0}
   cellSize: 1
+--- !u!114 &1766887525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1766887519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f919f13c6cfecd640a1a32c941d23c46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapRuntime
 --- !u!1001 &1772656997
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -27347,6 +27489,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -27570,6 +27717,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -28052,6 +28204,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -30130,6 +30287,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: -4
       objectReference: {fileID: 0}
@@ -31032,6 +31194,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: -4
       objectReference: {fileID: 0}
@@ -31888,6 +32055,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
       propertyPath: gridPos.x
       value: 3
       objectReference: {fileID: 0}
@@ -32288,6 +32460,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: Wall/Wall_WN
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
@@ -32890,6 +33067,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -33364,6 +33546,7 @@ GameObject:
   - component: {fileID: 2099596723}
   - component: {fileID: 2099596722}
   - component: {fileID: 2099596725}
+  - component: {fileID: 2099596726}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -33441,6 +33624,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapVisualizer
   prefabDB: {fileID: 0}
   cellSize: 1
+--- !u!114 &2099596726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099596720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f919f13c6cfecd640a1a32c941d23c46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapRuntime
 --- !u!1001 &2100545828
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33543,6 +33738,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1827188271}
     m_Modifications:
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
       propertyPath: gridPos.x
@@ -34226,6 +34426,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
         type: 3}
+      propertyPath: tileType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5283093321131037518, guid: 103991ee748417d4b82f89a7a47c12a7,
+        type: 3}
       propertyPath: gridPos.x
       value: -4
       objectReference: {fileID: 0}
@@ -34521,5 +34726,4 @@ SceneRoots:
   - {fileID: 1313974761}
   - {fileID: 1843926586}
   - {fileID: 715630607}
-  - {fileID: 641276774}
   - {fileID: 1012867334}

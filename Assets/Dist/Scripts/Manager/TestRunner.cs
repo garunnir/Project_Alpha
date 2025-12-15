@@ -1,16 +1,12 @@
+using IsoTilemap;
 using UnityEngine;
 
 public class TestRunner : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [SerializeField] TileMapSerializer _serializer;
     void Start()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        _serializer.LoadMap();
+        Debug.Log("TestRunner started.");
     }
 }

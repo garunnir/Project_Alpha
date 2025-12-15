@@ -77,7 +77,11 @@ public class PlayerInputDirectionAnim : MonoBehaviour
                 
             }
         }
-        if (!string.IsNullOrEmpty(paramMoving)) animator.SetBool(paramMoving, moving);
+        if (!string.IsNullOrEmpty(paramMoving))
+        {
+            int MovingHash = Animator.StringToHash(paramMoving);
+            animator.SetBool(MovingHash, moving);
+        } 
     }
 
     void UpdateSpriteSwap(Vector2 input, bool moving)

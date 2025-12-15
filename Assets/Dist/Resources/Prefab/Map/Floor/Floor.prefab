@@ -13,6 +13,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Floor
       objectReference: {fileID: 0}
+    - target: {fileID: 2907014591947330200, guid: f3d540f87bda6194d9218a19dd4205d8,
+        type: 3}
+      propertyPath: tileType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3120816106238495781, guid: f3d540f87bda6194d9218a19dd4205d8,
         type: 3}
       propertyPath: m_LocalPosition.x

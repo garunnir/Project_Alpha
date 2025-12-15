@@ -189,7 +189,7 @@ public class PlayerMovement : MonoBehaviour
 				if (_hits[i].collider == null || _hits[i].collider.gameObject == gameObject) continue;
 				if (((1 << _hits[i].collider.gameObject.layer) & _collisionMask.value) == 0) continue;
 				slideBlocked = true;
-				Debug.Log("PlayerMovement: Slide blocked by " + _hits[i].collider.name);
+				if(Config.DebugMode.PlayerMovement)	Debug.Log("PlayerMovement: Slide blocked by " + _hits[i].collider.name);
 				break;
 			}
 
@@ -197,7 +197,7 @@ public class PlayerMovement : MonoBehaviour
 			{
 				_lastSlide = slide;
 				_rb.MovePosition(_rb.position + slide);
-				Debug.Log("PlayerMovement: Sliding");
+				if(Config.DebugMode.PlayerMovement)	Debug.Log("PlayerMovement: Sliding");
 				return;
 			}
 		}
@@ -213,7 +213,7 @@ public class PlayerMovement : MonoBehaviour
 		{
 			// 거의 붙어있으면 정지
 			_rb.MovePosition(_rb.position);
-			Debug.LogError("PlayerMovement: Stuck!");
+			if(Config.DebugMode.PlayerMovement)	Debug.LogError("PlayerMovement: Stuck!");
 		}
 	}
 

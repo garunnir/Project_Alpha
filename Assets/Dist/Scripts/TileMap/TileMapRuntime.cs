@@ -12,6 +12,8 @@ namespace IsoTilemap
     [RequireComponent(typeof(TileMapVisualizer))]
     public class TileMapRuntime : MonoBehaviour
     {
+        
+        public TileMapRuntimeData GetRuntimeData() { return _runtimeData; }
         private TileMapRuntimeData _runtimeData;
         private TileMapVisualizer _visualizer;
         private void Awake()
@@ -20,13 +22,13 @@ namespace IsoTilemap
         }
         private void OnEnable()
         {
+            //타일맵이 빌드될때마다 데이터 업데이트를 수행한다.
             _visualizer.TileMapBuilded += UpdateRuntimeData;
         }
         private void OnDisable()
         {
             _visualizer.TileMapBuilded -= UpdateRuntimeData;
         }
-        public TileMapRuntimeData GetRuntimeData() { return _runtimeData; }
         public void UpdateRuntimeData(TileMapRuntimeData runtimeData)
         {
             _runtimeData = runtimeData;
@@ -49,7 +51,7 @@ namespace IsoTilemap
             return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
         }
         //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
-        private void DebugGizmos(HashSet<Vector3Int> visitedCells)
+        private void DebugGizmos(HashSet<Vector3Int> visitedCells,Color color=default)
         {
 
             //이웃하지 않는 셀을 표시
@@ -69,7 +71,7 @@ namespace IsoTilemap
                         Vector3 midPoint = new Vector3((target.x + neighbor.x) * 0.5f, target.y, (target.z + neighbor.z) * 0.5f);
                         Vector3 startline= midPoint - dirv * 0.5f;
                         Vector3 endline= midPoint + dirv * 0.5f;
-                        Debug.DrawLine(startline,endline, Color.red);
+                        Debug.DrawLine(startline,endline, color);
                     }
                 }
             }
@@ -165,6 +167,8 @@ namespace IsoTilemap
             // BFS flood-fill (XZ plane only) - Y층은 playerCellPos.y로 고정
             var visited = new HashSet<Vector3Int>();
             var q = new Queue<Vector3Int>();
+            var floorChecked = new HashSet<Vector3Int>();
+            var wallChecked = new HashSet<Vector3Int>();
             visited.Add(start);
             q.Enqueue(start);
 
@@ -181,7 +185,10 @@ namespace IsoTilemap
                 foreach (var d in neighbors)
                 {
                     var nx = new Vector3Int(cur.x + d.x, playerCellPos.y, cur.z + d.z);
-                    if (visited.Contains(nx)) continue;
+                    // 'Add'로 방문 체크를 한 번에 처리
+                    // (이미 방문했으면 false → continue)
+                    if (!visited.Add(nx))
+                        continue;
 
                     if (alltiles.TryGetValue(nx, out var list))
                     {
@@ -190,23 +197,33 @@ namespace IsoTilemap
                         {
                             if (t == null) continue;
                             if (IsWallEligibleForHiding(t.tileType))
+                            {
                                 resultSet.Add(t);
+                                wallChecked.Add(nx);
+                            }
+                            else if(t.tileType == TileInfo.TileType.Floor)
+                            {
+                                //바닥 타일이면 확장
+                                q.Enqueue(nx);
+                                floorChecked.Add(nx);
+                            }
+                            else
+                            {
+                                Debug.LogError(t.tileType+"/"+t.gridPos);
+                                //그 외 타일은 무시
+                            }
                         }
-                        // 이 쪽은 통과 불가 (벽/오브젝트가 점유)
-                    }
-                    else
-                    {
-                        // 비어있으면 확장
-                        visited.Add(nx);
-                        q.Enqueue(nx);
                     }
                 }
             }
-                        DebugGizmos(visited);
+            DebugGizmos(floorChecked,Color.green);
+            DebugGizmos(wallChecked,Color.red);
             List<TileInfo> result = new List<TileInfo>(resultSet);
+            if(Config.DebugMode.FloorAlgorithm) Debug.Log("Hideable WallDetect"+result.Count+" tiles"+visited.Count);
             result=GetBelowWall(visited, result.ToHashSet());
-            _cachedCurrentRoomID = visited.ToHashSet();
-            _cachedtiles = result;
+            //_cachedCurrentRoomID = visited.ToHashSet();
+            //_cachedtiles = result; 
+
             return result;
         }
 
