@@ -7,7 +7,7 @@ namespace IsoTilemap
 {
     // 한 타일(Anchor 기준)의 순수 데이터 구조
     [Serializable]
-    public class TileData
+    public class TileSaveData
     {
         public int x;
         public int y;
@@ -22,7 +22,7 @@ namespace IsoTilemap
     }
     public class TileMapRuntimeData
     {
-        public Dictionary<Vector3Int, List<TileInfo>> tiles = new Dictionary<Vector3Int, List<TileInfo>>();
+        public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
     }
     public static class TileHelper
     {
@@ -37,12 +37,16 @@ namespace IsoTilemap
                 Mathf.RoundToInt(p.z - 0.5f)
             );
         }
-        public static Vector3 ConvertGridToWorldPos(Vector3Int worldPos, float cellSize = 1f)
+        public static Vector3 ConvertGridToWorldPos(Vector3Int gridPos, float cellSize = 1f)
+        {
+            return ConvertGridToWorldPos((Vector3)gridPos, cellSize);
+        }
+        public static Vector3 ConvertGridToWorldPos(Vector3 worldPos, float cellSize = 1f)
         {
             Vector3 wPos = new Vector3(
             worldPos.x * cellSize + 0.5f * cellSize,
-            worldPos.y * cellSize,
-    worldPos.z * cellSize + 0.5f * cellSize
+            worldPos.y * cellSize + 0.5f * cellSize,
+                worldPos.z * cellSize + 0.5f * cellSize
 );
             return wPos;
         }

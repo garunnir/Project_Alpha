@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
@@ -80,6 +80,8 @@ public class PlayerInputDirectionAnim : MonoBehaviour
         if (!string.IsNullOrEmpty(paramMoving))
         {
             int MovingHash = Animator.StringToHash(paramMoving);
+
+
             animator.SetBool(MovingHash, moving);
         } 
     }

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
+    // 타일맵 시각화 담당 클래스
+    [RequireComponent(typeof(TileMapRuntime))]
     public class TileMapVisualizer : MonoBehaviour
     {
         [Header("Prefab DB for loading")]
@@ -11,19 +13,22 @@ namespace IsoTilemap
 
         [Header("Grid / World Settings")]
         public float cellSize = 1f;
+
+        private TileMapRuntime _tileMapRuntime;
         // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
 
-        public event Action<Dictionary<Vector3Int,List<TileInfo>>> TileMapBuilded;
+        public event Action<Dictionary<Vector3Int, List<TileData>>> TileMapBuilded;
         void Awake()
         {
+            _tileMapRuntime = GetComponent<TileMapRuntime>();
         }
 
         public void BuildVisualFromData(TileMapData data)
         {
             // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
             ClearExistingTiles();
-            Dictionary<Vector3Int,List<TileInfo>> runtimeInfos=new Dictionary<Vector3Int, List<TileInfo>>();
+            Dictionary<Vector3Int, List<TileData>> runtimeInfos = new Dictionary<Vector3Int, List<TileData>>();
             foreach (var td in data.tiles)
             {
                 GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(td.prefabId) : null;
@@ -53,11 +58,11 @@ namespace IsoTilemap
 
                 if (runtimeInfos.ContainsKey(gridPos))
                 {
-                    runtimeInfos[gridPos].Add(info);
+                    runtimeInfos[gridPos].Add(new TileData { tileInfo = info });
                 }
                 else
                 {
-                    runtimeInfos.Add(gridPos, new List<TileInfo>());
+                    runtimeInfos.Add(gridPos, new List<TileData>() { new TileData { tileInfo = info } });
                 }
                 // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
                 // e.g. info.ApplyGridToWorld(cellSize);
@@ -78,12 +83,43 @@ namespace IsoTilemap
                     DestroyImmediate(info.gameObject);
                 }
             }
-
         }
-            void OnCellChanged(Vector3Int cellPos)
-    {
-        // 해당 셀만 갱신
+
+        Dictionary<Vector3Int, TileState> states = new();
+        HashSet<Vector3Int> dirty = new();
+
+        //public ref TileState GetOrCreate(Vector3Int cell) { /* ... */ }
+
+        public void MarkDirty(Vector3Int cell) => dirty.Add(cell);
+
+        public void FlushDirty(TileViewUpdater view)
+        {
+            foreach (var cell in dirty)
+                RefreshCell(cell, states[cell]); // 그 셀만 갱신
+            dirty.Clear();
+        }
+        void Update()
+        {
+            
+        }
+        private void RefreshCell(Vector3Int cellPos, TileState state)
+        {
+            // 해당 셀만 갱신
+        }
+        public void UpdateCell(Vector3Int cellPos, TileState state)
+        {
+            states[cellPos] = state;
+            MarkDirty(cellPos);
+        }
     }
+    public class TileData
+    {
+        public TileInfo tileInfo;
+        public TileState state;
+    }
+    public class TileState
+    {
+        public bool isHiddenCharacter = false;
     }
 
 }

@@ -1,4 +1,5 @@
 using IsoTilemap;
+using System.Collections.Generic;
 using UnityEngine;
 [RequireComponent(typeof(CharacterState))]
 public class CharacterVisibilityBroadcaster : MonoBehaviour
@@ -28,6 +29,10 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     //연결해서 캐릭터의 그리드포지션이 바뀔때마다 런타임 타일맵에 벽 감춤 명령을 내림.
     private void BroadcastWallHide(Vector3Int vector3Int)
     {
-        _tileMapRuntime.GetWallsOfRoomTiles(vector3Int);
+        List<TileData> walls = _tileMapRuntime.GetOccludingWalls(vector3Int);
+        foreach (TileData wall in walls)
+        {
+            wall.state.isHiddenCharacter = true;
+        }
     }
 }

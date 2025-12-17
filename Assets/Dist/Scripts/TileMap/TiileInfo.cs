@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 // 씬에 실제로 붙어있는 타일 오브젝트용
 // Anchor + Size + PrefabId 기반
+// 저장용 컴포넌트 런타임 기능 넣으면 안됨.
 namespace IsoTilemap
 {
     public class TileInfo : MonoBehaviour
@@ -42,9 +44,6 @@ namespace IsoTilemap
             prefabId = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
 #endif
         }
-
-
-
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
         // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
         // - 높이(size.y)에 맞춘 와이어 박스를 함께 표시합니다.

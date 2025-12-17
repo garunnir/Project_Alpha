@@ -49,7 +49,7 @@ namespace IsoTilemap
                 // 혹시 월드에서 그리드 역산해야 하면:
                 // info.CaptureGridFromWorld(cellSize);
 
-                TileData td = new TileData
+                TileSaveData td = new TileSaveData
                 {
                     x = info.gridPos.x,
                     y = info.gridPos.y,
@@ -79,22 +79,21 @@ namespace IsoTilemap
             TileMapData mapDatas = new TileMapData();
             foreach (var item in mapData.tiles.Values)
             {
-                foreach (var info in item)
+                foreach (var data in item)
                 {
-                    TileData td = new TileData
+                    TileSaveData td = new TileSaveData
                     {
-                        x = info.gridPos.x,
-                        y = info.gridPos.y,
-                        z = info.gridPos.z,
-                        sizeX = info.size.x,
-                        sizeY = info.size.y,
-                        sizeZ = info.size.z,
-                        prefabId = info.prefabId,
-                        tileType = (byte)info.tileType
+                        x = data.tileInfo.gridPos.x,
+                        y = data.tileInfo.gridPos.y,
+                        z = data.tileInfo.gridPos.z,
+                        sizeX = data.tileInfo.size.x,
+                        sizeY = data.tileInfo.size.y,
+                        sizeZ = data.tileInfo.size.z,
+                        prefabId = data.tileInfo.prefabId,
+                        tileType = (byte)data.tileInfo.tileType,
                     };
 
                     mapDatas.tiles.Add(td);
-
                 }
             }
 
@@ -134,6 +133,6 @@ namespace IsoTilemap
     [Serializable]
     public class TileMapData
     {
-        public List<TileData> tiles = new List<TileData>();
+        public List<TileSaveData> tiles = new List<TileSaveData>();
     }
 }

@@ -19,6 +19,8 @@ public class CharacterState : MonoBehaviour
         {
             GridPos = gridPos;
             GridPosChanged?.Invoke(gridPos);
+            if(Config.DebugMode.PlayerPosUpdate)
+                Debug.Log($"Player GridPos Changed: {GridPos}");
         }
     }
 }
