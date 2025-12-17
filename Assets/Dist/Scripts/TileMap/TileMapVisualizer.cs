@@ -15,6 +15,7 @@ namespace IsoTilemap
         public float cellSize = 1f;
 
         private TileMapRuntime _tileMapRuntime;
+        private List<string> _mapPrefabID = new List<string>();
         // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
 
@@ -24,50 +25,55 @@ namespace IsoTilemap
             _tileMapRuntime = GetComponent<TileMapRuntime>();
         }
 
-        public void BuildVisualFromData(TileMapData data)
+        public void BuildVisualFromData(TileMapRuntimeData data)
         {
             // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
             ClearExistingTiles();
-            Dictionary<Vector3Int, List<TileData>> runtimeInfos = new Dictionary<Vector3Int, List<TileData>>();
             foreach (var td in data.tiles)
             {
-                GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(td.prefabId) : null;
-
-                if (prefab == null)
+                Vector3Int key = td.Key;
+                List<TileData> tileist = td.Value;
+                foreach(var ti in tileist)
                 {
-                    Debug.LogWarning($"No prefab for id: {td.prefabId}");
-                    continue;
+                    GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(ti.tileDefId) : null;
+
+                    if (prefab == null)
+                    {
+                        Debug.LogWarning($"No prefab for id: {ti.tileDefId}");
+                        continue;
+                    }
+
+                    // Anchor 기준 월드 좌표
+                    Vector3Int gridPos = key;
+                    Vector3 worldPos = TileHelper.ConvertGridToWorldPos(gridPos, cellSize);
+
+                    var go = Instantiate(prefab, worldPos, Quaternion.identity, this.transform);
+
+                    var info = go.GetComponent<TileInfo>();
+                    if (info == null)
+                    {
+                        info = go.AddComponent<TileInfo>();
+                    }
+
+                    info.gridPos = gridPos;
+                    info.size = key;
+                    info.prefabId = ti.tileDefId;
+                    info.tileType = (TileInfo.TileType)td.tileType;
+
+                    if (runtimeInfos.ContainsKey(gridPos))
+                    {
+                        runtimeInfos[gridPos].Add(new TileData { tileInfo = info });
+                    }
+                    else
+                    {
+                        runtimeInfos.Add(gridPos, new List<TileData>() { new TileData { tileInfo = info } });
+                    }
+                    // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
+                    // e.g. info.ApplyGridToWorld(cellSize);
                 }
 
-                // Anchor 기준 월드 좌표
-                Vector3Int gridPos = new Vector3Int(td.x, td.y, td.z);
-                Vector3 worldPos = TileHelper.ConvertGridToWorldPos(gridPos, cellSize);
-
-                var go = Instantiate(prefab, worldPos, Quaternion.identity, this.transform);
-
-                var info = go.GetComponent<TileInfo>();
-                if (info == null)
-                {
-                    info = go.AddComponent<TileInfo>();
-                }
-
-                info.gridPos = gridPos;
-                info.size = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ);
-                info.prefabId = td.prefabId;
-                info.tileType = (TileInfo.TileType)td.tileType;
-
-                if (runtimeInfos.ContainsKey(gridPos))
-                {
-                    runtimeInfos[gridPos].Add(new TileData { tileInfo = info });
-                }
-                else
-                {
-                    runtimeInfos.Add(gridPos, new List<TileData>() { new TileData { tileInfo = info } });
-                }
-                // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
-                // e.g. info.ApplyGridToWorld(cellSize);
             }
-            TileMapBuilded?.Invoke(runtimeInfos);
+            TileMapBuilded?.Invoke(data.tiles);
         }
         void ClearExistingTiles()
         {
@@ -85,14 +91,13 @@ namespace IsoTilemap
             }
         }
 
-        Dictionary<Vector3Int, TileState> states = new();
         HashSet<Vector3Int> dirty = new();
 
         //public ref TileState GetOrCreate(Vector3Int cell) { /* ... */ }
 
         public void MarkDirty(Vector3Int cell) => dirty.Add(cell);
 
-        public void FlushDirty(TileViewUpdater view)
+        public void FlushDirty()
         {
             foreach (var cell in dirty)
                 RefreshCell(cell, states[cell]); // 그 셀만 갱신
@@ -100,13 +105,17 @@ namespace IsoTilemap
         }
         void Update()
         {
-            
+            FlushDirty();
         }
-        private void RefreshCell(Vector3Int cellPos, TileState state)
+        private void RefreshCell(Vector3Int cellPos, TileData state)
         {
             // 해당 셀만 갱신
         }
-        public void UpdateCell(Vector3Int cellPos, TileState state)
+        private void RefreshObj(TileData obj)
+        {
+
+        }
+        public void UpdateCell(Vector3Int cellPos, TileData state)
         {
             states[cellPos] = state;
             MarkDirty(cellPos);
@@ -114,6 +123,7 @@ namespace IsoTilemap
     }
     public class TileData
     {
+        public int tileDefId;
         public TileInfo tileInfo;
         public TileState state;
     }

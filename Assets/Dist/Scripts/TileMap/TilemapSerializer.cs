@@ -41,7 +41,7 @@ namespace IsoTilemap
             // Use FindObjectsByType and explicitly include inactive objects for the same behavior.
             var tileInfos = UnityEngine.Object.FindObjectsByType<TileInfo>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
 
-            TileMapData mapData = new TileMapData();
+            TileSaveJsonData mapData = new TileSaveJsonData();
             mapData.tiles.Clear();
 
             foreach (var info in tileInfos)
@@ -76,7 +76,7 @@ namespace IsoTilemap
         public void SaveMap()
         {
             var mapData = _tileMapData.GetRuntimeData();
-            TileMapData mapDatas = new TileMapData();
+            TileSaveJsonData mapDatas = new TileSaveJsonData();
             foreach (var item in mapData.tiles.Values)
             {
                 foreach (var data in item)
@@ -117,7 +117,7 @@ namespace IsoTilemap
             }
 
             string json = File.ReadAllText(fullPath);
-            TileMapData mapData = JsonUtility.FromJson<TileMapData>(json);
+            TileSaveJsonData mapData = JsonUtility.FromJson<TileSaveJsonData>(json);
 
             if (mapData == null || mapData.tiles == null)
             {
@@ -127,12 +127,13 @@ namespace IsoTilemap
             _visualizer.BuildVisualFromData(mapData);
         }
 
- 
+        public void AssemblyTileData(TileSaveJsonData tileMapData)
 
+        [Serializable]
+        public class TileSaveJsonData
+        {
+            public List<TileSaveData> tiles = new List<TileSaveData>();
+        }
     }
-    [Serializable]
-    public class TileMapData
-    {
-        public List<TileSaveData> tiles = new List<TileSaveData>();
-    }
+
 }
