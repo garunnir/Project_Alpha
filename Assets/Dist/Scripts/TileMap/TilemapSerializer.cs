@@ -76,27 +76,8 @@ namespace IsoTilemap
         public void SaveMap()
         {
             var mapData = _tileMapData.GetRuntimeData();
-            TileSaveJsonData mapDatas = new TileSaveJsonData();
-            foreach (var item in mapData.tiles.Values)
-            {
-                foreach (var data in item)
-                {
-                    TileSaveData td = new TileSaveData
-                    {
-                        x = data.tileInfo.gridPos.x,
-                        y = data.tileInfo.gridPos.y,
-                        z = data.tileInfo.gridPos.z,
-                        sizeX = data.tileInfo.size.x,
-                        sizeY = data.tileInfo.size.y,
-                        sizeZ = data.tileInfo.size.z,
-                        prefabId = data.tileInfo.prefabId,
-                        tileType = (byte)data.tileInfo.tileType,
-                    };
 
-                    mapDatas.tiles.Add(td);
-                }
-            }
-
+            TileSaveJsonData mapDatas = AssemblyTileSaveData(mapData);
 
             string json = JsonUtility.ToJson(mapDatas, true);
 
@@ -124,10 +105,61 @@ namespace IsoTilemap
                 Debug.LogWarning("Map data is null or invalid.");
                 return;
             }
-            _visualizer.BuildVisualFromData(mapData);
+            _visualizer.BuildVisualFromData(AssemblyTileData(mapData));
         }
+        //저장용 타일데이터를 인게임에서 사용하는 형태로 변환한다.
+        public TileMapRuntimeData AssemblyTileData(TileSaveJsonData tileMapData)
+        {
+            TileMapRuntimeData mapRuntimeData=new TileMapRuntimeData();
+            
+            foreach (var td in tileMapData.tiles)
+            {
+                Vector3Int v = new Vector3Int(td.x, td.y, td.z);
 
-        public void AssemblyTileData(TileSaveJsonData tileMapData)
+                if (mapRuntimeData.tiles.ContainsKey(v))
+                {
+                    mapRuntimeData.tiles[v].Add(new TileData
+                    {
+                        state = new TileState { },
+                        identity = new TileIdentity
+                        {
+                            PrefabId = td.prefabId,
+                            tileType = td.tileType,
+                            GridPos = new Vector3Int(td.x, td.y, td.z),
+                            sizeUnit = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ),
+
+                        }
+                    });
+                }
+            }
+            //맵아이디 어차피 참고해야할 부분인데 굳이 따로 바인드해가면서 쓸 일인가?
+            //내가 방황하는 이유는 이 타일데이터라는 항목의 목적이 명확하지 않기 때문인 듯.
+            //타일데이터의 목표... 그것은 데이터적으로 숨겨야 할 벽에 접근하기 위함.
+            return mapRuntimeData;
+        }
+        public TileSaveJsonData AssemblyTileSaveData(TileMapRuntimeData tileMapRuntimeData)
+        {
+            TileSaveJsonData tile=new TileSaveJsonData();
+
+            foreach(var td in tileMapRuntimeData.tiles)
+            {
+                foreach (var ti in td.Value)
+                {
+                    tile.tiles.Add(new TileSaveData
+                    {
+                        sizeX = ti.identity.sizeUnit.x,
+                        sizeY = ti.identity.sizeUnit.y,
+                        sizeZ = ti.identity.sizeUnit.z,
+                        x=ti.identity.GridPos.x,
+                        y=ti.identity.GridPos.y,
+                        z=ti.identity.GridPos.z,
+                        tileType=ti.identity.tileType,
+                        prefabId=ti.identity.PrefabId,
+                    });
+                }
+            }
+            return tile;
+        }
 
         [Serializable]
         public class TileSaveJsonData
@@ -135,5 +167,4 @@ namespace IsoTilemap
             public List<TileSaveData> tiles = new List<TileSaveData>();
         }
     }
-
 }

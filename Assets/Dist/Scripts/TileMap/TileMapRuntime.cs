@@ -91,7 +91,7 @@ namespace IsoTilemap
             foreach (var wall in walls)
             {
                 //벽 자신 기준으로 위와 왼쪽의 공간이 방의 구성요소일경우 아래에 있는 벽으로 간주한다.
-                if (visitedGridPositions.Contains(wall.tileInfo.gridPos + Vector3Int.forward) || visitedGridPositions.Contains(wall.tileInfo.gridPos + Vector3Int.left))
+                if (visitedGridPositions.Contains(wall.identity.GridPos+ Vector3Int.forward) || visitedGridPositions.Contains(wall.identity.GridPos+ Vector3Int.left))
                     belowWalls.Add(wall);
             }
             return belowWalls;
@@ -123,7 +123,7 @@ namespace IsoTilemap
                 foreach (var t in startList)
                 {
                     if (t == null) continue;
-                    if (IsWallEligibleForHiding(t.tileInfo.tileType))
+                    if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                     { hasBlocking = true; break; }
                 }
 
@@ -137,7 +137,7 @@ namespace IsoTilemap
                     {
                         var n = new Vector3Int(start.x + d.x, start.y, start.z + d.z);
                         //벽 타일이나 오브젝트 타일이 없는 빈칸을 찾음
-                        if (!alltiles[n].Any(x => IsWallEligibleForHiding(x.tileInfo.tileType))) { start = n; found = true; break; }
+                        if (!alltiles[n].Any(x => IsWallEligibleForHiding((TileInfo.TileType)x.identity.tileType))) { start = n; found = true; break; }
                     }
                     if (!found)
                     {
@@ -148,7 +148,7 @@ namespace IsoTilemap
                         {
                             foreach (var t in rightlist)
                             {
-                                if (IsWallEligibleForHiding(t.tileInfo.tileType))
+                                if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                                 {
                                     hidelist.Add(t);
                                 }
@@ -158,7 +158,7 @@ namespace IsoTilemap
                         {
                             foreach (var t in backlist)
                             {
-                                if (IsWallEligibleForHiding(t.tileInfo.tileType))
+                                if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                                 {
                                     hidelist.Add(t);
                                 }
@@ -218,7 +218,7 @@ namespace IsoTilemap
                         foreach (var t in list)
                         {
                             if (t == null) continue;
-                            if (IsWallEligibleForHiding(t.tileInfo.tileType))
+                            if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                             {
                                 resultSet.Add(t);
                                 wallChecked.Add(nx);
@@ -226,7 +226,7 @@ namespace IsoTilemap
                                 isFloor = false;
                                 break;
                             }
-                            else if (t.tileInfo.tileType == TileInfo.TileType.Floor)
+                            else if ((TileInfo.TileType)t.identity.tileType == TileInfo.TileType.Floor)
                             {
                                 //바닥 타일이면 확장
                                 isFloor = true;
@@ -257,7 +257,7 @@ namespace IsoTilemap
                     DebugGizmos(floorChecked, 0, Color.green);
                     DebugGizmos(wallChecked, 0.1f, Color.red);
                     DebugGizmos(new() { start }, 0, Color.skyBlue);
-                    DebugGizmos(result.Select(t => t.tileInfo.gridPos).ToHashSet(), 0.01f, Color.skyBlue);
+                    DebugGizmos(result.Select(t => t.identity.GridPos).ToHashSet(), 0.01f, Color.skyBlue);
 };
                 StateRunner.Instance.ChangeState(new DebugTileRunner(action));
             }

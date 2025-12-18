@@ -40,10 +40,10 @@ namespace IsoTilemap
             if (_cache == null) BuildCache();
             return _cache != null && _cache.TryGetValue(id, out var prefab) ? prefab : null;
         }
-        public GameObject GetPrefab(int id)
-        {
-            return entries[id].prefab;
-        }
+        //public GameObject GetPrefab(int id)
+        //{
+        //    return entries[id].prefab;
+        //}
 #if UNITY_EDITOR
         void OnValidate()
         {

@@ -15,7 +15,7 @@ namespace IsoTilemap
         public float cellSize = 1f;
 
         private TileMapRuntime _tileMapRuntime;
-        private List<string> _mapPrefabID = new List<string>();
+        private Dictionary<Guid,TileInfo> _tileDefInstance = new Dictionary<Guid,TileInfo>();
         // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
 
@@ -29,17 +29,18 @@ namespace IsoTilemap
         {
             // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
             ClearExistingTiles();
+            Guid tileId = Guid.NewGuid();
             foreach (var td in data.tiles)
             {
                 Vector3Int key = td.Key;
                 List<TileData> tileist = td.Value;
                 foreach(var ti in tileist)
                 {
-                    GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(ti.tileDefId) : null;
+                    GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(ti.identity.PrefabId) : null;
 
                     if (prefab == null)
                     {
-                        Debug.LogWarning($"No prefab for id: {ti.tileDefId}");
+                        Debug.LogWarning($"No prefab for id: {ti.identity.PrefabId}");
                         continue;
                     }
 
@@ -54,20 +55,12 @@ namespace IsoTilemap
                     {
                         info = go.AddComponent<TileInfo>();
                     }
+                    _tileDefInstance.Add(ti.tileDefId, info);
+                    info.gridPos = ti.identity.GridPos;
+                    info.size = ti.identity.sizeUnit;
+                    info.prefabId = ti.identity.PrefabId;
+                    info.tileType = (TileInfo.TileType)ti.identity.tileType;
 
-                    info.gridPos = gridPos;
-                    info.size = key;
-                    info.prefabId = ti.tileDefId;
-                    info.tileType = (TileInfo.TileType)td.tileType;
-
-                    if (runtimeInfos.ContainsKey(gridPos))
-                    {
-                        runtimeInfos[gridPos].Add(new TileData { tileInfo = info });
-                    }
-                    else
-                    {
-                        runtimeInfos.Add(gridPos, new List<TileData>() { new TileData { tileInfo = info } });
-                    }
                     // 필요하면, 멀티타일용으로 콜라이더/메시 사이즈 조정 로직 추가
                     // e.g. info.ApplyGridToWorld(cellSize);
                 }
@@ -100,36 +93,48 @@ namespace IsoTilemap
         public void FlushDirty()
         {
             foreach (var cell in dirty)
-                RefreshCell(cell, states[cell]); // 그 셀만 갱신
+                RefreshCell(cell); // 그 셀만 갱신
             dirty.Clear();
         }
         void Update()
         {
             FlushDirty();
         }
-        private void RefreshCell(Vector3Int cellPos, TileData state)
+        private void RefreshCell(Vector3Int cellPos)
         {
             // 해당 셀만 갱신
+            List<TileData> datas=_tileMapRuntime.GetRuntimeData().tiles[cellPos];
+            foreach (var data in datas)
+            {
+                RefreshObj(data);
+            }
         }
         private void RefreshObj(TileData obj)
         {
-
+            TileInfo info = _tileDefInstance[obj.tileDefId];
+            info.gameObject.SetActive(!obj.state.isHiddenCharacter);
         }
         public void UpdateCell(Vector3Int cellPos, TileData state)
         {
-            states[cellPos] = state;
             MarkDirty(cellPos);
         }
     }
     public class TileData
     {
-        public int tileDefId;
-        public TileInfo tileInfo;
+        public Guid tileDefId;
         public TileState state;
+        public TileIdentity identity;
     }
     public class TileState
     {
         public bool isHiddenCharacter = false;
+    }
+    public class TileIdentity
+    {
+        public string PrefabId;
+        public Vector3Int GridPos;
+        public Vector3Int sizeUnit;
+        public byte tileType;
     }
 
 }
