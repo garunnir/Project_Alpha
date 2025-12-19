@@ -53,36 +53,70 @@ namespace IsoTilemap
             return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
         }
 #if UNITY_EDITOR
-        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
-        private void DebugGizmos(HashSet<Vector3Int> visitedCells, float offset = 0f, Color color = default)
+        // TODO: 타일이 1x1이 아닌 경우 정상 동작하지 않음 → 예외 처리 필요
+        private void DebugGizmos(
+            HashSet<Vector3Int> occupiedCells,
+            float offset = 0f,
+            Color color = default)
         {
+            // 경계 판별을 위해 리스트로 변환
+            var occupiedCellList = occupiedCells.ToList();
 
-            //이웃하지 않는 셀을 표시
-            var cellList = visitedCells.ToList();
-            var tryDirs = new Vector3Int[] { Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward };
-            for (int i = 0; i < cellList.Count; i++)
+            // 상하좌우(카디널) 방향
+            var cardinalDirections = new Vector3Int[]
             {
-                var target = cellList[i];
-                foreach (var dir in tryDirs)
-                {
-                    var neighbor = new Vector3Int(target.x + dir.x, target.y, target.z + dir.z);
-                    if (!visitedCells.Contains(neighbor))
-                    {
-                        //다음블록과의 중심을 기준으로 표시선을 그린다
-                        Vector3 dira = neighbor - target;
-                        Vector3 dirv = new Vector3(-dira.z, 0, dira.x).normalized;//수직 벡터
-                        Vector3 midPoint = new Vector3((target.x + neighbor.x) * 0.5f, target.y, (target.z + neighbor.z) * 0.5f);
-                        Vector3 startline = midPoint - dirv * 0.5f;
-                        Vector3 endline = midPoint + dirv * 0.5f;
+        Vector3Int.right,
+        Vector3Int.back,
+        Vector3Int.left,
+        Vector3Int.forward
+            };
 
-                        startline = TileHelper.ConvertGridToWorldPos(startline + (dira) * offset, 1f);
-                        endline = TileHelper.ConvertGridToWorldPos(endline + (dira) * offset, 1f);
-                        Debug.DrawLine(startline, endline, color);
+            for (int i = 0; i < occupiedCellList.Count; i++)
+            {
+                var cell = occupiedCellList[i];
+
+                foreach (var direction in cardinalDirections)
+                {
+                    var adjacentCell = new Vector3Int(
+                        cell.x + direction.x,
+                        cell.y,
+                        cell.z + direction.z
+                    );
+
+                    // 인접 셀이 없으면 외곽 경계
+                    if (!occupiedCells.Contains(adjacentCell))
+                    {
+                        // 현재 셀 → 인접 셀 방향
+                        Vector3 cellToAdjacentDir = adjacentCell - cell;
+
+                        // 경계선용 수직 벡터
+                        Vector3 perpendicularDir =
+                            new Vector3(-cellToAdjacentDir.z, 0, cellToAdjacentDir.x).normalized;
+
+                        // 두 셀 사이 경계의 중심
+                        Vector3 edgeCenter = new Vector3(
+                            (cell.x + adjacentCell.x) * 0.5f,
+                            cell.y,
+                            (cell.z + adjacentCell.z) * 0.5f
+                        );
+
+                        Vector3 edgeLineStart = edgeCenter - perpendicularDir * 0.5f;
+                        Vector3 edgeLineEnd = edgeCenter + perpendicularDir * 0.5f;
+
+                        // 오프셋 적용 후 월드 좌표 변환
+                        edgeLineStart = TileHelper.ConvertGridToWorldPos(
+                            edgeLineStart + cellToAdjacentDir * offset, 1f);
+
+                        edgeLineEnd = TileHelper.ConvertGridToWorldPos(
+                            edgeLineEnd + cellToAdjacentDir * offset, 1f);
+
+                        Debug.DrawLine(edgeLineStart, edgeLineEnd, color);
                     }
                 }
             }
         }
 #endif
+
         private List<TileData> GetBelowWall(HashSet<Vector3Int> visitedGridPositions, HashSet<TileData> walls)
         {
             //방을 구성하는 벽들을 가져온다.
@@ -262,8 +296,8 @@ namespace IsoTilemap
                 StateRunner.Instance.ChangeState(new DebugTileRunner(action));
             }
 #endif
-            //_cachedCurrentRoomID = visited.ToHashSet();
-            //_cachedtiles = result; 
+            _cachedCurrentRoomID = visited.ToHashSet();
+            _cachedtiles = result;
 
             return result;
         }
