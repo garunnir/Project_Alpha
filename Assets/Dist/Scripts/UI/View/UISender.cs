@@ -55,10 +55,10 @@ public class UISender : MonoBehaviour
         switch (mode)
         {
             case Mode.inputfield:
-                rtn += Utillity.TupleSigleConv(GetTitle(), true, GetField());
+                rtn += Garunnir.Utillity.TextSerializeBuffer.TupleSingle(GetTitle(), true, GetField());
                 break;
             case Mode.dropdown:
-                rtn += Utillity.TupleSigleConv(GetTitle(), true, dropdown.value);
+                rtn += Garunnir.Utillity.TextSerializeBuffer.TupleSingle(GetTitle(), true, dropdown.value);
                 break;
         }
         return rtn;

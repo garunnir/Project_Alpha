@@ -173,11 +173,11 @@ public class ResourceManager : MonoBehaviour
         //가지고 있는것이 있는지 먼저 판단
         //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
         Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/" + rpath);
-        string path = Utillity.CheckFolderInPath(Application.persistentDataPath + ("/Img/" + rpath));
+        string path = Garunnir.Utillity.PathUtility.EnsureDirectory(Application.persistentDataPath + ("/Img/" + rpath));
         print("start");
         foreach (var item in textures)
         {
-            await File.WriteAllBytesAsync(path + "/" + item.name + ".png", Utillity.GetTextureBytesFromCopy(item));
+            await File.WriteAllBytesAsync(path + "/" + item.name + ".png", Garunnir.Utillity.TextureIO.GetTextureBytesFromCopy(item));
             tmpPathContainer.Add(path + "/" + item.name + ".png");
         }
         print("end");

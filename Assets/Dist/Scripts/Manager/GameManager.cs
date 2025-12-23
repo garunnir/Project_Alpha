@@ -14,6 +14,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using UnityEngine.Events;
 
+
 namespace Garunnir
 {
     public enum Form
@@ -35,7 +36,7 @@ namespace Garunnir
         none,
         male, female
     }
-    
+
     public class GameManager : Singleton<GameManager>
     {
         #region DataConfig
@@ -76,8 +77,8 @@ namespace Garunnir
             FormStrDic.Add((Form.gender, Gender.male), "Gender.Male");
             FormStrDic.Add((Form.gender, Gender.none), "Gender.None");
             FormStrDic.Add((Form.gender, Gender.female), "Gender.female");
-            charProfleImg = Utillity.CombinePath(Application.persistentDataPath, "Char", "CharProfile");
-            Utillity.CheckFolderInPath(charProfleImg,false);
+            charProfleImg = Utillity.PathUtility.CombinePath(Application.persistentDataPath, "Char", "CharProfile");
+            Utillity.PathUtility.EnsureDirectory(charProfleImg, false);
         }
 
         public string GetTypeDic(Type type)
@@ -124,10 +125,10 @@ namespace Garunnir
 #endif
         #endregion
         #region Managers
-        [SerializeField]CharacterManager _charactorManager;
+        [SerializeField] CharacterManager _charactorManager;
         [SerializeField] DialogueSystemController _dialogueSystemController;
-        [SerializeField]UIManager _uiManager;
-        [SerializeField]ResourceManager _resourceManager;
+        [SerializeField] UIManager _uiManager;
+        [SerializeField] ResourceManager _resourceManager;
         [SerializeField] InputManager _inputManager;
         public UIManager GetUIManager() => _uiManager;
         public ResourceManager GetResourceManager() => _resourceManager;
@@ -141,7 +142,7 @@ namespace Garunnir
         {
             if (_charactorManager.characters.Count == 0) return;
             var player = _charactorManager.characters.Find(x => x.Name == "Player");
-            player.portrait = Utillity.LoadImage(GameManager.charProfleImg + player.id);
+            player.portrait = Utillity.TextureIO.LoadImage(GameManager.charProfleImg + player.id);
         }
         private void LoadChar()
         {
@@ -181,256 +182,56 @@ namespace Garunnir
 
         private void StarterInit()
         {
-
         }
-      
-    }
-    
-    public class Utillity
-    {
-        //public const string lf = "\r\n";
-        public const string divider = "==";
-        public const string lf = "\n";
-        public static StringBuilder stringBuilder = new StringBuilder();
-        public static T ObjectParser<T>(string str)
-        {
-            if (typeof(T) == typeof(bool))
-            {
-                return (T)(object)bool.Parse(str);
-            }
-            else if (typeof(T) == typeof(float))
-            {
-                return (T)(object)float.Parse(str);
-            }
-            else if (typeof(T) == typeof(int))
-            {
-                return (T)(object)int.Parse(str);
-            }
-            else
-            {
-                return (T)(object)str;
-            }
-        }
-        public static string CombinePath(params string[] path)
-        {
-            string str=string.Empty;
-            foreach (var item in path)
-            {
-                str += item;
-                if(path.Last()!=item)
-                str += "/";
-            }
-            return str;
-        }
-        public static string CheckFolderInPath(string path,bool isOnlyDir=true)
-        {
-            Debug.LogWarning(path);
-            if (!isOnlyDir)
-                path = Path.GetDirectoryName(path);
-            if (!Directory.Exists(path))
-            {
-                Debug.Log("Create");
-                Directory.CreateDirectory(path);
-            }
-            return path;
-        }
-        public static Texture2D LoadImage(string path)
-        {
-            if (!File.Exists(path)) return null;
-            byte[] bytes = File.ReadAllBytes(path);
-            if (bytes != null)
-            {
-                //print("findByte");
-                Texture2D texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-                bool boolen = texture.LoadImage(bytes);
-                if (boolen)
-                {
-                    //print("loadDone");
-                    return texture;
-                }
-                else return null;
-            }
-            else { return null; }
-        }
-        public static void ConvertToSaver(string head, params object[] objects)
-        {
-            stringBuilder.Append($"{head}:");
-            foreach (object obj in objects)
-            {
-                stringBuilder.Append(obj);
-                if (obj != objects.Last())
-                    stringBuilder.Append(",");
-            }
-
-            stringBuilder.Append(lf);
-            //Debug.Log("Convert: " + assemble);
-        }
-        public static void ListConverter<T>(string head, List<T> list) where T : Shape
-        {
-            if (list != null && list.Count > 0 && list[0] is Organ)
-            {
-                stringBuilder.Append($"{typeof(Organ).Name}.{head}/List:");
-            }
-            else
-            {
-                stringBuilder.Append($"{typeof(T).Name}.{head}/List:");
-            }
-            foreach (var obj in list)
-            {
-                stringBuilder.Append(obj.name);
-                if (obj != list.Last())
-                    stringBuilder.Append(",");
-            }
-            stringBuilder.Append(lf);
-        }
-        public static void ListConverter(string head, List<string> list)
-        {
-            stringBuilder.Append($"{head}/List:");
-            foreach (var obj in list)
-            {
-                stringBuilder.Append(obj);
-                if (obj != list.Last())
-                    stringBuilder.Append(",");
-            }
-            stringBuilder.Append(lf);
-        }
-        public static void DicConverter(string head, Dictionary<string, float> dic)
-        {
-            stringBuilder.Append($"{head}/Dic:");
-            foreach (var obj in dic)
-            {
-                stringBuilder.Append(obj.Key);
-                stringBuilder.Append("=");
-                stringBuilder.Append(obj.Value);
-                if (obj.Key != dic.Last().Key)
-                {
-                    stringBuilder.Append(",");
-                }
-            }
-            stringBuilder.Append(lf);
-        }
-        public static void DicConverter(string head, Dictionary<string, object> dic)
-        {
-            stringBuilder.Append($"{head}/Dic:");
-            foreach (var obj in dic)
-            {
-                stringBuilder.Append(obj.Key);
-                stringBuilder.Append("=");
-                stringBuilder.Append(obj.Value);
-                if (obj.Key != dic.Last().Key)
-                {
-                    stringBuilder.Append(",");
-                }
-            }
-            stringBuilder.Append(lf);
-        }
-        public static string TupleSigleConv(string a, bool b, object c)
-        {
-            if (c.ToString() == string.Empty) c = "Null";
-            return string.Format("{0}={1}|{2}", a, b, c);
-        }
-        public static void TupleDicConv(string head, Dictionary<string, (bool, object)> tupledic)
-        {
-            stringBuilder.Append($"{head}/Dic:");
-            foreach (var obj in tupledic)
-            {
-                stringBuilder.Append(TupleSigleConv(obj.Key, obj.Value.Item1, obj.Value.Item2));
-                if (obj.Key != tupledic.Last().Key)
-                {
-                    stringBuilder.Append(",");
-                }
-            }
-            stringBuilder.Append(lf);
-        }
-        public static string GetJsonConvert(Actor character)
-        {
-            Utillity.stringBuilder.Clear();
-            Utillity.stringBuilder.Append($"{lf}{GameManager.Instance.GetFormDic(Form0.character, Form.id)}:");
-            Utillity.stringBuilder.Append(character.id);
-            Utillity.stringBuilder.Append(lf);
-            //TupleDicConv(GameManager.Instance.GetFormDic(Form0.character, Form.field), character.fields);
-            Utillity.stringBuilder.Append(divider);
-            Utillity.stringBuilder.Append(lf);
-            //character.bodyCore.GetJsonConvert();
-            return Utillity.stringBuilder.ToString();
-        }
-        //static Rect CalculateAbsoluteRect(RectTransform target)
-        //{
-        //    // 부모 Transform의 위치
-        //    Vector3 parentPosition = target.parent.position;
-
-        //    // Rect의 위치와 크기를 부모 위치에 더하여 절대 좌표를 계산
-        //    float absoluteX = target.rect.x + parentPosition.x;
-        //    float absoluteY = target.rect.y + parentPosition.y;
-        //    float absoluteWidth = target.rect.width;
-        //    float absoluteHeight = target.rect.height;
-
-        //    // 계산된 절대 좌표로 Rect 생성
-        //    Rect absoluteRect = new Rect(absoluteX, absoluteY, absoluteWidth, absoluteHeight);
-
-        //    return absoluteRect;
-        //}
-        //public static void CopyDifParentRect(RectTransform source,RectTransform target)
-        //{
-        //    Rect rect=CalculateAbsoluteRect(source);
-        //    Transform parent = target.parent;
-        //    target.parent = null;
-        //    target.ForceUpdateRectTransforms();
-        //    target.rect.Set(0,0,rect.width,rect.height);
-        //    target.parent = parent;
-        //}
-
-        public static byte[] GetTextureBytesFromCopy(Texture2D texture, bool isJpeg=false)
-        {
-            // Texture is marked as non-readable, create a readable copy and save it instead
-            Debug.LogWarning("Saving non-readable textures is slower than saving readable textures");
-
-            Texture2D sourceTexReadable = null;
-            RenderTexture rt = RenderTexture.GetTemporary(texture.width, texture.height);
-            RenderTexture activeRT = RenderTexture.active;
-
-            try
-            {
-                Graphics.Blit(texture, rt);
-                RenderTexture.active = rt;
-
-                sourceTexReadable = new Texture2D(texture.width, texture.height, isJpeg ? TextureFormat.RGB24 : TextureFormat.RGBA32, false);
-                sourceTexReadable.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0, false);
-                sourceTexReadable.Apply(false, false);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-
-                UnityEngine.Object.DestroyImmediate(sourceTexReadable);
-                return null;
-            }
-            finally
-            {
-                RenderTexture.active = activeRT;
-                RenderTexture.ReleaseTemporary(rt);
-            }
-
-            try
-            {
-                return isJpeg ? sourceTexReadable.EncodeToJPG(100) : sourceTexReadable.EncodeToPNG();
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-                return null;
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(sourceTexReadable);
-            }
-        }
-
 
     }
-    static class Extentions
-    {
 
+    /// <summary>
+    /// 문자열 파싱, 경로 처리, 커스텀 직렬화, 텍스처 로드 등
+    /// 프로젝트 전반에서 재사용되는 유틸리티 모음 클래스
+    /// </summary>
+public static class ExUtillity
+{
+    public const string divider = Utillity.TextSerializeBuffer.Divider;
+    public const string lf = Utillity.TextSerializeBuffer.LF;
+
+    // 기존 접근 유지
+    public static StringBuilder stringBuilder => Utillity.TextSerializeBuffer.SB;
+
+    public static T ObjectParser<T>(string str) => Utillity.ParseUtility.ObjectParser<T>(str);
+
+    public static string CombinePath(params string[] path) => Utillity.PathUtility.CombinePath(path);
+
+    public static string CheckFolderInPath(string path, bool isOnlyDir = true)
+        => Utillity.PathUtility.EnsureDirectory(path, isOnlyDir);
+
+    public static Texture2D LoadImage(string path) => Utillity.TextureIO.LoadImage(path);
+
+    public static void ConvertToSaver(string head, params object[] objects)
+        => Utillity.TextSerializeBuffer.AppendValues(head, objects);
+
+    public static void ListConverter<T>(string head, List<T> list) where T : Shape
+    {
+        // 기존 로직 유지: Organ이면 Organ으로 찍기
+        if (list != null && list.Count > 0 && list[0] is Organ)
+        {
+            Utillity.TextSerializeBuffer.SB.Append($"{typeof(Organ).Name}.{head}/List:");
+        }
+        else
+        {
+            Utillity.TextSerializeBuffer.SB.Append($"{typeof(T).Name}.{head}/List:");
+        }
+
+        foreach (var obj in list)
+        {
+            Utillity.TextSerializeBuffer.SB.Append(obj.name);
+            if (obj != list[^1])
+                Utillity.TextSerializeBuffer.SB.Append(",");
+        }
+        Utillity.TextSerializeBuffer.SB.Append(Utillity.TextSerializeBuffer.LF);
     }
 }
+
+        
+    }
 

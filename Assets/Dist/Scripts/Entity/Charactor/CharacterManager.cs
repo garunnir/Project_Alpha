@@ -179,21 +179,21 @@ namespace Garunnir.CharacterAppend.BodySystem
         #endregion
         public string GetJsonConvert()
         {
-            Utillity.stringBuilder.Append("<Core>");
-            Utillity.stringBuilder.Append("</Core>");
-            Utillity.stringBuilder.Append("<Parts>\n");
+            Utillity.TextSerializeBuffer.SB.Append("<Core>");
+            Utillity.TextSerializeBuffer.SB.Append("</Core>");
+            Utillity.TextSerializeBuffer.SB.Append("<Parts>\n");
             foreach (var item in partslist)
             {
                 item.ToJson();
             }
-            Utillity.stringBuilder.Append("</Parts>");
-            Utillity.stringBuilder.Append("<Inner>\n");
+            Utillity.TextSerializeBuffer.SB.Append("</Parts>");
+            Utillity.TextSerializeBuffer.SB.Append("<Inner>\n");
             foreach (var item in innerDic.Values)
             {
                 item.ToJson();
             }
-            Utillity.stringBuilder.Append("</Inner>");
-            return Utillity.stringBuilder.ToString();
+            Utillity.TextSerializeBuffer.SB.Append("</Inner>");
+            return Utillity.TextSerializeBuffer.SB.ToString();
         }
     }
     public abstract class Shape
@@ -386,12 +386,12 @@ namespace Garunnir.CharacterAppend.BodySystem
             //    json += ",";
             //}
             //json += "}";
-            Utillity.ConvertToSaver(GameManager.Instance.GetTypeDic(this.GetType()), name, durability);
-            Utillity.DicConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.field), field);
-            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.inner), innerParts);
-            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.prev), prev);
-            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.next), next);
-            Utillity.stringBuilder.Append(Utillity.divider + Utillity.lf);
+            Utillity.TextSerializeBuffer.AppendValues(GameManager.Instance.GetTypeDic(this.GetType()), name, durability);
+            Utillity.TextSerializeBuffer.AppendDictionary(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.field), field);
+            ExUtillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.inner), innerParts);
+            ExUtillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.prev), prev);
+            ExUtillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.next), next);
+            Utillity.TextSerializeBuffer.SB.Append(Utillity.TextSerializeBuffer.Divider + Utillity.TextSerializeBuffer.LF);
         }
         public override void FromJson(string[] strings)
         {
@@ -649,7 +649,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             #endregion
             public override void ToJson()
             {
-                Utillity.ConvertToSaver(name, bloodLv, level, isEnable, readyFragRate, menstruationRate, actMenstruation, canfrag, semenRate, isfrag);
+                Utillity.TextSerializeBuffer.AppendValues(name, bloodLv, level, isEnable, readyFragRate, menstruationRate, actMenstruation, canfrag, semenRate, isfrag);
             }
             public override void FromJson(string[] strings)
             {
@@ -718,7 +718,7 @@ namespace Garunnir.CharacterAppend.BodySystem
 
             public override void ToJson()
             {
-                Utillity.ConvertToSaver(name, milkRate, milkml, milkmlMax, lv);
+                Utillity.TextSerializeBuffer.AppendValues(name, milkRate, milkml, milkmlMax, lv);
             }
 
             public override void FromJson(string[] strings)

@@ -199,7 +199,7 @@ namespace Garunnir
             m_data = new Data();
             foreach (var item in CharacterManager.Instance.characters)
             {
-                m_data.characterData.Add(Utillity.GetJsonConvert(item));
+                m_data.characterData.Add(Garunnir.Utillity.ActorSerializer.Serialize(item));
             }
             print("convert//" + m_data.characterData);
             return SaveSystem.Serialize(m_data);

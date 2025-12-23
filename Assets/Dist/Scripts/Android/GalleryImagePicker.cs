@@ -25,7 +25,7 @@ namespace Garunnir
         if(string.IsNullOrEmpty(filename)) { _filepath = GameManager.charProfleImg +ConstDataTable.Actor.PlayerID; }
            else _filepath = Path.Combine(GameManager.charProfleImg + filename);
             if (File.Exists(_filepath))
-        img.texture = Utillity.LoadImage(_filepath);
+        img.texture = Garunnir.Utillity.TextureIO.LoadImage(_filepath);
     }
     public void ChangeImage(string filepath)
     {
@@ -39,7 +39,7 @@ namespace Garunnir
     }
     private void ImgApply(string path)
     {
-        img.texture=Utillity.LoadImage(path);
+        img.texture=Garunnir.Utillity.TextureIO.LoadImage(path);
     }
 
 }
