@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TestRunner : MonoBehaviour
 {
-    [SerializeField] TileMapSerializer _serializer;
+    [SerializeField] TileMapLoader _serializer;
     void Start()
     {
         _serializer.LoadMap();

@@ -1,4 +1,4 @@
-using NUnit.Framework;
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -106,7 +106,7 @@ namespace IsoTilemap
         private void RefreshCell(Vector3Int cellPos)
         {
             // 해당 셀만 갱신
-            List<TileData> datas=_tileMapRuntime.GetRuntimeData().tiles[cellPos];
+            List<TileData> datas=_do.GetRuntimeData().tiles[cellPos];
             foreach (var data in datas)
             {
                 RefreshObj(data);

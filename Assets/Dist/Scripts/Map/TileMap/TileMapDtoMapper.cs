@@ -42,8 +42,6 @@ namespace IsoTilemap
             return mapRuntimeData;
         }
 
-   
-
         public MapSaveJsonDto FromDomain(Dictionary<Vector3Int, List<TileData>> domain)
         {
             MapSaveJsonDto tile = new MapSaveJsonDto();

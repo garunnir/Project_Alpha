@@ -6,7 +6,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 {
     //캐릭터 보임 관련 요소를 맵과 상호작용하기 위한 클래스
     private CharacterState _characterState;
-    [SerializeField] private TileMapRuntime _tileMapRuntime;
+    [SerializeField] private TileMapDomainData _tileMapRuntime;
     private void Awake()
     {
         _characterState = GetComponent<CharacterState>();
