@@ -3,26 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
-    public interface IMapSerializer
-    {
-        MapSaveJsonDto Read(string path);
-        void Write(string path, MapSaveJsonDto dto);
-    }
-    public interface IMapMapper
-    {
-        Dictionary<Vector3Int, List<TileData>> ToDomain(MapSaveJsonDto dto);
-        MapSaveJsonDto FromDomain(Dictionary<Vector3Int, List<TileData>> domain);
-    }
-    public interface IMapDomainBuilder
-    {
-        TileMapRuntimeData BuildRuntime(Dictionary<Vector3Int, List<TileData>> domainData);
-        TileMapRuntimeData GetRuntimeData();
-    }
-    public interface IMapViewBuilder
-    {
-        void Build(TileMapRuntimeData runtimeData);
-    }
-
     public sealed class MapLoadPipeline
     {
         private readonly IMapSerializer _serializer;
@@ -46,16 +26,16 @@ namespace IsoTilemap
             // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);
             // Map DTO to Domain Model
-            Dictionary<Vector3Int, List<TileData>> domain = _mapper.ToDomain(dto);
+            IMapDomainReadOnly domain = _mapper.ToDomain(dto);
             // Build Runtime Data
-            TileMapRuntimeData view = _domainBuilder.BuildRuntime(domain);
+            TileMapDomainData domainData = _domainBuilder.BuildRuntime(domain);
             // Build View
-            _viewBuilder.Build(view); 
+            _viewBuilder.Build(domainData, domain); 
         }
         public void Save(string path)
         {
-            TileMapRuntimeData domain = _domainBuilder.GetRuntimeData();
-            MapSaveJsonDto dto = _mapper.FromDomain(domain.tiles);
+            TileMapDomainData domain = _domainBuilder.GetRuntimeData();
+            MapSaveJsonDto dto = _mapper.FromDomain(domain);
             // Serialize dto to JSON and save to path
             _serializer.Write(path, dto);
         }

@@ -11,14 +11,19 @@ namespace IsoTilemap
         private TileMapRuntimeData _runtimeData;
         private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
+#region IMapDomainBuilder 구현
 
-
-        public TileMapRuntimeData BuildRuntime(Dictionary<Vector3Int, List<TileData>> domainData)
+        TileMapRuntimeData IMapDomainBuilder.BuildRuntime(IMapDomainReadOnly domainData)
         {
-            _runtimeData = new TileMapRuntimeData { tiles = domainData };
+            _runtimeData = new TileMapRuntimeData { tiles = domainData.GetRuntimeData() };
             return _runtimeData;
         }
 
+        TileMapRuntimeData IMapDomainBuilder.GetRuntimeData()
+        {
+            return _runtimeData;
+        }
+#endregion
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
@@ -193,10 +198,6 @@ namespace IsoTilemap
             return result;
         }
 
-        public TileMapRuntimeData GetRuntimeData()
-        {
-            return _runtimeData;
-        }
         private bool IsWallEligibleForHiding(TileInfo.TileType type)
         {
             return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
@@ -279,6 +280,9 @@ namespace IsoTilemap
             }
             return belowWalls;
         }
+
+
+
 
 
         //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요

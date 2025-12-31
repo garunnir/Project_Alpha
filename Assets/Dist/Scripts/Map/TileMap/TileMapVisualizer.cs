@@ -6,7 +6,7 @@ namespace IsoTilemap
 {
     // 타일맵 시각화 담당 클래스
     [RequireComponent(typeof(TileMapDomainData))]
-    public class TileMapVisualizer : MonoBehaviour
+    public class TileMapVisualizer : MonoBehaviour,IMapViewBuilder
     {
         [Header("Prefab DB for loading")]
         public TilePrefabDB prefabDB;
@@ -21,8 +21,9 @@ namespace IsoTilemap
 
         public event Action<Dictionary<Vector3Int, List<TileData>>> TileMapBuilded;
 
-        public void BuildVisualFromData(TileMapRuntimeData data)
+        public void BuildVisualFromData(IMapDomainReadOnly domainData)
         {
+            var data= domainData.GetRuntimeData();
             if(data.tiles == null || data.tiles.Count == 0)
             {
                 Debug.LogWarning("No tile data to build visual.");
