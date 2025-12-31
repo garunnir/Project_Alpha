@@ -1,136 +1,24 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
+using UnityEngine;
 namespace IsoTilemap
 {
-
-    //타일 데이터를 관리한다
-    //컨트롤러가 뷰잉을 개시한다.
-    //런타임에만 사용된다.
-    //타일이 생성 삭제될때 반드시 갱신되어야 함
-    // 맵 전체 데이터
-    //비쥬얼라이저의 하위 조직
-    //구성이 잘못되었다?
-    //데이터에 접근해야지 뷰에 접근하는 모양세가 되면 안돼!
-    //이게 필요했던 이유는, 구현화 상태에서의 정보를 가져오려고 했기 때문임..
-    //계산 자체를 데이터를 분석해서 해결해야함ㅁ...
-    //
-    public class TileMapRuntime : MonoBehaviour
+    // 타일맵 도메인 데이터 관리 클래스
+    // 뷰와는 독립적으로 타일맵 데이터를 관리하고 제공하는 역할을 합니다.
+    public class TileMapDomainData : MonoBehaviour, IMapDomainBuilder
     {
-
-        public TileMapRuntimeData GetRuntimeData() { return _runtimeData; }
         private TileMapRuntimeData _runtimeData;
-        private void Awake()
-        {
-        }
-        private void OnEnable()
-        {
-            //타일맵이 빌드될때마다 데이터 업데이트를 수행한다.
-        }
-        private void OnDisable()
-        {
-        }
-        public void UpdateRuntimeData(TileMapRuntimeData runtimeData)
-        {
-            _runtimeData = runtimeData;
-        }
-        public void UpdateRuntimeData(Dictionary<Vector3Int, List<TileData>> keyValuePairs)
-        {
-            if (_runtimeData == null) _runtimeData = new TileMapRuntimeData();
-            _runtimeData.tiles = keyValuePairs;
-        }
-
-        private HashSet<Vector3Int> _cachedCurrentRoomID;//이미 계산된 타일이면 건너뜀.
+        private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+
+
+        public TileMapRuntimeData BuildRuntime(Dictionary<Vector3Int, List<TileData>> domainData)
         {
-
+            _runtimeData = new TileMapRuntimeData { tiles = domainData };
+            return _runtimeData;
         }
-        private bool IsWallEligibleForHiding(TileInfo.TileType type)
-        {
-            return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
-        }
-#if UNITY_EDITOR
-        // TODO: 타일이 1x1이 아닌 경우 정상 동작하지 않음 → 예외 처리 필요
-        private void DebugGizmos(
-            HashSet<Vector3Int> occupiedCells,
-            float offset = 0f,
-            Color color = default)
-        {
-            // 경계 판별을 위해 리스트로 변환
-            var occupiedCellList = occupiedCells.ToList();
 
-            // 상하좌우(카디널) 방향
-            var cardinalDirections = new Vector3Int[]
-            {
-        Vector3Int.right,
-        Vector3Int.back,
-        Vector3Int.left,
-        Vector3Int.forward
-            };
-
-            for (int i = 0; i < occupiedCellList.Count; i++)
-            {
-                var cell = occupiedCellList[i];
-
-                foreach (var direction in cardinalDirections)
-                {
-                    var adjacentCell = new Vector3Int(
-                        cell.x + direction.x,
-                        cell.y,
-                        cell.z + direction.z
-                    );
-
-                    // 인접 셀이 없으면 외곽 경계
-                    if (!occupiedCells.Contains(adjacentCell))
-                    {
-                        // 현재 셀 → 인접 셀 방향
-                        Vector3 cellToAdjacentDir = adjacentCell - cell;
-
-                        // 경계선용 수직 벡터
-                        Vector3 perpendicularDir =
-                            new Vector3(-cellToAdjacentDir.z, 0, cellToAdjacentDir.x).normalized;
-
-                        // 두 셀 사이 경계의 중심
-                        Vector3 edgeCenter = new Vector3(
-                            (cell.x + adjacentCell.x) * 0.5f,
-                            cell.y,
-                            (cell.z + adjacentCell.z) * 0.5f
-                        );
-
-                        Vector3 edgeLineStart = edgeCenter - perpendicularDir * 0.5f;
-                        Vector3 edgeLineEnd = edgeCenter + perpendicularDir * 0.5f;
-
-                        // 오프셋 적용 후 월드 좌표 변환
-                        edgeLineStart = TileHelper.ConvertGridToWorldPos(
-                            edgeLineStart + cellToAdjacentDir * offset, 1f);
-
-                        edgeLineEnd = TileHelper.ConvertGridToWorldPos(
-                            edgeLineEnd + cellToAdjacentDir * offset, 1f);
-
-                        Debug.DrawLine(edgeLineStart, edgeLineEnd, color);
-                    }
-                }
-            }
-        }
-#endif
-
-        private List<TileData> GetBelowWall(HashSet<Vector3Int> visitedGridPositions, HashSet<TileData> walls)
-        {
-            //방을 구성하는 벽들을 가져온다.
-            //하단의 벽을 구분해서 가져온다.
-            List<TileData> belowWalls = new List<TileData>();
-            foreach (var wall in walls)
-            {
-                //벽 자신 기준으로 위와 왼쪽의 공간이 방의 구성요소일경우 아래에 있는 벽으로 간주한다.
-                if (visitedGridPositions.Contains(wall.identity.GridPos+ Vector3Int.forward) || visitedGridPositions.Contains(wall.identity.GridPos+ Vector3Int.left))
-                    belowWalls.Add(wall);
-            }
-            return belowWalls;
-        }
-        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
@@ -142,8 +30,11 @@ namespace IsoTilemap
                 return new List<TileData>();
 
             var alltiles = _runtimeData.tiles;
+
+
             Vector3Int start = playerCellPos;
             //이미 계산된구역이면 재계산하지 않음. 이 효력은 다른 구역으로 이동하면 사라짐
+
             if (_cachedCurrentRoomID != null && _cachedCurrentRoomID.Contains(start))
             {
                 return _cachedtiles;
@@ -288,10 +179,10 @@ namespace IsoTilemap
             {
                 Action action = () =>
 {
-                    DebugGizmos(floorChecked, 0, Color.green);
-                    DebugGizmos(wallChecked, 0.1f, Color.red);
-                    DebugGizmos(new() { start }, 0, Color.skyBlue);
-                    DebugGizmos(result.Select(t => t.identity.GridPos).ToHashSet(), 0.01f, Color.skyBlue);
+    DebugGizmos(floorChecked, 0, Color.green);
+    DebugGizmos(wallChecked, 0.1f, Color.red);
+    DebugGizmos(new() { start }, 0, Color.skyBlue);
+    DebugGizmos(result.Select(t => t.identity.GridPos).ToHashSet(), 0.01f, Color.skyBlue);
 };
                 StateRunner.Instance.ChangeState(new DebugTileRunner(action));
             }
@@ -302,9 +193,98 @@ namespace IsoTilemap
             return result;
         }
 
+        public TileMapRuntimeData GetRuntimeData()
+        {
+            return _runtimeData;
+        }
+        private bool IsWallEligibleForHiding(TileInfo.TileType type)
+        {
+            return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
+        }
+#if UNITY_EDITOR
+        // TODO: 타일이 1x1이 아닌 경우 정상 동작하지 않음 → 예외 처리 필요
+        private void DebugGizmos(
+            HashSet<Vector3Int> occupiedCells,
+            float offset = 0f,
+            Color color = default)
+        {
+            // 경계 판별을 위해 리스트로 변환
+            var occupiedCellList = occupiedCells.ToList();
+
+            // 상하좌우(카디널) 방향
+            var cardinalDirections = new Vector3Int[]
+            {
+        Vector3Int.right,
+        Vector3Int.back,
+        Vector3Int.left,
+        Vector3Int.forward
+            };
+
+            for (int i = 0; i < occupiedCellList.Count; i++)
+            {
+                var cell = occupiedCellList[i];
+
+                foreach (var direction in cardinalDirections)
+                {
+                    var adjacentCell = new Vector3Int(
+                        cell.x + direction.x,
+                        cell.y,
+                        cell.z + direction.z
+                    );
+
+                    // 인접 셀이 없으면 외곽 경계
+                    if (!occupiedCells.Contains(adjacentCell))
+                    {
+                        // 현재 셀 → 인접 셀 방향
+                        Vector3 cellToAdjacentDir = adjacentCell - cell;
+
+                        // 경계선용 수직 벡터
+                        Vector3 perpendicularDir =
+                            new Vector3(-cellToAdjacentDir.z, 0, cellToAdjacentDir.x).normalized;
+
+                        // 두 셀 사이 경계의 중심
+                        Vector3 edgeCenter = new Vector3(
+                            (cell.x + adjacentCell.x) * 0.5f,
+                            cell.y,
+                            (cell.z + adjacentCell.z) * 0.5f
+                        );
+
+                        Vector3 edgeLineStart = edgeCenter - perpendicularDir * 0.5f;
+                        Vector3 edgeLineEnd = edgeCenter + perpendicularDir * 0.5f;
+
+                        // 오프셋 적용 후 월드 좌표 변환
+                        edgeLineStart = TileHelper.ConvertGridToWorldPos(
+                            edgeLineStart + cellToAdjacentDir * offset, 1f);
+
+                        edgeLineEnd = TileHelper.ConvertGridToWorldPos(
+                            edgeLineEnd + cellToAdjacentDir * offset, 1f);
+
+                        Debug.DrawLine(edgeLineStart, edgeLineEnd, color);
+                    }
+                }
+            }
+        }
+#endif
+
+        private List<TileData> GetBelowWall(HashSet<Vector3Int> visitedGridPositions, HashSet<TileData> walls)
+        {
+            //방을 구성하는 벽들을 가져온다.
+            //하단의 벽을 구분해서 가져온다.
+            List<TileData> belowWalls = new List<TileData>();
+            foreach (var wall in walls)
+            {
+                //벽 자신 기준으로 위와 왼쪽의 공간이 방의 구성요소일경우 아래에 있는 벽으로 간주한다.
+                if (visitedGridPositions.Contains(wall.identity.GridPos + Vector3Int.forward) || visitedGridPositions.Contains(wall.identity.GridPos + Vector3Int.left))
+                    belowWalls.Add(wall);
+            }
+            return belowWalls;
+        }
+
+
+        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
 
     }
-    public class DebugTileRunner : IFrameState
+        public class DebugTileRunner : IFrameState
     {
         Action _action;
         public void Enter()

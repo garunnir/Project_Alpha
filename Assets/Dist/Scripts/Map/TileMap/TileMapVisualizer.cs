@@ -5,7 +5,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     // 타일맵 시각화 담당 클래스
-    [RequireComponent(typeof(TileMapRuntime))]
+    [RequireComponent(typeof(TileMapDomainData))]
     public class TileMapVisualizer : MonoBehaviour
     {
         [Header("Prefab DB for loading")]
@@ -14,22 +14,22 @@ namespace IsoTilemap
         [Header("Grid / World Settings")]
         public float cellSize = 1f;
 
-        private TileMapRuntime _tileMapRuntime;
+        // 타일 정의 인스턴스 매핑
         private Dictionary<Guid,TileInfo> _tileDefInstance = new Dictionary<Guid,TileInfo>();
         // 그리드 셀 월드 크기
         // Start is called once before the first execution of Update after the MonoBehaviour is created
 
         public event Action<Dictionary<Vector3Int, List<TileData>>> TileMapBuilded;
-        void Awake()
-        {
-            _tileMapRuntime = GetComponent<TileMapRuntime>();
-        }
 
         public void BuildVisualFromData(TileMapRuntimeData data)
         {
+            if(data.tiles == null || data.tiles.Count == 0)
+            {
+                Debug.LogWarning("No tile data to build visual.");
+                return;
+            }
             // 기존 타일들 정리할지 말지 선택 (여기선 다 지우는 예시)
             ClearExistingTiles();
-            Guid tileId = Guid.NewGuid();
             foreach (var td in data.tiles)
             {
                 Vector3Int key = td.Key;
@@ -38,6 +38,7 @@ namespace IsoTilemap
                 {
                     GameObject prefab = prefabDB != null ? prefabDB.GetPrefab(ti.identity.PrefabId) : null;
 
+                    //Debug.Log($"Spawning tile at {key} with prefabId {ti.identity.PrefabId}");
                     if (prefab == null)
                     {
                         Debug.LogWarning($"No prefab for id: {ti.identity.PrefabId}");
@@ -55,6 +56,8 @@ namespace IsoTilemap
                     {
                         info = go.AddComponent<TileInfo>();
                     }
+                    ti.tileDefId = Guid.NewGuid();
+
                     _tileDefInstance.Add(ti.tileDefId, info);
                     info.gridPos = ti.identity.GridPos;
                     info.size = ti.identity.sizeUnit;
