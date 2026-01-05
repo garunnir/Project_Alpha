@@ -5,7 +5,7 @@ namespace IsoTilemap
 // DTO 와 도메인 모델 간의 매핑을 담당하는 클래스
     public class TileMapDtoMapper : IMapMapper
     {
-        public  Dictionary<Vector3Int, List<TileData>> ToDomain(MapSaveJsonDto tileMapData)
+        public  IMapTilesReadOnly ToPrepared(MapSaveJsonDto tileMapData)
         {
             if (tileMapData == null || tileMapData.tiles == null)
             {
@@ -39,14 +39,15 @@ namespace IsoTilemap
             //맵아이디 어차피 참고해야할 부분인데 굳이 따로 바인드해가면서 쓸 일인가?
             //내가 방황하는 이유는 이 타일데이터라는 항목의 목적이 명확하지 않기 때문인 듯.
             //타일데이터의 목표... 그것은 데이터적으로 숨겨야 할 벽에 접근하기 위함.
-            return mapRuntimeData;
+            return new MapDomain(mapRuntimeData);
         }
 
-        public MapSaveJsonDto FromDomain(Dictionary<Vector3Int, List<TileData>> domain)
+        public MapSaveJsonDto FromPrepared(IMapTilesReadOnly domain)
         {
+            var tiles = domain.GetDomainData().tiles;
             MapSaveJsonDto tile = new MapSaveJsonDto();
-
-            foreach (var td in domain)
+        
+            foreach (var td in tiles)
             {
                 foreach (var ti in td.Value)
                 {
@@ -65,5 +66,7 @@ namespace IsoTilemap
             }
             return tile;
         }
+
+
     }
 }

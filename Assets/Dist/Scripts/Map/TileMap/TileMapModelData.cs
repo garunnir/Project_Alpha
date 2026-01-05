@@ -1,49 +1,19 @@
 using System;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 namespace IsoTilemap
 {
-    // 타일맵 도메인 데이터 관리 클래스
-    // 뷰와는 독립적으로 타일맵 데이터를 관리하고 제공하는 역할을 합니다.
-    public class TileMapDomainData : MonoBehaviour, IMapDomainBuilder
+    public class TileMapModelData:IMapModel
     {
-        private TileMapRuntimeData _runtimeData;
-        private HashSet<Vector3Int> _cachedCurrentRoomID;
-        private List<TileData> _cachedtiles;
-#region IMapDomainBuilder 구현
-
-        TileMapRuntimeData IMapDomainBuilder.BuildRuntime(IMapDomainReadOnly domainData)
-        {
-            _runtimeData = new TileMapRuntimeData { tiles = domainData.GetRuntimeData() };
-            return _runtimeData;
-        }
-
-        TileMapRuntimeData IMapDomainBuilder.GetRuntimeData()
-        {
-            return _runtimeData;
-        }
-#endregion
-        public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
+        public List<TileData> GetOccludingWalls(Vector3Int playerCellPos,Dictionary<Vector3Int, List<TileData>> alltiles)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
             // 2D(XZ) flood-fill을 수행하여 플레이어가 닿을 수 있는 빈 공간을 찾습니다.
             // 그 과정에서 빈 공간과 접한 Wall 타입의 타일을 수집하여 반환합니다.
             // 반환값: 숨겨야 할 Wall 타일들의 리스트(중복 제거)
 
-            if (_runtimeData == null || _runtimeData.tiles == null)
-                return new List<TileData>();
-
-            var alltiles = _runtimeData.tiles;
-
-
             Vector3Int start = playerCellPos;
-            //이미 계산된구역이면 재계산하지 않음. 이 효력은 다른 구역으로 이동하면 사라짐
-
-            if (_cachedCurrentRoomID != null && _cachedCurrentRoomID.Contains(start))
-            {
-                return _cachedtiles;
-            }
             var resultSet = new HashSet<TileData>();
 
             // 시작 셀이 점유되어 있고, 그 점유물이 Wall/Obstacle이면 인접한 빈칸을 찾아 시작점으로 삼음
@@ -192,8 +162,7 @@ namespace IsoTilemap
                 StateRunner.Instance.ChangeState(new DebugTileRunner(action));
             }
 #endif
-            _cachedCurrentRoomID = visited.ToHashSet();
-            _cachedtiles = result;
+
 
             return result;
         }
@@ -281,32 +250,9 @@ namespace IsoTilemap
             return belowWalls;
         }
 
-
-
-
-
-        //TODO 타일이 1x1이 아닌경우 정상적 동작이 안됨 예외 처리 필요
-
-    }
-        public class DebugTileRunner : IFrameState
-    {
-        Action _action;
-        public void Enter()
+        public IEnumerable<TileCellSnapshot> Tiles()
         {
-        }
-
-        public void Exit()
-        {
-        }
-
-        public void Tick(float dt)
-        {
-            // Debug.Log("DebugRunner Tick: " + dt);
-            _action?.Invoke();
-        }
-        public DebugTileRunner(Action action)
-        {
-            _action = action;
+            throw new NotImplementedException();
         }
     }
 }
