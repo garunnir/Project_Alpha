@@ -6,6 +6,33 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
+
+public interface IMapSession
+{
+    IMapModelReadOnly Model { get; }
+    IMapRuntimeReadOnly Runtime { get; }
+}
+public interface IMapRuntimeReadOnly
+{
+}
+public interface IMapRuntime : IMapRuntimeReadOnly
+    {
+        
+    }
+
+public sealed class MapInstance : IMapSession
+{
+    public IMapModelReadOnly Model { get; }
+    public IMapRuntimeReadOnly Runtime { get; }
+
+    public MapInstance(IMapModelReadOnly model, IMapRuntimeReadOnly runtime)
+    {
+        Model = model;
+        Runtime = runtime;
+    }
+}
+
+
     //맵 데이터 입출력 담당
 
 
@@ -21,10 +48,15 @@ public interface IMapMapper
     IMapTilesReadOnly ToPrepared(MapSaveJsonDto dto);
     MapSaveJsonDto FromPrepared(IMapTilesReadOnly prepared);
 }
+public interface IMapRuntimeBuilder
+
+{
+    IMapRuntime Build(IMapModelReadOnly prepared);
+    }
     //맵 도메인 모델 빌더 담당
 public interface IMapModelBuilder
 {
-    IMapModel BuildRuntime(IMapTilesReadOnly prepared);
+    IMapModel Build(IMapTilesReadOnly prepared);
 }
     public interface IMapTilesReadOnly
 {
@@ -42,13 +74,13 @@ public interface IMapModelBuilder
     //맵 도메인 모델 구현체
     public sealed class MapTilesDTO : IMapTilesReadOnly
     {
-        private readonly TileMapRuntime _runtimeData;
+        private readonly Dictionary<Vector3Int, List<TileData>> _dto;
 
-        public IEnumerable<Vector3Int> Positions => _runtimeData.tiles.Keys;
+        public IEnumerable<Vector3Int> Positions => _dto.Keys;
 
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles)
         {
-            if (_runtimeData.tiles.TryGetValue(pos, out var tileList))
+            if (_dto.TryGetValue(pos, out var tileList))
             {
                 tiles = tileList;
                 return true;
@@ -57,9 +89,9 @@ public interface IMapModelBuilder
             return false;
         }
 
-        public MapTilesDTO(TileMapRuntime runtimeData)
+        public MapTilesDTO(Dictionary<Vector3Int, List<TileData>> dto)
         {
-            _runtimeData = runtimeData;
+            _dto = dto;
         }
     }
     // //맵 도메인 스냅샷 구현체

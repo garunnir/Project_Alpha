@@ -13,10 +13,10 @@ namespace IsoTilemap
         private TileMapRuntime _runtimeData;
         private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
-        public void Initialize(IMapModelReadOnly model, TileMapRuntime runtimeData)
+        public void Initialize(IMapSession mapSession)
         {
-            Model = model;
-            _runtimeData = runtimeData;
+            Model = mapSession.Model;
+            _runtimeData = mapSession.Runtime as TileMapRuntime;
         }
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {

@@ -6,7 +6,7 @@ public class TestRunner : MonoBehaviour
     [SerializeField] TileMapLoader _serializer;
     void Start()
     {
-        _serializer.LoadMap();
+        _serializer.LoadMapRuntime();
         Debug.Log("TestRunner started.");
     }
 }

@@ -7,29 +7,23 @@ namespace IsoTilemap
     public class MapSavePipline
     {
         private readonly IMapSerializer _serializer;
-        private readonly IMapModelReadOnly _domainBuilder;
-        private readonly IMapViewBuilder _viewBuilder;
+        private readonly IMapModelBuilder _modelBuilder;
         private readonly IMapMapper _mapper;
+        private readonly TileMapRuntime _runtime;
 
         public MapSavePipline(
             IMapSerializer serializer,
-            IMapModelBuilder domainBuilder,
-            IMapViewBuilder viewBuilder,
+            IMapModelBuilder modelBuilder,
             IMapMapper mapper)
         {
             _serializer = serializer;
-            _domainBuilder = domainBuilder;
-            _viewBuilder = viewBuilder;
+            _modelBuilder = modelBuilder;
             _mapper = mapper;
         }
 
         public void Save(string fullPath)
         {
-            IEnumerable<TileCellSnapshot> mapData = _domainBuilder.Tiles();
-            foreach (var snapshot in mapData)
-            {
-                Debug.Log($"Snapshot Tile: Pos({snapshot.Identity.GridPos}), PrefabId({snapshot.Identity.PrefabId})");
-            }
+            IMapTilesReadOnly mapData = _runtime.GetTiles();
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
 
             string json = JsonUtility.ToJson(mapDatas, true);

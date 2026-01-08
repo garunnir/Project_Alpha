@@ -48,7 +48,7 @@ namespace IsoTilemap
     {
         private TileMapRuntime _runtimeData;
 
-        public IMapModel BuildRuntime(IMapTilesReadOnly prepared)
+        public IMapModel Build(IMapTilesReadOnly prepared)
         {
             
             _runtimeData = new TileMapRuntime { tiles = prepared.TryGetTiles().tiles };

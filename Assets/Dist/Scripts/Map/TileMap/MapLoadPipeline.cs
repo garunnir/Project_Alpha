@@ -8,26 +8,30 @@ namespace IsoTilemap
         private readonly IMapSerializer _serializer;
         private readonly IMapModelBuilder _modelBuilder;
         private readonly IMapMapper _mapper;
+        private readonly IMapRuntimeBuilder _runtime;
 
         public MapLoadPipeline(IMapSerializer serializer,
                                IMapModelBuilder domainBuilder,
-                               IMapMapper mapper)
+                               IMapMapper mapper,
+                               IMapRuntimeBuilder runtimeBuilder)
         {
             _serializer = serializer;
             _modelBuilder = domainBuilder;
             _mapper = mapper;
+            _runtime = runtimeBuilder;
         }
 
-        public IMapModelReadOnly LoadModel(string path)
+        public IMapSession LoadModel(string path)
         {
             // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);
             // Map DTO to Domain Model
             IMapTilesReadOnly prepared = _mapper.ToPrepared(dto);
             // Build Runtime Data
-            IMapModelReadOnly modelData = _modelBuilder.BuildRuntime(prepared);
+            IMapModelReadOnly modelData = _modelBuilder.Build(prepared);
+            IMapRuntimeReadOnly runtimeData = _runtime.Build(modelData);
             // Build View
-            return modelData;
+            return new MapInstance(modelData, runtimeData);
         }
     }
 }

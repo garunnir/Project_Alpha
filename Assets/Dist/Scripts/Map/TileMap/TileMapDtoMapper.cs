@@ -45,6 +45,7 @@ namespace IsoTilemap
         public MapSaveJsonDto FromPrepared(IMapTilesReadOnly prepared)
         {
             IEnumerable<Vector3Int> tiles = prepared.Positions;
+            //DTO로 변환하여 집어넣을 컨테이너 생성
             MapSaveJsonDto tile = new MapSaveJsonDto();
 
             foreach (var td in tiles)
