@@ -10,13 +10,13 @@ namespace IsoTilemap
     public class TileMapContext : MonoBehaviour
     {
         public IMapModelReadOnly Model { get; private set; }
-        private TileMapRuntimeData runtimeData;
+        private TileMapRuntime _runtimeData;
         private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
-        public void Initialize(IMapModelReadOnly model)
+        public void Initialize(IMapModelReadOnly model, TileMapRuntime runtimeData)
         {
             Model = model;
-            runtimeData = (model as MapModelReadOnlyImpl)?._domainReadOnly as TileMapRuntimeData;
+            _runtimeData = runtimeData;
         }
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
@@ -25,10 +25,10 @@ namespace IsoTilemap
             // 그 과정에서 빈 공간과 접한 Wall 타입의 타일을 수집하여 반환합니다.
             // 반환값: 숨겨야 할 Wall 타일들의 리스트(중복 제거)
             
-            if (runtimeData == null || runtimeData.tiles == null)
+            if (_runtimeData == null || _runtimeData.tiles == null)
                 return new List<TileData>();
 
-            var alltiles = runtimeData.tiles;
+            var alltiles = _runtimeData.tiles;
 
 
             //이미 계산된구역이면 재계산하지 않음. 이 효력은 다른 구역으로 이동하면 사라짐
@@ -37,11 +37,13 @@ namespace IsoTilemap
             {
                 return _cachedtiles;
             }
-            Model.
-    
+            IEnumerable<TileCellSnapshot> wallResult = Model.GetOccludingWalls(playerCellPos,_runtimeData.tiles);
+            var visited = wallResult.Select(x => x.Position).ToHashSet();
+            List<TileData> resultTiles = wallResult.SelectMany(x => x.Tiles).ToList();
+
             _cachedCurrentRoomID = visited.ToHashSet();
-            _cachedtiles = result;
-            return result;
+            _cachedtiles = resultTiles;
+            return resultTiles;
         }
     }
 }

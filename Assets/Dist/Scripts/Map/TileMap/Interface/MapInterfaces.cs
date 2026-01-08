@@ -34,27 +34,15 @@ public interface IMapModelBuilder
     //맵 도메인 모델 읽기 전용 인터페이스
     public interface IMapModelReadOnly
     {
-         IEnumerable<TileCellSnapshot> Tiles();
     }
     public interface IMapModel : IMapModelReadOnly
     {
     }
-    public sealed class MapModelReadOnlyImpl: IMapModel
-    {
-        private readonly IMapModelReadOnly _domainReadOnly;
-        public MapModelReadOnlyImpl(IMapModelReadOnly domainReadOnly)
-        {
-            _domainReadOnly = domainReadOnly;
-        }
-        public IEnumerable<TileCellSnapshot> Tiles()
-        {
-            return _domainReadOnly.Tiles();
-        }
-    }
+
     //맵 도메인 모델 구현체
-    public sealed class MapTiles : IMapTilesReadOnly
+    public sealed class MapTilesDTO : IMapTilesReadOnly
     {
-        private readonly TileMapRuntimeData _runtimeData;
+        private readonly TileMapRuntime _runtimeData;
 
         public IEnumerable<Vector3Int> Positions => _runtimeData.tiles.Keys;
 
@@ -69,43 +57,29 @@ public interface IMapModelBuilder
             return false;
         }
 
-        public MapTiles(TileMapRuntimeData runtimeData)
+        public MapTilesDTO(TileMapRuntime runtimeData)
         {
             _runtimeData = runtimeData;
         }
-        public MapTiles(Dictionary<Vector3Int, List<TileData>> runtimeData)
-        {
-            _runtimeData = new TileMapRuntimeData()
-            {
-                tiles = runtimeData
-            };
-        }
-        //복사 생성자
-        public MapTiles(MapTiles other)
-        {
-            _runtimeData = new TileMapRuntimeData()
-            {
-                tiles = new Dictionary<Vector3Int, List<TileData>>(other._runtimeData.tiles)
-            };
-        }
     }
-    //맵 도메인 스냅샷 구현체
-        public sealed class MapDomainSnapshot : IMapModelReadOnly
-    {
-        private readonly IEnumerable<TileCellSnapshot>  _tiles;
-        public MapDomainSnapshot(MapDomainSnapshot tiles)
-        {
-            //복사 생성자
-        }
-        public MapDomainSnapshot(IEnumerable<TileCellSnapshot> tiles)
-        {
-            _tiles = tiles;
-        }
-        public IEnumerable<TileCellSnapshot> Tiles()
-        {
-            return _tiles;
-        }
-    }
+    // //맵 도메인 스냅샷 구현체
+    //     public sealed class MapModelSnapshot : IMapModelReadOnly
+    // {
+    //     private readonly IEnumerable<TileCellSnapshot>  _tiles;
+    //     public MapModelSnapshot(MapModelSnapshot tiles)
+    //     {
+    //         //복사 생성자
+    //     }
+    //     public MapModelSnapshot(IEnumerable<TileCellSnapshot> tiles)
+    //     {
+    //         _tiles = tiles;
+    //     }
+
+    //     public IEnumerable<TileCellSnapshot> GetOccludingWalls(Vector3Int playerCellPos, Dictionary<Vector3Int, List<TileData>> alltiles)
+    //     {
+    //         throw new NotImplementedException();
+    //     }
+    // }
     //맵 뷰 빌더 담당
     public interface IMapViewBuilder
 

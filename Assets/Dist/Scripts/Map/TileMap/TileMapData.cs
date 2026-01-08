@@ -5,11 +5,6 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-
-    public class TileMapRuntimeData
-    {
-        public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
-    }
     public static class TileHelper
     {
         public static Vector3Int ConvertWorldToGrid(Vector3 worldPos)
