@@ -4,15 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 namespace IsoTilemap
 {
-    public class TileMapModelData:IMapModel
+    public sealed class TileMapModel : IMapModel
     {
-        
+        private readonly IMapTilesReadOnly _prepared;
+        public TileMapModel(IMapTilesReadOnly prepared) => _prepared = prepared;
 
-        public IEnumerable<TileCellSnapshot> Tiles()
-        {
-            throw new NotImplementedException();
-        }
+        public IEnumerable<Vector3Int> Positions => _prepared.Positions;
 
-
+        public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles)
+            => _prepared.TryGetTiles(pos, out tiles);
     }
 }

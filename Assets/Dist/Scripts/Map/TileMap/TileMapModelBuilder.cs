@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 namespace IsoTilemap
 {
@@ -46,14 +48,12 @@ namespace IsoTilemap
     */
     public class TileMapModelBuilder : IMapModelBuilder
     {
-        private TileMapRuntime _runtimeData;
 
         public IMapModel Build(IMapTilesReadOnly prepared)
         {
-            
-            _runtimeData = new TileMapRuntime { tiles = prepared.TryGetTiles().tiles };
+            TileMapModel data = new TileMapModel(prepared);
 
-            return  new TileMapModelData();
+            return data;
         }
 
     }

@@ -6,8 +6,9 @@ public class TileMapLoader : MonoBehaviour
 {
     private TileMapContext _context;
     [SerializeField] IMapSerializer _serializer;
-    [SerializeField] IMapModelBuilder _domainBuilder;
+    [SerializeField] IMapModelBuilder _modelBuilder;
     [SerializeField] IMapViewBuilder _viewBuilder;
+    [SerializeField] IMapRuntimeBuilder _runtimeBuilder;
     [SerializeField] IMapMapper _mapper;
     [Header("Where to save/read the map file")]
     [SerializeField] private string fileName = "map01.json";      // 파일 이름
@@ -18,13 +19,6 @@ public class TileMapLoader : MonoBehaviour
     }
     private void Start()
     {
-        MapLoadPipeline pipeline = new MapLoadPipeline(
-            serializer: _serializer,
-            domainBuilder: _domainBuilder,
-            mapper: _mapper);
-        IMapModelReadOnly modelData = pipeline.LoadModel(GetFullPath());
-        _context.Initialize(modelData);
-        _viewBuilder.Build(modelData);
     }
 #if UNITY_EDITOR
     // === Deserialize: JSON 파일 → 씬 ===
@@ -34,22 +28,24 @@ public class TileMapLoader : MonoBehaviour
         //TODO: 에디트모드에서 작동 하게해야함
         MapLoadPipeline pipeline = new MapLoadPipeline(
             serializer: _serializer,
-            domainBuilder: _domainBuilder,
+            modelBuilder: _modelBuilder,
+            runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapModelReadOnly modelData = pipeline.LoadModel(GetFullPath());
-        _context.Initialize(modelData);
-        _viewBuilder.Build(modelData);
+        IMapSession session = pipeline.LoadModel(GetFullPath());
+        _context.Initialize(session);
+        _viewBuilder.Build(session.Model);
     }
 #endif
     public void LoadMapRuntime(string path)
     {
         MapLoadPipeline pipeline = new MapLoadPipeline(
             serializer: _serializer,
-            domainBuilder: _domainBuilder,
+            modelBuilder: _modelBuilder,
+            runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapModelReadOnly modelData = pipeline.LoadModel(path);
-        _context.Initialize(modelData);
-        _viewBuilder.Build(modelData);
+        IMapSession session = pipeline.LoadModel(path);
+        _context.Initialize(session);
+        _viewBuilder.Build(session.Model);
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===

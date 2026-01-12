@@ -3,16 +3,30 @@ using System.Collections.Generic;
 
 namespace IsoTilemap
 {
-public class TileRuntimeBuilder : IMapRuntimeBuilder
+public sealed class TileRuntimeBuilder : IMapRuntimeBuilder
 {
-    public IMapRuntime Build(IMapModelReadOnly prepared)
+    public IMapRuntime Build(IMapModelReadOnly model)
     {
-        TileMapRuntime runtime = new TileMapRuntime(prepared);
-        return runtime;
+        var tiles = new Dictionary<Vector3Int, IReadOnlyList<TileData>>();
+
+        foreach (var pos in model.Positions)
+        {
+            if (model.TryGetTiles(pos, out var tileList))
+            {
+                // 공유 전제: tileList는 수정되지 않는다는 팀 규율/설계가 필요
+                tiles[pos] = tileList;
+            }
+        }
+
+        return new TileMapRuntime(new MapRuntimeInitData(tiles));
     }
 }
 public record MapRuntimeInitData
     {
-        IReadOnlyDictionary<Vector3Int, List<TileData>> tiles;
+        public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> tiles;
+        public MapRuntimeInitData(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> tiles)
+        {
+            this.tiles = tiles;
+        }
     }
 }
