@@ -16,6 +16,18 @@ namespace IsoTilemap
 
 이벤트/버퍼 초기화
 같은 초기화 규칙이 계속 늘어난다.
+
+
+입력:
+- 어디서 옴?
+
+처리:
+- 누가 바꿈?
+- 언제 바뀜?
+
+출력:
+- 누가 씀?
+- 누가 책임짐?
     */
     public class TileMapRuntime: IMapRuntime
     {
