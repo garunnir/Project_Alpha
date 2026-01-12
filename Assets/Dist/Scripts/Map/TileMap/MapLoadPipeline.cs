@@ -11,12 +11,12 @@ namespace IsoTilemap
         private readonly IMapRuntimeBuilder _runtime;
 
         public MapLoadPipeline(IMapSerializer serializer,
-                               IMapModelBuilder domainBuilder,
+                               IMapModelBuilder modelBuilder,
                                IMapMapper mapper,
                                IMapRuntimeBuilder runtimeBuilder)
         {
             _serializer = serializer;
-            _modelBuilder = domainBuilder;
+            _modelBuilder = modelBuilder;
             _mapper = mapper;
             _runtime = runtimeBuilder;
         }

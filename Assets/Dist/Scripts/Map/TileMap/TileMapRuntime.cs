@@ -32,11 +32,15 @@ namespace IsoTilemap
     public class TileMapRuntime: IMapRuntime
     {
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
-        private IMapModelReadOnly prepared;
 
+// 준비가 된 데이터로부터 TileMapRuntime 인스턴스를 초기화
         public TileMapRuntime(MapRuntimeInitData prepared)
         {
-            tiles = prepared.GetAllTiles();
+            //한번만 발생하므로 가독성 우선, 변수 활용 용이함을 위해 읽기전용을 일반 딕셔너리로 변환
+            this.tiles = prepared.tiles.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToList()
+            );
         }
 
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos, Dictionary<Vector3Int, List<TileData>> alltiles)
