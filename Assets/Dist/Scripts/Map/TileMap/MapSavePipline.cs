@@ -1,14 +1,15 @@
 using System.IO;
-using System.Threading.Tasks;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System;
 namespace IsoTilemap
 {
     public class MapSavePipline
     {
         private readonly IMapMapper _mapper;
-        private readonly TileMapRuntime _runtime;
+        private readonly IMapRuntime _runtime;
 
-        public MapSavePipline(TileMapRuntime runtime,
+        public MapSavePipline(IMapRuntime runtime,
             IMapMapper mapper)
         {
             _mapper = mapper;
@@ -17,7 +18,7 @@ namespace IsoTilemap
 
         public void Save(string fullPath)
         {
-            IMapTilesReadOnly mapData = new MapTilesDTO(_runtime.tiles);
+            IMapTilesReadOnly mapData = new MapTilesDTO(_runtime.GetAllTiles());
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
 
             string json = JsonUtility.ToJson(mapDatas, true);
@@ -27,30 +28,48 @@ namespace IsoTilemap
             Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count})");
         }
         // void 대신 async Task 또는 async void(이벤트성일 때만) 사용
-        public async void SaveAsync(string fullPath)
+        public async UniTask SaveAsync(string fullPath)
         {
-            // 1. 메인 스레드 작업: 데이터 캡처 (유니티 API 접근은 메인 스레드에서 해야 함)
-            // 런타임 데이터가 저장 중에 바뀌면 안되므로 여기서 DTO 변환까지는 끝내는 것이 안전함
-            IMapTilesReadOnly mapData = new MapTilesDTO(_runtime.tiles);
-            MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
+            // 1. 메인 스레드: 데이터 캡처
+            var mapData = new MapTilesDTO(_runtime.tiles);
+            var mapDatas = _mapper.FromPrepared(mapData);
 
-            // 2. 백그라운드 작업: JSON 변환 및 파일 쓰기 (무거운 작업)
-            await Task.Run(() =>
+            // 2. 백그라운드 작업 (이 블록 안에서만 백그라운드임이 보장됨)
+            await UniTask.RunOnThreadPool(async () =>
             {
-                // JsonUtility는 메인 스레드 전용이므로, 백그라운드에서는 Newtonsoft.Json을 쓰거나
-                // 혹은 JsonUtility를 위쪽(1번 영역)에서 미리 수행하고 string만 넘겨야 함.
-                // 여기서는 string을 넘겨받았다고 가정하거나, JsonUtility를 메인에서 호출하는 방식으로 수정 권장.
-                
-                // *수정 전략*: JsonUtility는 스레드 안전하지 않으므로 메인 스레드에서 string으로 변환 후
-                // 파일 쓰기만 비동기로 넘기는 것이 가장 깔끔합니다.
-            });
-            
-            // 더 나은 비동기 저장 패턴 (JsonUtility 사용 시)
-            string json = JsonUtility.ToJson(mapDatas, true); // 메인 스레드에서 수행 (빠름)
-            
-            await File.WriteAllTextAsync(fullPath, json); // .NET Standard 2.1 (Unity 2021.2+) 지원
+                // 여기서 Newtonsoft.Json 사용 (CPU Heavy)
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(mapDatas, Newtonsoft.Json.Formatting.Indented);
 
+                // 파일 쓰기 (I/O Heavy)
+                await File.WriteAllTextAsync(fullPath, json);
+            });
+
+            // 3. 여기는 자동으로 "메인 스레드"로 복귀되어 있음!
+            // 별도의 SwitchToMainThread() 호출이 필요 없어 실수가 발생하지 않음
             Debug.Log($"TileMap saved asynchronously to: {fullPath}");
+        }
+        public async UniTask SaveSafeAsync(string fileName)
+        {
+            string fullPath = Path.Combine(Application.persistentDataPath, fileName);
+
+            // 1. 데이터 준비
+            var mapDatas = _mapper.FromPrepared(new MapTilesDTO(_runtime.tiles));
+
+            await UniTask.RunOnThreadPool(() =>
+            {
+                // 2. 스트림을 열고 바로 쓴다 (메모리에 거대 string을 만들지 않음)
+                using (var fileStream = File.CreateText(fullPath))
+                using (var writer = new Newtonsoft.Json.JsonTextWriter(fileStream))
+                {
+                    writer.Formatting = Newtonsoft.Json.Formatting.Indented; // 들여쓰기 설정
+                    var serializer = new Newtonsoft.Json.JsonSerializer();
+
+                    // 데이터를 조각내어 파일로 바로 흘려보냄
+                    serializer.Serialize(writer, mapDatas);
+                }
+            });
+
+            Debug.Log($"Saved safely to: {fullPath}");
         }
     }
 }

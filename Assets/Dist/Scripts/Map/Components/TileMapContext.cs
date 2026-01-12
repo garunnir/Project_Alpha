@@ -37,10 +37,8 @@ namespace IsoTilemap
             {
                 return _cachedtiles;
             }
-            IEnumerable<TileCellSnapshot> wallResult = Model.GetOccludingWalls(playerCellPos,_runtimeData.tiles);
-            var visited = wallResult.Select(x => x.Position).ToHashSet();
-            List<TileData> resultTiles = wallResult.SelectMany(x => x.Tiles).ToList();
-
+            List<TileData> resultTiles = _runtimeData.GetOccludingWalls(playerCellPos);
+            IEnumerable<Vector3Int> visited = resultTiles.Select(x => x.identity.GridPos);
             _cachedCurrentRoomID = visited.ToHashSet();
             _cachedtiles = resultTiles;
             return resultTiles;

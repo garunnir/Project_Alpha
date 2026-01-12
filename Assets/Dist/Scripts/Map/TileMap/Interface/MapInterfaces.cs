@@ -14,6 +14,7 @@ namespace IsoTilemap
     }
     public interface IMapRuntimeReadOnly
     {
+        IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles();
     }
     public interface IMapRuntime : IMapRuntimeReadOnly
     {
