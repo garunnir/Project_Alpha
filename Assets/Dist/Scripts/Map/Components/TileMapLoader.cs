@@ -36,6 +36,10 @@ public class TileMapLoader : MonoBehaviour
         _viewBuilder.Build(session.Model);
     }
 #endif
+    public void LoadMapRuntime()
+    {
+        LoadMapRuntime(GetFullPath());
+    }
     public void LoadMapRuntime(string path)
     {
         MapLoadPipeline pipeline = new MapLoadPipeline(

@@ -32,21 +32,10 @@ namespace IsoTilemap
     public class TileMapRuntime : IMapRuntime
     {
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
-        public IEnumerable<KeyValuePair<Vector3Int, IReadOnlyList<TileData>>> GetAllTiles()
-        {
-            foreach (var kvp in tiles)
-            {
-                // 2. 내부 리스트만 안전하게 읽기 전용으로 포장해서 건네줌
-                // (AsReadOnly는 여전히 객체를 만들지만, ToDictionary라는 거대한 통은 안 만듦)
-                // 더 최적화하려면 KeyValuePair 구조체만 넘기고 받는 쪽에서 인터페이스로 받게 설계 변경 가능
-                yield return new KeyValuePair<Vector3Int, IReadOnlyList<TileData>>(kvp.Key, kvp.Value);
-            }
-        }
-        // 준비가 된 데이터로부터 TileMapRuntime 인스턴스를 초기화
+
         public TileMapRuntime(MapRuntimeInitData prepared)
         {
-            //한번만 발생하므로 가독성 우선, 변수 활용 용이함을 위해 읽기전용을 일반 딕셔너리로 변환
-            this.tiles = prepared.tiles.ToDictionary(
+            tiles = prepared.tiles.ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.ToList()
             );
@@ -299,7 +288,10 @@ namespace IsoTilemap
             return belowWalls;
         }
 
-
+        public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles()
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }
