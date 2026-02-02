@@ -78,7 +78,7 @@ namespace IsoTilemap
     //맵 도메인 모델 구현체
     public sealed class MapTilesDTO : IMapTilesReadOnly
     {
-        private readonly Dictionary<Vector3Int, List<TileData>> _dto;
+        private readonly IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> _dto;
 
         public IEnumerable<Vector3Int> Positions => _dto.Keys;
 
@@ -93,7 +93,7 @@ namespace IsoTilemap
             return false;
         }
 
-        public MapTilesDTO(Dictionary<Vector3Int, List<TileData>> dto)
+        public MapTilesDTO(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> dto)
         {
             _dto = dto;
         }

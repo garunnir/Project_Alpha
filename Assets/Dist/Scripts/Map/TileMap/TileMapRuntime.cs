@@ -4,30 +4,32 @@ using System.Linq;
 using System;
 namespace IsoTilemap
 {
+
+
     // 런타임 상에서 타일맵 데이터를 보관하는 클래스
     /*
     런타임은 대개 단순 데이터가 아니라:
 
-좌표 인덱스(배열/청크) 구성
+    좌표 인덱스(배열/청크) 구성
 
-타일 룰/머티리얼/레이어 매핑
+    타일 룰/머티리얼/레이어 매핑
 
-가림/경로/충돌용 캐시 초기화
+    가림/경로/충돌용 캐시 초기화
 
-이벤트/버퍼 초기화
-같은 초기화 규칙이 계속 늘어난다.
+    이벤트/버퍼 초기화
+    같은 초기화 규칙이 계속 늘어난다.
 
 
-입력:
-- 어디서 옴?
+    입력:
+    - 어디서 옴?
 
-처리:
-- 누가 바꿈?
-- 언제 바뀜?
+    처리:
+    - 누가 바꿈?
+    - 언제 바뀜?
 
-출력:
-- 누가 씀?
-- 누가 책임짐?
+    출력:
+    - 누가 씀?
+    - 누가 책임짐?
     */
     public class TileMapRuntime : IMapRuntime
     {
@@ -40,7 +42,10 @@ namespace IsoTilemap
                 kvp => kvp.Value.ToList()
             );
         }
-
+        public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles()
+        {
+            throw new NotImplementedException();
+        }
         private List<TileData> GetOccludingWalls(Vector3Int playerCellPos, Dictionary<Vector3Int, List<TileData>> alltiles)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
@@ -286,11 +291,6 @@ namespace IsoTilemap
                     belowWalls.Add(wall);
             }
             return belowWalls;
-        }
-
-        public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles()
-        {
-            throw new NotImplementedException();
         }
     }
 
