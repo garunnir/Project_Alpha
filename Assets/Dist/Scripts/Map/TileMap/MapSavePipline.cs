@@ -31,7 +31,7 @@ namespace IsoTilemap
         public async UniTask SaveAsync(string fullPath)
         {
             // 1. 메인 스레드: 데이터 캡처
-            var mapData = new MapTilesDTO(_runtime.tiles);
+            var mapData = new MapTilesDTO(_runtime.GetAllTiles());
             var mapDatas = _mapper.FromPrepared(mapData);
 
             // 2. 백그라운드 작업 (이 블록 안에서만 백그라운드임이 보장됨)
@@ -53,7 +53,7 @@ namespace IsoTilemap
             string fullPath = Path.Combine(Application.persistentDataPath, fileName);
 
             // 1. 데이터 준비
-            var mapDatas = _mapper.FromPrepared(new MapTilesDTO(_runtime.tiles));
+            var mapDatas = _mapper.FromPrepared(new MapTilesDTO(_runtime.GetAllTiles()));
 
             await UniTask.RunOnThreadPool(() =>
             {

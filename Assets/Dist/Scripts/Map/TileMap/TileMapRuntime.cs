@@ -44,7 +44,10 @@ namespace IsoTilemap
         }
         public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles()
         {
-            throw new NotImplementedException();
+            return tiles.ToDictionary(
+                kvp => kvp.Key,
+                kvp => (IReadOnlyList<TileData>)kvp.Value
+            );
         }
         private List<TileData> GetOccludingWalls(Vector3Int playerCellPos, Dictionary<Vector3Int, List<TileData>> alltiles)
         {

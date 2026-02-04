@@ -107,6 +107,10 @@ namespace IsoTilemap
 
         public MapTilesDTO(Dictionary<Vector3Int, List<TileData>> dto)
         {
+            _dto = dto.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<TileData>)kvp.Value);
+        }
+        public MapTilesDTO(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> dto)
+        {
             _dto = dto;
         }
     }
