@@ -10,10 +10,10 @@ namespace IsoTilemap
     {
         public enum TileType
         {
-            none=0,
-            Floor=1,
-            Wall=2,
-            Obstacle=3
+            none = 0,
+            Floor = 1,
+            Wall = 2,
+            Obstacle = 3
         }
         [Header("Grid Anchor Position (xyz)")]
         public Vector3Int gridPos;          // gx, gy, gz
@@ -24,15 +24,15 @@ namespace IsoTilemap
         [Header("Prefab Identity")]
         public string prefabId;             // 어떤 프리팹/타입인지 식별용
 
-    [Header("Tile Type")]
-    public TileType tileType = TileType.none;
+        [Header("Tile Type")]
+        public TileType tileType = TileType.none;
 
-    [Header("Gizmo (Grid) Settings")]
-    [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
-    public float gizmoCellSize = 1f;
-    [Tooltip("기즈모 그리드 선을 그릴지 여부")]
-    public bool drawGizmoGrid = true;
-    public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
+        [Header("Gizmo (Grid) Settings")]
+        [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
+        public float gizmoCellSize = 1f;
+        [Tooltip("기즈모 그리드 선을 그릴지 여부")]
+        public bool drawGizmoGrid = true;
+        public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
 
         private void Reset()
         {
@@ -47,6 +47,7 @@ namespace IsoTilemap
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
         // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
         // - 높이(size.y)에 맞춘 와이어 박스를 함께 표시합니다.
+        // 각 타일의 권장규격을 표현하는 기즈모입니다.
         private void OnDrawGizmosSelected()
         {
             if (!drawGizmoGrid) return;
@@ -54,7 +55,7 @@ namespace IsoTilemap
             // 셀 크기
             float cs = Mathf.Max(0.0001f, gizmoCellSize);
 
-            Vector3 anchor = transform.position- new Vector3(0.5f, 0f, 0.5f);
+            Vector3 anchor = transform.position - new Vector3(0.5f, 0f, 0.5f);
 
             int sx = Mathf.Max(1, size.x);
             int sy = Mathf.Max(1, size.y);

@@ -11,6 +11,8 @@ namespace IsoTilemap
 
         public IEnumerable<Vector3Int> Positions => _prepared.Positions;
 
+        public IReadOnlyList<TileData> Tiles()=>_prepared.Tiles();
+
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles)
             => _prepared.TryGetTiles(pos, out tiles);
     }

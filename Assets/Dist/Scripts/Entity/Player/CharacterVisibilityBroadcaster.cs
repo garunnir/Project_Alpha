@@ -32,7 +32,10 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         List<TileData> walls = _tileMapRuntime.GetOccludingWalls(vector3Int);
         foreach (TileData wall in walls)
         {
-            wall.state.isHiddenCharacter = true;
+            if (_tileMapRuntime.TryGetTile(wall.tileDefId, out TileInfo tileInfo))
+            {
+                tileInfo.state.isHiddenCharacter = true;
+            }
         }
     }
 }

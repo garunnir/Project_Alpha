@@ -43,5 +43,21 @@ namespace IsoTilemap
             _cachedtiles = resultTiles;
             return resultTiles;
         }
+        public void HideOcclusionTileWall(Vector3Int playerCellPos)
+        {
+            List<TileData> walls = GetOccludingWalls(playerCellPos);
+            for (int i = 0; i < walls.Count; i++)
+            {
+                TileData wall = walls[i];
+                TileState tileState = wall.state;
+                    tileState.isHiddenCharacter = true;
+                    wall.state = tileState;
+            }
+        }
+
+        internal bool TryGetTile(Guid tileDefId, out TileInfo tileInfo)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

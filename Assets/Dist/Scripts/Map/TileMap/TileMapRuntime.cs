@@ -62,7 +62,6 @@ namespace IsoTilemap
                 bool hasBlocking = false;
                 foreach (var t in startList)
                 {
-                    if (t == null) continue;
                     if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                     { hasBlocking = true; break; }
                 }
@@ -157,7 +156,6 @@ namespace IsoTilemap
                         // 점유된 셀: 해당 그리드좌표에 포함된 타일들 중 Wall인 경우가 결과에 추가
                         foreach (var t in list)
                         {
-                            if (t == null) continue;
                             if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
                             {
                                 resultSet.Add(t);

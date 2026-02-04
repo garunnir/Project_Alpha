@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
+    //컨트롤러는 타일맵의 상태를 관리하고, 변경 사항을 시각화하는 역할을 합니다.
     public class TileMapController : MonoBehaviour
     {
         [SerializeField] private TileMapVisualizer _visualizer;

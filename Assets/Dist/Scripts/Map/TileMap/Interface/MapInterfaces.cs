@@ -63,12 +63,14 @@ namespace IsoTilemap
     {
         bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles);
         IEnumerable<Vector3Int> Positions { get; }
+        IReadOnlyList<TileData> Tiles();
     }
     //맵 도메인 모델 읽기 전용 인터페이스
     public interface IMapModelReadOnly
     {
         bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles);
         IEnumerable<Vector3Int> Positions { get; }
+        IReadOnlyList<TileData> Tiles();
     }
     public interface IMapModel : IMapModelReadOnly
     {
@@ -93,7 +95,17 @@ namespace IsoTilemap
             return false;
         }
 
-        public MapTilesDTO(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> dto)
+        public IReadOnlyList<TileData> Tiles()
+        {
+            List<TileData> allTiles = new List<TileData>();
+            foreach (var tileList in _dto.Values)
+            {
+                allTiles.AddRange(tileList);
+            }
+            return allTiles;
+        }
+
+        public MapTilesDTO(Dictionary<Vector3Int, List<TileData>> dto)
         {
             _dto = dto;
         }
