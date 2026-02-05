@@ -6,7 +6,7 @@ using UnityEngine;
 // 저장용 컴포넌트 런타임 기능 넣으면 안됨.
 namespace IsoTilemap
 {
-    public class TileInfo : MonoBehaviour
+    public class TileView : MonoBehaviour
     {
         public enum TileType
         {

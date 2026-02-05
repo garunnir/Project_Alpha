@@ -6,14 +6,11 @@ namespace IsoTilemap
     //컨트롤러는 타일맵의 상태를 관리하고, 변경 사항을 시각화하는 역할을 합니다.
     public class TileMapController : MonoBehaviour
     {
-        [SerializeField] private TileMapVisualizer _visualizer;
         [SerializeField] private TileMapContext _context;
-
-
         void ClearExistingTiles()
         {
             // FindObjectsByType: include inactive so we match the previous behavior of FindObjectsOfType(true).
-            var tileInfos = UnityEngine.Object.FindObjectsByType<TileInfo>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            var tileInfos = UnityEngine.Object.FindObjectsByType<TileView>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
 
             // 타일만 날린다고 가정 (이 스크립트가 붙은 오브젝트는 남김)
             foreach (var info in tileInfos)
@@ -53,7 +50,7 @@ namespace IsoTilemap
         }
         private void RefreshObj(TileData obj)
         {
-            TileInfo info = _tileDefInstance[obj.tileDefId];
+            TileView info = _tileDefInstance[obj.tileDefId];
             info.gameObject.SetActive(!obj.state.isHiddenCharacter);
         }
         public void UpdateCell(Vector3Int cellPos, TileData state)

@@ -65,7 +65,7 @@ namespace IsoTilemap
                 bool hasBlocking = false;
                 foreach (var t in startList)
                 {
-                    if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
+                    if (IsWallEligibleForHiding((TileView.TileType)t.identity.tileType))
                     { hasBlocking = true; break; }
                 }
 
@@ -79,7 +79,7 @@ namespace IsoTilemap
                     {
                         var n = new Vector3Int(start.x + d.x, start.y, start.z + d.z);
                         //벽 타일이나 오브젝트 타일이 없는 빈칸을 찾음
-                        if (!alltiles[n].Any(x => IsWallEligibleForHiding((TileInfo.TileType)x.identity.tileType))) { start = n; found = true; break; }
+                        if (!alltiles[n].Any(x => IsWallEligibleForHiding((TileView.TileType)x.identity.tileType))) { start = n; found = true; break; }
                     }
                     if (!found)
                     {
@@ -90,7 +90,7 @@ namespace IsoTilemap
                         {
                             foreach (var t in rightlist)
                             {
-                                if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
+                                if (IsWallEligibleForHiding((TileView.TileType)t.identity.tileType))
                                 {
                                     hidelist.Add(t);
                                 }
@@ -100,7 +100,7 @@ namespace IsoTilemap
                         {
                             foreach (var t in backlist)
                             {
-                                if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
+                                if (IsWallEligibleForHiding((TileView.TileType)t.identity.tileType))
                                 {
                                     hidelist.Add(t);
                                 }
@@ -159,7 +159,7 @@ namespace IsoTilemap
                         // 점유된 셀: 해당 그리드좌표에 포함된 타일들 중 Wall인 경우가 결과에 추가
                         foreach (var t in list)
                         {
-                            if (IsWallEligibleForHiding((TileInfo.TileType)t.identity.tileType))
+                            if (IsWallEligibleForHiding((TileView.TileType)t.identity.tileType))
                             {
                                 resultSet.Add(t);
                                 wallChecked.Add(nx);
@@ -167,7 +167,7 @@ namespace IsoTilemap
                                 isFloor = false;
                                 break;
                             }
-                            else if ((TileInfo.TileType)t.identity.tileType == TileInfo.TileType.Floor)
+                            else if ((TileView.TileType)t.identity.tileType == TileView.TileType.Floor)
                             {
                                 //바닥 타일이면 확장
                                 isFloor = true;
@@ -211,9 +211,9 @@ namespace IsoTilemap
         {
             return GetOccludingWalls(playerCellPos, this.tiles);
         }
-        private bool IsWallEligibleForHiding(TileInfo.TileType type)
+        private bool IsWallEligibleForHiding(TileView.TileType type)
         {
-            return type == TileInfo.TileType.Wall || type == TileInfo.TileType.Obstacle;
+            return type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
         }
 #if UNITY_EDITOR
         // TODO: 타일이 1x1이 아닌 경우 정상 동작하지 않음 → 예외 처리 필요

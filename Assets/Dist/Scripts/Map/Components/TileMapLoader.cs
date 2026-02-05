@@ -4,6 +4,9 @@ using UnityEngine;
 [DisallowMultipleComponent, RequireComponent(typeof(TileMapContext))]
 public class TileMapLoader : MonoBehaviour
 {
+    [Header("Prefab DB for loading")]
+    public TilePrefabDB prefabDB;
+    private TileObjFactory _tileFactory;
     private TileMapContext _context;
     [SerializeField] IMapSerializer _serializer;
     [SerializeField] IMapModelBuilder _modelBuilder;
@@ -32,8 +35,10 @@ public class TileMapLoader : MonoBehaviour
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
         IMapSession session = pipeline.LoadModel(GetFullPath());
-        _context.Initialize(session);
-        _viewBuilder.Build(session.Model);
+        _tileFactory = new TileObjFactory(this.transform, prefabDB);
+        _viewBuilder = new TileMapVisualizer(_tileFactory);
+        _context.Initialize(session, _viewBuilder);
+        _viewBuilder.Build(session.Model, _context);
     }
 #endif
     public void LoadMapRuntime()
@@ -48,8 +53,10 @@ public class TileMapLoader : MonoBehaviour
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
         IMapSession session = pipeline.LoadModel(path);
-        _context.Initialize(session);
-        _viewBuilder.Build(session.Model);
+        _tileFactory = new TileObjFactory(this.transform, prefabDB);
+        _viewBuilder = new TileMapVisualizer(_tileFactory);
+        _context.Initialize(session, _viewBuilder);
+        _viewBuilder.Build(session.Model, _context);
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===
@@ -58,7 +65,7 @@ public class TileMapLoader : MonoBehaviour
     {
         // FindObjectsOfType(T) is obsolete in newer Unity versions.
         // Use FindObjectsByType and explicitly include inactive objects for the same behavior.
-        var tileInfos = UnityEngine.Object.FindObjectsByType<TileInfo>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+        var tileInfos = UnityEngine.Object.FindObjectsByType<TileView>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
 
         MapSaveJsonDto mapData = new MapSaveJsonDto();
         mapData.tiles.Clear();

@@ -134,8 +134,7 @@ namespace IsoTilemap
     // }
     //맵 뷰 빌더 담당
     public interface IMapViewBuilder
-
     {
-        void Build(IMapModelReadOnly runtimeData);
+        void Build(IMapModelReadOnly model, TileMapContext context);
     }
 }
