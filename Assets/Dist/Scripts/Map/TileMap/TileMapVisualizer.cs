@@ -30,7 +30,7 @@ namespace IsoTilemap
         /// <summary>
         /// 모델 데이터를 기반으로 타일맵을 구축합니다.
         /// </summary>
-        public void Build(IMapModelReadOnly modelData, TileMapContext context)
+        public void Build(IMapModelReadOnly modelData, TileMapSession context)
         {
             var tiles = modelData.Tiles();
             if (tiles == null || tiles.Count() == 0)

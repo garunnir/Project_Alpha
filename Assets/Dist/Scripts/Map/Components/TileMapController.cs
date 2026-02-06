@@ -6,7 +6,7 @@ namespace IsoTilemap
     //컨트롤러는 타일맵의 상태를 관리하고, 변경 사항을 시각화하는 역할을 합니다.
     public class TileMapController : MonoBehaviour
     {
-        [SerializeField] private TileMapContext _context;
+        [SerializeField] private TileMapSession _context;
         void ClearExistingTiles()
         {
             // FindObjectsByType: include inactive so we match the previous behavior of FindObjectsOfType(true).

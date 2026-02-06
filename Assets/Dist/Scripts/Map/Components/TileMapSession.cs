@@ -6,19 +6,17 @@ namespace IsoTilemap
 {
     // 타일맵 도메인 데이터 관리 클래스
     // 뷰와는 독립적으로 타일맵 데이터를 관리하고 제공하는 역할을 합니다.
-    public class TileMapContext
+    public class TileMapSession
     {
-        public IMapModelReadOnly Model { get; private set; }
-        private TileMapRuntime _runtimeData;
+        private IMapRuntime _runtimeData;
         private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
-        private TileMapVisualizer _visualizer;
+        private IMapViewBuilder _visualizer;
 
-        public void Initialize(IMapSession mapSession, IMapViewBuilder viewBuilder)
+        public void Initialize(IMapRuntime runtime, IMapViewBuilder viewBuilder)
         {
-            Model = mapSession.Model;
-            _runtimeData = mapSession.Runtime as TileMapRuntime;
-            _visualizer = viewBuilder as TileMapVisualizer;
+            _runtimeData = runtime;
+            _visualizer = viewBuilder;
         }
         public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {

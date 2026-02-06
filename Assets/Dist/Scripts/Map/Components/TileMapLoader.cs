@@ -1,13 +1,13 @@
 using IsoTilemap;
 using System.IO;
 using UnityEngine;
-[DisallowMultipleComponent, RequireComponent(typeof(TileMapContext))]
+[DisallowMultipleComponent, RequireComponent(typeof(TileMapSession))]
 public class TileMapLoader : MonoBehaviour
 {
     [Header("Prefab DB for loading")]
     public TilePrefabDB prefabDB;
     private TileObjFactory _tileFactory;
-    private TileMapContext _context;
+    private TileMapSession _context;
     [SerializeField] IMapSerializer _serializer;
     [SerializeField] IMapModelBuilder _modelBuilder;
     [SerializeField] IMapViewBuilder _viewBuilder;
@@ -18,7 +18,7 @@ public class TileMapLoader : MonoBehaviour
     [SerializeField] private bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
     void Awake()
     {
-        _context = GetComponent<TileMapContext>();
+        _context = GetComponent<TileMapSession>();
     }
     private void Start()
     {
@@ -34,7 +34,7 @@ public class TileMapLoader : MonoBehaviour
             modelBuilder: _modelBuilder,
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapSession session = pipeline.LoadModel(GetFullPath());
+        IMapContext session = pipeline.LoadModel(GetFullPath());
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
         _context.Initialize(session, _viewBuilder);
@@ -52,7 +52,7 @@ public class TileMapLoader : MonoBehaviour
             modelBuilder: _modelBuilder,
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapSession session = pipeline.LoadModel(path);
+        IMapContext session = pipeline.LoadModel(path);
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
         _context.Initialize(session, _viewBuilder);

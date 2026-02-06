@@ -7,7 +7,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
 
-    public interface IMapSession
+    public interface IMapContext
     {
         IMapModelReadOnly Model { get; }
         IMapRuntimeReadOnly Runtime { get; }
@@ -21,7 +21,7 @@ namespace IsoTilemap
 
     }
 
-    public sealed class MapInstance : IMapSession
+    public sealed class MapInstance : IMapContext
     {
         public IMapModelReadOnly Model { get; }
         public IMapRuntimeReadOnly Runtime { get; }
@@ -135,6 +135,6 @@ namespace IsoTilemap
     //맵 뷰 빌더 담당
     public interface IMapViewBuilder
     {
-        void Build(IMapModelReadOnly model, TileMapContext context);
+        void Build(IMapModelReadOnly model, TileMapSession context);
     }
 }
