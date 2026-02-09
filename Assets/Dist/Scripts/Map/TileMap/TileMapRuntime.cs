@@ -33,7 +33,17 @@ namespace IsoTilemap
     */
     public class TileMapRuntime : IMapRuntime
     {
+        public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
+        public void SetTile(Vector3Int pos, TileData tileDatas)
+        {
+            if (!tiles.ContainsKey(pos))
+            {
+                tiles[pos] = new List<TileData>();
+            }
+            tiles[pos].Add(tileDatas);
+            OnRuntimeDataChanged?.Invoke(pos, tiles[pos]);
+        }
 
         public TileMapRuntime(MapRuntimeInitData prepared)
         {
@@ -42,13 +52,11 @@ namespace IsoTilemap
                 kvp => kvp.Value.ToList()
             );
         }
-        public IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles()
+        public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
-            return tiles.ToDictionary(
-                kvp => kvp.Key,
-                kvp => (IReadOnlyList<TileData>)kvp.Value
-            );
+            return GetOccludingWalls(playerCellPos, tiles);
         }
+
         private List<TileData> GetOccludingWalls(Vector3Int playerCellPos, Dictionary<Vector3Int, List<TileData>> alltiles)
         {
             // 주어진 플레이어 셀 위치(playerCellPos)를 기준으로
@@ -207,10 +215,6 @@ namespace IsoTilemap
 
             return result;
         }
-        public List<TileData> GetOccludingWalls(Vector3Int playerCellPos)
-        {
-            return GetOccludingWalls(playerCellPos, this.tiles);
-        }
         private bool IsWallEligibleForHiding(TileView.TileType type)
         {
             return type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
@@ -293,6 +297,8 @@ namespace IsoTilemap
             }
             return belowWalls;
         }
+
+
     }
 
 }

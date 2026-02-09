@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
-       public struct TileData
+    public readonly struct TileData
     {
-        public Guid tileDefId;
-        public TileState state;
-        public TileIdentity identity;
+        public readonly Guid tileDefId;
+        public readonly TileState state;
+        public readonly TileIdentity identity;
     }
-    public struct TileState
+    public readonly struct TileState
     {
-        public bool isHiddenCharacter;
+        public readonly bool isHiddenCharacter;
     }
-    public struct TileIdentity
+    public readonly struct TileIdentity
     {
-        public string PrefabId;
-        public Vector3Int GridPos;
-        public Vector3Int sizeUnit;
-        public byte tileType;
+        public readonly string PrefabId;
+        public readonly Vector3Int GridPos;
+        public readonly Vector3Int sizeUnit;
+        public readonly byte tileType;
     }
 
 }

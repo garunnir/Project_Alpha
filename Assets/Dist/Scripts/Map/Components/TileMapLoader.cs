@@ -7,7 +7,7 @@ public class TileMapLoader : MonoBehaviour
     [Header("Prefab DB for loading")]
     public TilePrefabDB prefabDB;
     private TileObjFactory _tileFactory;
-    private TileMapSession _context;
+    private TileMapSession _session;
     [SerializeField] IMapSerializer _serializer;
     [SerializeField] IMapModelBuilder _modelBuilder;
     [SerializeField] IMapViewBuilder _viewBuilder;
@@ -18,7 +18,7 @@ public class TileMapLoader : MonoBehaviour
     [SerializeField] private bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
     void Awake()
     {
-        _context = GetComponent<TileMapSession>();
+        _session = GetComponent<TileMapSession>();
     }
     private void Start()
     {
@@ -34,11 +34,11 @@ public class TileMapLoader : MonoBehaviour
             modelBuilder: _modelBuilder,
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapContext session = pipeline.LoadModel(GetFullPath());
+        IMapSession session = pipeline.LoadModel(GetFullPath());
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
-        _context.Initialize(session, _viewBuilder);
-        _viewBuilder.Build(session.Model, _context);
+        _session.Initialize(session, _viewBuilder);
+        _viewBuilder.Build(session.Model, _session);
     }
 #endif
     public void LoadMapRuntime()
@@ -52,11 +52,11 @@ public class TileMapLoader : MonoBehaviour
             modelBuilder: _modelBuilder,
             runtimeBuilder: _runtimeBuilder,
             mapper: _mapper);
-        IMapContext session = pipeline.LoadModel(path);
+        IMapSession session = pipeline.LoadModel(path);
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
-        _context.Initialize(session, _viewBuilder);
-        _viewBuilder.Build(session.Model, _context);
+        _session.Initialize(session, _viewBuilder);
+        _viewBuilder.Build(session.Model, _session);
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===

@@ -19,6 +19,7 @@ namespace IsoTilemap
 
         private Transform _targetTransform;
         private TileObjFactory _tileFactory;
+        private IMapRuntimeReadOnly _runtime;
 
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
@@ -64,6 +65,40 @@ namespace IsoTilemap
         public bool TryGetTile(Guid tileId, out TileView tileInfo)
         {
             return _tileInstances.TryGetValue(tileId, out tileInfo);
+        }
+
+        public void Bind(IMapRuntimeReadOnly runtime)
+        {
+            _runtime = runtime;
+            _runtime.OnRuntimeDataChanged += RefreshTiles;
+        }
+        public void Unbind()
+        {
+            if (_runtime != null)
+            {
+                _runtime.OnRuntimeDataChanged -= RefreshTiles;
+                _runtime = null;
+            }
+        }
+        private void RefreshTiles(Vector3Int changedPos, List<TileData> changedTiles)
+        {
+            foreach (var tileData in changedTiles)
+            {
+                if (TryGetTile(tileData.tileDefId, out TileView tileView))// 타일 인스턴스가 존재하는 경우
+                {
+                    // 타일 상태 업데이트
+                    tileView.UpdateState(tileData.state);
+                }
+                else
+                {
+                    var spawnedTile = _tileFactory.SpawnTile(tileData);
+                    _tileInstances[tileData.tileDefId] = spawnedTile;
+                }
+            }
+        }
+        private void OnDestroy()
+        {
+            Unbind();
         }
     }
 }

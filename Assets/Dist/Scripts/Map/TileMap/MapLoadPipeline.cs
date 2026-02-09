@@ -21,7 +21,7 @@ namespace IsoTilemap
             _runtime = runtimeBuilder;
         }
 
-        public IMapContext LoadModel(string path)
+        public IMapSession LoadModel(string path)
         {
             // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);

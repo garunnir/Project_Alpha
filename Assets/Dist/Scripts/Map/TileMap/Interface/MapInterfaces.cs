@@ -7,21 +7,22 @@ using UnityEngine;
 namespace IsoTilemap
 {
 
-    public interface IMapContext
+    public interface IMapSession
     {
-        IMapModelReadOnly Model { get; }
-        IMapRuntimeReadOnly Runtime { get; }
+        public IMapModelReadOnly Model { get; }
+        public IMapRuntimeReadOnly Runtime { get; }
     }
     public interface IMapRuntimeReadOnly
     {
-        IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> GetAllTiles();
+        public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
+        public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos);
     }
     public interface IMapRuntime : IMapRuntimeReadOnly
     {
-
+        
     }
 
-    public sealed class MapInstance : IMapContext
+    public sealed class MapInstance : IMapSession
     {
         public IMapModelReadOnly Model { get; }
         public IMapRuntimeReadOnly Runtime { get; }
@@ -132,9 +133,12 @@ namespace IsoTilemap
     //         throw new NotImplementedException();
     //     }
     // }
-    //맵 뷰 빌더 담당
+    /// <summary>
+    /// 맵 뷰 빌더 담당 초기화,실시간 뷰 구성
+    /// </summary>
     public interface IMapViewBuilder
     {
         void Build(IMapModelReadOnly model, TileMapSession context);
+        void Bind(IMapRuntimeReadOnly runtime);
     }
 }
