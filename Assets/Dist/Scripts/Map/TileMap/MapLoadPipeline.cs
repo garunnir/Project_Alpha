@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 namespace IsoTilemap
 {
     public sealed class MapLoadPipeline
@@ -26,10 +23,10 @@ namespace IsoTilemap
             // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);
             // Map DTO to Domain Model
-            IMapTilesReadOnly prepared = _mapper.ToPrepared(dto);
+            IMapModelReadOnly prepared = _mapper.ToPrepared(dto);
             // Build Runtime Data
-            IMapModelReadOnly modelData = _modelBuilder.Build(prepared);
-            IMapRuntimeReadOnly runtimeData = _runtime.Build(modelData);
+            IMapModel modelData = _modelBuilder.Build(prepared);
+            IMapRuntime runtimeData = _runtime.Build(modelData);
             // Build View
             return new MapInstance(modelData, runtimeData);
         }

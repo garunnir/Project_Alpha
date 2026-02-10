@@ -10,7 +10,7 @@ namespace IsoTilemap
     /// 타일맵 시각화 담당 클래스
     /// 모델 데이터를 게임 월드에 3D 타일로 인스턴스화합니다.
     /// </summary>
-    public class TileMapVisualizer : IMapViewBuilder
+    public class TileMapVisualizer : IMapViewBuilder,IDisposable
     {
         [Header("Grid / World Settings")]
         public float cellSize = 1f;
@@ -24,6 +24,7 @@ namespace IsoTilemap
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
             _tileFactory = tileFactory;
+            _runtime.OnRuntimeDataChanged += RefreshTiles;
         }
 
 
@@ -31,7 +32,7 @@ namespace IsoTilemap
         /// <summary>
         /// 모델 데이터를 기반으로 타일맵을 구축합니다.
         /// </summary>
-        public void Build(IMapModelReadOnly modelData, TileMapSession context)
+        public void Build(IMapModelReadOnly modelData)
         {
             var tiles = modelData.Tiles();
             if (tiles == null || tiles.Count() == 0)
@@ -87,7 +88,7 @@ namespace IsoTilemap
                 if (TryGetTile(tileData.tileDefId, out TileView tileView))// 타일 인스턴스가 존재하는 경우
                 {
                     // 타일 상태 업데이트
-                    tileView.UpdateState(tileData.state);
+                    tileView.UpdateTile(tileData);
                 }
                 else
                 {
@@ -96,9 +97,10 @@ namespace IsoTilemap
                 }
             }
         }
-        private void OnDestroy()
+        public void Dispose()
         {
             Unbind();
+            ClearExistingTiles();
         }
     }
 }

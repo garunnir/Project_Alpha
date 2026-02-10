@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
 namespace IsoTilemap
 {
     /// <summary>
@@ -11,19 +12,15 @@ namespace IsoTilemap
     public class TileMapSession : IMapSession
     {
         private IMapRuntime _runtimeData;
+        public IMapRuntime Runtime => _runtimeData;
+        public IMapModel Model => throw new NotImplementedException();
+
         private HashSet<Vector3Int> _cachedCurrentRoomID;
         private List<TileData> _cachedtiles;
-        private IMapViewBuilder _visualizer;
 
-        public IMapModelReadOnly Model => throw new NotImplementedException();
-
-        public IMapRuntimeReadOnly Runtime => _runtimeData;
-
-        public void Initialize(IMapRuntime runtime, IMapViewBuilder viewBuilder)
+        public void Initialize(IMapRuntime runtime)
         {
             _runtimeData = runtime;
-            _visualizer = viewBuilder;
-            _visualizer.Bind(runtime);
         }
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
@@ -50,9 +47,8 @@ namespace IsoTilemap
             for (int i = 0; i < walls.Count; i++)
             {
                 TileData wall = walls[i];
-                TileState tileState = wall.state;
-                    tileState.isHiddenCharacter = true;
-                    wall.state = tileState;
+                TileState tileState = wall.state with { isHiddenCharacter = true };
+                walls[i] = wall with { state = tileState };
             }
         }
 

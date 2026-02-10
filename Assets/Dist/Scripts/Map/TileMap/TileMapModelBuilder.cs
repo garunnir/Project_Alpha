@@ -49,7 +49,7 @@ namespace IsoTilemap
     public class TileMapModelBuilder : IMapModelBuilder
     {
 
-        public IMapModel Build(IMapTilesReadOnly prepared)
+        public IMapModel Build(IMapModelReadOnly prepared)
         {
             TileMapModel data = new TileMapModel(prepared);
 

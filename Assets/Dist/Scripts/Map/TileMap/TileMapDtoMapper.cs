@@ -5,7 +5,7 @@ namespace IsoTilemap
     // DTO 와 도메인 모델 간의 매핑을 담당하는 클래스
     public class TileMapDtoMapper : IMapMapper
     {
-        public IMapTilesReadOnly ToPrepared(MapSaveJsonDto tileMapData)
+        public IMapModelReadOnly ToPrepared(MapSaveJsonDto tileMapData)
         {
             if (tileMapData == null || tileMapData.tiles == null)
             {
@@ -45,10 +45,10 @@ namespace IsoTilemap
             foreach (var kv in prepareData)
                 readonlyDict[kv.Key] = kv.Value;
 
-            return new MapTilesDTO(readonlyDict);
+            return new MapModelDTO(readonlyDict);
         }
 
-        public MapSaveJsonDto FromPrepared(IMapTilesReadOnly prepared)
+        public MapSaveJsonDto FromPrepared(IMapModelReadOnly prepared)
         {
             IEnumerable<Vector3Int> tiles = prepared.Positions;
             //DTO로 변환하여 집어넣을 컨테이너 생성

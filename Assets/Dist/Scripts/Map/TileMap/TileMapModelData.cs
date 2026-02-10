@@ -6,8 +6,8 @@ namespace IsoTilemap
 {
     public sealed class TileMapModel : IMapModel
     {
-        private readonly IMapTilesReadOnly _prepared;
-        public TileMapModel(IMapTilesReadOnly prepared) => _prepared = prepared;
+        private readonly IMapModelReadOnly _prepared;
+        public TileMapModel(IMapModelReadOnly prepared) => _prepared = prepared;
 
         public IEnumerable<Vector3Int> Positions => _prepared.Positions;
 

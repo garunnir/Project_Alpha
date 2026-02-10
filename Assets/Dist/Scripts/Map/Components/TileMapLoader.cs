@@ -29,16 +29,7 @@ public class TileMapLoader : MonoBehaviour
     public void LoadMapEditor()
     {
         //TODO: 에디트모드에서 작동 하게해야함
-        MapLoadPipeline pipeline = new MapLoadPipeline(
-            serializer: _serializer,
-            modelBuilder: _modelBuilder,
-            runtimeBuilder: _runtimeBuilder,
-            mapper: _mapper);
-        IMapSession session = pipeline.LoadModel(GetFullPath());
-        _tileFactory = new TileObjFactory(this.transform, prefabDB);
-        _viewBuilder = new TileMapVisualizer(_tileFactory);
-        _session.Initialize(session, _viewBuilder);
-        _viewBuilder.Build(session.Model, _session);
+LoadMapRuntime();
     }
 #endif
     public void LoadMapRuntime()
@@ -47,16 +38,28 @@ public class TileMapLoader : MonoBehaviour
     }
     public void LoadMapRuntime(string path)
     {
-        MapLoadPipeline pipeline = new MapLoadPipeline(
-            serializer: _serializer,
-            modelBuilder: _modelBuilder,
-            runtimeBuilder: _runtimeBuilder,
-            mapper: _mapper);
-        IMapSession session = pipeline.LoadModel(path);
+        // 1. 데이터 로드 (DTO 느낌으로 받기)
+        IMapSession loadedSession = new MapLoadPipeline(
+                serializer: _serializer,
+                modelBuilder: _modelBuilder,
+                runtimeBuilder: _runtimeBuilder,
+                mapper: _mapper).LoadModel(path);
+
+        // 2. 팩토리 & 뷰 준비
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
-        _session.Initialize(session, _viewBuilder);
-        _viewBuilder.Build(session.Model, _session);
+
+        // 3. [핵심] 컨트롤러가 "중재자" 역할
+        // 세션한테는 "데이터"만 줍니다.
+        _session.Initialize(loadedSession.Runtime);
+
+        // 뷰한테는 "데이터 변화 감지해라"라고 연결해줍니다.
+        // (세션이 아니라, 뷰가 런타임 이벤트를 구독하게 함)
+        _viewBuilder.Bind(loadedSession.Runtime);
+
+        // 4. 초기 화면 그리기
+        // 뷰는 모델(Model)만 보고 1번 그립니다. (_session 필요 없음)
+        _viewBuilder.Build(loadedSession.Model);
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===

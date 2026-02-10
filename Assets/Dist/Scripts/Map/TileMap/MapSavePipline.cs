@@ -1,7 +1,6 @@
 using System.IO;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using System;
 namespace IsoTilemap
 {
     public class MapSavePipline
@@ -18,7 +17,7 @@ namespace IsoTilemap
 
         public void Save(string fullPath)
         {
-            IMapTilesReadOnly mapData = new MapTilesDTO(_runtime.GetAllTiles());
+            IMapModelReadOnly mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
 
             string json = JsonUtility.ToJson(mapDatas, true);
@@ -31,7 +30,7 @@ namespace IsoTilemap
         public async UniTask SaveAsync(string fullPath)
         {
             // 1. 메인 스레드: 데이터 캡처
-            var mapData = new MapTilesDTO(_runtime.GetAllTiles());
+            var mapData = new MapModelDTO(_runtime);
             var mapDatas = _mapper.FromPrepared(mapData);
 
             // 2. 백그라운드 작업 (이 블록 안에서만 백그라운드임이 보장됨)
@@ -53,7 +52,7 @@ namespace IsoTilemap
             string fullPath = Path.Combine(Application.persistentDataPath, fileName);
 
             // 1. 데이터 준비
-            var mapDatas = _mapper.FromPrepared(new MapTilesDTO(_runtime.GetAllTiles()));
+            var mapDatas = _mapper.FromPrepared(new MapModelDTO(_runtime));
 
             await UniTask.RunOnThreadPool(() =>
             {

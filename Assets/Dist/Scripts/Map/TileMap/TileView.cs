@@ -77,5 +77,13 @@ namespace IsoTilemap
                 anchor + new Vector3(0f, 0f, sz * cs)
             };
         }
+
+        internal void UpdateTile(TileData tileData)
+        {
+            tileType = (TileType)tileData.identity.tileType;
+            prefabId = tileData.identity.PrefabId;
+            gridPos = tileData.identity.GridPos;
+            size = tileData.identity.sizeUnit;
+        }
     }
 }

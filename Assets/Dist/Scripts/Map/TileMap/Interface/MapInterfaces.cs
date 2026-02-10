@@ -9,6 +9,11 @@ namespace IsoTilemap
 
     public interface IMapSession
     {
+        public IMapModel Model { get; }
+        public IMapRuntime Runtime { get; }
+    }
+    public interface IMapSessionReadOnly
+    {
         public IMapModelReadOnly Model { get; }
         public IMapRuntimeReadOnly Runtime { get; }
     }
@@ -24,10 +29,10 @@ namespace IsoTilemap
 
     public sealed class MapInstance : IMapSession
     {
-        public IMapModelReadOnly Model { get; }
-        public IMapRuntimeReadOnly Runtime { get; }
+        public IMapModel Model { get; }
+        public IMapRuntime Runtime { get; }
 
-        public MapInstance(IMapModelReadOnly model, IMapRuntimeReadOnly runtime)
+        public MapInstance(IMapModel model, IMapRuntime runtime)
         {
             Model = model;
             Runtime = runtime;
@@ -47,8 +52,8 @@ namespace IsoTilemap
     //맵 데이터 구조 변환 담당
     public interface IMapMapper
     {
-        IMapTilesReadOnly ToPrepared(MapSaveJsonDto dto);
-        MapSaveJsonDto FromPrepared(IMapTilesReadOnly prepared);
+        IMapModelReadOnly ToPrepared(MapSaveJsonDto dto);
+        MapSaveJsonDto FromPrepared(IMapModelReadOnly prepared);
     }
     public interface IMapRuntimeBuilder
 
@@ -58,13 +63,7 @@ namespace IsoTilemap
     //맵 도메인 모델 빌더 담당
     public interface IMapModelBuilder
     {
-        IMapModel Build(IMapTilesReadOnly prepared);
-    }
-    public interface IMapTilesReadOnly
-    {
-        bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tiles);
-        IEnumerable<Vector3Int> Positions { get; }
-        IReadOnlyList<TileData> Tiles();
+        IMapModel Build(IMapModelReadOnly prepared);
     }
     //맵 도메인 모델 읽기 전용 인터페이스
     public interface IMapModelReadOnly
@@ -78,8 +77,7 @@ namespace IsoTilemap
 
     }
 
-    //맵 도메인 모델 구현체
-    public sealed class MapTilesDTO : IMapTilesReadOnly
+    public sealed class MapModelDTO : IMapModelReadOnly
     {
         private readonly IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> _dto;
 
@@ -106,11 +104,11 @@ namespace IsoTilemap
             return allTiles;
         }
 
-        public MapTilesDTO(Dictionary<Vector3Int, List<TileData>> dto)
+        public MapModelDTO(Dictionary<Vector3Int, List<TileData>> dto)
         {
             _dto = dto.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<TileData>)kvp.Value);
         }
-        public MapTilesDTO(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> dto)
+        public MapModelDTO(IReadOnlyDictionary<Vector3Int, IReadOnlyList<TileData>> dto)
         {
             _dto = dto;
         }
@@ -138,7 +136,7 @@ namespace IsoTilemap
     /// </summary>
     public interface IMapViewBuilder
     {
-        void Build(IMapModelReadOnly model, TileMapSession context);
+        void Build(IMapModelReadOnly model);
         void Bind(IMapRuntimeReadOnly runtime);
     }
 }

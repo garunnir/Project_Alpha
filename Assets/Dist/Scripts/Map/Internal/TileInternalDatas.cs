@@ -5,9 +5,9 @@ namespace IsoTilemap
 {
     public readonly struct TileData
     {
-        public readonly Guid tileDefId;
-        public readonly TileState state;
-        public readonly TileIdentity identity;
+        public Guid tileDefId{init; get;}
+        public TileState state{init; get;}
+        public TileIdentity identity{init; get;}
     }
     public readonly struct TileState
     {
@@ -15,10 +15,10 @@ namespace IsoTilemap
     }
     public readonly struct TileIdentity
     {
-        public readonly string PrefabId;
-        public readonly Vector3Int GridPos;
-        public readonly Vector3Int sizeUnit;
-        public readonly byte tileType;
+        public string PrefabId{init; get;}
+        public Vector3Int GridPos{init; get;}
+        public Vector3Int sizeUnit{init; get;}
+        public byte tileType{init; get;}
     }
 
 }
