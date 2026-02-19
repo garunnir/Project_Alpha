@@ -19,7 +19,7 @@ namespace IsoTilemap
 
         private Transform _targetTransform;
         private TileObjFactory _tileFactory;
-        private IMapRuntimeReadOnly _runtime;
+        private IMapModelReadOnly _runtime;
 
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
@@ -34,7 +34,7 @@ namespace IsoTilemap
         /// </summary>
         public void Build(IMapModelReadOnly modelData)
         {
-            var tiles = modelData.Tiles();
+            IReadOnlyList<TileData> tiles = modelData.TilesSnapshot;
             if (tiles == null || tiles.Count() == 0)
             {
                 Debug.LogWarning("No tile data to build visual.");
@@ -68,7 +68,7 @@ namespace IsoTilemap
             return _tileInstances.TryGetValue(tileId, out tileInfo);
         }
 
-        public void Bind(IMapRuntimeReadOnly runtime)
+        public void Bind(IMapModelReadOnly runtime)
         {
             _runtime = runtime;
             _runtime.OnRuntimeDataChanged += RefreshTiles;

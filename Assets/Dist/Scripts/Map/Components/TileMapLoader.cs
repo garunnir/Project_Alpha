@@ -11,7 +11,6 @@ public class TileMapLoader : MonoBehaviour
     [SerializeField] IMapSerializer _serializer;
     [SerializeField] IMapModelBuilder _modelBuilder;
     [SerializeField] IMapViewBuilder _viewBuilder;
-    [SerializeField] IMapRuntimeBuilder _runtimeBuilder;
     [SerializeField] IMapMapper _mapper;
     [Header("Where to save/read the map file")]
     [SerializeField] private string fileName = "map01.json";      // 파일 이름
@@ -42,7 +41,6 @@ LoadMapRuntime();
         IMapSession loadedSession = new MapLoadPipeline(
                 serializer: _serializer,
                 modelBuilder: _modelBuilder,
-                runtimeBuilder: _runtimeBuilder,
                 mapper: _mapper).LoadModel(path);
 
         // 2. 팩토리 & 뷰 준비
@@ -51,11 +49,11 @@ LoadMapRuntime();
 
         // 3. [핵심] 컨트롤러가 "중재자" 역할
         // 세션한테는 "데이터"만 줍니다.
-        _session.Initialize(loadedSession.Runtime);
+        _session.Initialize(loadedSession.Model);
 
         // 뷰한테는 "데이터 변화 감지해라"라고 연결해줍니다.
         // (세션이 아니라, 뷰가 런타임 이벤트를 구독하게 함)
-        _viewBuilder.Bind(loadedSession.Runtime);
+        _viewBuilder.Bind(loadedSession.Model);
 
         // 4. 초기 화면 그리기
         // 뷰는 모델(Model)만 보고 1번 그립니다. (_session 필요 없음)

@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
-    public readonly struct TileData
+    public struct TileData
     {
         public Guid tileDefId{init; get;}
-        public TileState state{init; get;}
+        public TileState state;
         public TileIdentity identity{init; get;}
     }
-    public readonly struct TileState
+    public struct TileState
     {
-        public readonly bool isHiddenCharacter;
+        public bool isHiddenCharacter;
     }
     public readonly struct TileIdentity
     {

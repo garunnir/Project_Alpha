@@ -31,10 +31,40 @@ namespace IsoTilemap
     - 누가 씀?
     - 누가 책임짐?
     */
-    public class TileMapRuntime : IMapRuntime
+    public class TileMapModel : IMapModel
     {
         public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
+
+        private List<TileData> _cachedList = new List<TileData>();
+        private bool _isDirty = false; // "데이터 바뀜?" 체크
+
+        public void AddTile(Vector3Int pos, TileData tile)
+        {
+            // 딕셔너리에만 일단 넣고
+            /* (위와 동일한 딕셔너리 추가 로직) */
+
+            // "야, 나중에 리스트 다시 만들어야 돼"라고 깃발만 듦
+            _isDirty = true;
+        }
+
+        public IReadOnlyList<TileData> TilesSnapshot
+        {
+            get
+            {
+                // 데이터가 바뀐 적이 있으면 그때 새로 만듦 (Lazy Update)
+                if (_isDirty)
+                {
+                    _cachedList.Clear();
+                    foreach (var list in tiles.Values)
+                    {
+                        _cachedList.AddRange(list);
+                    }
+                    _isDirty = false;
+                }
+                return _cachedList;
+            }
+        }
         public void SetTile(Vector3Int pos, TileData tileDatas)
         {
             if (!tiles.ContainsKey(pos))
@@ -45,12 +75,13 @@ namespace IsoTilemap
             OnRuntimeDataChanged?.Invoke(pos, tiles[pos]);
         }
 
-        public TileMapRuntime(MapRuntimeInitData prepared)
+        public void Initialize(MapModelDTO prepared)
         {
-            tiles = prepared.tiles.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToList()
-            );
+            // DTO로부터 모델 초기화
+            foreach (var kv in prepared.TilesData)
+            {
+                tiles[kv.identity.GridPos] = new List<TileData> { kv };
+            }
         }
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
@@ -298,7 +329,30 @@ namespace IsoTilemap
             return belowWalls;
         }
 
+        public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
+        {
+            throw new NotImplementedException();
+        }
 
+        public void HideOcclusionTileWall(Vector3Int playerCellPos)
+        {
+            List<TileData> wallsList = GetOccludingWalls(playerCellPos, tiles);
+            for (int i = 0; i < wallsList.Count; i++)
+            {
+                TileData wall = wallsList[i];
+                TileState state = wall.state;
+                state.isHiddenCharacter = true;
+                TileState tileState = state;
+                wall.state = tileState;
+                wallsList[i] = wall;
+            }
+            SetTiles(wallsList);
+        }
+
+        private void SetTiles(List<TileData> wallsList)
+        {
+  
+        }
     }
 
 }

@@ -7,9 +7,8 @@ namespace IsoTilemap
     [DisallowMultipleComponent]
     public class TileMapSaver : MonoBehaviour
     {
-    [SerializeField] IMapRuntime _serializer;
+    [SerializeField] IMapModel _serializer;
     [SerializeField] IMapModelBuilder _domainBuilder;
-    [SerializeField] IMapViewBuilder _viewBuilder;
     [SerializeField] IMapMapper _mapper;
     
         [Header("Where to save/read the map file")]
@@ -18,7 +17,7 @@ namespace IsoTilemap
         public void SaveMap()
         {
             new MapSavePipline(
-                _serializer as TileMapRuntime,
+                _serializer,
                 _mapper
             ).Save(Path.Combine(Application.persistentDataPath, fileName));
         }

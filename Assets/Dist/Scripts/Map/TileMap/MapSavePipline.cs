@@ -6,9 +6,9 @@ namespace IsoTilemap
     public class MapSavePipline
     {
         private readonly IMapMapper _mapper;
-        private readonly IMapRuntime _runtime;
+        private readonly IMapModelReadOnly _runtime;
 
-        public MapSavePipline(IMapRuntime runtime,
+        public MapSavePipline(IMapModelReadOnly runtime,
             IMapMapper mapper)
         {
             _mapper = mapper;
@@ -17,7 +17,7 @@ namespace IsoTilemap
 
         public void Save(string fullPath)
         {
-            IMapModelReadOnly mapData = new MapModelDTO(_runtime);
+            MapModelDTO mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
 
             string json = JsonUtility.ToJson(mapDatas, true);

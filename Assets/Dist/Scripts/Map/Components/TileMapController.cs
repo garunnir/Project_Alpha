@@ -6,22 +6,9 @@ namespace IsoTilemap
     //컨트롤러는 타일맵의 상태를 관리하고, 변경 사항을 시각화하는 역할을 합니다.
     public class TileMapController : MonoBehaviour
     {
-        [SerializeField] private TileMapSession _context;
-        void ClearExistingTiles()
-        {
-            // FindObjectsByType: include inactive so we match the previous behavior of FindObjectsOfType(true).
-            var tileInfos = UnityEngine.Object.FindObjectsByType<TileView>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+        [SerializeField] private IMapModel _model;
+        [SerializeField] private IMapViewBuilder _viewBuilder;
 
-            // 타일만 날린다고 가정 (이 스크립트가 붙은 오브젝트는 남김)
-            foreach (var info in tileInfos)
-            {
-                if (info != null)
-                {
-                    // 본인 자신(TileMapSerializer의 GameObject) 밑에 있는지만 보고 날릴 수도 있음
-                    DestroyImmediate(info.gameObject);
-                }
-            }
-        }
 
         HashSet<Vector3Int> dirty = new();
 
@@ -41,22 +28,11 @@ namespace IsoTilemap
         }
         private void RefreshCell(Vector3Int cellPos)
         {
-            // 해당 셀만 갱신
-            List<TileData> datas=_do.GetRuntimeData().tiles[cellPos];
-            foreach (var data in datas)
+            //모델의 데이터를 조회하여 뷰를 갱신
+            if (_model.TryGetTiles(cellPos, out IReadOnlyList<TileData> tiles))
             {
-                RefreshObj(data);
+                _viewBuilder.RefreshCell(cellPos, tiles);
             }
         }
-        private void RefreshObj(TileData obj)
-        {
-            TileView info = _tileDefInstance[obj.tileDefId];
-            info.gameObject.SetActive(!obj.state.isHiddenCharacter);
-        }
-        public void UpdateCell(Vector3Int cellPos, TileData state)
-        {
-            MarkDirty(cellPos);
-        }
-        
     }
 }

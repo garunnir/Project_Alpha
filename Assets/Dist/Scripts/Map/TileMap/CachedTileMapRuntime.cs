@@ -4,20 +4,18 @@ using System.Linq;
 using UnityEngine;
 namespace IsoTilemap
 {
-    public class CachedTileMapRuntime : IMapRuntime
+    public class CachedTileMapRuntime : IMapModel
     {
-        private readonly IMapRuntime _runtimeData;
+        private readonly IMapModel _runtimeData;
         #nullable enable
         private List<TileData>? _cachedtiles = null;
         private HashSet<Vector3Int>? _cachedCurrentRoomID = null;
-        #nullable disable
+
+        public IReadOnlyList<TileData> TilesSnapshot => _runtimeData.TilesSnapshot;
+#nullable disable
+
 
         public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
-
-        public CachedTileMapRuntime(IMapRuntime runtime)
-        {
-            _runtimeData = runtime;
-        }
 
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
@@ -35,6 +33,20 @@ namespace IsoTilemap
         {
             _cachedtiles = null;
             _cachedCurrentRoomID = null;
+        }
+
+        public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
+        {
+            return _runtimeData.TryGetTiles(pos, out tileList);
+        }
+        public void Initialize(MapModelDTO prepared)
+        {
+            _runtimeData.Initialize(prepared);
+        }
+
+        public void HideOcclusionTileWall(Vector3Int playerCellPos)
+        {
+            _runtimeData.HideOcclusionTileWall(playerCellPos);
         }
     }
 }
