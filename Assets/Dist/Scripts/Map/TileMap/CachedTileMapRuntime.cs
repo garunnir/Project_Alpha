@@ -11,6 +11,11 @@ namespace IsoTilemap
         private List<TileData>? _cachedtiles = null;
         private HashSet<Vector3Int>? _cachedCurrentRoomID = null;
 
+        public CachedTileMapRuntime(IMapModel runtimeData)
+        {
+            _runtimeData = runtimeData;
+        }
+
         public IReadOnlyList<TileData> TilesSnapshot => _runtimeData.TilesSnapshot;
 #nullable disable
 
@@ -42,6 +47,11 @@ namespace IsoTilemap
         public void Initialize(MapModelDTO prepared)
         {
             _runtimeData.Initialize(prepared);
+        }
+
+        public void SetTile(TileData tileData)
+        {
+            _runtimeData.SetTile(tileData);
         }
 
         public void HideOcclusionTileWall(Vector3Int playerCellPos)

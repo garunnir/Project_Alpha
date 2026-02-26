@@ -24,7 +24,6 @@ namespace IsoTilemap
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
             _tileFactory = tileFactory;
-            _runtime.OnRuntimeDataChanged += RefreshTiles;
         }
 
 
@@ -97,6 +96,20 @@ namespace IsoTilemap
                 }
             }
         }
+        public void RefreshCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
+        {
+            foreach (var tileData in tiles)
+            {
+                if (TryGetTile(tileData.tileDefId, out TileView tileView))
+                    tileView.UpdateTile(tileData);
+                else
+                {
+                    var spawned = _tileFactory.SpawnTile(tileData);
+                    _tileInstances[tileData.tileDefId] = spawned;
+                }
+            }
+        }
+
         public void Dispose()
         {
             Unbind();

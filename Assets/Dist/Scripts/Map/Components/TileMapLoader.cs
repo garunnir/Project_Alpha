@@ -1,13 +1,14 @@
 using IsoTilemap;
+using Sirenix.OdinInspector;
 using System.IO;
 using UnityEngine;
-[DisallowMultipleComponent, RequireComponent(typeof(TileMapSession))]
-public class TileMapLoader : MonoBehaviour
+[DisallowMultipleComponent]
+public class TileMapLoader : SerializedMonoBehaviour
 {
     [Header("Prefab DB for loading")]
     public TilePrefabDB prefabDB;
+    public IMapModel Model { get; private set; }
     private TileObjFactory _tileFactory;
-    private TileMapSession _session;
     [SerializeField] IMapSerializer _serializer;
     [SerializeField] IMapModelBuilder _modelBuilder;
     [SerializeField] IMapViewBuilder _viewBuilder;
@@ -15,9 +16,19 @@ public class TileMapLoader : MonoBehaviour
     [Header("Where to save/read the map file")]
     [SerializeField] private string fileName = "map01.json";      // 파일 이름
     [SerializeField] private bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
+
     void Awake()
     {
-        _session = GetComponent<TileMapSession>();
+        //런타임에서 자동으로 맵을 불러오도록 설정 (테스트용)
+        Initialize();   
+    }
+    public void Initialize()
+    {
+        // Initialize any required components or dependencies
+        if (_serializer == null || _modelBuilder == null || _mapper == null)
+        {
+            Debug.LogError("Missing required dependencies in TileMapLoader");
+        }
     }
     private void Start()
     {
@@ -37,8 +48,8 @@ LoadMapRuntime();
     }
     public void LoadMapRuntime(string path)
     {
-        // 1. 데이터 로드 (DTO 느낌으로 받기)
-        IMapSession loadedSession = new MapLoadPipeline(
+        // 1. 데이터 로드
+        Model = new MapLoadPipeline(
                 serializer: _serializer,
                 modelBuilder: _modelBuilder,
                 mapper: _mapper).LoadModel(path);
@@ -47,17 +58,11 @@ LoadMapRuntime();
         _tileFactory = new TileObjFactory(this.transform, prefabDB);
         _viewBuilder = new TileMapVisualizer(_tileFactory);
 
-        // 3. [핵심] 컨트롤러가 "중재자" 역할
-        // 세션한테는 "데이터"만 줍니다.
-        _session.Initialize(loadedSession.Model);
-
-        // 뷰한테는 "데이터 변화 감지해라"라고 연결해줍니다.
-        // (세션이 아니라, 뷰가 런타임 이벤트를 구독하게 함)
-        _viewBuilder.Bind(loadedSession.Model);
+        // 3. 뷰에 데이터 변화 구독 연결
+        _viewBuilder.Bind(Model);
 
         // 4. 초기 화면 그리기
-        // 뷰는 모델(Model)만 보고 1번 그립니다. (_session 필요 없음)
-        _viewBuilder.Build(loadedSession.Model);
+        _viewBuilder.Build(Model);
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===

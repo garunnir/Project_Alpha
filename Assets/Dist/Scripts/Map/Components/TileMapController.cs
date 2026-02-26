@@ -22,10 +22,7 @@ namespace IsoTilemap
                 RefreshCell(cell); // 그 셀만 갱신
             dirty.Clear();
         }
-        void Update()
-        {
-            FlushDirty();
-        }
+
         private void RefreshCell(Vector3Int cellPos)
         {
             //모델의 데이터를 조회하여 뷰를 갱신

@@ -7,25 +7,6 @@ using UnityEngine;
 namespace IsoTilemap
 {
 
-    public interface IMapSession
-    {
-        public IMapModel Model { get; }
-    }
-    public interface IMapSessionReadOnly
-    {
-        public IMapModelReadOnly Model { get; }
-    }
-
-    public sealed class MapInstance : IMapSession
-    {
-        public IMapModel Model { get; }
-        public MapInstance(IMapModel model)
-        {
-            Model = model;
-        }
-    }
-
-
         /// <summary>
         /// 맵 뷰 빌더 담당 초기화,실시간 뷰 구성
         /// </summary>
@@ -33,6 +14,7 @@ namespace IsoTilemap
     {
         void Build(IMapModelReadOnly model);
         void Bind(IMapModelReadOnly runtime);
+        void RefreshCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles);
     }
 
     public interface IMapSerializer

@@ -65,7 +65,12 @@ namespace IsoTilemap
                 return _cachedList;
             }
         }
-        public void SetTile(Vector3Int pos, TileData tileDatas)
+        public void SetTile(TileData tileData)
+        {
+            SetTile(tileData.identity.GridPos, tileData);
+        }
+
+        private void SetTile(Vector3Int pos, TileData tileDatas)
         {
             if (!tiles.ContainsKey(pos))
             {
@@ -331,7 +336,9 @@ namespace IsoTilemap
 
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
         {
-            throw new NotImplementedException();
+            if (tiles.TryGetValue(pos, out var list)) { tileList = list; return true; }
+            tileList = null;
+            return false;
         }
 
         public void HideOcclusionTileWall(Vector3Int playerCellPos)
@@ -349,9 +356,20 @@ namespace IsoTilemap
             SetTiles(wallsList);
         }
 
-        private void SetTiles(List<TileData> wallsList)
+        private void SetTiles(List<TileData> tileList)
         {
-  
+            foreach (var tile in tileList)
+            {
+                var pos = tile.identity.GridPos;
+                if (!tiles.TryGetValue(pos, out var existingList)) continue;
+                for (int i = 0; i < existingList.Count; i++)
+                {
+                    if (existingList[i].tileDefId == tile.tileDefId)
+                    { existingList[i] = tile; break; }
+                }
+                OnRuntimeDataChanged?.Invoke(pos, existingList);
+            }
+            _isDirty = true;
         }
     }
 

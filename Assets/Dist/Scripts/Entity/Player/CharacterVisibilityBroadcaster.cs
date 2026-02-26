@@ -6,11 +6,11 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 {
     //캐릭터 보임 관련 요소를 맵과 상호작용하기 위한 클래스
     private CharacterState _characterState;
-    [SerializeField] private TileMapSession _tileMapRuntime;
+    [SerializeField] private TileMapLoader _tileMapLoader;
     private void Awake()
     {
         _characterState = GetComponent<CharacterState>();
-        if (_tileMapRuntime == null) Debug.LogWarning("not exist tilemapruntime");
+        if (_tileMapLoader == null) Debug.LogWarning("not exist tilemaploader");
     }
     private void OnEnable()
     {
@@ -29,6 +29,6 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     //연결해서 캐릭터의 그리드포지션이 바뀔때마다 런타임 타일맵에 벽 감춤 명령을 내림.
     private void BroadcastWallHide(Vector3Int vector3Int)
     {
-        _tileMapRuntime.HideOcclusionTileWall(vector3Int);
+        _tileMapLoader.Model?.HideOcclusionTileWall(vector3Int);
     }
 }

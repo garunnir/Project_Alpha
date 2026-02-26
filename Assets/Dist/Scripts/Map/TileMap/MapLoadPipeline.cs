@@ -15,16 +15,14 @@ namespace IsoTilemap
             _mapper = mapper;
         }
 
-        public IMapSession LoadModel(string path)
+        public IMapModel LoadModel(string path)
         {
             // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);
             // Map DTO to Domain Model
             MapModelDTO prepared = _mapper.ToPrepared(dto);
             // Build Runtime Data
-            IMapModel modelData = _modelBuilder.Build(prepared);
-            // Build View
-            return new MapInstance(modelData);
+            return _modelBuilder.Build(prepared);
         }
     }
 }
