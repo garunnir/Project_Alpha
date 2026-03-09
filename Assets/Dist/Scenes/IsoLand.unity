@@ -5134,6 +5134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 299715453}
   - component: {fileID: 299715454}
+  - component: {fileID: 299715455}
   m_Layer: 0
   m_Name: MapData
   m_TagString: Untagged
@@ -5168,9 +5169,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c13e09ce608cbc3489a233f0f863c745, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TileMapDomainData
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
   prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
   fileName: map01.json
   usePersistentPath: 1
+--- !u!114 &299715455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb3a9a713ac9a0040beef0aa693a7003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapController
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
@@ -34722,6 +34744,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1012867334}
   - {fileID: 21899784}
   - {fileID: 305037486}
   - {fileID: 134219685}
@@ -34731,4 +34754,3 @@ SceneRoots:
   - {fileID: 1313974761}
   - {fileID: 1843926586}
   - {fileID: 715630607}
-  - {fileID: 1012867334}

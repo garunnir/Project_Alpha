@@ -1,8 +1,3 @@
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
@@ -17,11 +12,6 @@ namespace IsoTilemap
             data.Initialize(prepared);
             return data;
         }
-        public IMapModel DefaultBuild(MapModelDTO prepared)//추후 맵 생성을 어떤식으로 할것인가에 따라 필요해질수 있음..
-        {
-            throw new NotImplementedException();
-        }
-
     }
 }
 

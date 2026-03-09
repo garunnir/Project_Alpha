@@ -10,14 +10,10 @@ namespace IsoTilemap
     /// 타일맵 시각화 담당 클래스
     /// 모델 데이터를 게임 월드에 3D 타일로 인스턴스화합니다.
     /// </summary>
-    public class TileMapVisualizer : IMapViewBuilder,IDisposable
+    public class TileMapVisualizer : IMapViewBuilder, IDisposable
     {
-        [Header("Grid / World Settings")]
-        public float cellSize = 1f;
-
         private Dictionary<Guid, TileView> _tileInstances = new Dictionary<Guid, TileView>();
 
-        private Transform _targetTransform;
         private TileObjFactory _tileFactory;
         private IMapModelReadOnly _runtime;
 
@@ -51,9 +47,10 @@ namespace IsoTilemap
         /// </summary>
         private void ClearExistingTiles()
         {
-            foreach (Transform child in _targetTransform)
+            foreach (var tile in _tileInstances.Values)
             {
-                GameObject.Destroy(child.gameObject);
+                if (tile != null)
+                    GameObject.Destroy(tile.gameObject);
             }
 
             _tileInstances.Clear();

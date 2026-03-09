@@ -35,3 +35,7 @@ The goal is to improve maintainability and scalability, minimizing the impact on
 | `CachedTileMapRuntime` 생성자에서 의존성 주입 | readonly 필드 초기화를 위해 생성자 패턴 사용 | 2026-02-26 |
 | `TileMapSession` 제거 — `TileMapLoader.Model`로 통합 | `IMapSession`/`MapInstance` 래퍼 레이어가 `IMapModel` 중복이었음. `TileMapLoader`가 `public IMapModel Model`을 직접 노출 | 2026-02-26 |
 | 변경 전 반드시 설계 의도 설명 요구 | 의도치 않은 구조 위반 방지 | - |
+| 파이프라인 구성요소(`IMapSerializer`, `IMapModelBuilder`)를 `new`로 직접 생성 | 현재 교체 요구 없음. 교체 필요 시 ScriptableObject 전략 패턴으로 전환 예정 (인스펙터에서 구현체 드래그 교체 가능) | 2026-03-09 |
+
+## Extension Directions
+- **파이프라인 구성요소 교체**: `TileMapSerializer`, `TileMapModelBuilder` 등을 ScriptableObject로 만들면 인스펙터에서 JSON/Binary 등 구현체를 교체 가능. 현재는 단일 구현만 존재하므로 보류.

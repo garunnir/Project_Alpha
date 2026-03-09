@@ -6,32 +6,24 @@ using UnityEngine;
 public class TileMapLoader : SerializedMonoBehaviour
 {
     [Header("Prefab DB for loading")]
-    public TilePrefabDB prefabDB;
-    public IMapModel Model { get; private set; }
-    private TileObjFactory _tileFactory;
-    [SerializeField] IMapSerializer _serializer;
-    [SerializeField] IMapModelBuilder _modelBuilder;
-    [SerializeField] IMapViewBuilder _viewBuilder;
-    [SerializeField] IMapMapper _mapper;
+    [SerializeField] private TilePrefabDB prefabDB;
     [Header("Where to save/read the map file")]
-    [SerializeField] private string fileName = "map01.json";      // 파일 이름
-    [SerializeField] private bool usePersistentPath = true;       // Application.persistentDataPath 사용할지
+    [SerializeField] private string fileName = "map01.json";
+    [SerializeField] private bool usePersistentPath = true;
+
+    public IMapModel Model { get; private set; }
+
+    private TileObjFactory _tileFactory;
+    private IMapViewBuilder _viewBuilder;
+    private IMapSerializer _serializer;
+    private IMapModelBuilder _modelBuilder;
+    private IMapMapper _mapper;
 
     void Awake()
     {
-        //런타임에서 자동으로 맵을 불러오도록 설정 (테스트용)
-        Initialize();   
-    }
-    public void Initialize()
-    {
-        // Initialize any required components or dependencies
-        if (_serializer == null || _modelBuilder == null || _mapper == null)
-        {
-            Debug.LogError("Missing required dependencies in TileMapLoader");
-        }
-    }
-    private void Start()
-    {
+        _serializer = new TileMapSerializer();
+        _modelBuilder = new TileMapModelBuilder();
+        _mapper = new TileMapDtoMapper();
     }
 #if UNITY_EDITOR
     // === Deserialize: JSON 파일 → 씬 ===
@@ -66,7 +58,7 @@ LoadMapRuntime();
     }
 #if UNITY_EDITOR
     // === Serialize: 씬 → JSON 파일 ===
-    [SerializeField, ContextMenu("Save Map To JSON")]
+    [ContextMenu("Save Map To JSON")]
     private void SaveMapInEditor()
     {
         // FindObjectsOfType(T) is obsolete in newer Unity versions.
