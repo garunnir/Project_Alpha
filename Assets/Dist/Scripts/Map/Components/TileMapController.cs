@@ -1,35 +1,35 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace IsoTilemap
+using IsoTilemap;
+
+// 타일 편집 조작과 뷰 갱신만 담당합니다. 로드/저장은 TileMapManager 책임.
+public class TileMapController : MonoBehaviour
 {
-    //컨트롤러는 타일맵의 상태를 관리하고, 변경 사항을 시각화하는 역할을 합니다.
-    public class TileMapController : MonoBehaviour
+    private IMapModel _model;
+    private IMapViewBuilder _viewBuilder;
+
+    private readonly HashSet<Vector3Int> _dirty = new();
+
+    public void Init(IMapModel model, IMapViewBuilder viewBuilder)
     {
-        [SerializeField] private IMapModel _model;
-        [SerializeField] private IMapViewBuilder _viewBuilder;
+        _model = model;
+        _viewBuilder = viewBuilder;
+        _viewBuilder.Bind(model);
+        _viewBuilder.Build(model);
+    }
 
+    public void MarkDirty(Vector3Int cell) => _dirty.Add(cell);
 
-        HashSet<Vector3Int> dirty = new();
+    public void FlushDirty()
+    {
+        foreach (var cell in _dirty)
+            RefreshCell(cell);
+        _dirty.Clear();
+    }
 
-        //public ref TileState GetOrCreate(Vector3Int cell) { /* ... */ }
-
-        public void MarkDirty(Vector3Int cell) => dirty.Add(cell);
-
-        public void FlushDirty()
-        {
-            foreach (var cell in dirty)
-                RefreshCell(cell); // 그 셀만 갱신
-            dirty.Clear();
-        }
-
-        private void RefreshCell(Vector3Int cellPos)
-        {
-            //모델의 데이터를 조회하여 뷰를 갱신
-            if (_model.TryGetTiles(cellPos, out IReadOnlyList<TileData> tiles))
-            {
-                _viewBuilder.RefreshCell(cellPos, tiles);
-            }
-        }
+    private void RefreshCell(Vector3Int cellPos)
+    {
+        if (_model.TryGetTiles(cellPos, out IReadOnlyList<TileData> tiles))
+            _viewBuilder.RefreshCell(cellPos, tiles);
     }
 }

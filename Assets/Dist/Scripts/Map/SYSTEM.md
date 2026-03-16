@@ -10,9 +10,13 @@
 ```mermaid
 graph TD
     subgraph Components["Components (MonoBehaviour)"]
-        Loader[TileMapLoader]
-        Saver[TileMapSaver]
+        Manager[TileMapManager]
+        Loader[MapFileLoader]
+        Saver[MapFileSaver]
         Controller[TileMapController]
+        Manager --> Loader
+        Manager --> Saver
+        Manager --> Controller
     end
 
     subgraph Pipeline["TileMap / Pipeline"]
@@ -95,22 +99,31 @@ graph TD
 
 ```mermaid
 sequenceDiagram
-    participant F as JSON File
+    participant Mgr as TileMapManager
+    participant L as MapFileLoader
     participant P as MapLoadPipeline
     participant M as TileMapModel
     participant V as TileMapVisualizer
+    participant C as TileMapController
 
-    F->>P: Read (TilemapSerializer)
-    P->>P: ToPrepared (TileMapDtoMapper)
-    P->>M: Build (TileMapModelBuilder)
-    M-->>V: Bind (OnRuntimeDataChanged 구독)
-    M->>V: Build (초기 GameObject 생성)
+    Mgr->>L: Load()
+    L->>P: LoadModel(path)
+    P->>P: Read → ToPrepared → Build
+    P-->>L: IMapModel + IMapViewBuilder
+    L-->>Mgr: Model, ViewBuilder
+    Mgr->>C: Init(model, viewBuilder)
+    C->>V: Bind(model) — OnRuntimeDataChanged 구독
+    C->>V: Build(model) — 초기 GameObject 생성
     Note over V: TileObjFactory → TileView
 
     Note over M,V: 런타임 수정
     M->>M: SetTile()
     M-->>V: OnRuntimeDataChanged
     V->>V: RefreshCell → TileView.UpdateTile()
+
+    Note over Mgr: 저장 요청
+    Mgr->>Mgr: Save()
+    Mgr->>Mgr: _saver.Save()
 ```
 
 ---
@@ -119,7 +132,8 @@ sequenceDiagram
 
 | 레이어 | 위치 | 역할 |
 |--------|------|------|
-| Entry | `Components/` | 씬에 붙는 MB, 파이프라인 조합 |
+| Coordinator | `Components/` | `TileMapManager` — 생명주기 조율, wiring |
+| Entry | `Components/` | `MapFileLoader`, `MapFileSaver`, `TileMapController` |
 | Data | `Internal/` | 순수 구조체 (Unity 비의존) |
 | Interface | `TileMap/Interface/` | 레이어 간 계약, 결합도 최소화 |
 | DTO | `TileMap/DTO/` | JSON 직렬화 전용 포맷 |

@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class TestRunner : MonoBehaviour
 {
-    [SerializeField] TileMapLoader _loader;
+    [SerializeField] TileMapManager _manager;
     void Start()
     {
-        _loader.LoadMapRuntime("TestMap");
+        _manager.Load();
         Debug.Log("TestRunner started.");
     }
 }

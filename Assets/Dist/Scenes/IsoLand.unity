@@ -3890,7 +3890,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f30a16de4bd81814e8bd847f951d905d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TestRunner
-  _loader: {fileID: 299715454}
+  _manager: {fileID: 299715456}
 --- !u!1001 &222328543
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5134,7 +5134,9 @@ GameObject:
   m_Component:
   - component: {fileID: 299715453}
   - component: {fileID: 299715454}
+  - component: {fileID: 299715457}
   - component: {fileID: 299715455}
+  - component: {fileID: 299715456}
   m_Layer: 0
   m_Name: MapData
   m_TagString: Untagged
@@ -5150,12 +5152,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 299715452}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1774915254}
+  m_Father: {fileID: 1012867334}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &299715454
 MonoBehaviour:
@@ -5166,7 +5168,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 299715452}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c13e09ce608cbc3489a233f0f863c745, type: 3}
+  m_Script: {fileID: 11500000, guid: e842ea84fbc01f74e9fda20a75c07010, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TileMapDomainData
   serializationData:
@@ -5178,7 +5180,7 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
+  prefabDB: {fileID: 0}
   fileName: map01.json
   usePersistentPath: 1
 --- !u!114 &299715455
@@ -5193,6 +5195,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb3a9a713ac9a0040beef0aa693a7003, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapController
+--- !u!114 &299715456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56c587780db204243babb3309f4b2535, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileMapManager
+  _loader: {fileID: 299715454}
+  _saver: {fileID: 299715457}
+  _controller: {fileID: 299715455}
+--- !u!114 &299715457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2049c5c39634f4d409dd6e8be61aed54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapSaver
+  fileName: map01.json
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
@@ -5555,7 +5585,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 305037486}
-  - component: {fileID: 305037487}
   m_Layer: 0
   m_Name: 3D test
   m_TagString: Untagged
@@ -5582,18 +5611,6 @@ Transform:
   - {fileID: 1827188271}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &305037487
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 305037485}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5803aeb2a26a2540856854efca1c21d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::TileMapSerializer
 --- !u!1 &305086254
 GameObject:
   m_ObjectHideFlags: 0
@@ -14824,7 +14841,7 @@ Transform:
   - {fileID: 525082049}
   - {fileID: 1569324472}
   - {fileID: 1951877347}
-  - {fileID: 1774915254}
+  - {fileID: 299715453}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1018035369
@@ -19430,7 +19447,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f16376cf86bf4e149b7731e82b3ce72b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterVisibilityBroadcaster
-  _tileMapLoader: {fileID: 0}
+  _tileMapManager: {fileID: 0}
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0
@@ -27458,38 +27475,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1772656997}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1774915253
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1774915254}
-  m_Layer: 0
-  m_Name: DomainData
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1774915254
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1774915253}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 299715453}
-  m_Father: {fileID: 1012867334}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1808075731
 PrefabInstance:
   m_ObjectHideFlags: 0
