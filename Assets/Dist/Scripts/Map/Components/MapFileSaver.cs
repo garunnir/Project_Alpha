@@ -7,6 +7,7 @@ public class MapFileSaver : MonoBehaviour
 {
     [Header("Map file")]
     [SerializeField] private string fileName = "map01.json";
+    [SerializeField] private bool usePersistentPath = false;
 
     private IMapModel _model;
     private IMapMapper _mapper;
@@ -19,8 +20,15 @@ public class MapFileSaver : MonoBehaviour
 
     public void Save()
     {
-        new MapSavePipline(_model, _mapper)
-            .Save(Path.Combine(Application.persistentDataPath, fileName));
+        new MapSavePipline(_model, _mapper).Save(GetFullPath());
+    }
+
+    private string GetFullPath()
+    {
+        if (usePersistentPath)
+            return Path.Combine(Application.persistentDataPath, fileName);
+        else
+            return Path.Combine(Application.dataPath, "..", fileName);
     }
 
 #if UNITY_EDITOR
@@ -48,9 +56,8 @@ public class MapFileSaver : MonoBehaviour
             });
         }
 
-        string fullPath = Path.Combine(Application.dataPath, "..", fileName);
-        File.WriteAllText(fullPath, JsonUtility.ToJson(mapData, true));
-        Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapData.tiles.Count})");
+        File.WriteAllText(GetFullPath(), JsonUtility.ToJson(mapData, true));
+        Debug.Log($"TileMap saved to: {GetFullPath()} (tiles: {mapData.tiles.Count})");
     }
 #endif
 }

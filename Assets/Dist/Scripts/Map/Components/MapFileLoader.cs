@@ -11,7 +11,7 @@ public class MapFileLoader : SerializedMonoBehaviour
 
     [Header("Map file")]
     [SerializeField] private string fileName = "map01.json";
-    [SerializeField] private bool usePersistentPath = true;
+    [SerializeField] private bool usePersistentPath = false;
 
     public IMapModel Model { get; private set; }
     public IMapViewBuilder ViewBuilder { get; private set; }
@@ -34,6 +34,7 @@ public class MapFileLoader : SerializedMonoBehaviour
 
     public void Load(string path)
     {
+        Debug.Log($"[MapFileLoader] 로드 시도 경로: {path}");
         Model = new MapLoadPipeline(
             serializer: _serializer,
             modelBuilder: _modelBuilder,

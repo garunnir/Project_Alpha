@@ -17,11 +17,14 @@ namespace IsoTilemap
 
         public IMapModel LoadModel(string path)
         {
-            // Deserialize JSON to DTO
             MapSaveJsonDto dto = _serializer.Read(path);
-            // Map DTO to Domain Model
+            if (dto == null)
+                throw new System.InvalidOperationException($"[MapLoadPipeline] 맵 파일 로드 실패: {path}");
+
             MapModelDTO prepared = _mapper.ToPrepared(dto);
-            // Build Runtime Data
+            if (prepared == null)
+                throw new System.InvalidOperationException($"[MapLoadPipeline] DTO 변환 실패: {path}");
+
             return _modelBuilder.Build(prepared);
         }
     }
