@@ -26,7 +26,7 @@ namespace IsoTilemap
         {
             Vector3 wPos = new Vector3(
             worldPos.x * cellSize + 0.5f * cellSize,
-            worldPos.y * cellSize + 0.5f * cellSize,
+            worldPos.y * cellSize,
                 worldPos.z * cellSize + 0.5f * cellSize
 );
             return wPos;

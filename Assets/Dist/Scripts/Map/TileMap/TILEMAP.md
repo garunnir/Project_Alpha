@@ -99,7 +99,7 @@ graph TD
 - **MapSavePipline.cs** — `Save()` / `SaveAsync()` / `SaveSafeAsync()` (Newtonsoft 스트리밍)
 
 ### View
-- **TileMapVisualizer.cs** — `Dictionary<Guid, TileView>` 추적, Bind/Build/RefreshCell
+- **TileMapVisualizer.cs** — `Dictionary<Guid, TileView>` 추적, Bind/Build/RefreshCell. Model이 이벤트로 보낸 `TileData.tileDefId`로 대응하는 TileView를 조회해 업데이트
 - **TileObjFactory.cs** — PrefabDB 조회 → Instantiate → TileView 초기화
 - **TilePrefabDB.cs** — ScriptableObject, `string → GameObject` 캐시
 - **TileView.cs** — 타일 MB, `UpdateTile()`, 씬뷰 기즈모
@@ -114,6 +114,18 @@ graph TD
 
 ### Debug
 - **Debug/DebugTileRunner.cs** — BFS 기즈모 콜백 홀더 (`IFrameState`)
+
+---
+
+## 레이어 설계 원칙
+
+| 레이어 | 알아도 되는 것 | 알면 안 되는 것 |
+|--------|--------------|----------------|
+| **Model** (`TileMapModel`) | `TileData` (순수 데이터) | `TileView`, `GameObject` 등 뷰 일체 |
+| **Visualizer** (`TileMapVisualizer`) | `TileData`, `TileView`, `Guid` 매핑 | Model 내부 구현 |
+| **View** (`TileView`) | 자신의 시각 상태 | `TileData`, Model |
+
+`tileDefId`는 Model과 Visualizer 사이의 계약 — Visualizer가 어떤 TileView를 갱신해야 하는지 찾기 위한 런타임 전용 키.
 
 ---
 

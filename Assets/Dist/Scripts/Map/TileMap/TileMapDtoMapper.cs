@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
@@ -19,6 +20,7 @@ namespace IsoTilemap
             {
                 prepareData.Add(new TileData
                 {
+                    tileDefId = Guid.NewGuid(),
                     state = new TileState { },
                     identity = new TileIdentity
                     {

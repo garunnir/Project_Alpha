@@ -29,7 +29,7 @@ classDiagram
 
 | 필드 | 설명 |
 |------|------|
-| `tileDefId` | Guid — 씬 재로드 후에도 인스턴스 추적 |
+| `tileDefId` | Guid — 런타임 바인딩 키. 저장하지 않으며 로드 시 `Guid.NewGuid()`로 생성. `TileMapVisualizer`가 TileData → TileView를 찾을 때 사용 |
 | `isHiddenCharacter` | BFS 오클루전으로 숨김 처리됨 |
 | `PrefabId` | `TilePrefabDB` 딕셔너리 키 |
 | `sizeUnit` | 점유 그리드 크기 (예: `2,1,1`) |

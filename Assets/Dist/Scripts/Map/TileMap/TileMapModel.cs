@@ -86,6 +86,7 @@ namespace IsoTilemap
             foreach (var kv in prepared.TilesData)
             {
                 tiles[kv.identity.GridPos] = new List<TileData> { kv };
+                _cachedList.Add(kv);
             }
         }
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
