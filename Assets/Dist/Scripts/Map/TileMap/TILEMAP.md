@@ -109,7 +109,7 @@ graph TD
 - **IsoTileMap.cs** — ⚠️ 레거시, 현재 미사용
 
 ### Editor Only
-- **RhombusChunkBaker.cs** — 자식 타일 → 단일 MeshCollider 베이킹 (1×1만 지원)
+- **RhombusChunkBaker.cs** — 자식 타일 → 단일 MeshCollider 베이킹. Largest-Rect-First 알고리즘으로 인접 타일을 최대 직사각형으로 병합해 정점 수 최소화. → 상세: [CHUNK_BAKER.md](CHUNK_BAKER.md)
 - **RhombusTileMarker.cs** — 베이킹 대상 마커 (빈 MB)
 
 ### Debug
