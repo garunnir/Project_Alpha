@@ -12,10 +12,9 @@ namespace IsoTilemap
     /// </summary>
     public class TileMapVisualizer : IMapViewBuilder, IDisposable
     {
-        private Dictionary<Guid, TileView> _tileInstances = new Dictionary<Guid, TileView>();
+        private Dictionary<Guid, TileView> _tileViews = new Dictionary<Guid, TileView>();
 
         private TileObjFactory _tileFactory;
-        private IMapModelReadOnly _runtime;
 
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
@@ -27,72 +26,44 @@ namespace IsoTilemap
         /// <summary>
         /// 모델 데이터를 기반으로 타일맵을 구축합니다.
         /// </summary>
-        public void Build(IMapModelReadOnly modelData)
+        public void Build(IMapModelReadOnly model)
         {
-            IReadOnlyList<TileData> tiles = modelData.TilesSnapshot;
+            IReadOnlyList<TileData> tiles = model.TilesSnapshot;
             if (tiles == null || tiles.Count() == 0)
             {
                 Debug.LogWarning("No tile data to build visual.");
                 return;
             }
 
-            ClearExistingTiles();
-            Dictionary<Guid, TileView> spawnedTiles = _tileFactory.SpawnTiles(tiles);
-            _tileInstances = spawnedTiles;
+            ClearTiles();
+            _tileViews = _tileFactory.SpawnTiles(tiles);
         }
 
 
         /// <summary>
         /// 기존 타일들을 정리합니다.
         /// </summary>
-        private void ClearExistingTiles()
+        private void ClearTiles()
         {
-            foreach (var tile in _tileInstances.Values)
+            foreach (var view in _tileViews.Values)
             {
-                if (tile != null)
-                    GameObject.Destroy(tile.gameObject);
+                if (view != null)
+                    GameObject.Destroy(view.gameObject);
             }
 
-            _tileInstances.Clear();
+            _tileViews.Clear();
         }
 
         /// <summary>
         /// ID로 타일 인스턴스를 조회합니다.
         /// </summary>
-        public bool TryGetTile(Guid tileId, out TileView tileInfo)
+        public bool TryGetTile(Guid tileId, out TileView tileView)
         {
-            return _tileInstances.TryGetValue(tileId, out tileInfo);
+            return _tileViews.TryGetValue(tileId, out tileView);
         }
 
-        public void Bind(IMapModelReadOnly runtime)
-        {
-            _runtime = runtime;
-            _runtime.OnRuntimeDataChanged += RefreshTiles;
-        }
-        public void Unbind()
-        {
-            if (_runtime != null)
-            {
-                _runtime.OnRuntimeDataChanged -= RefreshTiles;
-                _runtime = null;
-            }
-        }
-        private void RefreshTiles(Vector3Int changedPos, List<TileData> changedTiles)
-        {
-            foreach (var tileData in changedTiles)
-            {
-                if (TryGetTile(tileData.tileDefId, out TileView tileView))// 타일 인스턴스가 존재하는 경우
-                {
-                    // 타일 상태 업데이트
-                    tileView.UpdateTile(tileData);
-                }
-                else
-                {
-                    var spawnedTile = _tileFactory.SpawnTile(tileData);
-                    _tileInstances[tileData.tileDefId] = spawnedTile;
-                }
-            }
-        }
+        public void Bind(IMapModelReadOnly runtime) { }
+
         public void RefreshCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
         {
             foreach (var tileData in tiles)
@@ -101,16 +72,15 @@ namespace IsoTilemap
                     tileView.UpdateTile(tileData);
                 else
                 {
-                    var spawned = _tileFactory.SpawnTile(tileData);
-                    _tileInstances[tileData.tileDefId] = spawned;
+                    var newView = _tileFactory.SpawnTile(tileData);
+                    _tileViews[tileData.tileDefId] = newView;
                 }
             }
         }
 
         public void Dispose()
         {
-            Unbind();
-            ClearExistingTiles();
+            ClearTiles();
         }
     }
 }

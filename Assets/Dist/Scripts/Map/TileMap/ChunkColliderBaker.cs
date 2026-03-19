@@ -1,10 +1,10 @@
-// 자식 RhombusTileMarker 들을 Largest-Rect-First 알고리즘으로 병합,
+// 자식 ColliderTileMarker 들을 Largest-Rect-First 알고리즘으로 병합,
 // 단일 MeshCollider 로 베이킹. 런타임/에디터 모두 동작.
 using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(MeshCollider))]
-public class RhombusChunkBaker : MonoBehaviour
+public class ChunkColliderBaker : MonoBehaviour
 {
     [Header("Tile size (world units)")]
     public float diagX = 1f;
@@ -21,7 +21,7 @@ public class RhombusChunkBaker : MonoBehaviour
     private class GroupData
     {
         public int                     id;
-        public List<RhombusTileMarker> markers = new List<RhombusTileMarker>();
+        public List<ColliderTileMarker> markers = new List<ColliderTileMarker>();
         public Vector3[]               verts;
         public int[]                   tris;
     }
@@ -50,10 +50,10 @@ public class RhombusChunkBaker : MonoBehaviour
     [ContextMenu("Bake Chunk")]
     public void BakeChunk()
     {
-        var tiles = GetComponentsInChildren<RhombusTileMarker>(includeInactive);
+        var tiles = GetComponentsInChildren<ColliderTileMarker>(includeInactive);
         if (tiles == null || tiles.Length == 0)
         {
-            Debug.LogWarning("[RhombusChunkBaker] No RhombusTileMarker found.");
+            Debug.LogWarning("[ChunkColliderBaker] No ColliderTileMarker found.");
             return;
         }
 
@@ -68,7 +68,7 @@ public class RhombusChunkBaker : MonoBehaviour
 
         int totalVerts = 0, totalTris = 0;
         foreach (var g in _groups.Values) { totalVerts += g.verts.Length; totalTris += g.tris.Length / 3; }
-        Debug.Log($"[RhombusChunkBaker] {tiles.Length} tiles → {_groups.Count} groups | verts:{totalVerts}, tris:{totalTris}");
+        Debug.Log($"[ChunkColliderBaker] {tiles.Length} tiles → {_groups.Count} groups | verts:{totalVerts}, tris:{totalTris}");
     }
 
     /// <summary>
@@ -79,11 +79,11 @@ public class RhombusChunkBaker : MonoBehaviour
     {
         if (!_groups.TryGetValue(id, out var existing))
         {
-            Debug.LogWarning($"[RhombusChunkBaker] Group {id} 가 캐시에 없습니다. BakeChunk 를 먼저 실행하세요.");
+            Debug.LogWarning($"[ChunkColliderBaker] Group {id} 가 캐시에 없습니다. BakeChunk 를 먼저 실행하세요.");
             return;
         }
 
-        var liveMarkers = new List<RhombusTileMarker>();
+        var liveMarkers = new List<ColliderTileMarker>();
         foreach (var m in existing.markers)
             if (m != null) liveMarkers.Add(m);
 
@@ -96,7 +96,7 @@ public class RhombusChunkBaker : MonoBehaviour
             BakeTilesIntoGroups(liveMarkers.ToArray());
 
         RebuildMeshFromGroups();
-        Debug.Log($"[RhombusChunkBaker] BakeGroup({id}): {liveMarkers.Count} 타일 재계산 완료");
+        Debug.Log($"[ChunkColliderBaker] BakeGroup({id}): {liveMarkers.Count} 타일 재계산 완료");
     }
 
     [ContextMenu("Clear Baked Mesh")]
@@ -114,11 +114,11 @@ public class RhombusChunkBaker : MonoBehaviour
     // Core: 타일 → GroupData 파티셔닝
     // ─────────────────────────────────────────────
 
-    private void BakeTilesIntoGroups(RhombusTileMarker[] tiles)
+    private void BakeTilesIntoGroups(ColliderTileMarker[] tiles)
     {
         float hy = thicknessY * 0.5f;
 
-        var byLayer = new Dictionary<int, List<(int gx, int gz, float worldY, RhombusTileMarker marker)>>();
+        var byLayer = new Dictionary<int, List<(int gx, int gz, float worldY, ColliderTileMarker marker)>>();
 
         foreach (var tile in tiles)
         {
@@ -130,7 +130,7 @@ public class RhombusChunkBaker : MonoBehaviour
 
             if (!byLayer.TryGetValue(key, out var list))
             {
-                list = new List<(int, int, float, RhombusTileMarker)>();
+                list = new List<(int, int, float, ColliderTileMarker)>();
                 byLayer[key] = list;
             }
             list.Add((gx, gz, lp.y, tile));
@@ -213,7 +213,7 @@ public class RhombusChunkBaker : MonoBehaviour
                 tris.Add(t + offset);
         }
 
-        if (_mesh == null) _mesh = new Mesh { name = "RhombusChunkMesh" };
+        if (_mesh == null) _mesh = new Mesh { name = "ChunkColliderMesh" };
         _mesh.Clear();
         _mesh.indexFormat = verts.Count > 65535
             ? UnityEngine.Rendering.IndexFormat.UInt32

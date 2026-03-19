@@ -32,4 +32,24 @@ public class TileMapController : MonoBehaviour
         if (_model.TryGetTiles(cellPos, out IReadOnlyList<TileData> tiles))
             _viewBuilder.RefreshCell(cellPos, tiles);
     }
+    public void AddTile(TileData tileData)
+    {
+        _model.SetTile(tileData);
+        MarkDirty(tileData.identity.GridPos);
+    }
+    public void RemoveTile(TileData tileData)
+    {
+        _model.SetTile(tileData);
+        MarkDirty(tileData.identity.GridPos);
+    }
+    public void AddAndFlush(TileData tileData)
+    {
+        AddTile(tileData);
+        FlushDirty();
+    }
+    public void RemoveAndFlush(TileData tileData)
+    {
+        RemoveTile(tileData);
+        FlushDirty();
+    }
 }
