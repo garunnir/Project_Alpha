@@ -3,18 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
 {
-    [Serializable]
-    public class TilePrefabEntry
-    {
-        public string prefabId;
-        public GameObject prefab;
-    }
-
     // id → prefab
     [CreateAssetMenu(menuName = "Iso/Tile Prefab DB")]
     public class TilePrefabDB : ScriptableObject
     {
-        public List<TilePrefabEntry> entries = new List<TilePrefabEntry>();
+        public List<TileDefinition> entries = new List<TileDefinition>();
 
         private Dictionary<string, GameObject> _cache;
 
@@ -28,10 +21,9 @@ namespace IsoTilemap
             _cache = new Dictionary<string, GameObject>();
             foreach (var e in entries)
             {
+                if (e == null) continue;
                 if (!string.IsNullOrEmpty(e.prefabId) && e.prefab != null)
-                {
                     _cache[e.prefabId] = e.prefab;
-                }
             }
         }
 
@@ -52,12 +44,13 @@ namespace IsoTilemap
 
         void AutoSetPrefabId()
         {
-
             foreach (var e in entries)
             {
+                if (e == null) continue;
                 if (string.IsNullOrEmpty(e.prefabId) && e.prefab != null)
                 {
                     e.prefabId = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(e.prefab);
+                    UnityEditor.EditorUtility.SetDirty(e);
                 }
             }
         }
