@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
   m_Name: Wall_NE_DoorFrame
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: 09a310c0d748c314c997c29c0110bdc8, type: 3}
   prefabId: Wall/Wall_NE_DoorFrame
   prefab: {fileID: 3204928609027114191, guid: d7d1fe6fd5da5074d947e01087f96417, type: 3}

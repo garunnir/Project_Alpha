@@ -1,20 +1,15 @@
 using IsoTilemap;
-using Sirenix.OdinInspector;
 using System.IO;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class MapFileLoader : SerializedMonoBehaviour
+public class MapFileLoader : MonoBehaviour
 {
-    [Header("Prefab DB for loading")]
-    [SerializeField] private TilePrefabDB prefabDB;
-
     [Header("Map file")]
     [SerializeField] private string fileName = "map01.json";
     [SerializeField] private bool usePersistentPath = false;
 
     public IMapModel Model { get; private set; }
-    public IMapViewBuilder ViewBuilder { get; private set; }
 
     private IMapSerializer _serializer;
     private IMapModelBuilder _modelBuilder;
@@ -39,9 +34,6 @@ public class MapFileLoader : SerializedMonoBehaviour
             serializer: _serializer,
             modelBuilder: _modelBuilder,
             mapper: _mapper).LoadModel(path);
-
-        var factory = new TileObjFactory(this.transform, prefabDB);
-        ViewBuilder = new TileMapVisualizer(factory);
     }
 
     private string GetFullPath()

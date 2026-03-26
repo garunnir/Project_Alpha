@@ -227,7 +227,7 @@ namespace IsoTilemap
                     else
                     {
                         // 비어있는 셀: 확장
-                        Debug.LogError("빈셀발견 확장" + nx);
+                        Debug.Log("빈셀발견 확장" + nx);
                     }
                 }
             }

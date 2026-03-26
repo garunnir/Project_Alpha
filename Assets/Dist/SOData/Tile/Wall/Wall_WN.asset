@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
   m_Name: Wall_WN
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: e1a634728cdda094981435a37a1baac6, type: 3}
   prefabId: Wall/Wall_WN
   prefab: {fileID: 7270704505922181963, guid: 103991ee748417d4b82f89a7a47c12a7, type: 3}

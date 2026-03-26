@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
   m_Name: Wardrobe
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: 8c2e9342e9bc04e499d4a0bff0e58763, type: 3}
   prefabId: Furniture/Wardrobe
   prefab: {fileID: 8495666809683980932, guid: 7750082aef184184aae64824ffd2f53e, type: 3}

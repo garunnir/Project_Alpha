@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Maps player input direction to an animation.
@@ -49,7 +50,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
 
     void Update()
     {
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        Vector2 input = InputManager.Instance.Actions.Player.Move.ReadValue<Vector2>();
         bool moving = input.sqrMagnitude > moveThreshold;
 
         if (mode == Mode.Animator)

@@ -15,5 +15,8 @@ namespace IsoTilemap
 
         [VerticalGroup("Row/Info"), LabelWidth(70)]
         public GameObject prefab;
+
+        [VerticalGroup("Row/Info"), LabelWidth(70)]
+        public string category;
     }
 }

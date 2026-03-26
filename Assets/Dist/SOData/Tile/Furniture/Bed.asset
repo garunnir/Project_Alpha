@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
   m_Name: Bed
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: 248c9b4703f056a4aa5f7604c4349837, type: 3}
   prefabId: Furniture/Bed
   prefab: {fileID: 8699972130991688985, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a, type: 3}

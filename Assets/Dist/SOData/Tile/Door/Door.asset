@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
   m_Name: Door
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: 9bc596d12d8676a4b8793bd311c59e17, type: 3}
   prefabId: Door/Door
   prefab: {fileID: 2502377816984249760, guid: 0a9cc9b261c968a41b72aad56e69a6af, type: 3}

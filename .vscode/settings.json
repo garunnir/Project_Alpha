@@ -66,12 +66,12 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "Project_Pictureless.sln",
+    "dotnet.defaultSolution": "Project_Pictureless.slnx",
     "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
     "dotnetAcquisitionExtension.existingDotnetPath": [
         {"extensionId":"ms-dotnettools.csharp","path":"C:\\Program Files\\dotnet\\dotnet.exe"},
         {"extensionId":"ms-dotnettools.csdevkit","path":"C:\\Program Files\\dotnet\\dotnet.exe"}
     ],
     "dotnet.server.useOmnisharp": false,
-    "dotnet.automaticallyBuildOnSave": false,
+    "dotnet.automaticallyBuildOnSave": false
 }

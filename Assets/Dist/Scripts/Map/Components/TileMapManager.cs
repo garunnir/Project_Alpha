@@ -12,13 +12,21 @@ public class TileMapManager : MonoBehaviour
     [SerializeField] private MapFileSaver _saver;
     [SerializeField] private TileMapController _controller;
 
+    [Header("Prefab DB")]
+    [SerializeField] private TilePrefabDB _prefabDB;
+
     public IMapModel Model { get; private set; }
+    public TilePrefabDB PrefabDB => _prefabDB;
 
     void Start()
     {
         _loader.Load();
         Model = _loader.Model;
-        _controller.Init(Model, _loader.ViewBuilder);
+
+        var factory = new TileObjFactory(this.transform, _prefabDB);
+        var viewBuilder = new TileMapVisualizer(factory);
+
+        _controller.Init(Model, viewBuilder);
         _saver.Init(Model);
     }
 
