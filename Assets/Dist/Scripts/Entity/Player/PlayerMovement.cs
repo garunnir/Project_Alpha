@@ -52,6 +52,11 @@ public class PlayerMovement : MonoBehaviour
 		// 물리 기반 이동 시 회전은 외부로부터 고정하는 것이 일반적입니다.
 		_rb.freezeRotation = true;
 	}
+	void Start(){
+		InputManager.Instance.Actions.Player.Move.performed += OnMove;
+		InputManager.Instance.Actions.Player.Move.canceled += OnMove;
+		InputManager.Instance.Actions.Player.Run.performed += OnRun;
+	}
 
 
 	#region Input System Callbacks
