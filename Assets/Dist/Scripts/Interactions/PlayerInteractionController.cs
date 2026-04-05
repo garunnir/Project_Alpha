@@ -3,18 +3,18 @@ using UnityEngine.InputSystem;
 namespace Interactions
 {
     [RequireComponent(typeof(CharacterState))]
+    [RequireComponent(typeof(DirectionalRaycaster))]
 public class PlayerInteractionController : MonoBehaviour
 {
-    [Header("Detection")]
-    [SerializeField] private float _interactDistance = 3f;
-    [SerializeField] private LayerMask _interactableMask;
-
     private IInteractable _currentTarget;
     private CharacterState _characterState;
-    private Vector3 _lastLookDir;
+    private DirectionalRaycaster _raycaster;
+    private Collider _lastHitCollider;
+
     private void Awake()
     {
         _characterState = GetComponent<CharacterState>();
+        _raycaster = GetComponent<DirectionalRaycaster>();
     }
 
     // 인풋 시스템에서 호출할 메서드
@@ -37,29 +37,25 @@ public class PlayerInteractionController : MonoBehaviour
 
     private void UpdateInteractionTarget()
     {
-        
-        Vector3 LookDir = _characterState.FacingDir.normalized;
-        if(LookDir==Vector3.zero) return;
-
-        Ray ray = new Ray(transform.position,LookDir);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, _interactDistance, _interactableMask))
+        Vector3 lookDir = _characterState.FacingDir;
+        if (!_raycaster.TryRaycast(transform.position, lookDir, out RaycastHit hit))
         {
-            var interactable = hit.collider.GetComponentInParent<IInteractable>();
-            if(Config.DebugMode.PlayerInteraction) Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
-            if (interactable != null)
-            {
-                // 타겟 변경 감지
-                if (interactable != _currentTarget)
-                {
-                    ChangeTarget(interactable);
-                }
-                return;
-            }
+            _lastHitCollider = null;
+            if (_currentTarget != null) ClearTarget();
+            return;
         }
 
-        // 더 이상 인터랙트 가능한 걸 안 보고 있을 때
-        if (_currentTarget != null)
+        if (hit.collider == _lastHitCollider) return;
+        _lastHitCollider = hit.collider;
+
+        var interactable = hit.collider.GetComponentInParent<IInteractable>();
+        if (Config.DebugMode.PlayerInteraction) Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
+
+        if (interactable != null)
+        {
+            if (interactable != _currentTarget) ChangeTarget(interactable);
+        }
+        else if (_currentTarget != null)
         {
             ClearTarget();
         }
@@ -75,22 +71,23 @@ public class PlayerInteractionController : MonoBehaviour
         _currentTarget = newTarget;
         _currentTarget.OnFocus(gameObject);
         if(Config.DebugMode.PlayerInteraction) Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
-        // 여기서 UI에 displayName, hintText 띄우는 것도 가능
     }
 
     private void ClearTarget()
     {
         _currentTarget.OnUnfocus(gameObject);
         _currentTarget = null;
-        if(Config.DebugMode.PlayerInteraction) Debug.Log ("Unfocused");
-        // UI 숨기기 등
+        if(Config.DebugMode.PlayerInteraction) Debug.Log("Unfocused");
     }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
-        if(_characterState==null)
+        if (_characterState == null)
             _characterState = GetComponent<CharacterState>();
-        Gizmos.DrawRay(transform.position, _characterState.FacingDir.normalized * _interactDistance);
+        if (_raycaster == null)
+            _raycaster = GetComponent<DirectionalRaycaster>();
+        Gizmos.DrawRay(transform.position, _characterState.FacingDir.normalized * _raycaster.Range);
     }
 }
 }

@@ -17,6 +17,7 @@ This skill provides best practices for writing clean, performant Unity C# script
 - Events, delegates, or callbacks → read `references/events.md`
 - ScriptableObject questions → read `references/scriptableobjects.md`
 - Performance or optimization → read `references/performance.md`
+- Input, keyboard, mouse, controller, InputAction, PlayerInput → read `references/input.md`
 
 ## Core Rules
 

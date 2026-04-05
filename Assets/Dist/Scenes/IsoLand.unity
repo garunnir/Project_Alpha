@@ -20248,6 +20248,7 @@ GameObject:
   - component: {fileID: 1383865918}
   - component: {fileID: 1383865919}
   - component: {fileID: 1383865920}
+  - component: {fileID: 1383865921}
   m_Layer: 0
   m_Name: PlayerCharacter
   m_TagString: Untagged
@@ -20486,10 +20487,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7afcf2faa7c74354291156a48096da4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerInteractionController
-  _interactDistance: 3
-  _interactableMask:
-    serializedVersion: 2
-    m_Bits: 1
 --- !u!114 &1383865919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20515,6 +20512,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterVisibilityBroadcaster
   _tileMapManager: {fileID: 299715456}
+--- !u!114 &1383865921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1383865911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25f1a27154956ee4ea1947e12c03addb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::DirectionalRaycaster
+  _range: 3
+  _mask:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0

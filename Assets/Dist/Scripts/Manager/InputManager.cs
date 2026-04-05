@@ -32,13 +32,13 @@ public class InputManager : Singleton<InputManager>
         Actions.Dispose();
     }
 
-    private bool IsClike() { return Input.GetMouseButtonDown(0); }
+    private bool IsClike() { return Pointer.current?.press.wasPressedThisFrame ?? false; }
 
     public static RaycastHit RayCast() //todo 공통사용가능한 부위로 옮겨야함.
     {
-        var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit info;
-        Physics.Raycast(ray, out info);
+        var screenPos = Pointer.current?.position.ReadValue() ?? Vector2.zero;
+        var ray = Camera.main.ScreenPointToRay(screenPos);
+        Physics.Raycast(ray, out RaycastHit info);
         if (info.collider != null) Debug.Log(info.collider.name);
         return info;
     }
