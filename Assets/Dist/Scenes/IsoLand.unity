@@ -15533,6 +15533,7 @@ MonoBehaviour:
   _controller: {fileID: 299715455}
   _placementState: {fileID: 1001567636}
   _cursorVisual: {fileID: 1005200164}
+  _camera: {fileID: 64710673}
 --- !u!1 &1005200164
 GameObject:
   m_ObjectHideFlags: 0

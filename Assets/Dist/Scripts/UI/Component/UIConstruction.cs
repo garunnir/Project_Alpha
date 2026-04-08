@@ -47,7 +47,7 @@ public class UIConstruction : MonoBehaviour
         foreach (var entry in _tileManager.PrefabDB.entries)
         {
             if (entry == null) continue;
-            string cat = string.IsNullOrEmpty(entry.category) ? "기타" : entry.category;
+            string cat = string.IsNullOrEmpty(entry.category) ? ConstDataTable.Tile.UncategorizedCategory : entry.category;
             if (!_grouped.ContainsKey(cat))
             {
                 _grouped[cat] = new List<TileDefinition>();
