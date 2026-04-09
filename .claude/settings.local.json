@@ -8,7 +8,8 @@
       "mcp__unityMCP__manage_gameobject",
       "mcp__unityMCP__manage_components",
       "mcp__unityMCP__manage_scene",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebSearch"
     ]
   }
 }

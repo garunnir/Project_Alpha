@@ -7,6 +7,9 @@ public class DirectionalRaycaster : MonoBehaviour
 
     public float Range => _range;
 
+    private Vector3 _lastOrigin;
+    private Vector3 _lastDirection;
+
     public bool TryRaycast(Vector3 origin, Vector3 direction, out RaycastHit hit)
     {
         if (direction == Vector3.zero)
@@ -14,6 +17,15 @@ public class DirectionalRaycaster : MonoBehaviour
             hit = default;
             return false;
         }
+        _lastOrigin = origin;
+        _lastDirection = direction;
         return Physics.Raycast(new Ray(origin, direction.normalized), out hit, _range, _mask);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (_lastDirection == Vector3.zero) return;
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(_lastOrigin, _lastDirection.normalized * _range);
     }
 }

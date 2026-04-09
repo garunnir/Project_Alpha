@@ -10,7 +10,7 @@ public class CharacterState : MonoBehaviour
 
     internal void UpdateState(Vector3 desiredMove)
     {
-        FacingDir=desiredMove;
+        FacingDir=(desiredMove!=Vector3.zero)?desiredMove:FacingDir;
     }
     internal void UpdateGridPos(Vector3 worldPos)
     {

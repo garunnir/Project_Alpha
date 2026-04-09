@@ -10,22 +10,30 @@ public class PlayerInteractionController : MonoBehaviour
     private CharacterState _characterState;
     private DirectionalRaycaster _raycaster;
     private Collider _lastHitCollider;
+    private InputActions _interactAction;
 
     private void Awake()
     {
         _characterState = GetComponent<CharacterState>();
         _raycaster = GetComponent<DirectionalRaycaster>();
     }
+    private void Start()
+    {
+        _interactAction = InputManager.Instance.Actions;
+        _interactAction.Player.Interaction.performed += OnInteract;
+    }
 
     // 인풋 시스템에서 호출할 메서드
     public void OnInteract(InputAction.CallbackContext context)
     {
+        Debug.Log("OnInteract");
         if (!context.performed) return;
         if (_currentTarget == null) return;
 
         var interactor = gameObject;
         if (_currentTarget.CanInteract(interactor))
         {
+            Debug.Log("Interact");
             _currentTarget.Interact(interactor);
         }
     }
@@ -80,14 +88,5 @@ public class PlayerInteractionController : MonoBehaviour
         if(Config.DebugMode.PlayerInteraction) Debug.Log("Unfocused");
     }
 
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.green;
-        if (_characterState == null)
-            _characterState = GetComponent<CharacterState>();
-        if (_raycaster == null)
-            _raycaster = GetComponent<DirectionalRaycaster>();
-        Gizmos.DrawRay(transform.position, _characterState.FacingDir.normalized * _raycaster.Range);
-    }
 }
 }
