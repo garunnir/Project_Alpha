@@ -59,7 +59,9 @@ namespace IsoTilemap
         {
             foreach (var kv in prepared.TilesData)
             {
-                tiles[kv.identity.GridPos] = new List<TileData> { kv };
+                if (!tiles.ContainsKey(kv.identity.GridPos))
+                    tiles[kv.identity.GridPos] = new List<TileData>();
+                tiles[kv.identity.GridPos].Add(kv);
             }
             _isDirty = true;
             _occlusionFinder = new WallOcclusionFinder(tiles);

@@ -24,6 +24,11 @@ public class MapFileLoader : MonoBehaviour
 
     public void Load()
     {
+        // Awake가 호출되지 않은 에디터 환경에서도 동작하도록 lazy 초기화
+        _serializer ??= new TileMapSerializer();
+        _modelBuilder ??= new TileMapModelBuilder();
+        _mapper ??= new TileMapDtoMapper();
+
         Load(GetFullPath());
     }
 
