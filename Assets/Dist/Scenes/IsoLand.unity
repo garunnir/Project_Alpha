@@ -3261,6 +3261,76 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 158876506}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &163523734
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 163523735}
+  - component: {fileID: 163523737}
+  - component: {fileID: 163523736}
+  m_Layer: 0
+  m_Name: ChunkColliderBaker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &163523735
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 163523734}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 299715453}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &163523736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 163523734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d9060eb62d4a4e4a87e5e56602422fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::ChunkColliderBaker
+  diagX: 1
+  diagZ: 1
+  thicknessY: 0.05
+--- !u!64 &163523737
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 163523734}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1001 &168108346
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3938,7 +4008,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1012867334}
+  m_Father: {fileID: 1288659263}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &217030179
 MonoBehaviour:
@@ -5316,12 +5386,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 299715453}
-  - component: {fileID: 299715454}
-  - component: {fileID: 299715457}
-  - component: {fileID: 299715455}
   - component: {fileID: 299715456}
   m_Layer: 0
-  m_Name: MapData
+  m_Name: MapManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5340,35 +5407,12 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1243572174}
+  - {fileID: 163523735}
+  - {fileID: 636504849}
   - {fileID: 1827188271}
   m_Father: {fileID: 1012867334}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &299715454
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 299715452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e842ea84fbc01f74e9fda20a75c07010, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::TileMapDomainData
-  fileName: map01.json
-  usePersistentPath: 0
---- !u!114 &299715455
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 299715452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb3a9a713ac9a0040beef0aa693a7003, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapController
 --- !u!114 &299715456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5381,24 +5425,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56c587780db204243babb3309f4b2535, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TileMapManager
-  _loader: {fileID: 299715454}
-  _saver: {fileID: 299715457}
-  _controller: {fileID: 299715455}
+  _loader: {fileID: 1243572175}
+  _saver: {fileID: 1243572173}
+  _controller: {fileID: 636504848}
   _prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
---- !u!114 &299715457
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 299715452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2049c5c39634f4d409dd6e8be61aed54, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapSaver
-  fileName: map01.json
-  usePersistentPath: 0
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
@@ -10812,6 +10842,50 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &636504847
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 636504849}
+  - component: {fileID: 636504848}
+  m_Layer: 0
+  m_Name: TileAdd/Remover
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &636504848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636504847}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb3a9a713ac9a0040beef0aa693a7003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapController
+--- !u!4 &636504849
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636504847}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 299715453}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &648114892
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13202,7 +13276,6 @@ GameObject:
   - component: {fileID: 798652878}
   - component: {fileID: 798652877}
   - component: {fileID: 798652879}
-  - component: {fileID: 798652880}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -13255,18 +13328,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 309ea7f5dd404b34c9560977a8a64f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &798652880
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 798652876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5803aeb2a26a2540856854efca1c21d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
 --- !u!4 &805241905 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6202581747814701985, guid: 4b191b68807ecfe4d92ea9bfd6cfd53a,
@@ -14576,7 +14637,6 @@ MonoBehaviour:
   diagX: 1
   diagZ: 1
   thicknessY: 0.05
-  includeInactive: 0
 --- !u!64 &914010259
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -15529,7 +15589,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 508c3521f0eaf784ab074656bf15b6a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::GridCursor
-  _controller: {fileID: 299715455}
+  _controller: {fileID: 0}
   _placementState: {fileID: 1001567636}
   _cursorVisual: {fileID: 1005200164}
   _camera: {fileID: 64710673}
@@ -15651,7 +15711,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 217030178}
+  - {fileID: 1288659263}
   - {fileID: 525082049}
   - {fileID: 1569324472}
   - {fileID: 1951877347}
@@ -18805,6 +18865,67 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1242853343}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1243572172
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1243572174}
+  - component: {fileID: 1243572175}
+  - component: {fileID: 1243572173}
+  m_Layer: 0
+  m_Name: MapLoad/Saver
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1243572173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243572172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2049c5c39634f4d409dd6e8be61aed54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileMapSaver
+  fileName: map01.json
+  usePersistentPath: 0
+--- !u!4 &1243572174
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243572172}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 299715453}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1243572175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243572172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e842ea84fbc01f74e9fda20a75c07010, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileMapDomainData
+  fileName: map01.json
+  usePersistentPath: 0
 --- !u!1 &1243793052
 GameObject:
   m_ObjectHideFlags: 0
@@ -19298,6 +19419,38 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1284913312}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1288659262
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1288659263}
+  m_Layer: 0
+  m_Name: DebugManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1288659263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1288659262}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 217030178}
+  m_Father: {fileID: 1012867334}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1294749269
 GameObject:
   m_ObjectHideFlags: 0
@@ -28555,7 +28708,6 @@ GameObject:
   - component: {fileID: 1766887520}
   - component: {fileID: 1766887523}
   - component: {fileID: 1766887522}
-  - component: {fileID: 1766887521}
   m_Layer: 0
   m_Name: Gridx2
   m_TagString: Untagged
@@ -28580,18 +28732,6 @@ Transform:
   - {fileID: 628740016}
   m_Father: {fileID: 1313974761}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1766887521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1766887519}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5803aeb2a26a2540856854efca1c21d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
 --- !u!114 &1766887522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35082,7 +35222,6 @@ GameObject:
   - component: {fileID: 2099596721}
   - component: {fileID: 2099596724}
   - component: {fileID: 2099596723}
-  - component: {fileID: 2099596722}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -35108,18 +35247,6 @@ Transform:
   - {fileID: 444329848}
   m_Father: {fileID: 1313974761}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2099596722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2099596720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5803aeb2a26a2540856854efca1c21d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::MultiLayerTilemapToJson
 --- !u!114 &2099596723
 MonoBehaviour:
   m_ObjectHideFlags: 0

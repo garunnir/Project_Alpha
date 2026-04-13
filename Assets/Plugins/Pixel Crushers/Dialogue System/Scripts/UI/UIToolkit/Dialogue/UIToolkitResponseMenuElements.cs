@@ -32,9 +32,18 @@ namespace PixelCrushers.DialogueSystem.UIToolkit
         public override AbstractUISubtitleControls subtitleReminderControls => null;
         protected VisualElement ResponseMenuPanel => UIToolkitDialogueUI.GetVisualElement<VisualElement>(Document, responseMenuPanelName);
         protected ProgressBar TimerProgressBar => UIToolkitDialogueUI.GetVisualElement<ProgressBar>(Document, timerProgressBarName);
-        protected Label PortraitLabel => UIToolkitDialogueUI.GetVisualElement<Label>(Document, portraitLabelName);
         protected VisualElement PortraitImage => UIToolkitDialogueUI.GetVisualElement<VisualElement>(Document, portraitImageName);
         protected virtual Button GetResponseButton(int index) => UIToolkitDialogueUI.GetVisualElement<Button>(Document, responseButtonNames[index]);
+
+        protected TextElement portraitLabel = null;
+        protected TextElement PortraitLabel
+        {
+            get
+            {
+                if (portraitLabel == null) portraitLabel = new TextElement(Document, portraitLabelName);
+                return portraitLabel;
+            }
+        }
 
         protected float TimerSecondsMax { get; set; }
         protected float TimerSecondsLeft { get;set; }
@@ -105,6 +114,7 @@ namespace PixelCrushers.DialogueSystem.UIToolkit
             int numUnusedButtons = responseButtonNames.Count - maxResponses;
 
             // Fill in buttons using specified positions & alignment:
+            var needToFocusAButton = InputDeviceManager.autoFocus;
             for (int i = 0; i < responses.Length; i++)
             {
                 var response = responses[i];
@@ -118,7 +128,14 @@ namespace PixelCrushers.DialogueSystem.UIToolkit
                 var button = GetResponseButton(index);
                 if (button == null) continue;
                 button.text = response.formattedText.text;
-                UIToolkitDialogueUI.SetDisplay(button, true);
+                button.SetEnabled(response.enabled);
+                var focusThisButton = false;
+                if (needToFocusAButton && response.enabled)
+                {
+                    focusThisButton = true;
+                    needToFocusAButton = false;
+                }
+                UIToolkitDialogueUI.SetDisplay(button, true, focusThisButton);
             }
 
             // If specified, show unused buttons with no text:

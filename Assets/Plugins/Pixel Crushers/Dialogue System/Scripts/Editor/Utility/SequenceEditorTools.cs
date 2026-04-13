@@ -31,6 +31,9 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public static event SetupGenericMenuDelegate customSequenceMenuSetup = null;
 
+        private static GUIContent CheckButtonLabel = new GUIContent("Check", "Check sequence for errors.");
+        private static GUIContent DefaultButtonLabel = new GUIContent("{{default}}", "Add the {{default}} keyword, which tells the Sequence to include the Dialogue Manager's Default Sequence (or Default Player Sequence for player entries if it's not blank).");
+
         /// <summary>
         /// Add text to the currently-edited sequence. Typically called from a
         /// customSequenceMenuSetup handler.
@@ -103,7 +106,11 @@ namespace PixelCrushers.DialogueSystem
             return DrawLayout(guiContent, sequence, ref rect, ref syntaxState, entry, field);
         }
 
-        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, ref SequenceSyntaxState syntaxState, DialogueEntry entry = null, Field field = null)
+        private static bool needToCheckSyntax = false;
+
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect,
+            ref SequenceSyntaxState syntaxState, DialogueEntry entry = null, Field field = null,
+            bool showDefaultShortcutButton = false)
         {
             if (!string.IsNullOrEmpty(queuedText))
             {
@@ -116,19 +123,28 @@ namespace PixelCrushers.DialogueSystem
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(guiContent);
 
-            if (entry != null && field != null && DialogueEditor.DialogueEditorWindow.instance != null)
-            {
+            if (DialogueEditor.DialogueEditorWindow.instance != null)
+            { // Note: We no longer check (entry != null && field != null) so we can handle multinode selections.
                 DialogueEditor.DialogueEditorWindow.instance.DrawAISequence(entry, field);
             }
 
             EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(sequence));
-            if (GUILayout.Button(new GUIContent("Check", "Check sequence for errors."), EditorStyles.miniButton, GUILayout.Width(52)))
+            if (GUILayout.Button(CheckButtonLabel, EditorStyles.miniButton, GUILayout.Width(52))
+                || needToCheckSyntax)
             {
+                needToCheckSyntax = false;
                 syntaxState = CheckSyntax(sequence);
             }
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginChangeCheck();
+
+            if (GUILayout.Button(DefaultButtonLabel, EditorStyles.miniButton, GUILayout.Width(68)))
+            {
+                GUIUtility.keyboardControl = 0;
+                needToCheckSyntax = true;
+                return "{{default}};\n" + sequence;
+            }
 
             if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(26)))
             {
@@ -441,6 +457,8 @@ namespace PixelCrushers.DialogueSystem
 
         private static string AddCommandToSequence(string sequence, string newCommand)
         {
+            GUIUtility.keyboardControl = 0;
+            needToCheckSyntax = true;
             var s = sequence;
             if (!string.IsNullOrEmpty(sequence) && !sequence.TrimEnd().EndsWith(";"))
             {

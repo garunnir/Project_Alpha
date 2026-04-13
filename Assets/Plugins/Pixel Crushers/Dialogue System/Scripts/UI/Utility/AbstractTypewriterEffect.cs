@@ -271,6 +271,15 @@ namespace PixelCrushers.DialogueSystem
             paused = false;
         }
 
+        protected void RemoveIfDuplicate<T>() where T : AbstractTypewriterEffect
+        {
+            var effects = GetComponents<T>();
+            for (int i = effects.Length - 1; i >= 1; i--)
+            {
+                Destroy(effects[i]);
+            }
+        }
+
     }
 
 }

@@ -21,6 +21,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private const int MaxNodeTextLength = 26;
         private Rect sequenceRect;
 
+        private bool hideMenuText = false;
+
         private class DialogueNode
         {
             public DialogueEntry entry;
@@ -294,7 +296,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private GUIStyle GetDialogueEntryLeafStyle(DialogueEntry entry)
         {
-            return ((entry != null) && database.IsPlayerID(entry.ActorID)) ? pcLineLeafGUIStyle : npcLineLeafGUIStyle;
+            return (entry != null && database != null && database.IsPlayerID(entry.ActorID)) ? pcLineLeafGUIStyle : npcLineLeafGUIStyle;
         }
 
         private GUIStyle GetLinkButtonStyle(DialogueEntry entry)
@@ -632,6 +634,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             // Title:
             EditorGUI.BeginDisabledGroup(isStartEntry);
             entry.Title = EditorGUILayout.TextField(new GUIContent("Title", "Optional title for your reference only."), entry.Title);
+            DrawLocalizedVersions(entry, entry.fields, "Title {0}", false, FieldType.Text);
             EditorGUI.EndDisabledGroup();
 
             if (isStartEntry)
@@ -675,16 +678,19 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 EditorGUI.BeginChangeCheck();
 
                 // Menu text (including localized if defined in template):
-                var menuTextField = Field.Lookup(entry.fields, "Menu Text");
-                if (menuTextField == null)
+                if (!hideMenuText)
                 {
-                    menuTextField = new Field("Menu Text", "", FieldType.Text);
-                    entry.fields.Add(menuTextField);
+                    var menuTextField = Field.Lookup(entry.fields, "Menu Text");
+                    if (menuTextField == null)
+                    {
+                        menuTextField = new Field("Menu Text", "", FieldType.Text);
+                        entry.fields.Add(menuTextField);
+                    }
+                    var menuText = menuTextField.value;
+                    var menuTextLabel = string.IsNullOrEmpty(menuText) ? "Menu Text" : ("Menu Text (" + menuText.Length + " chars)");
+                    DrawRevisableTextAreaField(new GUIContent(menuTextLabel, "Response menu text (e.g., short paraphrase). If blank, uses Dialogue Text."), null, currentEntry, menuTextField);
+                    DrawLocalizedVersions(entry, entry.fields, "Menu Text {0}", false, FieldType.Text);
                 }
-                var menuText = menuTextField.value;
-                var menuTextLabel = string.IsNullOrEmpty(menuText) ? "Menu Text" : ("Menu Text (" + menuText.Length + " chars)");
-                DrawRevisableTextAreaField(new GUIContent(menuTextLabel, "Response menu text (e.g., short paraphrase). If blank, uses Dialogue Text."), null, currentEntry, menuTextField);
-                DrawLocalizedVersions(entry, entry.fields, "Menu Text {0}", false, FieldType.Text);
 
                 // Dialogue text (including localized):
                 var dialogueTextField = Field.Lookup(entry.fields, "Dialogue Text");
@@ -711,7 +717,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
                 var sequenceField = Field.Lookup(entry.fields, "Sequence");
                 EditorGUI.BeginChangeCheck();
-                sequenceField.value = SequenceEditorTools.DrawLayout(new GUIContent("Sequence", "Cutscene played when speaking this entry. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), sequenceField.value, ref sequenceRect, ref sequenceSyntaxState, entry, sequenceField);
+                sequenceField.value = SequenceEditorTools.DrawLayout(
+                    new GUIContent("Sequence", "Cutscene played when speaking this entry. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), 
+                    sequenceField.value, ref sequenceRect, ref sequenceSyntaxState, entry, sequenceField, 
+                    showDefaultShortcutButton: true);
                 if (EditorGUI.EndChangeCheck())
                 {
                     changed = true;
@@ -859,7 +868,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 // Sequence (including localized if defined):
                 var sequence = GetMultinodeSelectionFieldValue(DialogueSystemFields.Sequence);
                 EditorGUI.BeginChangeCheck();
-                sequence = SequenceEditorTools.DrawLayout(new GUIContent("Sequence", "Cutscene played when speaking these entries. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), sequence, ref sequenceRect, ref sequenceSyntaxState);
+                sequence = SequenceEditorTools.DrawLayout(new GUIContent("Sequence", "Cutscene played when speaking these entries. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), 
+                    sequence, ref sequenceRect, ref sequenceSyntaxState, 
+                    showDefaultShortcutButton: true);
                 if (EditorGUI.EndChangeCheck())
                 {
                     changed = true;
@@ -1042,14 +1053,21 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             if (onExecuteProperty != null)
             {
-                AssetDatabase.SaveAssets();
-                serializedObject.Update();
-                EditorGUILayout.PropertyField(onExecuteProperty);
-                if (serializedObject.ApplyModifiedProperties())
+                try
                 {
-                    SetDatabaseDirty("OnExecute");
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
+                    //--- The extra SaveAssets, etc., don't appear to be necessary & impacted performance.
+                    //if (Event.current.type != EventType.Repaint) AssetDatabase.SaveAssets();
+                    serializedObject.Update();
+                    EditorGUILayout.PropertyField(onExecuteProperty);
+                    if (serializedObject.ApplyModifiedProperties())
+                    {
+                        //SetDatabaseDirty("OnExecute");
+                        //if (Event.current.type != EventType.Repaint) AssetDatabase.SaveAssets();
+                        //AssetDatabase.Refresh();
+                    }
+                }
+                catch (Exception) // Catch serialization bug in some Unity versions.
+                {
                 }
             }
 
@@ -1190,13 +1208,19 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             // Participant IDs:
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.BeginVertical();
-            DrawParticipantField(currentEntryActor, "Speaker of this entry.");
+            var changedSpeaker = DrawParticipantField(currentEntryActor, "Speaker of this entry.");
             DrawParticipantField(currentEntryConversant, "Listener.");
             EditorGUILayout.EndVertical();
             var swap = GUILayout.Button(new GUIContent(" ", "Swap participants."), "Popup", GUILayout.Width(24));
             EditorGUILayout.EndHorizontal();
 
             if (swap) SwapParticipants(ref currentEntryActor, ref currentEntryConversant);
+
+            if (changedSpeaker || swap)
+            {
+                entryActorIDCache.Remove(entry);
+                Repaint();
+            }
         }
 
         private void VerifyParticipantField(DialogueEntry entry, string fieldTitle, ref Field participantField)
@@ -1215,7 +1239,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             return (field == null) || string.IsNullOrEmpty(field.value) || string.Equals(field.value, "-1");
         }
 
-        private void DrawParticipantField(Field participantField, string tooltipText)
+        private bool DrawParticipantField(Field participantField, string tooltipText)
         {
             string newValue = DrawAssetPopup<Actor>(participantField.value, (database != null) ? database.actors : null, new GUIContent(participantField.title, tooltipText));
             if (newValue != participantField.value)
@@ -1223,7 +1247,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 participantField.value = newValue;
                 ResetDialogueEntryText();
                 SetDatabaseDirty("Change Participant");
+                return true;
             }
+            return false;
         }
 
         private void SwapParticipants(ref Field currentActor, ref Field currentConversant)

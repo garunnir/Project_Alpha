@@ -8,6 +8,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class TileMapManager : MonoBehaviour
 {
+    [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
     [SerializeField] private MapFileLoader _loader;
     [SerializeField] private MapFileSaver _saver;
     [SerializeField] private TileMapController _controller;

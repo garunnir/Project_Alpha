@@ -6,16 +6,19 @@ using System.Collections.Generic;
 [RequireComponent(typeof(MeshCollider))]
 public class ChunkColliderBaker : MonoBehaviour
 {
+    public static ChunkColliderBaker Instance { get; private set; }
+
     [Header("Tile size (world units)")]
     public float diagX = 1f;
     public float diagZ = 1f;
     public float thicknessY = 0.05f;
 
-    [Header("Collect")]
-    public bool includeInactive = false;
-
     MeshCollider _mc;
     Mesh         _mesh;
+
+    // ─── 등록된 마커 목록 ──
+    private readonly HashSet<ColliderTileMarker> _registeredMarkers = new HashSet<ColliderTileMarker>();
+    private bool _dirty;
 
     // ─── 그룹 캐시 (직사각형 1개 = GroupData 1개) ──
     private class GroupData
@@ -35,6 +38,14 @@ public class ChunkColliderBaker : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[ChunkColliderBaker] 인스턴스가 이미 존재합니다.");
+            Destroy(this);
+            return;
+        }
+        Instance = this;
+
         _mc = GetComponent<MeshCollider>();
         _mc.convex = false;
         _mc.cookingOptions = MeshColliderCookingOptions.EnableMeshCleaning
@@ -42,18 +53,72 @@ public class ChunkColliderBaker : MonoBehaviour
                            | MeshColliderCookingOptions.UseFastMidphase;
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    void LateUpdate()
+    {
+        if (!_dirty) return;
+        _dirty = false;
+        BakeChunk();
+    }
+
+    // ─────────────────────────────────────────────
+    // 등록 API
+    // ─────────────────────────────────────────────
+
+    public void Register(ColliderTileMarker marker)
+    {
+        _registeredMarkers.Add(marker);
+        _dirty = true;
+    }
+
+    public void Unregister(ColliderTileMarker marker)
+    {
+        _registeredMarkers.Remove(marker);
+        _dirty = true;
+    }
+
     // ─────────────────────────────────────────────
     // Public API
     // ─────────────────────────────────────────────
 
-    /// <summary>모든 자식 타일을 대상으로 전체 베이킹.</summary>
-    [ContextMenu("Bake Chunk")]
+    /// <summary>등록된 마커 전체를 베이킹 (런타임).</summary>
     public void BakeChunk()
     {
-        var tiles = GetComponentsInChildren<ColliderTileMarker>(includeInactive);
+        if (_registeredMarkers.Count == 0)
+        {
+            Debug.LogWarning("[ChunkColliderBaker] 등록된 ColliderTileMarker 가 없습니다.");
+            return;
+        }
+
+        _groups.Clear();
+        _nextGroupId = 0;
+
+        foreach (var m in _registeredMarkers)
+            m.groupId = -1;
+
+        var arr = new ColliderTileMarker[_registeredMarkers.Count];
+        _registeredMarkers.CopyTo(arr);
+        BakeTilesIntoGroups(arr);
+        RebuildMeshFromGroups();
+
+        int totalVerts = 0, totalTris = 0;
+        foreach (var g in _groups.Values) { totalVerts += g.verts.Length; totalTris += g.tris.Length / 3; }
+        Debug.Log($"[ChunkColliderBaker] {_registeredMarkers.Count} tiles → {_groups.Count} groups | verts:{totalVerts}, tris:{totalTris}");
+    }
+
+#if UNITY_EDITOR
+    /// <summary>에디터 전용. 자식 계층에서 마커를 직접 수집해 베이킹.</summary>
+    [ContextMenu("Bake Chunk (Editor)")]
+    void BakeChunkEditor()
+    {
+        var tiles = GetComponentsInChildren<ColliderTileMarker>(includeInactive: true);
         if (tiles == null || tiles.Length == 0)
         {
-            Debug.LogWarning("[ChunkColliderBaker] No ColliderTileMarker found.");
+            Debug.LogWarning("[ChunkColliderBaker] No ColliderTileMarker found in children.");
             return;
         }
 
@@ -68,8 +133,9 @@ public class ChunkColliderBaker : MonoBehaviour
 
         int totalVerts = 0, totalTris = 0;
         foreach (var g in _groups.Values) { totalVerts += g.verts.Length; totalTris += g.tris.Length / 3; }
-        Debug.Log($"[ChunkColliderBaker] {tiles.Length} tiles → {_groups.Count} groups | verts:{totalVerts}, tris:{totalTris}");
+        Debug.Log($"[ChunkColliderBaker][Editor] {tiles.Length} tiles → {_groups.Count} groups | verts:{totalVerts}, tris:{totalTris}");
     }
+#endif
 
     /// <summary>
     /// 지정 그룹만 재계산. 그룹 내 생존 마커를 재파티셔닝 후 메시 재조합.

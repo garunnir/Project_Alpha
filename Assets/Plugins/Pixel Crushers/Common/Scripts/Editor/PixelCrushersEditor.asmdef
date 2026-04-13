@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "PixelCrushers",
-        "Unity.Addressables.Editor"
+        "Unity.Addressables.Editor",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

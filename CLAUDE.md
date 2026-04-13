@@ -60,6 +60,22 @@ Code: [paste code here]
 
 ---
 
+## Component Documentation
+
+When writing or modifying a Unity component, always include a header comment at the top of the file in this format:
+
+```csharp
+// ============================================================
+// [ComponentName] — One-line summary of what this component does
+// ============================================================
+```
+
+- Focus on "what it does", not "how it works"
+- Required when creating a new component
+- When modifying an existing component, add the header if missing or correct it if outdated
+
+---
+
 ## Memory Documents
 
 Keep these files up to date during long tasks:

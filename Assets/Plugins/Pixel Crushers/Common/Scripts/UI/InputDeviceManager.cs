@@ -276,7 +276,7 @@ namespace PixelCrushers
         private void OnInputSystemDeviceChange(UnityEngine.InputSystem.InputDevice device, InputDeviceChange change)
         {
             if (change == InputDeviceChange.Added ||
-               (change == InputDeviceChange.UsageChanged && device.lastUpdateTime >= Time.time - 1))
+               (change == InputDeviceChange.UsageChanged && device.lastUpdateTime >= Time.unscaledTime - 1))
             {
                 if (device is Joystick || device is Gamepad)
                 {
@@ -342,8 +342,8 @@ namespace PixelCrushers
 
         private void OnInputSystemEvent(InputEventPtr eventPtr, UnityEngine.InputSystem.InputDevice device)
         {
-            if (Time.time < prevInputSystemCheckTime) return;
-            prevInputSystemCheckTime = Time.time + InputSystemCheckFrequencyInSeconds;
+            if (Time.unscaledTime < prevInputSystemCheckTime) return;
+            prevInputSystemCheckTime = Time.unscaledTime + InputSystemCheckFrequencyInSeconds;
 
             if (!(eventPtr.IsA<StateEvent>() || eventPtr.IsA<DeltaStateEvent>())) return;
 
@@ -571,6 +571,7 @@ namespace PixelCrushers
         public static void RegisterInputAction(string name, InputAction inputAction)
         {
             inputActionDict[name] = inputAction;
+            if (inputAction != null) inputAction.Enable();
         }
 
         public static void UnregisterInputAction(string name)

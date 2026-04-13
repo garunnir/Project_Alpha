@@ -29,6 +29,7 @@ namespace PixelCrushers.DialogueSystem
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("spritePortrait"), new GUIContent("Portrait (Sprite)", "Optional portrait. If unassigned, will use portrait of actor in database. This field allows you to assign a Sprite."), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("portrait"), new GUIContent("Portrait (Texture2D)", "Optional portrait. If unassigned, will use portrait of actor in database. This field allows you to assign a Texture."), true);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("cameraAngles"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("audioSource"), true);
 
             var barkUISettingsProperty = serializedObject.FindProperty("barkUISettings");
@@ -92,7 +93,7 @@ namespace PixelCrushers.DialogueSystem
                 var dialogueActor = t as DialogueActor;
                 if (dialogueActor == null) continue;
                 Undo.RecordObject(dialogueActor, "Unique ID");
-                dialogueActor.persistentDataName = DialogueLua.StringToTableIndex(DialogueActor.GetActorName(dialogueActor.transform) + "_" + dialogueActor.GetInstanceID());
+                dialogueActor.persistentDataName = DialogueLua.StringToTableIndex(DialogueActor.GetActorName(dialogueActor.transform) + "_" + EntityUtility.GetEntityInt(dialogueActor));
                 EditorUtility.SetDirty(dialogueActor);
                 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(dialogueActor.gameObject.scene);
             }

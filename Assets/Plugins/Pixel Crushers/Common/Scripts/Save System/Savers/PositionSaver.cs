@@ -1,5 +1,4 @@
-// Recompile at 2025-12-05 오후 1:39:49
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -113,7 +112,7 @@ namespace PixelCrushers
             }
             else
             {
-                m_data.scene = currentScene;
+                m_data.scene = saveAcrossSceneChanges ? -1 : currentScene;
                 m_data.position = target.transform.position;
                 m_data.rotation = target.transform.rotation;
                 return SaveSystem.Serialize(m_data);

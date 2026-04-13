@@ -1,8 +1,5 @@
-using PixelCrushers;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using UnityEngine.Video;
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider), typeof(CharacterState))]
 public class PlayerMovement : MonoBehaviour
 {
