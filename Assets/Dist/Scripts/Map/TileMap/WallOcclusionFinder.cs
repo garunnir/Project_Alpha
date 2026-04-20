@@ -110,7 +110,8 @@ namespace IsoTilemap
                     }
                     else
                     {
-                        Debug.Log("빈셀발견 확장" + nx);
+                        if(Config.DebugMode.FloorAlgorithm)
+                            Debug.Log("빈셀발견 확장" + nx);
                     }
                 }
             }

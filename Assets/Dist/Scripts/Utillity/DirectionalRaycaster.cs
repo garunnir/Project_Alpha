@@ -19,12 +19,14 @@ public class DirectionalRaycaster : MonoBehaviour
         }
         _lastOrigin = origin;
         _lastDirection = direction;
-        return Physics.Raycast(new Ray(origin, direction.normalized), out hit, _range, _mask);
+        bool isRayCasted = Physics.Raycast(new Ray(origin, direction.normalized), out hit, _range, _mask);
+        return isRayCasted; 
     }
 
     private void OnDrawGizmosSelected()
-    {
+    {        
         if (_lastDirection == Vector3.zero) return;
+        
         Gizmos.color = Color.green;
         Gizmos.DrawRay(_lastOrigin, _lastDirection.normalized * _range);
     }

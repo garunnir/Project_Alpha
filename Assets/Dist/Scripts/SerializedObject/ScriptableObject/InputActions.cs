@@ -120,6 +120,15 @@ namespace UnityEngine.InputSystem
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LookAt"",
+                    ""type"": ""Button"",
+                    ""id"": ""d1e2f3a4-b5c6-7890-def0-123456789012"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -197,6 +206,17 @@ namespace UnityEngine.InputSystem
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e2f3a4b5-c6d7-8901-ef01-234567890123"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""LookAt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -829,6 +849,7 @@ namespace UnityEngine.InputSystem
             m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
             m_Player_Interaction = m_Player.FindAction("Interaction", throwIfNotFound: true);
             m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
+            m_Player_LookAt = m_Player.FindAction("LookAt", throwIfNotFound: true);
             // UI
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -926,6 +947,7 @@ namespace UnityEngine.InputSystem
         private readonly InputAction m_Player_Move;
         private readonly InputAction m_Player_Interaction;
         private readonly InputAction m_Player_Run;
+        private readonly InputAction m_Player_LookAt;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -949,6 +971,10 @@ namespace UnityEngine.InputSystem
             /// Provides access to the underlying input action "Player/Run".
             /// </summary>
             public InputAction @Run => m_Wrapper.m_Player_Run;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/LookAt".
+            /// </summary>
+            public InputAction @LookAt => m_Wrapper.m_Player_LookAt;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -984,6 +1010,9 @@ namespace UnityEngine.InputSystem
                 @Run.started += instance.OnRun;
                 @Run.performed += instance.OnRun;
                 @Run.canceled += instance.OnRun;
+                @LookAt.started += instance.OnLookAt;
+                @LookAt.performed += instance.OnLookAt;
+                @LookAt.canceled += instance.OnLookAt;
             }
 
             /// <summary>
@@ -1004,6 +1033,9 @@ namespace UnityEngine.InputSystem
                 @Run.started -= instance.OnRun;
                 @Run.performed -= instance.OnRun;
                 @Run.canceled -= instance.OnRun;
+                @LookAt.started -= instance.OnLookAt;
+                @LookAt.performed -= instance.OnLookAt;
+                @LookAt.canceled -= instance.OnLookAt;
             }
 
             /// <summary>
@@ -1336,6 +1368,13 @@ namespace UnityEngine.InputSystem
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnRun(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "LookAt" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnLookAt(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

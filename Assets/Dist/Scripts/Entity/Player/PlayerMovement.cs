@@ -23,6 +23,7 @@ public class PlayerMovement : MonoBehaviour
 	Vector3 _desiredMove;
 	Vector3 _moveDir;
 	bool _isRun = false;
+	bool _isAiming = false;
 
 	// 재사용할 히트 배열 (NonAlloc)
 	RaycastHit[] _hits = new RaycastHit[8];
@@ -53,6 +54,9 @@ public class PlayerMovement : MonoBehaviour
 		InputManager.Instance.Actions.Player.Move.performed += OnMove;
 		InputManager.Instance.Actions.Player.Move.canceled += OnMove;
 		InputManager.Instance.Actions.Player.Run.performed += OnRun;
+		InputManager.Instance.Actions.Player.LookAt.started += OnLookAt;
+		InputManager.Instance.Actions.Player.LookAt.performed += OnLookAt;
+		InputManager.Instance.Actions.Player.LookAt.canceled += OnLookAtCanceled;
 	}
 
 
@@ -68,7 +72,35 @@ public class PlayerMovement : MonoBehaviour
 		_isRun = context.ReadValue<float>() == 1 ? true : false;
 		Debug.Log("PlayerMovement: isRun = " + _isRun);
 	}
+
+	public void OnLookAt(InputAction.CallbackContext context)
+	{
+		_isAiming = true;
+		Debug.Log($"[LookAt] phase={context.phase} isAiming={_isAiming}");
+	}
+
+	public void OnLookAtCanceled(InputAction.CallbackContext context)
+	{
+		_isAiming = false;
+		_characterState.ClearAim();
+		Debug.Log($"[LookAt] Canceled");
+	}
 	#endregion
+
+	Vector3 GetMouseWorldDir()
+	{
+		var mousePos = Mouse.current?.position.ReadValue() ?? Vector2.zero;
+		Camera cam = _refCam != null ? _refCam : Camera.main;
+		if (cam == null) return Vector3.zero;
+		Ray ray = cam.ScreenPointToRay(mousePos);
+		if (Mathf.Abs(ray.direction.y) < 1e-6f) return Vector3.zero;
+		float t = (transform.position.y - ray.origin.y) / ray.direction.y;
+		if (t < 0f) return Vector3.zero;
+		Vector3 worldPos = ray.origin + ray.direction * t;
+		Vector3 dir = worldPos - transform.position;
+		dir.y = 0f;
+		return dir.sqrMagnitude > 1e-4f ? dir.normalized : Vector3.zero;
+	}
 
 	public Vector3 MoveByCameraRelativeInput(Vector2 move)
 	{
@@ -120,6 +152,13 @@ public class PlayerMovement : MonoBehaviour
 
 		_desiredMove = CalNextMoveDir(speed, ref _currentVelocity);
 		_characterState.UpdateState(_desiredMove);
+		if (_isAiming)
+		{
+			Vector3 aimDir = GetMouseWorldDir();
+			Debug.Log($"[LookAt] aimDir={aimDir}");
+			if (aimDir != Vector3.zero)
+				_characterState.SetAimDir(aimDir);
+		}
         _characterState.UpdateGridPos(transform.position);
 		if (_desiredMove.sqrMagnitude <= Mathf.Epsilon)
 			return;
@@ -243,6 +282,15 @@ public class PlayerMovement : MonoBehaviour
 		Gizmos.DrawLine(cp1 - transform.right * _capsule.radius, cp2 - transform.right * _capsule.radius);
 		Gizmos.color = Color.skyBlue;
 		Gizmos.DrawWireSphere(transform.position + _desiredMove, 0.01f);
+
+		// 조준 방향
+		if (_isAiming && _characterState != null)
+		{
+			Vector3 aimDir = _characterState.FacingDir;
+			Gizmos.color = Color.red;
+			Gizmos.DrawLine(transform.position, transform.position + aimDir * 1.5f);
+			Gizmos.DrawWireSphere(transform.position + aimDir * 1.5f, 0.1f);
+		}
 
 		// 캐스트 시각화
 		if (_lastHitCount >= 0)

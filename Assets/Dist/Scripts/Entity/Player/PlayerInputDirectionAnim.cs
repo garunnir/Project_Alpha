@@ -40,6 +40,13 @@ public class PlayerInputDirectionAnim : MonoBehaviour
     // runtime
     int currentDirection = 0; // 0..7
     float animTimer = 0f;
+    CharacterState _characterState;
+
+    void Awake()
+    {
+        _characterState = GetComponentInParent<CharacterState>();
+        if (_characterState == null) _characterState = GetComponent<CharacterState>();
+    }
 
     void Reset()
     {
@@ -52,6 +59,18 @@ public class PlayerInputDirectionAnim : MonoBehaviour
     {
         Vector2 input = InputManager.Instance.Actions.Player.Move.ReadValue<Vector2>();
         bool moving = input.sqrMagnitude > moveThreshold;
+
+        // 조준 중엔 CharacterState.FacingDir을 시선 방향으로 사용 (좀보이드식)
+        if (_characterState != null && _characterState.IsAiming)
+        {
+            Vector3 facing = _characterState.FacingDir;
+            Vector2 aimInput = new Vector2(facing.x, facing.z);
+            if (mode == Mode.Animator)
+                UpdateAnimator(aimInput, moving);
+            else
+                UpdateSpriteSwap(aimInput, moving);
+            return;
+        }
 
         if (mode == Mode.Animator)
         {
