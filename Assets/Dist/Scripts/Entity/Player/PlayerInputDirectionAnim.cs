@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using UnityEditorInternal;
 
 /// <summary>
 /// Maps player input direction to an animation.
@@ -10,6 +11,7 @@ using UnityEngine.InputSystem;
 ///
 /// Input comes from the classic Input axes (Horizontal, Vertical). Uses raw axes so direction is crisp.
 /// </summary>
+[RequireComponent(typeof(CharacterState))]
 public class PlayerInputDirectionAnim : MonoBehaviour
 {
     public enum Mode { SpriteSwap, Animator }
@@ -17,6 +19,8 @@ public class PlayerInputDirectionAnim : MonoBehaviour
     public Mode mode = Mode.SpriteSwap;
     [Tooltip("Minimum squared magnitude of input to consider 'moving'")]
     public float moveThreshold = 0.01f;
+    [Tooltip("방향 판정 기준 회전 오프셋 (도). 카메라/스프라이트 정렬 보정용")]
+    public float angleOffset = 0f;
 
     [Header("Animator Mode")]
     public Animator animator;
@@ -57,28 +61,17 @@ public class PlayerInputDirectionAnim : MonoBehaviour
 
     void Update()
     {
-        Vector2 input = InputManager.Instance.Actions.Player.Move.ReadValue<Vector2>();
-        bool moving = input.sqrMagnitude > moveThreshold;
-
-        // 조준 중엔 CharacterState.FacingDir을 시선 방향으로 사용 (좀보이드식)
-        if (_characterState != null && _characterState.IsAiming)
-        {
-            Vector3 facing = _characterState.FacingDir;
-            Vector2 aimInput = new Vector2(facing.x, facing.z);
-            if (mode == Mode.Animator)
-                UpdateAnimator(aimInput, moving);
-            else
-                UpdateSpriteSwap(aimInput, moving);
-            return;
-        }
+        Vector3 dir3 = Quaternion.Euler(0f, angleOffset, 0f) * _characterState.GetFacingDir();
+        Vector2 dir = new Vector2(dir3.x, dir3.z); // 3D 이동방향은 XZ 평면 → Y는 항상 0
+        bool moving = dir.sqrMagnitude > moveThreshold;
 
         if (mode == Mode.Animator)
         {
-            UpdateAnimator(input, moving);
+            UpdateAnimator(dir, moving);
         }
         else
         {
-            UpdateSpriteSwap(input, moving);
+            UpdateSpriteSwap(dir, moving);
         }
     }
 
@@ -94,7 +87,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
             }
             else
             {
-                
+
             }
         }
         if (!string.IsNullOrEmpty(paramMoving))
@@ -103,7 +96,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
 
 
             animator.SetBool(MovingHash, moving);
-        } 
+        }
     }
 
     void UpdateSpriteSwap(Vector2 input, bool moving)

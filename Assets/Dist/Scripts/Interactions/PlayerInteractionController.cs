@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 namespace Interactions
 {
     [RequireComponent(typeof(CharacterState))]
@@ -11,6 +12,7 @@ public class PlayerInteractionController : MonoBehaviour
     private DirectionalRaycaster _raycaster;
     private Collider _lastHitCollider;
     private InputActions _interactAction;
+    private readonly Dictionary<Collider, IInteractable> _interactableCache = new();
 
     private void Awake()
     {
@@ -45,7 +47,7 @@ public class PlayerInteractionController : MonoBehaviour
 
     private void UpdateInteractionTarget()
     {
-        Vector3 lookDir = _characterState.FacingDir;
+        Vector3 lookDir = _characterState.SightDir;
         if (!_raycaster.TryRaycast(transform.position, lookDir, out RaycastHit hit))
         {
             _lastHitCollider = null;
@@ -56,7 +58,11 @@ public class PlayerInteractionController : MonoBehaviour
         if (hit.collider == _lastHitCollider) return;
         _lastHitCollider = hit.collider;
 
-        var interactable = hit.collider.GetComponentInParent<IInteractable>();
+        if (!_interactableCache.TryGetValue(hit.collider, out var interactable))
+        {
+            interactable = hit.collider.GetComponentInParent<IInteractable>();
+            _interactableCache[hit.collider] = interactable; // null도 캐싱해서 반복 탐색 방지
+        }
         if (Config.DebugMode.PlayerInteraction) Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
 
         if (interactable != null)
