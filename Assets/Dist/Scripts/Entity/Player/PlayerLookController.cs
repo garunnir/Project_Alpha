@@ -1,11 +1,11 @@
 // ============================================================
-// PlayerAimController — 마우스 위치 기반 조준 방향을 CharacterState에 전달하는 컴포넌트
+// PlayerLookController — 마우스 위치 기반 시야 방향을 CharacterState에 전달하는 컴포넌트
 // ============================================================
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterState))]
-public class PlayerAimController : MonoBehaviour
+public class PlayerLookController : MonoBehaviour
 {
     [SerializeField] private Camera _refCam;
 
@@ -51,24 +51,12 @@ public class PlayerAimController : MonoBehaviour
     void FixedUpdate()
     {
         if (!_isAiming) return;
-        Vector3 aimDir = GetMouseWorldDir();
-        if (aimDir != Vector3.zero)
-            _characterState.SetAimDir(aimDir);
-    }
-
-    Vector3 GetMouseWorldDir()
-    {
-        var mousePos = Mouse.current?.position.ReadValue() ?? Vector2.zero;
         Camera cam = _refCam != null ? _refCam : Camera.main;
-        if (cam == null) return Vector3.zero;
-        Ray ray = cam.ScreenPointToRay(mousePos);
-        if (Mathf.Abs(ray.direction.y) < 1e-6f) return Vector3.zero;
-        float t = (transform.position.y - ray.origin.y) / ray.direction.y;
-        if (t < 0f) return Vector3.zero;
-        Vector3 worldPos = ray.origin + ray.direction * t;
+        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, transform.position.y, out Vector3 worldPos)) return;
         Vector3 dir = worldPos - transform.position;
         dir.y = 0f;
-        return dir.sqrMagnitude > 1e-4f ? dir.normalized : Vector3.zero;
+        if (dir.sqrMagnitude > 1e-4f)
+            _characterState.SetAimDir(dir.normalized);
     }
 
     void OnDrawGizmos()

@@ -1,7 +1,6 @@
 using IsoTilemap;
 using System;
 using UnityEngine;
-using UnityEngine.Video;
 
 public class CharacterState : MonoBehaviour
 {

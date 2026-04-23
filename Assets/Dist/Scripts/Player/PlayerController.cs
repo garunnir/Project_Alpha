@@ -8,14 +8,14 @@ using Sirenix.OdinInspector;
 [RequireComponent(typeof(CharacterState))]
 [RequireComponent(typeof(PlayerInputDirectionAnim))]
 [RequireComponent(typeof(PlayerInteractionController))]
-[RequireComponent(typeof(PlayerAimController))]
+[RequireComponent(typeof(PlayerLookController))]
 public class PlayerController : MonoBehaviour, IPlayControllable
 {
     [Title("References")]
     [Required, SerializeField] private CharacterState _state;
     [Required, SerializeField] private PlayerInputDirectionAnim _directionAnim;
     [Required, SerializeField] private PlayerInteractionController _interaction;
-    [Required, SerializeField] private PlayerAimController _aimController;
+    [Required, SerializeField] private PlayerLookController _aimController;
 
     public CharacterState State => _state;
     public PlayerInputDirectionAnim DirectionAnim => _directionAnim;
