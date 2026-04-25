@@ -9,12 +9,12 @@
   <Project Path="UniTask.Linq.csproj" />
   <Project Path="PixelCrushersEditor.csproj" />
   <Project Path="IngameDebugConsole.Runtime.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UniTask.Addressables.csproj" />
   <Project Path="UniRx.Examples.csproj" />
   <Project Path="CW.Common.csproj" />
   <Project Path="DOTween.Modules.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Edtior.csproj" />
   <Project Path="UniTask.TextMeshPro.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.Unity.Addressables.csproj" />
