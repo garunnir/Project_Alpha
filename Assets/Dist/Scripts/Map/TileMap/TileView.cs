@@ -1,9 +1,8 @@
-using System;
 using UnityEngine;
 
-// 씬에 실제로 붙어있는 타일 오브젝트용
-// Anchor + Size + PrefabId 기반
-// 저장용 컴포넌트 런타임 기능 넣으면 안됨.
+// 씬에 실제로 붙어있는 타일 오브젝트용 View.
+// Anchor + Size + PrefabId 기반 메타데이터를 유지하고,
+// 런타임 데이터 변경을 시각 상태(셰이더 컨트롤)까지 반영합니다.
 namespace IsoTilemap
 {
     public class TileView : MonoBehaviour
@@ -33,16 +32,34 @@ namespace IsoTilemap
         [Tooltip("기즈모 그리드 선을 그릴지 여부")]
         public bool drawGizmoGrid = true;
         public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
+        [Header("Render Controller")]
+        [SerializeField] private ShadeObjectController _shadeController;
+
+        private void Awake()
+        {
+            CacheControllers();
+        }
 
         private void Reset()
         {
             gridPos = TileHelper.ConvertWorldToGrid(transform.position);
+            CacheControllers();
             // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
 #if UNITY_EDITOR
             var source = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
             Debug.Log(UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source));
             prefabId = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
 #endif
+        }
+
+        private void OnValidate()
+        {
+            CacheControllers();
+        }
+
+        private void CacheControllers()
+        {
+            _shadeController ??= GetComponentInChildren<ShadeObjectController>();
         }
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
         // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
@@ -84,6 +101,7 @@ namespace IsoTilemap
             prefabId = tileData.identity.PrefabId;
             gridPos = tileData.identity.GridPos;
             size = tileData.identity.sizeUnit;
+            _shadeController?.SetAdditionalLightEnabled(!tileData.state.isHiddenCharacter);
         }
     }
 }

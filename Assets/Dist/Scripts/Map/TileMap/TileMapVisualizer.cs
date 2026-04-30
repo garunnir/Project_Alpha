@@ -8,13 +8,14 @@ namespace IsoTilemap
 {
     /// <summary>
     /// 타일맵 시각화 담당 클래스
-    /// 모델 데이터를 게임 월드에 3D 타일로 인스턴스화합니다.
+    /// 모델 이벤트를 받아 게임 월드 렌더 상태를 동기화합니다.
     /// </summary>
     public class TileMapVisualizer : IMapViewBuilder, IDisposable
     {
         private Dictionary<Guid, TileView> _tileViews = new Dictionary<Guid, TileView>();
 
-        private TileObjFactory _tileFactory;
+        private readonly TileObjFactory _tileFactory;
+        private IMapModelReadOnly _boundRuntime;
 
         public TileMapVisualizer(TileObjFactory tileFactory)
         {
@@ -24,19 +25,11 @@ namespace IsoTilemap
 
 
         /// <summary>
-        /// 모델 데이터를 기반으로 타일맵을 구축합니다.
+        /// 모델 스냅샷을 기반으로 초기 렌더를 구성합니다.
         /// </summary>
         public void Build(IMapModelReadOnly model)
         {
-            IReadOnlyList<TileData> tiles = model.TilesSnapshot;
-            if (tiles == null || tiles.Count() == 0)
-            {
-                Debug.LogWarning("No tile data to build visual.");
-                return;
-            }
-
-            ClearTiles();
-            _tileViews = _tileFactory.SpawnTiles(tiles);
+            RenderInitialMap(model); 
         }
 
 
@@ -62,10 +55,56 @@ namespace IsoTilemap
             return _tileViews.TryGetValue(tileId, out tileView);
         }
 
-        public void Bind(IMapModelReadOnly runtime) { }
+        public void Bind(IMapModelReadOnly runtime)
+        {
+            if (_boundRuntime != null)
+            {
+                _boundRuntime.OnRuntimeDataChanged -= RefreshCell;
+                _boundRuntime.OnRuntimeBatchChanged -= RefreshCells;
+            }
+
+            _boundRuntime = runtime;
+
+            if (_boundRuntime != null)
+            {
+                _boundRuntime.OnRuntimeDataChanged += RefreshCell;
+                _boundRuntime.OnRuntimeBatchChanged += RefreshCells;
+            }
+        }
 
         public void RefreshCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
         {
+            RenderCell(cellPos, tiles);
+        }
+
+        private void RefreshCells(IReadOnlyCollection<Vector3Int> changedCells)
+        {
+            if (_boundRuntime == null) return;
+            foreach (var cellPos in changedCells)
+            {
+                if (_boundRuntime.TryGetTiles(cellPos, out var tiles))
+                {
+                    RenderCell(cellPos, tiles);
+                }
+            }
+        }
+
+        private void RenderInitialMap(IMapModelReadOnly model)
+        {
+            IReadOnlyList<TileData> tiles = model.TilesSnapshot;
+            if (tiles == null || tiles.Count() == 0)
+            {
+                Debug.LogWarning("No tile data to build visual.");
+                return;
+            }
+
+            ClearTiles();
+            _tileViews = _tileFactory.SpawnTiles(tiles);
+        }
+
+        private void RenderCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
+        {
+            _ = cellPos;
             foreach (var tileData in tiles)
             {
                 if (TryGetTile(tileData.tileDefId, out TileView tileView))
@@ -80,6 +119,12 @@ namespace IsoTilemap
 
         public void Dispose()
         {
+            if (_boundRuntime != null)
+            {
+                _boundRuntime.OnRuntimeDataChanged -= RefreshCell;
+                _boundRuntime.OnRuntimeBatchChanged -= RefreshCells;
+                _boundRuntime = null;
+            }
             ClearTiles();
         }
     }

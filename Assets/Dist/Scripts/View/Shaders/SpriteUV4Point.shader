@@ -6,6 +6,7 @@ Shader "Custom/SpriteUV4Point"
         [PerRendererData] _Color ("Tint", Color) = (1,1,1,1)
         _DarknessFactor ("시야 밖 어둠 강도", Range(0, 1)) = 0.85
         _AmbientLight ("최소 밝기", Range(0, 1)) = 0.15
+        _AdditionalLightEnabled ("추가 라이트 사용", Range(0, 1)) = 1
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clipping", Float) = 0
         _Cutoff ("컷오프", Range(0,1)) = 0.5
@@ -81,6 +82,7 @@ Shader "Custom/SpriteUV4Point"
                 float4 _RendererColor;
                 float  _DarknessFactor;
                 float  _AmbientLight;
+                float  _AdditionalLightEnabled;
                 float  _Cutoff;
                 float4 _UV00;
                 float4 _UV10;
@@ -125,15 +127,19 @@ Shader "Custom/SpriteUV4Point"
                 #endif
 
                 half lightStrength = 0.0h;
+                const half3 lumaWeights = half3(0.2126h, 0.7152h, 0.0722h);
                 half3 normalWS = normalize(IN.normalWS);
                 // 양면 렌더링일 때 백페이스 노멀을 반전시켜 NdotL 누수를 방지
                 normalWS *= (isFrontFace != 0u) ? 1.0h : -1.0h;
 
                 Light mainLight = GetMainLight(IN.shadowCoord);
                 half mainNdotL = saturate(dot(normalWS, mainLight.direction));
-                lightStrength += mainNdotL * mainLight.distanceAttenuation * mainLight.shadowAttenuation;
+                half mainLightIntensity = dot(mainLight.color, lumaWeights);
+                lightStrength += mainNdotL * mainLight.distanceAttenuation * mainLight.shadowAttenuation * mainLightIntensity;
 
                 #ifdef _ADDITIONAL_LIGHTS
+                    if (_AdditionalLightEnabled > 0.001f)
+                    {
                     // 중요:
                     // RealtimeLights.hlsl에는 GetAdditionalLight 오버로드가 2개 있다.
                     // 1) GetAdditionalLight(i, positionWS)
@@ -149,8 +155,10 @@ Shader "Custom/SpriteUV4Point"
                     {
                         // 이 오버로드를 써야 light.shadowAttenuation에 "추가 라이트 그림자"가 반영된다.
                         Light light = GetAdditionalLight(i, IN.positionWS, shadowMask);
-                        half nDotL = saturate(dot(normalWS, light.direction));
-                        lightStrength += nDotL * light.distanceAttenuation * light.shadowAttenuation;
+                        half nDotL = 1.0h; //saturate(dot(normalWS, light.direction));
+                        half lightIntensity = dot(light.color, lumaWeights);
+                        lightStrength += nDotL * light.distanceAttenuation * light.shadowAttenuation * lightIntensity * _AdditionalLightEnabled;
+                    }
                     }
                 #endif
                 lightStrength = saturate(lightStrength);
@@ -211,6 +219,7 @@ Shader "Custom/SpriteUV4Point"
                 float4 _RendererColor;
                 float  _DarknessFactor;
                 float  _AmbientLight;
+                float  _AdditionalLightEnabled;
                 float  _Cutoff;
                 float4 _UV00;
                 float4 _UV10;

@@ -1,55 +1,45 @@
-using System.Collections.Generic;
 using UnityEngine;
 using IsoTilemap;
 
-// 타일 편집 조작과 뷰 갱신만 담당합니다. 로드/저장은 TileMapManager 책임.
+// 타일 편집 "명령"만 담당합니다. 렌더 반영은 모델 이벤트 -> Visualizer가 담당합니다.
 public class TileMapController : MonoBehaviour
 {
     private IMapModel _model;
-    private IMapViewBuilder _viewBuilder;
-
-    private readonly HashSet<Vector3Int> _dirty = new();
+    private IMapViewBuilder _visualizer;
 
     public void Init(IMapModel model, IMapViewBuilder viewBuilder)
     {
         _model = model;
-        _viewBuilder = viewBuilder;
-        _viewBuilder.Bind(model);
-        _viewBuilder.Build(model);
+        _visualizer = viewBuilder;
+        _visualizer.Bind(model);
+        _visualizer.Build(model);
     }
 
-    public void MarkDirty(Vector3Int cell) => _dirty.Add(cell);
-
-    public void FlushDirty()
+    // 하위 호환용 no-op: 이제 셀 갱신은 OnRuntimeDataChanged 이벤트로 자동 처리됩니다.
+    public void MarkDirty(Vector3Int cell)
     {
-        foreach (var cell in _dirty)
-            RefreshCell(cell);
-        _dirty.Clear();
     }
-
-    private void RefreshCell(Vector3Int cellPos)
-    {
-        if (_model.TryGetTiles(cellPos, out IReadOnlyList<TileData> tiles))
-            _viewBuilder.RefreshCell(cellPos, tiles);
-    }
+    // 하위 호환용 no-op: 이제 셀 갱신은 OnRuntimeDataChanged 이벤트로 자동 처리됩니다.
+    public void FlushDirty() { }
     public void AddTile(TileData tileData)
     {
-        _model.SetTile(tileData);
-        MarkDirty(tileData.identity.GridPos);
+        ApplyTileMutation(tileData);
     }
     public void RemoveTile(TileData tileData)
     {
-        _model.SetTile(tileData);
-        MarkDirty(tileData.identity.GridPos);
+        ApplyTileMutation(tileData);
     }
     public void AddAndFlush(TileData tileData)
     {
         AddTile(tileData);
-        FlushDirty();
     }
     public void RemoveAndFlush(TileData tileData)
     {
         RemoveTile(tileData);
-        FlushDirty();
+    }
+
+    private void ApplyTileMutation(TileData tileData)
+    {
+        _model.SetTile(tileData);
     }
 }

@@ -8,7 +8,8 @@ namespace IsoTilemap
     // ============================================================
     public class TileMapModel : IMapModel
     {
-        public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
+        public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
+        public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
         private List<TileData> _cachedList = new List<TileData>();
@@ -91,11 +92,12 @@ namespace IsoTilemap
                 wall.state = tileState;
                 wallsList[i] = wall;
             }
-            SetTiles(wallsList);
+            ApplyTiles(wallsList);
         }
 
-        private void SetTiles(List<TileData> tileList)
+        public void ApplyTiles(IReadOnlyList<TileData> tileList)
         {
+            HashSet<Vector3Int> changedCells = new HashSet<Vector3Int>();
             foreach (var tile in tileList)
             {
                 var pos = tile.identity.GridPos;
@@ -105,9 +107,13 @@ namespace IsoTilemap
                     if (existingList[i].tileDefId == tile.tileDefId)
                     { existingList[i] = tile; break; }
                 }
-                OnRuntimeDataChanged?.Invoke(pos, existingList);
+                changedCells.Add(pos);
             }
             _isDirty = true;
+            if (changedCells.Count > 0)
+            {
+                OnRuntimeBatchChanged?.Invoke(changedCells);
+            }
         }
     }
 

@@ -20,7 +20,16 @@ namespace IsoTilemap
 #nullable disable
 
 
-        public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
+        public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged
+        {
+            add => _runtimeData.OnRuntimeDataChanged += value;
+            remove => _runtimeData.OnRuntimeDataChanged -= value;
+        }
+        public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged
+        {
+            add => _runtimeData.OnRuntimeBatchChanged += value;
+            remove => _runtimeData.OnRuntimeBatchChanged -= value;
+        }
 
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
@@ -52,6 +61,10 @@ namespace IsoTilemap
         public void SetTile(TileData tileData)
         {
             _runtimeData.SetTile(tileData);
+        }
+        public void ApplyTiles(IReadOnlyList<TileData> tiles)
+        {
+            _runtimeData.ApplyTiles(tiles);
         }
 
         public void HideOcclusionTileWall(Vector3Int playerCellPos)

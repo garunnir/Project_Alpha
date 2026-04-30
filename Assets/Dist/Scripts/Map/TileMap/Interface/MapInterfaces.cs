@@ -36,7 +36,8 @@ namespace IsoTilemap
     //맵 도메인 모델 읽기 전용 인터페이스
     public interface IMapModelReadOnly
     {
-        public event Action<Vector3Int, List<TileData>> OnRuntimeDataChanged;
+        public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
+        public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos);
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
@@ -44,6 +45,7 @@ namespace IsoTilemap
     public interface IMapModel : IMapModelReadOnly
     {
         void SetTile(TileData tileDatas);
+        void ApplyTiles(IReadOnlyList<TileData> tiles);
         void HideOcclusionTileWall(Vector3Int playerCellPos);
         public void Initialize(MapModelDTO prepared);
     }

@@ -66,6 +66,7 @@ GameObject:
   - component: {fileID: 7836641927291631145}
   - component: {fileID: 3950078229687182381}
   - component: {fileID: 2533239093709032026}
+  - component: {fileID: 8353242498531843383}
   m_Layer: 0
   m_Name: Quad
   m_TagString: Untagged
@@ -182,6 +183,19 @@ MonoBehaviour:
   _texturePropertyName: _MainTex
   _texture: {fileID: 2800000, guid: 21c3c629ce4078342aa323897fe4f767, type: 3}
   _materialIndex: 0
+--- !u!114 &8353242498531843383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 662097689629581294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 464940bfc2a8bef44b656858aa0cd8dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::ShadeObjectController
+  _renderer: {fileID: 7836641927291631145}
 --- !u!1001 &1465468674018395453
 PrefabInstance:
   m_ObjectHideFlags: 0
