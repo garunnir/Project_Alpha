@@ -14,9 +14,6 @@ namespace IsoTilemap
             _targetTransform = rootTransform;
         }
 
-        /// <summary>
-        /// 타일 데이터에서 게임 오브젝트를 생성하고 인스턴스화합니다.
-        /// </summary>
         public Dictionary<Guid, TileView> SpawnTiles(IEnumerable<TileData> tiles)
         {
             var spawnedTiles = new Dictionary<Guid, TileView>();
@@ -31,9 +28,6 @@ namespace IsoTilemap
             return spawnedTiles;
         }
 
-        /// <summary>
-        /// 타일 게임 오브젝트의 TileView 컴포넌트를 초기화하고 추적 사전에 등록합니다.
-        /// </summary>
         private TileView InitializeTileInfo(GameObject tileGo, TileData tileData)
         {
 
@@ -47,6 +41,13 @@ namespace IsoTilemap
             info.size = tileData.identity.sizeUnit;
             info.prefabId = tileData.identity.PrefabId;
             info.tileType = (TileView.TileType)tileData.identity.tileType;
+            if (info.tileType == TileView.TileType.EdgeWall)
+            {
+                byte ef = tileData.identity.edgeFace;
+                info.wallEdgeFace = ef == TileIdentity.EdgeFaceNone
+                    ? (byte)0
+                    : (byte)Mathf.Clamp(ef, 0, 1);
+            }
             return info;
         }
 
@@ -60,10 +61,22 @@ namespace IsoTilemap
                 return null;
             }
 
-            Vector3 worldPos = TileHelper.ConvertGridToWorldPos(tileData.identity.GridPos, cellSize);
-            var tileGo = GameObject.Instantiate(prefab, worldPos, Quaternion.identity, _targetTransform);
+            Vector3 worldPos;
+            Quaternion rotation = Quaternion.identity;
+            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
+            {
+                var wk = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                WallEdgeKey.GetWorldPose(wk, cellSize, out worldPos, out rotation);
+            }
+            else
+            {
+                worldPos = TileHelper.ConvertGridToWorldPos(tileData.identity.GridPos, cellSize);
+            }
 
-            return InitializeTileInfo(tileGo, tileData);
+            var tileGo = GameObject.Instantiate(prefab, worldPos, rotation, _targetTransform);
+            var view = InitializeTileInfo(tileGo, tileData);
+            view.UpdateTile(tileData);
+            return view;
         }
     }
 }

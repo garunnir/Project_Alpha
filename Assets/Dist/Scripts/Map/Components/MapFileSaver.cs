@@ -32,32 +32,24 @@ public class MapFileSaver : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    // 에디터에서 씬의 TileView 오브젝트를 JSON으로 직렬화
+    /// <summary>씬 TileView 스냅샷으로 모델을 갱신한 뒤 <see cref="TileMapDtoMapper"/>와 동일 규칙으로 JSON 저장합니다.</summary>
     [ContextMenu("Save Map To JSON")]
     private void SaveInEditor()
     {
-        var tileInfos = Object.FindObjectsByType<TileView>(
+        var mapper = _mapper ?? new TileMapDtoMapper();
+
+        var tileViews = Object.FindObjectsByType<TileView>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
 
-        var mapData = new MapSaveJsonDto();
-        foreach (var info in tileInfos)
-        {
-            mapData.tiles.Add(new TileSaveData
-            {
-                x = info.gridPos.x,
-                y = info.gridPos.y,
-                z = info.gridPos.z,
-                sizeX = info.size.x,
-                sizeY = info.size.y,
-                sizeZ = info.size.z,
-                prefabId = info.prefabId,
-                tileType = (byte)info.tileType
-            });
-        }
+        var snapshot = TileViewSceneGather.BuildTileDataSnapshot(tileViews);
+        var dtoModel = new MapModelDTO(snapshot);
+        MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
 
-        File.WriteAllText(GetFullPath(), JsonUtility.ToJson(mapData, true));
-        Debug.Log($"TileMap saved to: {GetFullPath()} (tiles: {mapData.tiles.Count})");
+        _model?.Initialize(dtoModel);
+
+        File.WriteAllText(GetFullPath(), JsonUtility.ToJson(jsonDto, true));
+        Debug.Log($"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0})");
     }
 #endif
 }

@@ -15,5 +15,8 @@ namespace IsoTilemap
 
         public string prefabId;
         public byte tileType;
+
+        /// <summary>tileType이 EdgeWall(4)일 때만 사용. 0=+X 면, 1=+Z 면. 생략 시 JSON 역직렬화 기본값 0.</summary>
+        public byte face;
     }
 }

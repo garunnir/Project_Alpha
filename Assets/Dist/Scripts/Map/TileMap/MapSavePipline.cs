@@ -24,7 +24,7 @@ namespace IsoTilemap
 
             File.WriteAllText(fullPath, json);
 
-            Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count})");
+            Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count}, wallEdges: {mapDatas.wallEdges.Count})");
         }
         // void 대신 async Task 또는 async void(이벤트성일 때만) 사용
         public async UniTask SaveAsync(string fullPath)

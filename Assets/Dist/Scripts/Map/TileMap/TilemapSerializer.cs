@@ -23,6 +23,8 @@ namespace IsoTilemap
                 Debug.LogWarning("Map data is null or invalid.");
                 return null;
             }
+            if (mapData.wallEdges == null)
+                mapData.wallEdges = new System.Collections.Generic.List<WallEdgeSaveData>();
             return mapData;
         }
      

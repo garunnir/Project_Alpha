@@ -5,6 +5,7 @@ using UnityEngine;
 public class CharacterState : MonoBehaviour
 {
     public Vector3 SightDir { get; private set; }=Vector3.zero;
+    public Vector3 AimWorldPoint { get; private set; } = Vector3.zero; // 조준 월드 지점, ClearAim 시 zero
     public Vector3 MoveDir { get; private set; }=Vector3.zero;
     public Vector3Int GridPos { get; private set; }=Vector3Int.zero;
     public bool IsAiming { get; private set; }
@@ -16,10 +17,11 @@ public class CharacterState : MonoBehaviour
         MoveDir=desiredMove;
     }
 
-    internal void SetAimDir(Vector3 dir)
+    internal void SetAimDir(Vector3 dir, Vector3 aimWorldPoint)
     {
         if (dir == Vector3.zero) return;
         SightDir = dir;
+        AimWorldPoint = aimWorldPoint;
         IsAiming = true;
     }
     internal Vector3 GetFacingDir(){
@@ -31,6 +33,7 @@ public class CharacterState : MonoBehaviour
     internal void ClearAim()
     {
         IsAiming = false;
+        AimWorldPoint = Vector3.zero;
     }
     internal void UpdateGridPos(Vector3 worldPos)
     {

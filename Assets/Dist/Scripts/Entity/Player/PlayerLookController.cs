@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerLookController — 마우스 위치 기반 시야 방향을 CharacterState에 전달하는 컴포넌트
+// PlayerLookController — 마우스 기준 방향으로 SphereCast해 막힌 지점·시야를 CharacterState에 전달
 // ============================================================
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,6 +8,10 @@ using UnityEngine.InputSystem;
 public class PlayerLookController : MonoBehaviour
 {
     [SerializeField] private Camera _refCam;
+    [SerializeField] private float _sphereRadius = 0.15f;
+    [SerializeField] private float _castOriginYOffset = 0.35f;
+    [Tooltip("막힘 검사 레이어(플레이어 본체 레이어는 제외하는 것을 권장)")]
+    [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
     private CharacterState _characterState;
     private bool _isAiming;
@@ -52,19 +56,36 @@ public class PlayerLookController : MonoBehaviour
     {
         if (!_isAiming) return;
         Camera cam = _refCam != null ? _refCam : Camera.main;
-        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, transform.position.y, out Vector3 worldPos)) return;
-        Vector3 dir = worldPos - transform.position;
-        dir.y = 0f;
-        if (dir.sqrMagnitude > 1e-4f)
-            _characterState.SetAimDir(dir.normalized);
+        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, transform.position.y, out Vector3 mousePlanePos)) return;
+
+        Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
+        Vector3 flatTarget = mousePlanePos;
+        flatTarget.y = origin.y;
+
+        Vector3 toTarget = flatTarget - origin;
+        toTarget.y = 0f;
+        float maxDist = toTarget.magnitude;
+        if (maxDist < 1e-4f) return;
+        Vector3 dir = toTarget / maxDist;
+
+        Vector3 aimPoint;
+        if (Physics.SphereCast(origin, _sphereRadius, dir, out RaycastHit hit, maxDist,
+                _aimObstructionMask, QueryTriggerInteraction.Ignore))
+            aimPoint = hit.point;
+        else
+            aimPoint = origin + dir * maxDist;
+
+        Vector3 sightFlat = aimPoint - origin;
+        sightFlat.y = 0f;
+        if (sightFlat.sqrMagnitude < 1e-4f) return;
+        _characterState.SetAimDir(sightFlat.normalized, aimPoint);
     }
 
     void OnDrawGizmos()
     {
         if (_characterState == null || !_characterState.IsAiming) return;
-        Vector3 aimDir = _characterState.SightDir;
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + aimDir * 1.5f);
-        Gizmos.DrawWireSphere(transform.position + aimDir * 1.5f, 0.1f);
+        Gizmos.DrawLine(transform.position, _characterState.AimWorldPoint);
+        Gizmos.DrawWireSphere(_characterState.AimWorldPoint, 0.1f);
     }
 }

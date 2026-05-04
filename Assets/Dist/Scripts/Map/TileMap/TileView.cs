@@ -12,7 +12,9 @@ namespace IsoTilemap
             none = 0,
             Floor = 1,
             Wall = 2,
-            Obstacle = 3
+            Obstacle = 3,
+            /// <summary>JSON wallEdges 승격. GridPos=앵커 셀, TileIdentity.edgeFace=면.</summary>
+            EdgeWall = 4
         }
         [Header("Grid Anchor Position (xyz)")]
         public Vector3Int gridPos;          // gx, gy, gz
@@ -25,6 +27,9 @@ namespace IsoTilemap
 
         [Header("Tile Type")]
         public TileType tileType = TileType.none;
+
+        /// <summary>EdgeWall일 때 JSON wallEdges의 face(0=+X, 1=+Z). 에디터 저장 시 사용.</summary>
+        [Range(0, 1)] public byte wallEdgeFace;
 
         [Header("Gizmo (Grid) Settings")]
         [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
@@ -42,7 +47,8 @@ namespace IsoTilemap
 
         private void Reset()
         {
-            gridPos = TileHelper.ConvertWorldToGrid(transform.position);
+            float cs = Mathf.Max(0.0001f, gizmoCellSize);
+            gridPos = TileHelper.ConvertWorldToGrid(transform.position, cs);
             CacheControllers();
             // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
 #if UNITY_EDITOR
@@ -55,6 +61,24 @@ namespace IsoTilemap
         private void OnValidate()
         {
             CacheControllers();
+            float cs = Mathf.Max(0.0001f, gizmoCellSize);
+            if (tileType == TileType.EdgeWall)
+            {
+                if (WallEdgePicker.TryPickNearest(transform.position, cs, out var nearest))
+                {
+                    gridPos = nearest.Anchor;
+                    wallEdgeFace = (byte)nearest.Face;
+                }
+
+                WallEdgeKey key = new WallEdgeKey(gridPos, (WallFace)Mathf.Clamp(wallEdgeFace, 0, 1));
+                WallEdgeKey.GetWorldPose(key, cs, out Vector3 edgePos, out Quaternion edgeRot);
+                transform.SetPositionAndRotation(edgePos, edgeRot);
+            }
+            else
+            {
+                gridPos = TileHelper.ConvertWorldToGrid(transform.position, cs);
+                transform.position = TileHelper.ConvertGridToWorldPos(gridPos, cs);
+            }
         }
 
         private void CacheControllers()
@@ -101,6 +125,13 @@ namespace IsoTilemap
             prefabId = tileData.identity.PrefabId;
             gridPos = tileData.identity.GridPos;
             size = tileData.identity.sizeUnit;
+            if (tileType == TileType.EdgeWall)
+            {
+                byte ef = tileData.identity.edgeFace;
+                wallEdgeFace = ef == TileIdentity.EdgeFaceNone
+                    ? (byte)0
+                    : (byte)Mathf.Clamp(ef, 0, 1);
+            }
             _shadeController?.SetAdditionalLightEnabled(!tileData.state.isHiddenCharacter);
         }
     }

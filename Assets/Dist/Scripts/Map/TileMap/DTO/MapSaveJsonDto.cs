@@ -7,5 +7,6 @@ namespace IsoTilemap
     public class MapSaveJsonDto
     {
         public List<TileSaveData> tiles = new List<TileSaveData>();
+        public List<WallEdgeSaveData> wallEdges = new List<WallEdgeSaveData>();
     }
 }

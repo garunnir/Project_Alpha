@@ -16,6 +16,13 @@ namespace IsoTilemap
             _runtimeData = runtimeData;
         }
 
+        public ITileEdgeBinderReadOnly EdgeBinder => _runtimeData.EdgeBinder;
+
+        public void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer)
+        {
+            _runtimeData.GatherRenderableTiles(cellPos, buffer);
+        }
+
         public IReadOnlyList<TileData> TilesSnapshot => _runtimeData.TilesSnapshot;
 #nullable disable
 

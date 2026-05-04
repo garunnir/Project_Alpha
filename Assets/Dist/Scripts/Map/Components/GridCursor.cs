@@ -107,6 +107,7 @@ public class GridCursor : MonoBehaviour
         if (_placementState.Selected == null) return;
 
         var def = _placementState.Selected;
+        byte placedType = InferTileTypeFromPrefabId(def.prefabId);
         var tileData = new TileData
         {
             tileDefId = Guid.NewGuid(),
@@ -116,7 +117,8 @@ public class GridCursor : MonoBehaviour
                 PrefabId  = def.prefabId,
                 GridPos   = _cursorGridPos,
                 sizeUnit  = Vector3Int.one,
-                tileType  = 0,
+                tileType  = placedType,
+                edgeFace  = placedType == (byte)TileView.TileType.EdgeWall ? (byte)0 : TileIdentity.EdgeFaceNone,
             }
         };
         _controller.AddAndFlush(tileData);
@@ -137,6 +139,18 @@ public class GridCursor : MonoBehaviour
         enabled = active;
         if (_cursorVisual != null)
             _cursorVisual.SetActive(active);
+    }
+
+    static byte InferTileTypeFromPrefabId(string prefabId)
+    {
+        if (string.IsNullOrEmpty(prefabId)) return 0;
+        if (prefabId.StartsWith("SlimWall/", StringComparison.Ordinal))
+            return (byte)TileView.TileType.EdgeWall;
+        if (prefabId.StartsWith("Floor/", StringComparison.Ordinal))
+            return (byte)TileView.TileType.Floor;
+        if (prefabId.StartsWith("ThickWall/", StringComparison.Ordinal))
+            return (byte)TileView.TileType.Wall;
+        return 0;
     }
 
     void OnDestroy()

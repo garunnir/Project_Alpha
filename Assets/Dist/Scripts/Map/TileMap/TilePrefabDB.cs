@@ -29,8 +29,18 @@ namespace IsoTilemap
 
         public GameObject GetPrefab(string id)
         {
+            if (string.IsNullOrEmpty(id)) return null;
             if (_cache == null) BuildCache();
-            return _cache != null && _cache.TryGetValue(id, out var prefab) ? prefab : null;
+            if (_cache != null && _cache.TryGetValue(id, out var prefab))
+                return prefab;
+            // Visual/Prefab/Map 등에서 파일명만 id로 저장된 경우(예: SlimWall_WN)에 대한 폴백
+            foreach (var e in entries)
+            {
+                if (e == null || e.prefab == null || string.IsNullOrEmpty(e.prefabId)) continue;
+                if (e.prefab.name == id)
+                    return e.prefab;
+            }
+            return null;
         }
         //public GameObject GetPrefab(int id)
         //{

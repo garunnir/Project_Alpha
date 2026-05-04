@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1614907367629289029
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 326633140467323123, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: prefabId
+      value: SlimWall/Wall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 545209283464187470, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2972240822474316022, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: m_Name
+      value: SlimWall_NE
+      objectReference: {fileID: 0}
+    - target: {fileID: 5422711609254606176, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f96b7231d778afe4b83237417c46eea7, type: 2}
+    - target: {fileID: 8318615392058234317, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f,
+        type: 3}
+      propertyPath: _texture
+      value: 
+      objectReference: {fileID: 2800000, guid: 21c3c629ce4078342aa323897fe4f767, type: 3}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3a33f2c3f87222e4f87e046d9b7bfc0f, type: 3}

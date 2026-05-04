@@ -29,7 +29,7 @@ namespace IsoTilemap
         /// </summary>
         public void Build(IMapModelReadOnly model)
         {
-            RenderInitialMap(model); 
+            RenderInitialMap(model);
         }
 
 
@@ -80,19 +80,20 @@ namespace IsoTilemap
         private void RefreshCells(IReadOnlyCollection<Vector3Int> changedCells)
         {
             if (_boundRuntime == null) return;
+            var buffer = new List<TileData>();
             foreach (var cellPos in changedCells)
             {
-                if (_boundRuntime.TryGetTiles(cellPos, out var tiles))
-                {
-                    RenderCell(cellPos, tiles);
-                }
+                _boundRuntime.GatherRenderableTiles(cellPos, buffer);
+                if (buffer.Count > 0)
+                    RenderCell(cellPos, buffer);
             }
         }
 
         private void RenderInitialMap(IMapModelReadOnly model)
         {
             IReadOnlyList<TileData> tiles = model.TilesSnapshot;
-            if (tiles == null || tiles.Count() == 0)
+
+            if (tiles == null || tiles.Count == 0)
             {
                 Debug.LogWarning("No tile data to build visual.");
                 return;
@@ -112,7 +113,8 @@ namespace IsoTilemap
                 else
                 {
                     var newView = _tileFactory.SpawnTile(tileData);
-                    _tileViews[tileData.tileDefId] = newView;
+                    if (newView != null)
+                        _tileViews[tileData.tileDefId] = newView;
                 }
             }
         }

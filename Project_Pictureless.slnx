@@ -14,11 +14,11 @@
   <Project Path="CW.Common.csproj" />
   <Project Path="DOTween.Modules.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Edtior.csproj" />
   <Project Path="UniTask.TextMeshPro.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.Unity.Addressables.csproj" />
   <Project Path="PixelCrushersWrappersEditor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="DOTweenPro.EditorScripts.csproj" />
   <Project Path="Config.csproj" />
   <Project Path="NativeGallery.Runtime.csproj" />

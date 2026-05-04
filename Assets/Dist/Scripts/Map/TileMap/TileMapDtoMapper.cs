@@ -14,10 +14,13 @@ namespace IsoTilemap
                 Debug.LogWarning("TileMapData or its tiles are null.");
                 return null;
             }
-            // 내부적으로는 수정 가능한 List로 수집한 뒤 IReadOnlyDictionary/IReadOnlyList로 변환하여 반환합니다.
             List<TileData> prepareData = new List<TileData>();
             foreach (var td in tileMapData.tiles)
             {
+                byte edgeFace = TileIdentity.EdgeFaceNone;
+                if (td.tileType == (byte)TileView.TileType.EdgeWall)
+                    edgeFace = (byte)Mathf.Clamp((int)td.face, 0, 1);
+
                 prepareData.Add(new TileData
                 {
                     tileDefId = Guid.NewGuid(),
@@ -28,9 +31,30 @@ namespace IsoTilemap
                         tileType = td.tileType,
                         GridPos = new Vector3Int(td.x, td.y, td.z),
                         sizeUnit = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ),
-
+                        edgeFace = edgeFace,
                     }
                 });
+            }
+
+            if (tileMapData.wallEdges != null)
+            {
+                foreach (var we in tileMapData.wallEdges)
+                {
+                    byte faceClamped = (byte)Mathf.Clamp((int)we.face, 0, 1);
+                    prepareData.Add(new TileData
+                    {
+                        tileDefId = Guid.NewGuid(),
+                        state = new TileState(),
+                        identity = new TileIdentity
+                        {
+                            PrefabId = we.prefabId,
+                            GridPos = new Vector3Int(we.x, we.y, we.z),
+                            sizeUnit = Vector3Int.one,
+                            tileType = (byte)TileView.TileType.EdgeWall,
+                            edgeFace = faceClamped,
+                        }
+                    });
+                }
             }
 
             return new MapModelDTO(prepareData);
@@ -39,25 +63,38 @@ namespace IsoTilemap
         public MapSaveJsonDto FromPrepared(MapModelDTO prepared)
         {
             IReadOnlyList<TileData> tiles = prepared.TilesData;
-            //DTO로 변환하여 집어넣을 컨테이너 생성
             MapSaveJsonDto tile = new MapSaveJsonDto();
 
             foreach (var ti in tiles)
             {
-                tile.tiles.Add(new TileSaveData
+                if (ti.identity.tileType == (byte)TileView.TileType.EdgeWall)
                 {
-                    sizeX = ti.identity.sizeUnit.x,
-                    sizeY = ti.identity.sizeUnit.y,
-                    sizeZ = ti.identity.sizeUnit.z,
-                    x = ti.identity.GridPos.x,
-                    y = ti.identity.GridPos.y,
-                    z = ti.identity.GridPos.z,
-                    tileType = ti.identity.tileType,
-                    prefabId = ti.identity.PrefabId,
-                });
+                    tile.wallEdges.Add(new WallEdgeSaveData
+                    {
+                        x = ti.identity.GridPos.x,
+                        y = ti.identity.GridPos.y,
+                        z = ti.identity.GridPos.z,
+                        face = ti.identity.edgeFace,
+                        prefabId = ti.identity.PrefabId,
+                    });
+                }
+                else
+                {
+                    tile.tiles.Add(new TileSaveData
+                    {
+                        sizeX = ti.identity.sizeUnit.x,
+                        sizeY = ti.identity.sizeUnit.y,
+                        sizeZ = ti.identity.sizeUnit.z,
+                        x = ti.identity.GridPos.x,
+                        y = ti.identity.GridPos.y,
+                        z = ti.identity.GridPos.z,
+                        tileType = ti.identity.tileType,
+                        prefabId = ti.identity.PrefabId,
+                    });
+                }
             }
-            return tile;
 
+            return tile;
         }
     }
 }
