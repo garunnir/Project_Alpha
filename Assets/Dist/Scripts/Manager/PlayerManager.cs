@@ -9,6 +9,7 @@ public class PlayerManager : MonoBehaviour
 {
     [SerializeField, Required, ValidateInput(nameof(HasInitialControllable), "IPlayControllable을 구현한 컴포넌트를 할당해야 합니다.")]
     private MonoBehaviour _initialControllable;
+    [SerializeField] private CameraFollowTargetDriver _cameraFollowDriver;
 
     private IPlayControllable _playControllable;
 
@@ -17,6 +18,10 @@ public class PlayerManager : MonoBehaviour
 
         if (_playControllable == null)
             _playControllable = FindFirstPlayControllable(includeInactive: true);
+        if (_cameraFollowDriver == null)
+            _cameraFollowDriver = FindFirstObjectByType<CameraFollowTargetDriver>(FindObjectsInactive.Include);
+        if (_cameraFollowDriver == null)
+            _cameraFollowDriver = CreateCameraDriver();
         ChangeControllTarget(_playControllable);
     }
 
@@ -41,5 +46,27 @@ public class PlayerManager : MonoBehaviour
         _playControllable?.SetControlEnabled(false);
         _playControllable = controllable;
         _playControllable?.SetControlEnabled(true);
+        UpdateCameraTarget(_playControllable);
+    }
+
+    private void UpdateCameraTarget(IPlayControllable controllable)
+    {
+        if (_cameraFollowDriver == null)
+            return;
+
+        if (controllable is Component component)
+        {
+            CharacterState state = component.GetComponent<CharacterState>();
+            _cameraFollowDriver.SetTarget(component.transform, state);
+            return;
+        }
+
+        _cameraFollowDriver.SetTarget(null, null);
+    }
+
+    private static CameraFollowTargetDriver CreateCameraDriver()
+    {
+        GameObject go = new GameObject("GameplayCinemachineCamera");
+        return go.AddComponent<CameraFollowTargetDriver>();
     }
 }

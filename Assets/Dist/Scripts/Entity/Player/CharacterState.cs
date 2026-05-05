@@ -10,6 +10,7 @@ public class CharacterState : MonoBehaviour
     public Vector3Int GridPos { get; private set; }=Vector3Int.zero;
     public bool IsAiming { get; private set; }
     public event Action<Vector3Int> GridPosChanged;
+    public event Action<Vector3> AimWorldPointChanged;
 
     internal void SetMoveDir(Vector3 desiredMove)
     {
@@ -23,6 +24,7 @@ public class CharacterState : MonoBehaviour
         SightDir = dir;
         AimWorldPoint = aimWorldPoint;
         IsAiming = true;
+        AimWorldPointChanged?.Invoke(aimWorldPoint);
     }
     internal Vector3 GetFacingDir(){
         if(IsAiming){
@@ -34,6 +36,7 @@ public class CharacterState : MonoBehaviour
     {
         IsAiming = false;
         AimWorldPoint = Vector3.zero;
+        AimWorldPointChanged?.Invoke(Vector3.zero);
     }
     internal void UpdateGridPos(Vector3 worldPos)
     {
