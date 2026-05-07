@@ -178,7 +178,7 @@ Shader "Custom/SpriteUV4Point"
             Tags { "LightMode" = "ShadowCaster" }
             ZWrite On
             ZTest LEqual
-            Cull Back
+            Cull Off
             ColorMask 0
 
             HLSLPROGRAM

@@ -19,7 +19,6 @@ namespace IsoTilemap
     public class TileMapModel : IMapModel
 
     {
-
         public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
 
         public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
@@ -39,6 +38,9 @@ namespace IsoTilemap
         private bool _isDirty = false;
 
         private WallOcclusionFinder _occlusionFinder;
+        private readonly HashSet<Guid> _hiddenWallTileIds = new HashSet<Guid>();
+        private readonly Dictionary<Guid, TileData> _hiddenWallTileCache = new Dictionary<Guid, TileData>();
+        private readonly List<TileData> _occlusionApplyBuffer = new List<TileData>();
 
 
 
@@ -213,6 +215,8 @@ namespace IsoTilemap
             _isDirty = true;
 
             _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
+            _hiddenWallTileIds.Clear();
+            _hiddenWallTileCache.Clear();
 
         }
 
@@ -251,27 +255,81 @@ namespace IsoTilemap
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
 
             OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos);
+            var currentHiddenIds = new HashSet<Guid>();
+            _occlusionApplyBuffer.Clear();
 
-            var list = batch.Occluding;
-
+            var list = batch.FinalOccluding;
             for (int i = 0; i < list.Count; i++)
-
             {
-
                 TileData wall = list[i];
+                currentHiddenIds.Add(wall.tileDefId);
 
                 TileState state = wall.state;
+                if (!state.isHiddenCharacter)
+                {
+                    state.isHiddenCharacter = true;
+                    wall.state = state;
+                    _occlusionApplyBuffer.Add(wall);
+                }
 
-                state.isHiddenCharacter = true;
-
-                wall.state = state;
-
-                list[i] = wall;
-
+                _hiddenWallTileCache[wall.tileDefId] = wall;
             }
 
-            ApplyTiles(list);
+            foreach (Guid hiddenId in _hiddenWallTileIds)
+            {
+                if (currentHiddenIds.Contains(hiddenId))
+                    continue;
 
+                if (!_hiddenWallTileCache.TryGetValue(hiddenId, out var hiddenTile) &&
+                    !TryFindTileById(hiddenId, out hiddenTile))
+                {
+                    continue;
+                }
+
+                TileState state = hiddenTile.state;
+                if (state.isHiddenCharacter)
+                {
+                    state.isHiddenCharacter = false;
+                    hiddenTile.state = state;
+                    _occlusionApplyBuffer.Add(hiddenTile);
+                }
+
+                _hiddenWallTileCache.Remove(hiddenId);
+            }
+
+            _hiddenWallTileIds.Clear();
+            _hiddenWallTileIds.UnionWith(currentHiddenIds);
+
+            if (_occlusionApplyBuffer.Count > 0)
+                ApplyTiles(_occlusionApplyBuffer);
+
+        }
+
+        private bool TryFindTileById(Guid tileId, out TileData tileData)
+        {
+            foreach (var cellTiles in tiles.Values)
+            {
+                for (int i = 0; i < cellTiles.Count; i++)
+                {
+                    if (cellTiles[i].tileDefId == tileId)
+                    {
+                        tileData = cellTiles[i];
+                        return true;
+                    }
+                }
+            }
+
+            foreach (var edgeTile in _edgeBinder.EnumerateTiles())
+            {
+                if (edgeTile.tileDefId == tileId)
+                {
+                    tileData = edgeTile;
+                    return true;
+                }
+            }
+
+            tileData = default;
+            return false;
         }
 
 
@@ -316,7 +374,10 @@ namespace IsoTilemap
 
                     if (existingList[i].tileDefId == tile.tileDefId)
 
-                    { existingList[i] = tile; break; }
+                    {
+                        existingList[i] = tile;
+                        break;
+                    }
 
                 }
 

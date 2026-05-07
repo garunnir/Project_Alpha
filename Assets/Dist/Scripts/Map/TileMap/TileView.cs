@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 // 씬에 실제로 붙어있는 타일 오브젝트용 View.
 // Anchor + Size + PrefabId 기반 메타데이터를 유지하고,
@@ -39,6 +40,8 @@ namespace IsoTilemap
         public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
         [Header("Render Controller")]
         [SerializeField] private ShadeObjectController _shadeController;
+        [SerializeField] private Renderer _renderer;
+        private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On;
 
         private void Awake()
         {
@@ -84,6 +87,11 @@ namespace IsoTilemap
         private void CacheControllers()
         {
             _shadeController ??= GetComponentInChildren<ShadeObjectController>();
+            _renderer ??= GetComponentInChildren<Renderer>();
+            if (_renderer != null)
+            {
+                _defaultShadowCastingMode = _renderer.shadowCastingMode;
+            }
         }
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
         // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
@@ -133,6 +141,13 @@ namespace IsoTilemap
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
             _shadeController?.SetAdditionalLightEnabled(!tileData.state.isHiddenCharacter);
+            if (_renderer != null)
+            {
+                _renderer.enabled = true;
+                _renderer.shadowCastingMode = tileData.state.isHiddenCharacter
+                    ? ShadowCastingMode.ShadowsOnly
+                    : _defaultShadowCastingMode;
+            }
         }
     }
 }

@@ -4,8 +4,12 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 인접 두 칸 사이의 수직 면. 앵커는 해당 축에서 좌표가 작은 쪽 셀, Face는 +X 또는 +Z 방향 이웃을 향합니다.
+    /// 인접 두 칸 사이의 수직 면. 앵커는 정렬과 저장을 위한 키이며, 셀 점유 위치가 아닙니다.
     /// </summary>
+    /// <remarks>
+    /// <see cref="WallEdgeKey"/>는 <see cref="WallEdgeKey.CellA"/>와 <see cref="WallEdgeKey.CellB"/> 사이의 변을 나타냅니다.
+    /// Face는 CellA에서 +X 또는 +Z 방향의 CellB를 향합니다.
+    /// </remarks>
     public enum WallFace : byte
     {
         PosX = 0,
@@ -14,8 +18,11 @@ namespace IsoTilemap
 
     public readonly struct WallEdgeKey : IEquatable<WallEdgeKey>
     {
+        /// <summary>정렬과 저장을 위한 기준 셀. 엣지가 이 셀을 점유한다는 의미는 아닙니다.</summary>
         public Vector3Int Anchor { get; }
         public WallFace Face { get; }
+        public Vector3Int CellA => Anchor;
+        public Vector3Int CellB => NeighborCell();
 
         public WallEdgeKey(Vector3Int anchor, WallFace face)
         {
@@ -33,9 +40,7 @@ namespace IsoTilemap
         public override int GetHashCode() =>
             HashCode.Combine(Anchor.x, Anchor.y, Anchor.z, (byte)Face);
 
-        /// <summary>
-        /// a→b가 카드널 이웃일 때 공유 면 키. (y는 같아야 함.)
-        /// </summary>
+        /// <summary>a→b가 카드널 이웃일 때 두 셀 사이의 공유 면 키를 만듭니다. (y는 같아야 함.)</summary>
         public static bool TryBetween(Vector3Int a, Vector3Int b, out WallEdgeKey key)
         {
             key = default;
@@ -51,6 +56,12 @@ namespace IsoTilemap
         public Vector3Int NeighborCell() => Face == WallFace.PosX
             ? Anchor + Vector3Int.right
             : Anchor + Vector3Int.forward;
+
+        public void Deconstruct(out Vector3Int cellA, out Vector3Int cellB)
+        {
+            cellA = CellA;
+            cellB = CellB;
+        }
 
         public static Vector3Int StepTowardNeighbor(WallFace face) =>
             face == WallFace.PosX ? Vector3Int.right : Vector3Int.forward;
