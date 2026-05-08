@@ -54,6 +54,7 @@ MonoBehaviour:
   drawGizmoGrid: 1
   gizmoGridColor: {r: 0, g: 0.7, b: 0.9, a: 0.6}
   _shadeController: {fileID: 0}
+  _selectionLayer: {fileID: 11400000, guid: c70ec1a880df4f04d90d465eb917ea4f, type: 2}
 --- !u!1 &4165041982396032203
 GameObject:
   m_ObjectHideFlags: 0

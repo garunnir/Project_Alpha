@@ -17,6 +17,15 @@ namespace IsoTilemap
             /// <summary>JSON wallEdges 승격. GridPos=앵커 셀, TileIdentity.edgeFace=면.</summary>
             EdgeWall = 4
         }
+
+        // 기본축 시각 상태. 단일 선택이며 우선순위 규칙으로 결정한다.
+        // Selected는 별도 오버레이축으로 독립적으로 적용된다.
+        public enum TileBaseVisualState
+        {
+            Visible = 0,
+            Ghosted = 1,
+            HiddenByCharacter = 2,
+        }
         [Header("Grid Anchor Position (xyz)")]
         public Vector3Int gridPos;          // gx, gy, gz
 
@@ -40,12 +49,20 @@ namespace IsoTilemap
         public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
         [Header("Render Controller")]
         [SerializeField] private ShadeObjectController _shadeController;
-        [SerializeField] private Renderer _renderer;
+        [Tooltip("Selected 오버레이용 URP RenderingLayer 비트의 단일 진실원 SO")]
+        [SerializeField] private SelectionLayerConfig _selectionLayer;
         private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On;
+
+        private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
+        private bool _currentSelected;
+        private bool _baseStateInitialized;
+        private bool _selectedInitialized;
 
         private void Awake()
         {
             CacheControllers();
+            ForceApplyBaseState(TileBaseVisualState.Visible);
+            ForceApplySelectedOverlay(false);
         }
 
         private void Reset()
@@ -87,10 +104,10 @@ namespace IsoTilemap
         private void CacheControllers()
         {
             _shadeController ??= GetComponentInChildren<ShadeObjectController>();
-            _renderer ??= GetComponentInChildren<Renderer>();
-            if (_renderer != null)
+            Renderer renderer = _shadeController?.CachedRenderer;
+            if (renderer != null)
             {
-                _defaultShadowCastingMode = _renderer.shadowCastingMode;
+                _defaultShadowCastingMode = renderer.shadowCastingMode;
             }
         }
         // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
@@ -140,14 +157,84 @@ namespace IsoTilemap
                     ? (byte)0
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
-            _shadeController?.SetAdditionalLightEnabled(!tileData.state.isHiddenCharacter);
-            if (_renderer != null)
+
+            ApplyBaseState(ResolveBaseState(tileData.state));
+            ApplySelectedOverlay(tileData.state.isSelected);
+        }
+
+        // 기본축 상태 결정: 우선순위 Hidden > Ghosted > Visible.
+        private static TileBaseVisualState ResolveBaseState(TileState state)
+        {
+            if (state.isHiddenCharacter) return TileBaseVisualState.HiddenByCharacter;
+            if (state.isGhosted) return TileBaseVisualState.Ghosted;
+            return TileBaseVisualState.Visible;
+        }
+
+        private void ApplyBaseState(TileBaseVisualState next)
+        {
+            if (_baseStateInitialized && _currentBaseState == next) return;
+            ForceApplyBaseState(next);
+        }
+
+        private void ForceApplyBaseState(TileBaseVisualState next)
+        {
+            Renderer renderer = _shadeController?.CachedRenderer;
+            switch (next)
             {
-                _renderer.enabled = true;
-                _renderer.shadowCastingMode = tileData.state.isHiddenCharacter
-                    ? ShadowCastingMode.ShadowsOnly
-                    : _defaultShadowCastingMode;
+                case TileBaseVisualState.Visible:
+                    if (renderer != null)
+                    {
+                        renderer.enabled = true;
+                        renderer.shadowCastingMode = _defaultShadowCastingMode;
+                    }
+                    _shadeController?.SetAdditionalLightEnabled(true);
+                    _shadeController?.SetGhost(false);
+                    break;
+
+                case TileBaseVisualState.HiddenByCharacter:
+                    if (renderer != null)
+                    {
+                        renderer.enabled = true;
+                        renderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+                    }
+                    _shadeController?.SetAdditionalLightEnabled(false);
+                    _shadeController?.SetGhost(false);
+                    break;
+
+                case TileBaseVisualState.Ghosted:
+                    if (renderer != null)
+                    {
+                        renderer.enabled = true;
+                        renderer.shadowCastingMode = _defaultShadowCastingMode;
+                    }
+                    _shadeController?.SetAdditionalLightEnabled(true);
+                    _shadeController?.SetGhost(true);
+                    break;
             }
+
+            _currentBaseState = next;
+            _baseStateInitialized = true;
+        }
+
+        private void ApplySelectedOverlay(bool next)
+        {
+            if (_selectedInitialized && _currentSelected == next) return;
+            ForceApplySelectedOverlay(next);
+        }
+
+        private void ForceApplySelectedOverlay(bool next)
+        {
+            Renderer renderer = _shadeController?.CachedRenderer;
+            if (renderer != null && _selectionLayer != null)
+            {
+                uint mask = renderer.renderingLayerMask;
+                uint bit = _selectionLayer.RenderingLayerMask;
+                if (next) mask |= bit;
+                else mask &= ~bit;
+                renderer.renderingLayerMask = mask;
+            }
+            _currentSelected = next;
+            _selectedInitialized = true;
         }
     }
 }

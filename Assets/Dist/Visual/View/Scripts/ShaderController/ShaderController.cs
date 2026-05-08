@@ -7,6 +7,7 @@ public abstract class ShaderController : MonoBehaviour
 {
     protected Material Mat { get; private set; } = null;
     [SerializeField] private Renderer _renderer;
+    public Renderer CachedRenderer => _renderer;
 
     protected virtual void Awake()
     {

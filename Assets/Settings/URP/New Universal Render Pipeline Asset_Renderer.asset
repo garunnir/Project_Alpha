@@ -26,8 +26,9 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures: []
-  m_RendererFeatureMap: 
+  m_RendererFeatures:
+  - {fileID: 5101010101010101010}
+  m_RendererFeatureMap: 8a4f3b2c1d6e7f90
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -56,3 +57,22 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &5101010101010101010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ede0c453ee282f45917782140be3982, type: 3}
+  m_Name: SelectionOutlineRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _layerConfig: {fileID: 11400000, guid: c70ec1a880df4f04d90d465eb917ea4f, type: 2}
+  _maskShader: {fileID: 4800000, guid: 4a8c65543ada81942925d1732b92f698, type: 3}
+  _outlineShader: {fileID: 4800000, guid: 8731560c1474faa4c9ee285324370cd8, type: 3}
+  _outlineColor: {r: 0.1886576, g: 1, b: 0.015686274, a: 1}
+  _outlineThicknessPx: 1
+  _passEvent: 600

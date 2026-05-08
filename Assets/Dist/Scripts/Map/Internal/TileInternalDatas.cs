@@ -12,6 +12,8 @@ namespace IsoTilemap
     public struct TileState
     {
         public bool isHiddenCharacter;
+        public bool isGhosted;
+        public bool isSelected;
     }
     public readonly struct TileIdentity
     {
