@@ -16,7 +16,7 @@ PrefabInstance:
     - target: {fileID: 232636863341668395, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 764041695105569428, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
@@ -27,6 +27,11 @@ PrefabInstance:
         type: 3}
       propertyPath: prefabId
       value: ThickWall/Wall_NE_DoorFrame
+      objectReference: {fileID: 0}
+    - target: {fileID: 1566159718123278187, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: gridPos.z
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 1631580830965928406, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}

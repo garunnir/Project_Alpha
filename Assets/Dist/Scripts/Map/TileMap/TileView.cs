@@ -51,6 +51,9 @@ namespace IsoTilemap
         [SerializeField] private ShadeObjectController _shadeController;
         [Tooltip("Selected 오버레이용 URP RenderingLayer 비트의 단일 진실원 SO")]
         [SerializeField] private SelectionLayerConfig _selectionLayer;
+        [Header("Blocked Trace")]
+        [Tooltip("타일이 숨김 상태일 때 표시할 흔적 오브젝트(데칼/메시 등).")]
+        [SerializeField] private GameObject _blockedTraceObject;
         private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On;
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
@@ -63,6 +66,7 @@ namespace IsoTilemap
             CacheControllers();
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
+            SetBlockedTraceVisible(false);
         }
 
         private void Reset()
@@ -189,6 +193,7 @@ namespace IsoTilemap
                     }
                     _shadeController?.SetAdditionalLightEnabled(true);
                     _shadeController?.SetGhost(false);
+                    SetBlockedTraceVisible(false);
                     break;
 
                 case TileBaseVisualState.HiddenByCharacter:
@@ -199,6 +204,7 @@ namespace IsoTilemap
                     }
                     _shadeController?.SetAdditionalLightEnabled(false);
                     _shadeController?.SetGhost(false);
+                    SetBlockedTraceVisible(true);
                     break;
 
                 case TileBaseVisualState.Ghosted:
@@ -209,6 +215,7 @@ namespace IsoTilemap
                     }
                     _shadeController?.SetAdditionalLightEnabled(true);
                     _shadeController?.SetGhost(true);
+                    SetBlockedTraceVisible(false);
                     break;
             }
 
@@ -235,6 +242,13 @@ namespace IsoTilemap
             }
             _currentSelected = next;
             _selectedInitialized = true;
+        }
+
+        private void SetBlockedTraceVisible(bool visible)
+        {
+            if (_blockedTraceObject == null) return;
+            if (_blockedTraceObject.activeSelf == visible) return;
+            _blockedTraceObject.SetActive(visible);
         }
     }
 }
