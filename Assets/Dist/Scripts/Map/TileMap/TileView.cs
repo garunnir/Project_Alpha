@@ -57,9 +57,15 @@ namespace IsoTilemap
         private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On;
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
+        private float _characterOcclusion;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
+
+        private const float OcclusionEpsilon = 1e-4f;
+        private const float ShadowOnlyOcclusionThreshold = 0.99f;
+        private const float BlockedTraceOcclusionThreshold = 0.4f;
+        private const float AdditionalLightCutoffOcclusionThreshold = 0.55f;
 
         private void Awake()
         {
@@ -162,22 +168,23 @@ namespace IsoTilemap
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
 
-            ApplyBaseState(ResolveBaseState(tileData.state));
+            _characterOcclusion = tileData.state.characterOcclusion;
+            TileBaseVisualState resolved = ResolveBaseState(tileData.state);
+
+            if (!_baseStateInitialized || _currentBaseState != resolved)
+                ForceApplyBaseState(resolved);
+
+            ApplyCharacterOcclusionPresentation(resolved);
+
             ApplySelectedOverlay(tileData.state.isSelected);
         }
 
         // 기본축 상태 결정: 우선순위 Hidden > Ghosted > Visible.
         private static TileBaseVisualState ResolveBaseState(TileState state)
         {
-            if (state.isHiddenCharacter) return TileBaseVisualState.HiddenByCharacter;
+            if (state.characterOcclusion > OcclusionEpsilon) return TileBaseVisualState.HiddenByCharacter;
             if (state.isGhosted) return TileBaseVisualState.Ghosted;
             return TileBaseVisualState.Visible;
-        }
-
-        private void ApplyBaseState(TileBaseVisualState next)
-        {
-            if (_baseStateInitialized && _currentBaseState == next) return;
-            ForceApplyBaseState(next);
         }
 
         private void ForceApplyBaseState(TileBaseVisualState next)
@@ -193,18 +200,14 @@ namespace IsoTilemap
                     }
                     _shadeController?.SetAdditionalLightEnabled(true);
                     _shadeController?.SetGhost(false);
+                    _shadeController?.SetCharacterOcclusion(0f);
                     SetBlockedTraceVisible(false);
                     break;
 
                 case TileBaseVisualState.HiddenByCharacter:
                     if (renderer != null)
-                    {
                         renderer.enabled = true;
-                        renderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
-                    }
-                    _shadeController?.SetAdditionalLightEnabled(false);
                     _shadeController?.SetGhost(false);
-                    SetBlockedTraceVisible(true);
                     break;
 
                 case TileBaseVisualState.Ghosted:
@@ -215,6 +218,7 @@ namespace IsoTilemap
                     }
                     _shadeController?.SetAdditionalLightEnabled(true);
                     _shadeController?.SetGhost(true);
+                    _shadeController?.SetCharacterOcclusion(0f);
                     SetBlockedTraceVisible(false);
                     break;
             }
@@ -242,6 +246,27 @@ namespace IsoTilemap
             }
             _currentSelected = next;
             _selectedInitialized = true;
+        }
+
+        private void ApplyCharacterOcclusionPresentation(TileBaseVisualState visualState)
+        {
+            if (visualState != TileBaseVisualState.HiddenByCharacter)
+                return;
+
+            Renderer renderer = _shadeController?.CachedRenderer;
+            _shadeController?.SetCharacterOcclusion(_characterOcclusion);
+
+            if (renderer != null)
+            {
+                renderer.shadowCastingMode = _characterOcclusion >= ShadowOnlyOcclusionThreshold
+                    ? ShadowCastingMode.ShadowsOnly
+                    : _defaultShadowCastingMode;
+            }
+
+            _shadeController?.SetAdditionalLightEnabled(
+                _characterOcclusion < AdditionalLightCutoffOcclusionThreshold);
+
+            SetBlockedTraceVisible(_characterOcclusion >= BlockedTraceOcclusionThreshold);
         }
 
         private void SetBlockedTraceVisible(bool visible)

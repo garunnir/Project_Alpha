@@ -106,6 +106,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
         if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
         {
             _lastHitCount = 0;
+            _characterState.UpdateGridPos(transform.position);
             return;
         }
 
@@ -126,25 +127,28 @@ public class PlayerMovement : MonoBehaviour, IMovable
         _lastHitCount    = hitCount;
 
         if (hitCount == 0)
-        {
             _rb.MovePosition(_rb.position + desiredMove);
-            return;
-        }
-
-        Vector3 delta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
-
-        if (delta.sqrMagnitude <= Mathf.Epsilon)
+        else
         {
-            _rb.MovePosition(_rb.position);
-            if (Config.DebugMode.PlayerMovement) Debug.LogError("PlayerMovement: Stuck!");
-            return;
+            Vector3 delta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
+
+            if (delta.sqrMagnitude <= Mathf.Epsilon)
+            {
+                _rb.MovePosition(_rb.position);
+                if (Config.DebugMode.PlayerMovement) Debug.LogError("PlayerMovement: Stuck!");
+            }
+            else
+            {
+                if (Config.DebugMode.PlayerMovement && _mover.LastSlide.sqrMagnitude > 0f)
+                    Debug.Log("PlayerMovement: Sliding");
+
+                _rb.MovePosition(_rb.position + delta);
+                _moveDir = delta.normalized;
+            }
         }
 
-        if (Config.DebugMode.PlayerMovement && _mover.LastSlide.sqrMagnitude > 0f)
-            Debug.Log("PlayerMovement: Sliding");
-
-        _rb.MovePosition(_rb.position + delta);
-        _moveDir=delta.normalized;
+        // 이동이 없던 프레임과 관계 없이 피직스 적용 후 항상 갱신(오클루전 거리 블렌드 끊김 방지)
+        _characterState.UpdateGridPos(transform.position);
     }
 
     void OnDrawGizmos()

@@ -7,11 +7,13 @@ public class ShadeObjectController : ShaderController
 {
     private int _additionalLightEnabledId;
     private int _ghostAmountId;
+    private int _characterOcclusionId;
 
     protected override void CachePropertyIDs()
     {
         _additionalLightEnabledId = Shader.PropertyToID("_AdditionalLightEnabled");
         _ghostAmountId = Shader.PropertyToID("_GhostAmount");
+        _characterOcclusionId = Shader.PropertyToID("_CharacterOcclusion");
     }
 
     public void SetAdditionalLightEnabled(bool enabled)
@@ -37,5 +39,15 @@ public class ShadeObjectController : ShaderController
             return;
         }
         Mat.SetFloat(_ghostAmountId, Mathf.Clamp01(amount));
+    }
+
+    /// <summary>캐릭터에 가려질 때 알파 페이드(0 불투명 ~ 1 완전 투명).</summary>
+    public void SetCharacterOcclusion(float occlusion01)
+    {
+        if (Mat == null)
+        {
+            return;
+        }
+        Mat.SetFloat(_characterOcclusionId, Mathf.Clamp01(occlusion01));
     }
 }

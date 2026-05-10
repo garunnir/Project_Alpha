@@ -57,6 +57,9 @@ namespace IsoTilemap
         void SetTile(TileData tileDatas);
         void ApplyTiles(IReadOnlyList<TileData> tiles);
         void HideOcclusionTileWall(Vector3Int playerCellPos);
+
+        /// <summary>플레이어 월드 위치로 오클루전(셀 변경 시 BFS + 거리 occlusion) 갱신.</summary>
+        void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings);
         public void Initialize(MapModelDTO prepared);
     }
 /// <summary>

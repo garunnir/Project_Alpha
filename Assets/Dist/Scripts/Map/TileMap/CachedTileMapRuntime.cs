@@ -76,7 +76,14 @@ namespace IsoTilemap
 
         public void HideOcclusionTileWall(Vector3Int playerCellPos)
         {
+            ClearCache();
             _runtimeData.HideOcclusionTileWall(playerCellPos);
+        }
+
+        public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings)
+        {
+            ClearCache();
+            _runtimeData.UpdateOcclusionFromPlayerWorld(playerWorld, settings);
         }
     }
 }

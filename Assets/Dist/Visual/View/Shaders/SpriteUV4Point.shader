@@ -7,6 +7,8 @@ Shader "Custom/SpriteUV4Point"
         _DarknessFactor ("시야 밖 어둠 강도", Range(0, 1)) = 0.85
         _AmbientLight ("최소 밝기", Range(0, 1)) = 0.15
         _AdditionalLightEnabled ("추가 라이트 사용", Range(0, 1)) = 1
+        _GhostAmount ("고스트 블렌드", Range(0, 1)) = 0
+        _CharacterOcclusion ("캐릭터 가림 투명도 (0불투명 ~ 1완전투명)", Range(0, 1)) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clipping", Float) = 0
         _Cutoff ("컷오프", Range(0,1)) = 0.5
@@ -21,17 +23,17 @@ Shader "Custom/SpriteUV4Point"
     {
         Tags
         {
-            "Queue"             = "AlphaTest"
-            "RenderType"        = "TransparentCutout"
+            "Queue"             = "Transparent"
+            "RenderType"        = "Transparent"
             "RenderPipeline"    = "UniversalPipeline"
             "IgnoreProjector"   = "True"
             "PreviewType"       = "Plane"
             "CanUseSpriteAtlas" = "True"
         }
 
-        Blend Off
+        Blend SrcAlpha OneMinusSrcAlpha
         Cull Off
-        ZWrite On
+        ZWrite Off
 
         Pass
         {
@@ -83,6 +85,8 @@ Shader "Custom/SpriteUV4Point"
                 float  _DarknessFactor;
                 float  _AmbientLight;
                 float  _AdditionalLightEnabled;
+                float  _GhostAmount;
+                float  _CharacterOcclusion;
                 float  _Cutoff;
                 float4 _UV00;
                 float4 _UV10;
@@ -121,9 +125,10 @@ Shader "Custom/SpriteUV4Point"
 
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, warpedUV);
                 half4 finalColor = texColor * IN.color;
+                half baseAlpha = finalColor.a;
 
                 #ifdef _ALPHATEST_ON
-                    clip(finalColor.a - _Cutoff);
+                    clip(baseAlpha - _Cutoff);
                 #endif
 
                 half lightStrength = 0.0h;
@@ -167,6 +172,12 @@ Shader "Custom/SpriteUV4Point"
                 brightness = lerp(1.0h, brightness, _DarknessFactor);
 
                 finalColor.rgb *= brightness;
+
+                half ghostAmt = saturate((half)_GhostAmount);
+                finalColor.rgb *= lerp(1.0h, 0.74h, ghostAmt);
+
+                half fade = saturate((half)_CharacterOcclusion);
+                finalColor.a = baseAlpha * (1.0h - fade);
                 return finalColor;
             }
             ENDHLSL
@@ -220,6 +231,8 @@ Shader "Custom/SpriteUV4Point"
                 float  _DarknessFactor;
                 float  _AmbientLight;
                 float  _AdditionalLightEnabled;
+                float  _GhostAmount;
+                float  _CharacterOcclusion;
                 float  _Cutoff;
                 float4 _UV00;
                 float4 _UV10;
