@@ -5425,6 +5425,7 @@ GameObject:
   - component: {fileID: 209990004}
   - component: {fileID: 209990005}
   - component: {fileID: 209990003}
+  - component: {fileID: 209990006}
   m_Layer: 0
   m_Name: GameplayCinemachineCamera
   m_TagString: Untagged
@@ -5540,6 +5541,22 @@ MonoBehaviour:
     Time: 0
     Smoothing: 0
     IgnoreY: 0
+--- !u!114 &209990006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 209990001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce8b4ed7a12db45499eaff9d93682b48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CameraZoomController
+  _minOrthographicSize: 3
+  _maxOrthographicSize: 10
+  _scrollStepSize: 10
+  _zoomSmoothTime: 0.08
 --- !u!1 &210656666
 GameObject:
   m_ObjectHideFlags: 0
@@ -26643,6 +26660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1519f1585a69634483a7553acc7e0f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterState
+  _gridCellSize: 1
 --- !u!114 &1383865920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26656,6 +26674,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterVisibilityBroadcaster
   _tileMapManager: {fileID: 299715456}
+  _occlusionSettings:
+    CellSize: 1
+    OcclusionFullWithinDistance: 0.75
+    OcclusionNoneBeyondDistance: 8
+    ApplyEpsilon: 0.015
 --- !u!114 &1383865921
 MonoBehaviour:
   m_ObjectHideFlags: 0

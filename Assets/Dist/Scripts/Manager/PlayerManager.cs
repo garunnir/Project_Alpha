@@ -22,6 +22,7 @@ public class PlayerManager : MonoBehaviour
             _cameraFollowDriver = FindFirstObjectByType<CameraFollowTargetDriver>(FindObjectsInactive.Include);
         if (_cameraFollowDriver == null)
             _cameraFollowDriver = CreateCameraDriver();
+        EnsureCameraZoomController(_cameraFollowDriver);
         ChangeControllTarget(_playControllable);
     }
 
@@ -67,6 +68,16 @@ public class PlayerManager : MonoBehaviour
     private static CameraFollowTargetDriver CreateCameraDriver()
     {
         GameObject go = new GameObject("GameplayCinemachineCamera");
+        go.AddComponent<CameraZoomController>();
         return go.AddComponent<CameraFollowTargetDriver>();
+    }
+
+    private static void EnsureCameraZoomController(CameraFollowTargetDriver driver)
+    {
+        if (driver == null)
+            return;
+
+        if (driver.GetComponent<CameraZoomController>() == null)
+            driver.gameObject.AddComponent<CameraZoomController>();
     }
 }
