@@ -27,7 +27,7 @@ public class TileMapController : MonoBehaviour
     }
     public void RemoveTile(TileData tileData)
     {
-        ApplyTileMutation(tileData);
+        _model.RemoveTile(tileData);
     }
     public void AddAndFlush(TileData tileData)
     {

@@ -12,6 +12,7 @@ namespace IsoTilemap
         private readonly TileObjFactory _tileFactory;
         private readonly float _cellSize;
         private readonly int _chunkSize;
+        private readonly bool _ownsChunkIndex;
 
         private readonly Dictionary<Guid, TileView> _tileViews = new();
         private readonly HashSet<Vector2Int> _loadedChunks = new();
@@ -20,16 +21,26 @@ namespace IsoTilemap
         private readonly List<TileData> _gatherBuffer = new();
         private readonly HashSet<Guid> _unloadGuidSet = new();
         private readonly List<Vector2Int> _chunkIteration = new();
+        private readonly HashSet<Guid> _orphanCheckIds = new();
+        private readonly List<Guid> _pruneGuids = new();
 
         private TileMapChunkIndex _chunkIndex;
         private IMapModelReadOnly _boundRuntime;
 
-        public TileMapStreamingVisualizer(TileObjFactory tileFactory, float cellSize, int chunkSize = 16)
+        public TileMapStreamingVisualizer(
+            TileObjFactory tileFactory,
+            float cellSize,
+            int chunkSize = 16,
+            TileMapChunkIndex sharedChunkIndex = null)
         {
             _tileFactory = tileFactory;
             _cellSize = Mathf.Max(1e-4f, cellSize);
             _chunkSize = Mathf.Max(1, chunkSize);
+            _chunkIndex = sharedChunkIndex;
+            _ownsChunkIndex = sharedChunkIndex == null;
         }
+
+        public TileMapChunkIndex ChunkIndex => _chunkIndex;
 
         public IReadOnlyCollection<Vector2Int> LoadedChunks => _loadedChunks;
 
@@ -39,7 +50,9 @@ namespace IsoTilemap
             _loadedChunks.Clear();
             _tileChunkRefs.Clear();
 
-            _chunkIndex = new TileMapChunkIndex();
+            if (_chunkIndex == null)
+                _chunkIndex = new TileMapChunkIndex();
+
             _chunkIndex.Build(model, _chunkSize);
         }
 
@@ -49,6 +62,8 @@ namespace IsoTilemap
             {
                 _boundRuntime.OnRuntimeDataChanged -= RefreshCell;
                 _boundRuntime.OnRuntimeBatchChanged -= RefreshCells;
+                _boundRuntime.OnRuntimeTileAdded -= OnRuntimeTileAdded;
+                _boundRuntime.OnRuntimeTileRemoved -= OnRuntimeTileRemoved;
             }
 
             _boundRuntime = runtime;
@@ -57,6 +72,8 @@ namespace IsoTilemap
             {
                 _boundRuntime.OnRuntimeDataChanged += RefreshCell;
                 _boundRuntime.OnRuntimeBatchChanged += RefreshCells;
+                _boundRuntime.OnRuntimeTileAdded += OnRuntimeTileAdded;
+                _boundRuntime.OnRuntimeTileRemoved += OnRuntimeTileRemoved;
             }
         }
 
@@ -86,6 +103,14 @@ namespace IsoTilemap
             if (!IsCellInLoadedChunk(cellPos))
                 return;
 
+            if (_boundRuntime != null)
+            {
+                _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
+                PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
+                RenderTiles(_gatherBuffer);
+                return;
+            }
+
             RenderTiles(tiles);
         }
 
@@ -95,12 +120,28 @@ namespace IsoTilemap
             {
                 _boundRuntime.OnRuntimeDataChanged -= RefreshCell;
                 _boundRuntime.OnRuntimeBatchChanged -= RefreshCells;
+                _boundRuntime.OnRuntimeTileAdded -= OnRuntimeTileAdded;
+                _boundRuntime.OnRuntimeTileRemoved -= OnRuntimeTileRemoved;
                 _boundRuntime = null;
             }
 
             ClearAllTiles();
             _loadedChunks.Clear();
             _tileChunkRefs.Clear();
+
+            if (_ownsChunkIndex)
+                _chunkIndex = null;
+        }
+
+        private void OnRuntimeTileAdded(TileData tileData)
+        {
+            _chunkIndex?.RegisterTile(tileData, _chunkSize);
+        }
+
+        private void OnRuntimeTileRemoved(TileData tileData)
+        {
+            _chunkIndex?.UnregisterTile(tileData, _chunkSize);
+            DespawnViewCompletely(tileData.tileDefId);
         }
 
         private void RefreshCells(IReadOnlyCollection<Vector3Int> changedCells)
@@ -113,6 +154,8 @@ namespace IsoTilemap
                 _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
                 if (_gatherBuffer.Count > 0)
                     RefreshCell(cellPos, _gatherBuffer);
+                else if (IsCellInLoadedChunk(cellPos))
+                    PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
             }
         }
 
@@ -213,6 +256,43 @@ namespace IsoTilemap
             }
         }
 
+        private void PruneOrphanViewsAtCell(Vector3Int cell, List<TileData> currentTiles)
+        {
+            _orphanCheckIds.Clear();
+            for (int i = 0; i < currentTiles.Count; i++)
+                _orphanCheckIds.Add(currentTiles[i].tileDefId);
+
+            _pruneGuids.Clear();
+            foreach (var kv in _tileViews)
+            {
+                Guid id = kv.Key;
+                if (_orphanCheckIds.Contains(id))
+                    continue;
+
+                if (_boundRuntime == null || !_boundRuntime.TryGetTileById(id, out TileData tileData))
+                {
+                    _pruneGuids.Add(id);
+                    continue;
+                }
+
+                if (GetRepresentativeCell(tileData) == cell)
+                    _pruneGuids.Add(id);
+            }
+
+            for (int i = 0; i < _pruneGuids.Count; i++)
+                DespawnViewCompletely(_pruneGuids[i]);
+        }
+
+        private void DespawnViewCompletely(Guid tileId)
+        {
+            _tileChunkRefs.Remove(tileId);
+            if (!_tileViews.TryGetValue(tileId, out TileView view))
+                return;
+
+            _tileFactory.DespawnTile(view);
+            _tileViews.Remove(tileId);
+        }
+
         private bool IsCellInLoadedChunk(Vector3Int cell) =>
             _loadedChunks.Contains(TileChunkCoord.FromCell(cell, _chunkSize));
 
@@ -244,6 +324,5 @@ namespace IsoTilemap
             _tileViews.Clear();
             _tileChunkRefs.Clear();
         }
-
     }
 }

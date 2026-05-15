@@ -8,6 +8,8 @@ namespace IsoTilemap
     {
         public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
         public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
+        public event Action<TileData> OnRuntimeTileAdded;
+        public event Action<TileData> OnRuntimeTileRemoved;
 
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
@@ -75,12 +77,67 @@ namespace IsoTilemap
             InvalidateOcclusionPlayerTracking();
         }
 
+        public void RemoveTile(TileData tileData)
+        {
+            var changedCells = new HashSet<Vector3Int>();
+            bool removed = false;
+
+            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
+            {
+                if (_edgeBinder.TryRemove(tileData.tileDefId, out var removedTile))
+                {
+                    removed = true;
+                    tileData = removedTile;
+                    var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                    changedCells.Add(key.Anchor);
+                    changedCells.Add(key.NeighborCell());
+                }
+            }
+            else
+            {
+                Vector3Int pos = tileData.identity.GridPos;
+                if (tiles.TryGetValue(pos, out var list))
+                {
+                    for (int i = list.Count - 1; i >= 0; i--)
+                    {
+                        if (list[i].tileDefId != tileData.tileDefId)
+                            continue;
+
+                        tileData = list[i];
+                        list.RemoveAt(i);
+                        removed = true;
+                        changedCells.Add(pos);
+                        break;
+                    }
+
+                    if (list.Count == 0)
+                        tiles.Remove(pos);
+                }
+            }
+
+            if (!removed)
+                return;
+
+            _isDirty = true;
+            InvalidateOcclusionPlayerTracking();
+            OnRuntimeTileRemoved?.Invoke(tileData);
+
+            foreach (var cell in changedCells)
+                NotifyCell(cell);
+        }
+
+        public bool TryGetTileById(Guid tileId, out TileData tileData) => TryFindTileById(tileId, out tileData);
+
         private void SetEdgeTile(TileData tileData)
         {
+            var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+            if (_edgeBinder.TryGetTile(key, out var previous))
+                OnRuntimeTileRemoved?.Invoke(previous);
+
             _edgeBinder.Register(tileData);
             _isDirty = true;
+            OnRuntimeTileAdded?.Invoke(tileData);
 
-            var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
             NotifyCell(key.Anchor);
             NotifyCell(key.NeighborCell());
         }
@@ -88,12 +145,29 @@ namespace IsoTilemap
         private void SetCellTile(TileData tileData)
         {
             Vector3Int pos = tileData.identity.GridPos;
-            if (!tiles.ContainsKey(pos))
-                tiles[pos] = new List<TileData>();
+            if (!tiles.TryGetValue(pos, out var list))
+            {
+                tiles[pos] = new List<TileData> { tileData };
+                _isDirty = true;
+                OnRuntimeTileAdded?.Invoke(tileData);
+                NotifyCell(pos);
+                return;
+            }
 
-            tiles[pos].Add(tileData);
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].tileDefId != tileData.tileDefId)
+                    continue;
+
+                list[i] = tileData;
+                _isDirty = true;
+                NotifyCell(pos);
+                return;
+            }
+
+            list.Add(tileData);
             _isDirty = true;
-
+            OnRuntimeTileAdded?.Invoke(tileData);
             NotifyCell(pos);
         }
 

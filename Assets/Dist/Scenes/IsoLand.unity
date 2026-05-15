@@ -7461,8 +7461,9 @@ MonoBehaviour:
   _gridCellSize: 1
   _useStreaming: 1
   _chunkSize: 16
-  _playerChunkRadius: 2
-  _cameraChunkMargin: 2
+  _playerChunkRadius: 0
+  _cameraChunkMargin: 0
+  _unloadHysteresisSeconds: 0.35
   _gameCamera: {fileID: 210656668}
   _cinemachineCamera: {fileID: 209990004}
   _chunkStreamer: {fileID: 299715457}

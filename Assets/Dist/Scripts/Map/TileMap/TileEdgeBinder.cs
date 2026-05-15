@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,6 +30,24 @@ namespace IsoTilemap
 
             _edges[key] = tile;
             AddIncident(key);
+        }
+
+        public bool TryGetTile(in WallEdgeKey key, out TileData tile) => _edges.TryGetValue(key, out tile);
+
+        public bool TryRemove(Guid tileId, out TileData removed)
+        {
+            foreach (var kv in _edges)
+            {
+                if (kv.Value.tileDefId != tileId)
+                    continue;
+
+                removed = kv.Value;
+                RemoveInternal(kv.Key);
+                return true;
+            }
+
+            removed = default;
+            return false;
         }
 
         public bool TryReplaceTileData(in TileData tile)

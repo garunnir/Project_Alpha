@@ -45,16 +45,20 @@ namespace IsoTilemap
     {
         public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
         public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
+        event Action<TileData> OnRuntimeTileAdded;
+        event Action<TileData> OnRuntimeTileRemoved;
         ITileEdgeBinderReadOnly EdgeBinder { get; }
         /// <summary>셀에 놓인 타일 + 면 벽 바인더가 연결한 인접 EdgeWall을 합친 목록(렌더 갱신용).</summary>
         void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer);
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos);
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
+        bool TryGetTileById(Guid tileId, out TileData tileData);
     }
     public interface IMapModel : IMapModelReadOnly
     {
         void SetTile(TileData tileDatas);
+        void RemoveTile(TileData tileData);
         void ApplyTiles(IReadOnlyList<TileData> tiles);
         void HideOcclusionTileWall(Vector3Int playerCellPos);
 
