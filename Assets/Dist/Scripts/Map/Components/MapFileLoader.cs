@@ -10,6 +10,7 @@ public class MapFileLoader : MonoBehaviour
     [SerializeField] private bool usePersistentPath = false;
 
     public IMapModel Model { get; private set; }
+    public MapSaveJsonDto LastLoadedDto { get; private set; }
 
     private IMapSerializer _serializer;
     private IMapModelBuilder _modelBuilder;
@@ -35,10 +36,12 @@ public class MapFileLoader : MonoBehaviour
     public void Load(string path)
     {
         Debug.Log($"[MapFileLoader] 로드 시도 경로: {path}");
-        Model = new MapLoadPipeline(
+        var result = new MapLoadPipeline(
             serializer: _serializer,
             modelBuilder: _modelBuilder,
-            mapper: _mapper).LoadModel(path);
+            mapper: _mapper).Load(path);
+        Model = result.Model;
+        LastLoadedDto = result.Dto;
     }
 
     private string GetFullPath()

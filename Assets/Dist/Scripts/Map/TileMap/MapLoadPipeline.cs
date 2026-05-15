@@ -1,5 +1,17 @@
 namespace IsoTilemap
 {
+    public readonly struct MapLoadResult
+    {
+        public MapSaveJsonDto Dto { get; }
+        public IMapModel Model { get; }
+
+        public MapLoadResult(MapSaveJsonDto dto, IMapModel model)
+        {
+            Dto = dto;
+            Model = model;
+        }
+    }
+
     public sealed class MapLoadPipeline
     {
         private readonly IMapSerializer _serializer;
@@ -15,7 +27,7 @@ namespace IsoTilemap
             _mapper = mapper;
         }
 
-        public IMapModel LoadModel(string path)
+        public MapLoadResult Load(string path)
         {
             MapSaveJsonDto dto = _serializer.Read(path);
             if (dto == null)
@@ -25,7 +37,9 @@ namespace IsoTilemap
             if (prepared == null)
                 throw new System.InvalidOperationException($"[MapLoadPipeline] DTO 변환 실패: {path}");
 
-            return _modelBuilder.Build(prepared);
+            return new MapLoadResult(dto, _modelBuilder.Build(prepared));
         }
+
+        public IMapModel LoadModel(string path) => Load(path).Model;
     }
 }

@@ -7417,6 +7417,7 @@ GameObject:
   m_Component:
   - component: {fileID: 299715453}
   - component: {fileID: 299715456}
+  - component: {fileID: 299715457}
   m_Layer: 0
   m_Name: MapManager
   m_TagString: Untagged
@@ -7456,6 +7457,35 @@ MonoBehaviour:
   _controller: {fileID: 636504848}
   _tileContainer: {fileID: 1451314326}
   _prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
+  _characterState: {fileID: 1383865919}
+  _gridCellSize: 1
+  _useStreaming: 1
+  _chunkSize: 16
+  _playerChunkRadius: 2
+  _cameraChunkMargin: 2
+  _gameCamera: {fileID: 210656668}
+  _cinemachineCamera: {fileID: 209990004}
+  _chunkStreamer: {fileID: 299715457}
+  _enableTilePooling: 1
+  _maxPooledInstances: 2000
+  _maxPoolMemoryMb: 20000
+  _estimatedBytesPerTile: 65536
+  _poolReserveRatio: 0.15
+  _minPoolPerPrefab: 1
+  _maxPoolPerPrefab: 256
+  _streamingPeakOverride: 0
+--- !u!114 &299715457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e1200b77cd3a54428d34273817ab87c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileMapChunkStreamer
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
@@ -7960,7 +7990,7 @@ Transform:
   m_GameObject: {fileID: 308897437}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: -0.4}
+  m_LocalPosition: {x: 0, y: 0.2, z: -0.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

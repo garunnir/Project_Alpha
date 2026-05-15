@@ -43,7 +43,7 @@ namespace IsoTilemap
             foreach (var view in _tileViews.Values)
             {
                 if (view != null)
-                    GameObject.Destroy(view.gameObject);
+                    _tileFactory.DespawnTile(view);
             }
 
             _tileViews.Clear();

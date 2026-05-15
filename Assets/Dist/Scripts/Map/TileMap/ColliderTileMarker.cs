@@ -5,9 +5,14 @@ public class ColliderTileMarker : MonoBehaviour
     /// <summary>베이킹 후 이 마커가 속한 직사각형 그룹 ID (-1 = 미할당)</summary>
     [HideInInspector] public int groupId = -1;
 
-    void Awake()
+    void OnEnable()
     {
         ChunkColliderBaker.Instance?.Register(this);
+    }
+
+    void OnDisable()
+    {
+        ChunkColliderBaker.Instance?.Unregister(this);
     }
 
     void OnDestroy()

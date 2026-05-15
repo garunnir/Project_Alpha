@@ -54,7 +54,7 @@ namespace IsoTilemap
         [Header("Blocked Trace")]
         [Tooltip("타일이 숨김 상태일 때 표시할 흔적 오브젝트(데칼/메시 등).")]
         [SerializeField] private GameObject _blockedTraceObject;
-        private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On;
+        private ShadowCastingMode _defaultShadowCastingMode = ShadowCastingMode.On; 
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
         private float _characterOcclusion;
@@ -293,6 +293,16 @@ namespace IsoTilemap
             if (_blockedTraceObject == null) return;
             if (_blockedTraceObject.activeSelf == visible) return;
             _blockedTraceObject.SetActive(visible);
+        }
+
+        /// <summary>풀 반납 전 시각·오클루전·선택 상태 초기화. Awake는 재호출되지 않음.</summary>
+        internal void ResetForPool()
+        {
+            CacheControllers();
+            _characterOcclusion = 0f;
+            ForceApplyBaseState(TileBaseVisualState.Visible);
+            ForceApplySelectedOverlay(false);
+            SetBlockedTraceVisible(false);
         }
     }
 }
