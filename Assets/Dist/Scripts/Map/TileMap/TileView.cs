@@ -154,8 +154,10 @@ namespace IsoTilemap
             };
         }
 
-        internal void UpdateTile(TileData tileData)
+        internal void UpdateTile(TileData tileData, float cellSize)
         {
+            ApplyWorldPose(tileData, cellSize);
+
             tileType = (TileType)tileData.identity.tileType;
             prefabId = tileData.identity.PrefabId;
             gridPos = tileData.identity.GridPos;
@@ -177,6 +179,23 @@ namespace IsoTilemap
             ApplyCharacterOcclusionPresentation(resolved);
 
             ApplySelectedOverlay(tileData.state.isSelected);
+        }
+
+        private void ApplyWorldPose(in TileData tileData, float cellSize)
+        {
+            cellSize = Mathf.Max(1e-4f, cellSize);
+            var type = (TileType)tileData.identity.tileType;
+            if (type == TileType.EdgeWall)
+            {
+                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                WallEdgeKey.GetWorldPose(key, cellSize, out Vector3 pos, out Quaternion rot);
+                transform.SetPositionAndRotation(pos, rot);
+                return;
+            }
+
+            transform.SetPositionAndRotation(
+                TileHelper.ConvertGridToWorldPos(tileData.identity.GridPos, cellSize),
+                Quaternion.identity);
         }
 
         // 기본축 상태 결정: 우선순위 Hidden > Ghosted > Visible.

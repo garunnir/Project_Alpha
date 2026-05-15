@@ -14,41 +14,18 @@ namespace IsoTilemap
             _targetTransform = rootTransform;
         }
 
-        public Dictionary<Guid, TileView> SpawnTiles(IEnumerable<TileData> tiles)
+        public Dictionary<Guid, TileView> SpawnTiles(IEnumerable<TileData> tiles, float cellSize = 1f)
         {
             var spawnedTiles = new Dictionary<Guid, TileView>();
             foreach (var tile in tiles)
             {
-                var spawnedTile = SpawnTile(tile);
+                var spawnedTile = SpawnTile(tile, cellSize);
                 if (spawnedTile != null)
                 {
                     spawnedTiles.Add(tile.tileDefId, spawnedTile);
                 }
             }
             return spawnedTiles;
-        }
-
-        private TileView InitializeTileInfo(GameObject tileGo, TileData tileData)
-        {
-
-            var info = tileGo.GetComponent<TileView>();
-            if (info == null)
-            {
-                info = tileGo.AddComponent<TileView>();
-            }
-
-            info.gridPos = tileData.identity.GridPos;
-            info.size = tileData.identity.sizeUnit;
-            info.prefabId = tileData.identity.PrefabId;
-            info.tileType = (TileView.TileType)tileData.identity.tileType;
-            if (info.tileType == TileView.TileType.EdgeWall)
-            {
-                byte ef = tileData.identity.edgeFace;
-                info.wallEdgeFace = ef == TileIdentity.EdgeFaceNone
-                    ? (byte)0
-                    : (byte)Mathf.Clamp(ef, 0, 1);
-            }
-            return info;
         }
 
         public TileView SpawnTile(TileData tileData, float cellSize = 1f)
@@ -61,21 +38,12 @@ namespace IsoTilemap
                 return null;
             }
 
-            Vector3 worldPos;
-            Quaternion rotation = Quaternion.identity;
-            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
-            {
-                var wk = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
-                WallEdgeKey.GetWorldPose(wk, cellSize, out worldPos, out rotation);
-            }
-            else
-            {
-                worldPos = TileHelper.ConvertGridToWorldPos(tileData.identity.GridPos, cellSize);
-            }
+            var tileGo = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity, _targetTransform);
+            TileView view = tileGo.GetComponent<TileView>();
+            if (view == null)
+                view = tileGo.AddComponent<TileView>();
 
-            var tileGo = GameObject.Instantiate(prefab, worldPos, rotation, _targetTransform);
-            var view = InitializeTileInfo(tileGo, tileData);
-            view.UpdateTile(tileData);
+            view.UpdateTile(tileData, cellSize);
             return view;
         }
     }

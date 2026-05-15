@@ -15,11 +15,13 @@ namespace IsoTilemap
         private Dictionary<Guid, TileView> _tileViews = new Dictionary<Guid, TileView>();
 
         private readonly TileObjFactory _tileFactory;
+        private readonly float _cellSize;
         private IMapModelReadOnly _boundRuntime;
 
-        public TileMapVisualizer(TileObjFactory tileFactory)
+        public TileMapVisualizer(TileObjFactory tileFactory, float cellSize = 1f)
         {
             _tileFactory = tileFactory;
+            _cellSize = Mathf.Max(1e-4f, cellSize);
         }
 
 
@@ -100,7 +102,7 @@ namespace IsoTilemap
             }
 
             ClearTiles();
-            _tileViews = _tileFactory.SpawnTiles(tiles);
+            _tileViews = _tileFactory.SpawnTiles(tiles, _cellSize);
         }
 
         private void RenderCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
@@ -109,10 +111,10 @@ namespace IsoTilemap
             foreach (var tileData in tiles)
             {
                 if (TryGetTile(tileData.tileDefId, out TileView tileView))
-                    tileView.UpdateTile(tileData);
+                    tileView.UpdateTile(tileData, _cellSize);
                 else
                 {
-                    var newView = _tileFactory.SpawnTile(tileData);
+                    var newView = _tileFactory.SpawnTile(tileData, _cellSize);
                     if (newView != null)
                         _tileViews[tileData.tileDefId] = newView;
                 }

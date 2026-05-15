@@ -17,6 +17,11 @@ public class TileMapManager : MonoBehaviour
     [Header("Prefab DB")]
     [SerializeField] private TilePrefabDB _prefabDB;
 
+    [Header("Grid")]
+    [Tooltip("비어 있으면 아래 Grid Cell Size를 사용합니다.")]
+    [SerializeField] private CharacterState _characterState;
+    [SerializeField] private float _gridCellSize = 1f;
+
     public IMapModel Model { get; private set; }
     public TilePrefabDB PrefabDB => _prefabDB;
 
@@ -28,11 +33,14 @@ public class TileMapManager : MonoBehaviour
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
         var factory = new TileObjFactory(tileContainer, _prefabDB);
-        var viewBuilder = new TileMapVisualizer(factory);
+        var viewBuilder = new TileMapVisualizer(factory, ResolveGridCellSize());
 
         _controller.Init(Model, viewBuilder);
         _saver.Init(Model);
     }
+
+    private float ResolveGridCellSize() =>
+        _characterState != null ? _characterState.GridCellSize : Mathf.Max(1e-4f, _gridCellSize);
 
     public void Load() => _loader.Load();
     public void Save() => _saver.Save();
@@ -58,7 +66,7 @@ public class TileMapManager : MonoBehaviour
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
         var factory = new TileObjFactory(tileContainer, _prefabDB);
-        var viewBuilder = new TileMapVisualizer(factory);
+        var viewBuilder = new TileMapVisualizer(factory, ResolveGridCellSize());
         _controller.Init(Model, viewBuilder);
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");
