@@ -34,9 +34,7 @@ public class CameraZoomController : MonoBehaviour
             return;
 
         float scrollY = InputManager.Instance.Actions.Player.Zoom.ReadValue<Vector2>().y;
-        if (Mathf.Abs(scrollY) < 1e-4f)
-            return;
-
+    
         _targetOrthographicSize -= scrollY * _scrollStepSize / 120f;
         ClampTarget();
 
