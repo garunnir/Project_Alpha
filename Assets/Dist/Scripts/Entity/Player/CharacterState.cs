@@ -8,7 +8,10 @@ public class CharacterState : MonoBehaviour
     [SerializeField] private float _gridCellSize = 1f;
 
     public Vector3 SightDir { get; private set; } = Vector3.zero;
+    /// <summary>조준 레이의 끝(시야) 월드 위치.</summary>
     public Vector3 AimWorldPoint { get; private set; } = Vector3.zero;
+    /// <summary>플레이어 몸의 월드 위치. 조준이 아닐 때 오클루전 등의 기준점.</summary>
+    public Vector3 BodyWorldPoint { get; private set; } = Vector3.zero;
     public Vector3 MoveDir { get; private set; } = Vector3.zero;
     public Vector3Int GridPos { get; private set; } = Vector3Int.zero;
 
@@ -52,6 +55,8 @@ public class CharacterState : MonoBehaviour
 
     internal void UpdateGridPos(Vector3 worldPos)
     {
+        BodyWorldPoint = worldPos;
+
         var gridPos = TileHelper.ConvertWorldToGrid(worldPos, GridCellSize);
         if (GridPos != gridPos)
         {

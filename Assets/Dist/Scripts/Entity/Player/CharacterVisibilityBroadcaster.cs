@@ -22,7 +22,8 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     {
         if (_characterState != null)
         {
-            _characterState.WorldPoseChanged += BroadcastOcclusionFromWorldPose;
+            _characterState.WorldPoseChanged += OnWorldPoseChanged;
+            _characterState.AimWorldPointChanged += OnAimWorldPointChanged;
             SyncSettingsCellFromCharacterIfNeeded();
         }
     }
@@ -30,7 +31,10 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     private void OnDisable()
     {
         if (_characterState != null)
-            _characterState.WorldPoseChanged -= BroadcastOcclusionFromWorldPose;
+        {
+            _characterState.WorldPoseChanged -= OnWorldPoseChanged;
+            _characterState.AimWorldPointChanged -= OnAimWorldPointChanged;
+        }
     }
 
 #if UNITY_EDITOR
@@ -52,9 +56,15 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         _occlusionSettings = settings;
     }
 
-    /// <summary>월드 포즈만 넘김 → 모델이 그리드/BFS 및 거리 매핑.</summary>
-    private void BroadcastOcclusionFromWorldPose(Vector3 worldPosition)
+    private void OnWorldPoseChanged(Vector3 _) => BroadcastOcclusion();
+
+    private void OnAimWorldPointChanged(Vector3 _) => BroadcastOcclusion();
+
+    /// <summary>조준 중에는 <see cref="CharacterState.AimWorldPoint"/>, 아니면 <see cref="CharacterState.BodyWorldPoint"/>로 BFS·거리 오클루전 갱신.</summary>
+    private void BroadcastOcclusion()
     {
+        if (_characterState == null) return;
+
         SyncSettingsCellFromCharacterIfNeeded();
 
         OcclusionProximitySettings settings = _occlusionSettings;
@@ -63,7 +73,11 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         NormalizeSettings(ref settings);
         _occlusionSettings = settings;
 
-        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(worldPosition, settings);
+        Vector3 occlusionWorld = _characterState.IsAiming
+            ? _characterState.AimWorldPoint
+            : _characterState.BodyWorldPoint;
+
+        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(occlusionWorld, settings);
     }
 
     private static void NormalizeSettings(ref OcclusionProximitySettings s)
