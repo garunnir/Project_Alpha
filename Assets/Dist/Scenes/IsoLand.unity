@@ -7459,13 +7459,6 @@ MonoBehaviour:
   _prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
   _characterState: {fileID: 1383865919}
   _gridCellSize: 1
-  _useStreaming: 1
-  _chunkSize: 16
-  _playerChunkRadius: 0
-  _cameraChunkMargin: 0
-  _unloadHysteresisSeconds: 0.35
-  _gameCamera: {fileID: 210656668}
-  _cinemachineCamera: {fileID: 209990004}
   _chunkStreamer: {fileID: 299715457}
   _enableTilePooling: 1
   _maxPooledInstances: 2000
@@ -7487,6 +7480,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1200b77cd3a54428d34273817ab87c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TileMapChunkStreamer
+  _chunkSize: 16
+  _playerChunkRadius: 0
+  _cameraChunkMargin: 0
+  _unloadHysteresisSeconds: 0.35
+  _player: {fileID: 1383865919}
+  _gameCamera: {fileID: 210656668}
+  _cinemachineCamera: {fileID: 209990004}
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
