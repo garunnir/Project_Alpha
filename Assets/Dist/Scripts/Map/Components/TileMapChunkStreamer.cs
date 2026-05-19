@@ -87,7 +87,7 @@ public readonly struct TileChunkStreamSettings
 public class TileMapChunkStreamer : MonoBehaviour
 
 {
-
+    [Header("청크단위로 타일을 스트리밍 하는 컴포넌트입니다.")]
     private TileMapStreamingVisualizer _visualizer;
 
     private TileChunkStreamSettings _settings;

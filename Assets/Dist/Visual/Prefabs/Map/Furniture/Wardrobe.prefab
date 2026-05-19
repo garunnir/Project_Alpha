@@ -63,6 +63,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
+        type: 3}
+      propertyPath: tileType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
+        type: 3}
+      propertyPath: gridPos.x
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
+        type: 3}
+      propertyPath: gridPos.z
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 4365245638751190066, guid: 860884360b6c90e408b0da8f700e74cf,
         type: 3}
       propertyPath: m_LocalPosition.x

@@ -230,11 +230,11 @@ namespace IsoTilemap
                             floorChecked.Add(nx);
                         }
                     }
-                    else
-                    {
-                        if (Config.DebugMode.FloorAlgorithm)
-                            Debug.Log("빈셀발견 확장" + nx);
-                    }
+                    // else
+                    // {
+                    //     if (Config.DebugMode.FloorAlgorithm)
+                    //         Debug.Log("빈셀발견 확장" + nx);
+                    // }
                 }
             }
 
