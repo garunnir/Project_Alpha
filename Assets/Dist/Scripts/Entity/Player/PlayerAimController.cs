@@ -1,15 +1,17 @@
 // ============================================================
-// PlayerLookController — 마우스 기준 방향으로 SphereCast해 막힌 지점·시야를 CharacterState에 전달
+// PlayerAimController — 마우스 기준 조준 SphereCast로 시야·상호작용 방향을 CharacterState에 전달
 // ============================================================
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterState))]
-public class PlayerLookController : MonoBehaviour
+public class PlayerAimController : MonoBehaviour
 {
     [SerializeField] private Camera _refCam;
     [SerializeField] private float _sphereRadius = 0.10f;
     [SerializeField] private float _castOriginYOffset = 0.35f;
+    [Tooltip("마우스 거리와 무관하게 조준·상호작용 SphereCast가 닿는 최대 거리.")]
+    [SerializeField] private float _maxAimDistance = 15f;
     [Tooltip("켜면 조준 월드점 Y를 플레이어 transform.position.y로 고정(오클루전·몸 기준 거리와 맞춤).")]
     [SerializeField] private bool _flattenAimYToPlayerHeight = true;
     [Tooltip("막힘 검사 레이어(플레이어 본체 레이어는 제외하는 것을 권장)")]
@@ -17,6 +19,10 @@ public class PlayerLookController : MonoBehaviour
 
     private CharacterState _characterState;
     private bool _isAiming;
+
+    public float CastOriginYOffset => _castOriginYOffset;
+    public float SphereRadius => _sphereRadius;
+    public float MaxAimDistance => _maxAimDistance;
 
     void Awake()
     {
@@ -68,9 +74,9 @@ public class PlayerLookController : MonoBehaviour
 
         Vector3 toTarget = flatTarget - origin;
         toTarget.y = 0f;
-        float maxDist = toTarget.magnitude;
+        float maxDist = Mathf.Min(toTarget.magnitude, _maxAimDistance);
         if (maxDist < 1e-4f) return;
-        Vector3 dir = toTarget / maxDist;
+        Vector3 dir = toTarget.normalized;
 
         RaycastHit hit = default;
         bool hasHit = Physics.SphereCast(origin, _sphereRadius, dir, out hit, maxDist,
@@ -87,7 +93,7 @@ public class PlayerLookController : MonoBehaviour
         Vector3 sightFlat = aimPoint - origin;
         sightFlat.y = 0f;
         if (sightFlat.sqrMagnitude < 1e-4f) return;
-        _characterState.SetAimDir(sightFlat.normalized, aimPoint);
+        _characterState.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
 
 
     }

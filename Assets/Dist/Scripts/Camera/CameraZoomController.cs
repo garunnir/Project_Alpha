@@ -18,6 +18,12 @@ public class CameraZoomController : MonoBehaviour
     private float _targetOrthographicSize;
     private float _zoomVelocity;
 
+    public float MinOrthographicSize =>
+        Mathf.Min(_minOrthographicSize, _maxOrthographicSize);
+
+    public float MaxOrthographicSize =>
+        Mathf.Max(_minOrthographicSize, _maxOrthographicSize);
+
     private void Awake()
     {
         _cinemachineCamera = GetComponent<CinemachineCamera>();

@@ -24,7 +24,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         {
             _characterState.WorldPoseChanged += OnWorldPoseChanged;
             _characterState.AimWorldPointChanged += OnAimWorldPointChanged;
-            SyncSettingsCellFromCharacterIfNeeded();
+            SyncSettingsCellFromMapGrid();
         }
     }
 
@@ -43,16 +43,16 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         if (_characterState == null)
             _characterState = GetComponent<CharacterState>();
 
-        SyncSettingsCellFromCharacterIfNeeded();
+        SyncSettingsCellFromMapGrid();
     }
 #endif
 
-    private void SyncSettingsCellFromCharacterIfNeeded()
+    private void SyncSettingsCellFromMapGrid()
     {
-        if (_characterState == null) return;
+        if (_tileMapManager?.WorldGrid == null) return;
 
         OcclusionProximitySettings settings = _occlusionSettings;
-        settings.CellSize = _characterState.GridCellSize;
+        settings.CellSize = _tileMapManager.WorldGrid.CellSize;
         _occlusionSettings = settings;
     }
 
@@ -65,11 +65,13 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     {
         if (_characterState == null) return;
 
-        SyncSettingsCellFromCharacterIfNeeded();
+        SyncSettingsCellFromMapGrid();
 
         OcclusionProximitySettings settings = _occlusionSettings;
 
-        settings.CellSize = Mathf.Max(1e-4f, _characterState.GridCellSize);
+        if (_tileMapManager?.WorldGrid != null)
+            settings.CellSize = Mathf.Max(1e-4f, _tileMapManager.WorldGrid.CellSize);
+
         NormalizeSettings(ref settings);
         _occlusionSettings = settings;
 

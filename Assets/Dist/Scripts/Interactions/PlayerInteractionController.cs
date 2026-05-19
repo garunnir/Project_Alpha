@@ -1,98 +1,122 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+
 namespace Interactions
 {
     [RequireComponent(typeof(CharacterState))]
     [RequireComponent(typeof(DirectionalRaycaster))]
-public class PlayerInteractionController : MonoBehaviour
-{
-    private IInteractable _currentTarget;
-    private CharacterState _characterState;
-    private DirectionalRaycaster _raycaster;
-    private Collider _lastHitCollider;
-    private InputActions _interactAction;
-    private readonly Dictionary<Collider, IInteractable> _interactableCache = new();
-
-    private void Awake()
+    [RequireComponent(typeof(PlayerAimController))]
+    public class PlayerInteractionController : MonoBehaviour
     {
-        _characterState = GetComponent<CharacterState>();
-        _raycaster = GetComponent<DirectionalRaycaster>();
-    }
-    private void Start()
-    {
-        _interactAction = InputManager.Instance.Actions;
-        _interactAction.Player.Interaction.performed += OnInteract;
-    }
+        private IInteractable _currentTarget;
+        private CharacterState _characterState;
+        private DirectionalRaycaster _raycaster;
+        private PlayerAimController _aimController;
+        private Collider _lastHitCollider;
+        private InputActions _interactAction;
+        private readonly Dictionary<Collider, IInteractable> _interactableCache = new();
 
-    // 인풋 시스템에서 호출할 메서드
-    public void OnInteract(InputAction.CallbackContext context)
-    {
-        Debug.Log("OnInteract");
-        if (!context.performed) return;
-        if (_currentTarget == null) return;
-
-        var interactor = gameObject;
-        if (_currentTarget.CanInteract(interactor))
+        private void Awake()
         {
-            Debug.Log("Interact");
-            _currentTarget.Interact(interactor);
-        }
-    }
-
-    private void Update()
-    {
-        UpdateInteractionTarget();
-    }
-
-    private void UpdateInteractionTarget()
-    {
-        Vector3 lookDir = _characterState.SightDir;
-        if (!_raycaster.TryRaycast(transform.position, lookDir, out RaycastHit hit))
-        {
-            _lastHitCollider = null;
-            if (_currentTarget != null) ClearTarget();
-            return;
+            _characterState = GetComponent<CharacterState>();
+            _raycaster = GetComponent<DirectionalRaycaster>();
+            _aimController = GetComponent<PlayerAimController>();
         }
 
-        if (hit.collider == _lastHitCollider) return;
-        _lastHitCollider = hit.collider;
-
-        if (!_interactableCache.TryGetValue(hit.collider, out var interactable))
+        private void Start()
         {
-            interactable = hit.collider.GetComponentInParent<IInteractable>();
-            _interactableCache[hit.collider] = interactable; // null도 캐싱해서 반복 탐색 방지
+            _interactAction = InputManager.Instance.Actions;
+            _interactAction.Player.Interaction.performed += OnInteract;
         }
-        if (Config.DebugMode.PlayerInteraction) Debug.Log("Raycast hit: " + hit.collider.gameObject.name);
 
-        if (interactable != null)
+        private void OnDestroy()
         {
-            if (interactable != _currentTarget) ChangeTarget(interactable);
+            if (_interactAction != null)
+                _interactAction.Player.Interaction.performed -= OnInteract;
         }
-        else if (_currentTarget != null)
-        {
-            ClearTarget();
-        }
-    }
 
-    private void ChangeTarget(IInteractable newTarget)
-    {
-        if (_currentTarget != null)
+        public void OnInteract(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+            if (_currentTarget == null) return;
+
+            var interactor = gameObject;
+            if (_currentTarget.CanInteract(interactor))
+                _currentTarget.Interact(interactor);
+        }
+
+        private void LateUpdate()
+        {
+            UpdateInteractionTarget();
+        }
+
+        private void UpdateInteractionTarget()
+        {
+            if (!_characterState.HasInteractionFocus)
+            {
+                _lastHitCollider = null;
+                if (_currentTarget != null) ClearTarget();
+                return;
+            }
+
+            Vector3 origin = transform.position + Vector3.up * _aimController.CastOriginYOffset;
+            Vector3 direction = _characterState.InteractionDir;
+            float maxDistance = _characterState.InteractionReach;
+
+            if (!_raycaster.TrySphereCast(
+                    origin,
+                    direction,
+                    _aimController.SphereRadius,
+                    maxDistance,
+                    out RaycastHit hit))
+            {
+                _lastHitCollider = null;
+                if (_currentTarget != null) ClearTarget();
+                return;
+            }
+
+            if (hit.collider == _lastHitCollider) return;
+            _lastHitCollider = hit.collider;
+
+            if (!_interactableCache.TryGetValue(hit.collider, out var interactable))
+            {
+                interactable = hit.collider.GetComponentInParent<IInteractable>();
+                _interactableCache[hit.collider] = interactable;
+            }
+
+            if (Config.DebugMode.PlayerInteraction)
+                Debug.Log("Interaction SphereCast hit: " + hit.collider.gameObject.name);
+
+            if (interactable != null)
+            {
+                if (interactable != _currentTarget) ChangeTarget(interactable);
+            }
+            else if (_currentTarget != null)
+            {
+                ClearTarget();
+            }
+        }
+
+        private void ChangeTarget(IInteractable newTarget)
+        {
+            if (_currentTarget != null)
+                _currentTarget.OnUnfocus(gameObject);
+
+            _currentTarget = newTarget;
+            _currentTarget.OnFocus(gameObject);
+
+            if (Config.DebugMode.PlayerInteraction)
+                Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
+        }
+
+        private void ClearTarget()
         {
             _currentTarget.OnUnfocus(gameObject);
+            _currentTarget = null;
+
+            if (Config.DebugMode.PlayerInteraction)
+                Debug.Log("Unfocused");
         }
-
-        _currentTarget = newTarget;
-        _currentTarget.OnFocus(gameObject);
-        if(Config.DebugMode.PlayerInteraction) Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
     }
-
-    private void ClearTarget()
-    {
-        _currentTarget.OnUnfocus(gameObject);
-        _currentTarget = null;
-        if(Config.DebugMode.PlayerInteraction) Debug.Log("Unfocused");
-    }
-
-}
 }

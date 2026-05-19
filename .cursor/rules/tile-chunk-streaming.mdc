@@ -1,0 +1,25 @@
+---
+description: 타일 청크 스트리밍·언로드·sim 전제 (TileMapChunkStreamer 등)
+globs: Assets/Dist/Scripts/Map/**/*
+alwaysApply: false
+---
+
+# 청크 스트리밍 정책
+
+## desired 청크
+- **카메라-only**: 카메라 지면 footprint + `CameraChunkMargin`만 union
+- `IStreamFocus`, `PlayerStreamFocus`, `_playerChunkRadius`, `AppendPlayerChunks` **도입·재도입 금지** (명시적 요청 없이)
+
+## 역할 분리
+- **Unload (멀리)**: desired 밖 청크 despawn — mesh + collider 함께 제거
+- **Render (가까이)**: Unity frustum culling — 별도 TileRenderCuller 없음
+- **Model**: `IMapModel` 전체 메모리 유지 (저장, 오클루전 BFS)
+
+## sim 전제
+- 활성 sim 중 조종 대상은 로드 범위(footprint + margin + hysteresis) 안
+- sim 비활성(컷신, 대화, 조종 해제) 시 발밑 청크 언로드 OK
+- 재활성/텔레포트 시 로드 범위 확인 또는 `TileMapChunkStreamer.SyncNow()`
+
+## 관련 파일
+- `TileMapChunkStreamer`, `TileMapStreamingVisualizer`, `TileViewportBounds`
+- 풀 피크: `TilePoolStreamEstimate` — 카메라 청크 기준만

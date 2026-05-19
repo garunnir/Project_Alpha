@@ -10,7 +10,7 @@ namespace IsoTilemap
     public sealed class TileMapStreamingVisualizer : IMapViewBuilder, IDisposable
     {
         private readonly TileObjFactory _tileFactory;
-        private readonly float _cellSize;
+        private readonly IWorldGrid _worldGrid;
         private readonly int _chunkSize;
         private readonly bool _ownsChunkIndex;
 
@@ -29,16 +29,18 @@ namespace IsoTilemap
 
         public TileMapStreamingVisualizer(
             TileObjFactory tileFactory,
-            float cellSize,
+            IWorldGrid worldGrid,
             int chunkSize = 16,
             TileMapChunkIndex sharedChunkIndex = null)
         {
             _tileFactory = tileFactory;
-            _cellSize = Mathf.Max(1e-4f, cellSize);
+            _worldGrid = worldGrid;
             _chunkSize = Mathf.Max(1, chunkSize);
             _chunkIndex = sharedChunkIndex;
             _ownsChunkIndex = sharedChunkIndex == null;
         }
+
+        private float CellSize => _worldGrid != null ? _worldGrid.CellSize : 1f;
 
         public TileMapChunkIndex ChunkIndex => _chunkIndex;
 
@@ -211,7 +213,7 @@ namespace IsoTilemap
 
             if (!_tileViews.TryGetValue(id, out TileView view))
             {
-                view = _tileFactory.SpawnTile(tileData, _cellSize);
+                view = _tileFactory.SpawnTile(tileData, CellSize);
                 if (view == null)
                 {
                     refs.Remove(chunk);
@@ -224,7 +226,7 @@ namespace IsoTilemap
                 return;
             }
 
-            view.UpdateTile(tileData, _cellSize);
+            view.UpdateTile(tileData, CellSize);
         }
 
         private void ReleaseTileFromChunk(Guid tileId, Vector2Int chunk)
@@ -250,7 +252,7 @@ namespace IsoTilemap
             {
                 TileData tileData = tiles[i];
                 if (_tileViews.TryGetValue(tileData.tileDefId, out TileView tileView))
-                    tileView.UpdateTile(tileData, _cellSize);
+                    tileView.UpdateTile(tileData, CellSize);
                 else if (IsTileInLoadedChunk(tileData))
                     AcquireTileInChunk(tileData, TileChunkCoord.FromCell(GetRepresentativeCell(tileData), _chunkSize));
             }

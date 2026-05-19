@@ -39,6 +39,15 @@ The goal is to improve maintainability and scalability, minimizing the impact on
 | 파이프라인 구성요소(`IMapSerializer`, `IMapModelBuilder`)를 `new`로 직접 생성 | 현재 교체 요구 없음. 교체 필요 시 ScriptableObject 전략 패턴으로 전환 예정 (인스펙터에서 구현체 드래그 교체 가능) | 2026-03-09 |
 | 청크 스트리밍 + 풀링 + Phase 4 | `TileMapModel` 전체 유지, `TileView`만 desired 청크; 풀은 streaming 시 Manager 주입; 히스테리시스·증분 인덱스·`RemoveTile`로 런타임 편집 | 2026-05-15 |
 | 오클루전 핀 없음 | BFS는 `TileData`만; 카메라 밖 청크 강제 로드 과설계 제거 | 2026-05 |
+| 카메라-only 청크 스트리밍 | desired = 카메라 지면 footprint + `CameraChunkMargin`만. `IStreamFocus`/`PlayerStreamFocus`/플레이어 anchor 청크 사용 안 함. 멀면 언로드, 화면 밖 render는 Unity frustum culling | 2026-05-19 |
+| 스트리밍 sim 전제 | 활성 sim 중 조종 대상은 로드 범위(footprint + margin + hysteresis) 안. sim 비활성 시 발밑 청크 언로드 OK. 재활성/텔레포트 시 `SyncNow()` 또는 위치 확인 | 2026-05-19 |
+
+## Chunk Streaming Policy (2026-05-19)
+
+- **Unload**: `TileMapChunkStreamer` — desired 밖 청크 despawn (mesh + collider)
+- **Render**: Unity frustum culling — 별도 render culler 없음
+- **Model**: `IMapModel` 전체 유지
+- Cursor 규칙: `.cursor/rules/tile-chunk-streaming.mdc`
 
 ## Extension Directions
 - **파이프라인 구성요소 교체**: `TileMapSerializer`, `TileMapModelBuilder` 등을 ScriptableObject로 만들면 인스펙터에서 JSON/Binary 등 구현체를 교체 가능. 현재는 단일 구현만 존재하므로 보류.

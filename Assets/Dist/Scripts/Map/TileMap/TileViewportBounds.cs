@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-    /// <summary>카메라 ortho 뷰포트 → 월드 XZ → 청크 집합.</summary>
+    /// <summary>카메라 ortho·화면비 → 지면 XZ AABB → 청크 집합.</summary>
     public static class TileViewportBounds
     {
         public static void AppendCameraChunks(
@@ -19,7 +19,8 @@ namespace IsoTilemap
             if (camera == null || chunks == null)
                 return;
 
-            if (!TryGetViewportWorldBoundsXZ(camera, orthographicSize, groundPlaneY,
+            if (!TryGetOrthoFootprintBoundsXZ(
+                    camera, orthographicSize, groundPlaneY,
                     out float minX, out float maxX, out float minZ, out float maxZ))
                 return;
 
@@ -39,19 +40,20 @@ namespace IsoTilemap
             AppendCameraChunks(chunks, camera, orthoSize, cellSize, chunkSize, marginChunks, groundPlaneY);
         }
 
-        public static void AppendPlayerChunks(
-            HashSet<Vector2Int> chunks,
-            Vector3Int playerCell,
+        /// <summary>풀 피크 추정용 — ortho AABB가 XZ에 덮는 최대 청크 반경(보수적).</summary>
+        public static int ComputeCameraChunkRadius(
+            float orthographicSize,
+            float aspect,
+            float cellSize,
             int chunkSize,
-            int playerChunkRadius)
+            int marginChunks)
         {
-            if (chunks == null)
-                return;
-
-            TileChunkCoord.AppendChunkNeighborhood(
-                chunks,
-                TileChunkCoord.FromCell(playerCell, chunkSize),
-                playerChunkRadius);
+            float chunkWorld = Mathf.Max(1, chunkSize) * Mathf.Max(1e-4f, cellSize);
+            float halfW = Mathf.Max(0.01f, orthographicSize) * Mathf.Max(1f, aspect);
+            float halfH = Mathf.Max(0.01f, orthographicSize);
+            float axisSpan = halfW + halfH;
+            int orthoRadius = Mathf.CeilToInt(axisSpan / chunkWorld);
+            return Mathf.Max(0, marginChunks) + orthoRadius;
         }
 
         public static float ResolveOrthographicSize(Camera camera, CinemachineCamera cinemachineCamera)
@@ -65,10 +67,9 @@ namespace IsoTilemap
             return 10f;
         }
 
-        private static bool TryGetViewportWorldBoundsXZ(
+        private static bool TryGetOrthoFootprintBoundsXZ(
             Camera camera,
             float orthographicSize,
-            Vector3[] cornerBuffer,
             float groundPlaneY,
             out float minX,
             out float maxX,
@@ -78,51 +79,56 @@ namespace IsoTilemap
             minX = minZ = float.PositiveInfinity;
             maxX = maxZ = float.NegativeInfinity;
 
-            Vector3[] corners = cornerBuffer ?? new Vector3[4];
-            corners[0] = new Vector3(0f, 0f, 0f);
-            corners[1] = new Vector3(1f, 0f, 0f);
-            corners[2] = new Vector3(0f, 1f, 0f);
-            corners[3] = new Vector3(1f, 1f, 0f);
+            float aspect = Mathf.Max(0.01f, camera.aspect);
+            float halfW = Mathf.Max(0.01f, orthographicSize) * aspect;
+            float halfH = Mathf.Max(0.01f, orthographicSize);
 
-            bool hitAny = false;
-            for (int i = 0; i < corners.Length; i++)
-            {
-                Ray ray = camera.ViewportPointToRay(corners[i]);
-                if (!TryIntersectGroundPlane(ray, groundPlaneY, out Vector3 hit))
-                    continue;
+            Vector3 origin = ResolveViewOriginOnGround(camera, groundPlaneY);
+            Vector3 right = FlattenToGround(camera.transform.right);
+            Vector3 up = FlattenToGround(camera.transform.up);
 
-                hitAny = true;
-                minX = Mathf.Min(minX, hit.x);
-                maxX = Mathf.Max(maxX, hit.x);
-                minZ = Mathf.Min(minZ, hit.z);
-                maxZ = Mathf.Max(maxZ, hit.z);
-            }
+            if (right.sqrMagnitude < 1e-8f)
+                right = FlattenToGround(camera.transform.forward);
+            if (up.sqrMagnitude < 1e-8f)
+                up = new Vector3(-right.z, 0f, right.x);
 
-            if (!hitAny)
-            {
-                float aspect = Mathf.Max(0.01f, camera.aspect);
-                float halfHeight = Mathf.Max(0.01f, orthographicSize);
-                float halfWidth = halfHeight * aspect;
-                Vector3 pos = camera.transform.position;
-                minX = pos.x - halfWidth;
-                maxX = pos.x + halfWidth;
-                minZ = pos.z - halfHeight;
-                maxZ = pos.z + halfHeight;
-                hitAny = true;
-            }
+            ExpandBounds(ref minX, ref maxX, ref minZ, ref maxZ, groundPlaneY, origin + right * halfW + up * halfH);
+            ExpandBounds(ref minX, ref maxX, ref minZ, ref maxZ, groundPlaneY, origin + right * halfW - up * halfH);
+            ExpandBounds(ref minX, ref maxX, ref minZ, ref maxZ, groundPlaneY, origin - right * halfW + up * halfH);
+            ExpandBounds(ref minX, ref maxX, ref minZ, ref maxZ, groundPlaneY, origin - right * halfW - up * halfH);
 
-            return hitAny;
+            return minX <= maxX && minZ <= maxZ;
         }
 
-        private static bool TryGetViewportWorldBoundsXZ(
-            Camera camera,
-            float orthographicSize,
+        private static void ExpandBounds(
+            ref float minX,
+            ref float maxX,
+            ref float minZ,
+            ref float maxZ,
             float groundPlaneY,
-            out float minX,
-            out float maxX,
-            out float minZ,
-            out float maxZ) =>
-            TryGetViewportWorldBoundsXZ(camera, orthographicSize, null, groundPlaneY, out minX, out maxX, out minZ, out maxZ);
+            Vector3 point)
+        {
+            point.y = groundPlaneY;
+            minX = Mathf.Min(minX, point.x);
+            maxX = Mathf.Max(maxX, point.x);
+            minZ = Mathf.Min(minZ, point.z);
+            maxZ = Mathf.Max(maxZ, point.z);
+        }
+
+        private static Vector3 ResolveViewOriginOnGround(Camera camera, float groundPlaneY)
+        {
+            Vector3 origin = camera.transform.position;
+            if (TryIntersectGroundPlane(new Ray(origin, camera.transform.forward), groundPlaneY, out Vector3 hit))
+                return hit;
+
+            return new Vector3(origin.x, groundPlaneY, origin.z);
+        }
+
+        private static Vector3 FlattenToGround(Vector3 v)
+        {
+            v.y = 0f;
+            return v.sqrMagnitude > 1e-8f ? v.normalized : Vector3.zero;
+        }
 
         private static void AppendChunksForWorldBounds(
             HashSet<Vector2Int> chunks,
@@ -136,6 +142,7 @@ namespace IsoTilemap
         {
             cellSize = Mathf.Max(1e-4f, cellSize);
             chunkSize = Mathf.Max(1, chunkSize);
+            marginChunks = Mathf.Max(0, marginChunks);
 
             Vector3Int minCell = TileHelper.ConvertWorldToGrid(new Vector3(minX, 0f, minZ), cellSize);
             Vector3Int maxCell = TileHelper.ConvertWorldToGrid(new Vector3(maxX, 0f, maxZ), cellSize);

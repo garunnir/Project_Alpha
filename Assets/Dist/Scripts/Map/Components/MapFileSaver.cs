@@ -11,16 +11,19 @@ public class MapFileSaver : MonoBehaviour
 
     private IMapModel _model;
     private IMapMapper _mapper;
+    private IWorldGrid _worldGrid;
 
-    public void Init(IMapModel model)
+    public void Init(IMapModel model, IWorldGrid worldGrid)
     {
         _model = model;
+        _worldGrid = worldGrid;
         _mapper = new TileMapDtoMapper();
     }
 
     public void Save()
     {
-        new MapSavePipline(_model, _mapper).Save(GetFullPath());
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
+        new MapSavePipline(_model, _mapper).Save(GetFullPath(), cellSize);
     }
 
     private string GetFullPath()
@@ -45,6 +48,7 @@ public class MapFileSaver : MonoBehaviour
         var snapshot = TileViewSceneGather.BuildTileDataSnapshot(tileViews);
         var dtoModel = new MapModelDTO(snapshot);
         MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
+        jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
 
         _model?.Initialize(dtoModel);
 

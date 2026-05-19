@@ -4,9 +4,10 @@ using UnityEngine;
 /// <summary>
 /// 타일맵 생명주기 조율자.
 /// 로드 → Factory / ViewBuilder / Controller / Saver 조립.
-/// <see cref="TileMapChunkStreamer"/> 참조가 있을 때만 청크 스트리밍 경로를 사용합니다.
+/// <see cref="IsoWorldGrid"/>가 그리드 규칙의 단일 출처입니다.
 /// </summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(-50)]
 public class TileMapManager : MonoBehaviour
 {
     [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
@@ -19,8 +20,6 @@ public class TileMapManager : MonoBehaviour
     [SerializeField] private TilePrefabDB _prefabDB;
 
     [Header("Grid")]
-    [Tooltip("비어 있으면 아래 Grid Cell Size를 사용합니다.")]
-    [SerializeField] private CharacterState _characterState;
     [SerializeField] private float _gridCellSize = 1f;
 
     [Header("Chunk Streaming")]
@@ -38,8 +37,11 @@ public class TileMapManager : MonoBehaviour
     [Tooltip("0이면 맵·스트리밍 설정으로 자동 추정합니다.")]
     [SerializeField, Min(0)] private int _streamingPeakOverride;
 
+    private readonly IsoWorldGrid _worldGrid = new();
+
     public IMapModel Model { get; private set; }
     public TilePrefabDB PrefabDB => _prefabDB;
+    public IWorldGrid WorldGrid => _worldGrid;
 
     private bool UseChunkStreaming => _chunkStreamer != null;
 
@@ -48,20 +50,29 @@ public class TileMapManager : MonoBehaviour
         _loader.Load();
         Model = _loader.Model;
 
+        _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
+        BindWorldGridToCharacters();
+
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
 
-        float cellSize = ResolveGridCellSize();
         var factory = CreateTileFactory(tileContainer, UseChunkStreaming);
-        IMapViewBuilder viewBuilder = CreateViewBuilder(factory, cellSize, UseChunkStreaming);
+        IMapViewBuilder viewBuilder = CreateViewBuilder(factory, UseChunkStreaming);
 
         _controller.Init(Model, viewBuilder);
         _chunkStreamer?.SyncNow();
-        _saver.Init(Model);
+        _saver.Init(Model, _worldGrid);
     }
 
-    private float ResolveGridCellSize() =>
-        _characterState != null ? _characterState.GridCellSize : Mathf.Max(1e-4f, _gridCellSize);
+    private void BindWorldGridToCharacters()
+    {
+        var states = FindObjectsByType<CharacterState>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < states.Length; i++)
+            states[i].BindWorldGrid(_worldGrid);
+    }
 
     private TileObjFactory CreateTileFactory(Transform tileContainer, bool chunkStreaming)
     {
@@ -77,10 +88,7 @@ public class TileMapManager : MonoBehaviour
                 _maxPoolPerPrefab,
                 _streamingPeakOverride);
 
-            var streamEstimate = new TilePoolStreamEstimate(
-                _chunkStreamer.ChunkSize,
-                _chunkStreamer.PlayerChunkRadius,
-                _chunkStreamer.CameraChunkMargin);
+            var streamEstimate = _chunkStreamer.CreatePoolStreamEstimate(_worldGrid);
 
             var caps = TilePoolBudgetBuilder.Build(
                 _loader.LastLoadedDto,
@@ -95,14 +103,14 @@ public class TileMapManager : MonoBehaviour
         return new TileObjFactory(tileContainer, _prefabDB, pool);
     }
 
-    private IMapViewBuilder CreateViewBuilder(TileObjFactory factory, float cellSize, bool chunkStreaming)
+    private IMapViewBuilder CreateViewBuilder(TileObjFactory factory, bool chunkStreaming)
     {
         if (!chunkStreaming)
-            return new TileMapVisualizer(factory, cellSize);
+            return new TileMapVisualizer(factory, _worldGrid);
 
         var streamingVisualizer = new TileMapStreamingVisualizer(
-            factory, cellSize, _chunkStreamer.ChunkSize);
-        _chunkStreamer.Attach(streamingVisualizer, cellSize, _characterState);
+            factory, _worldGrid, _chunkStreamer.ChunkSize);
+        _chunkStreamer.Attach(streamingVisualizer, _worldGrid);
         return streamingVisualizer;
     }
 
@@ -127,12 +135,14 @@ public class TileMapManager : MonoBehaviour
             return;
         }
 
+        _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
+        BindWorldGridToCharacters();
+
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
 
-        float cellSize = ResolveGridCellSize();
         var factory = CreateTileFactory(tileContainer, chunkStreaming: false);
-        IMapViewBuilder viewBuilder = CreateViewBuilder(factory, cellSize, chunkStreaming: false);
+        IMapViewBuilder viewBuilder = CreateViewBuilder(factory, chunkStreaming: false);
         _controller.Init(Model, viewBuilder);
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");

@@ -100,13 +100,14 @@ namespace IsoTilemap
                 ? Mathf.Max(1, Mathf.CeilToInt((float)totalTiles / occupiedChunks))
                 : totalTiles;
 
-            int playerSide = estimate.PlayerChunkRadius * 2 + 1;
-            int playerChunks = playerSide * playerSide;
-
-            int camSide = playerSide + estimate.CameraChunkMargin * 2;
-            int camChunks = camSide * camSide;
-
-            int loadedChunkCount = playerChunks + camChunks;
+            int camRadius = TileViewportBounds.ComputeCameraChunkRadius(
+                estimate.MaxOrthographicSize,
+                estimate.CameraAspect,
+                estimate.CellSize,
+                estimate.ChunkSize,
+                estimate.CameraChunkMargin);
+            int camSide = camRadius * 2 + 1;
+            int loadedChunkCount = camSide * camSide;
             return Mathf.CeilToInt(loadedChunkCount * tilesPerChunk * 1.1f);
         }
 

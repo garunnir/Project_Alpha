@@ -15,10 +15,11 @@ namespace IsoTilemap
             _runtime = runtime;
         }
 
-        public void Save(string fullPath)
+        public void Save(string fullPath, float gridCellSize = 1f)
         {
             MapModelDTO mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
+            mapDatas.gridCellSize = Mathf.Max(1e-4f, gridCellSize);
 
             string json = JsonUtility.ToJson(mapDatas, true);
 

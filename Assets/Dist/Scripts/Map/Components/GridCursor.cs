@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class GridCursor : MonoBehaviour
 {
     [SerializeField] TileMapController _controller;
+    [SerializeField] TileMapManager _tileMapManager;
     [SerializeField] TilePlacementState _placementState;
     [SerializeField] GameObject _cursorVisual;
     [SerializeField] Camera _camera;
@@ -51,7 +52,8 @@ public class GridCursor : MonoBehaviour
         Ray ray = _camera.ScreenPointToRay(screenPos);
         if (!GroundPlane.Raycast(ray, out float dist)) return;
 
-        Vector3Int newGrid = TileHelper.ConvertWorldToGrid(ray.GetPoint(dist));
+        float cellSize = ResolveCellSize();
+        Vector3Int newGrid = TileHelper.ConvertWorldToGrid(ray.GetPoint(dist), cellSize);
         if (newGrid == _cursorGridPos) return;
 
         _cursorGridPos = newGrid;
@@ -126,7 +128,7 @@ public class GridCursor : MonoBehaviour
 
     void UpdateVisual()
     {
-        UpdateVisual(TileHelper.ConvertGridToWorldPos(_cursorGridPos));
+        UpdateVisual(TileHelper.ConvertGridToWorldPos(_cursorGridPos, ResolveCellSize()));
     }
     void UpdateVisual(Vector3 worldPos)
     {
@@ -140,6 +142,9 @@ public class GridCursor : MonoBehaviour
         if (_cursorVisual != null)
             _cursorVisual.SetActive(active);
     }
+
+    float ResolveCellSize() =>
+        _tileMapManager?.WorldGrid != null ? _tileMapManager.WorldGrid.CellSize : 1f;
 
     static byte InferTileTypeFromPrefabId(string prefabId)
     {

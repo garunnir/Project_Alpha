@@ -7457,7 +7457,6 @@ MonoBehaviour:
   _controller: {fileID: 636504848}
   _tileContainer: {fileID: 1451314326}
   _prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
-  _characterState: {fileID: 1383865919}
   _gridCellSize: 1
   _chunkStreamer: {fileID: 299715457}
   _enableTilePooling: 1
@@ -7481,10 +7480,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::TileMapChunkStreamer
   _chunkSize: 16
-  _playerChunkRadius: 0
-  _cameraChunkMargin: 0
+  _cameraChunkMargin: 1
   _unloadHysteresisSeconds: 0.35
-  _player: {fileID: 1383865919}
   _gameCamera: {fileID: 210656668}
   _cinemachineCamera: {fileID: 209990004}
 --- !u!1 &301129908
@@ -20215,6 +20212,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::GridCursor
   _controller: {fileID: 0}
+  _tileMapManager: {fileID: 0}
   _placementState: {fileID: 1001567636}
   _cursorVisual: {fileID: 1005200164}
   _camera: {fileID: 64710673}
@@ -26700,7 +26698,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1519f1585a69634483a7553acc7e0f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterState
-  _gridCellSize: 1
 --- !u!114 &1383865920
 MonoBehaviour:
   m_ObjectHideFlags: 0
