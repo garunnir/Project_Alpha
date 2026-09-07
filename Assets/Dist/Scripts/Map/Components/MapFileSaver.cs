@@ -40,7 +40,8 @@ public class MapFileSaver : MonoBehaviour
             cellSize,
             MapBloodHost.Runtime,
             MapPlantHost.Runtime,
-            MapLiquidHost.Runtime);
+            MapLiquidHost.Runtime,
+            MapDigColumnHost.Runtime);
     }
 
     public string FileName
@@ -100,7 +101,8 @@ public class MapFileSaver : MonoBehaviour
             existing,
             MapLiquidHost.Runtime,
             MapBloodHost.Runtime,
-            MapPlantHost.Runtime);
+            MapPlantHost.Runtime,
+            MapDigColumnHost.Runtime);
 
         MapBoundsBake.ApplyToDto(jsonDto);
 

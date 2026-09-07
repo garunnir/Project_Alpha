@@ -2,7 +2,9 @@
 // MapGameplayBootstrap — 맵 로드 후 플레이어·컨테이너에 Map 서비스 바인딩
 // ============================================================
 
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(-49)]
@@ -40,6 +42,104 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindMapCollisionServices(_tileMapManager);
         BindWorldGridToContainers(worldGrid);
         BindWorldGridToSmallItems(worldGrid);
+        BindMapDigService();
+    }
+
+    static void BindMapDigService()
+    {
+        MapDigService.Configure(new MapDigRuntimeHooks
+        {
+            IsMoodBlocked = () => MoodGameplayGate.IsBlocked,
+            HasDigQuality = MapPlantService.HasDigQuality,
+            PlayerHasDigTool = PlayerHasDigTool,
+            DigBlockedLabel = () => HarvestContextLabels.TillBlocked,
+            GrantItem = GrantDigItem,
+            TryResolveActorCell = MapPlantService.TryResolveActorCell,
+        });
+    }
+
+    static bool PlayerHasDigTool()
+    {
+        InventoryContainer body = PlayerInventoryRuntime.Active?.Host?.Container;
+        if (body?.Stacks != null)
+        {
+            IReadOnlyList<ItemStack> stacks = body.Stacks;
+            for (int i = 0; i < stacks.Count; i++)
+            {
+                ItemStack stack = stacks[i];
+                if (stack?.Item != null && stack.Count > 0 && MapPlantService.HasDigQuality(stack.Item))
+                    return true;
+            }
+        }
+
+        WieldSlots wield = PlayerGearHost.Active?.Service?.Wield;
+        if (wield?.Left?.Item != null &&
+            wield.Left.Count > 0 &&
+            MapPlantService.HasDigQuality(wield.Left.Item))
+        {
+            return true;
+        }
+
+        if (wield?.Right?.Item != null &&
+            wield.Right != wield.Left &&
+            wield.Right.Count > 0 &&
+            MapPlantService.HasDigQuality(wield.Right.Item))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    static void GrantDigItem(string itemId, int count, Vector3 world)
+    {
+        ItemData item = GameplayData.GetItem(itemId);
+        if (item == null || count < 1)
+            return;
+
+        var stack = new ItemStack(item, count);
+        CharacterGearService gear = PlayerGearHost.Active?.Service;
+        if (gear != null && gear.CanDepositToBody(stack))
+        {
+            gear.DepositToBody(stack);
+            return;
+        }
+
+        InventoryContainer body = PlayerInventoryRuntime.Active?.Host?.Container;
+        if (body != null && body.CapacityPolicy != null && body.CapacityPolicy.CanAccept(body, stack))
+        {
+            body.AddItem(item, count);
+            PlayerInventoryRuntime.Active.Session?.NotifyExternalStacksChanged(body);
+            return;
+        }
+
+        SmallItemObject prefab = FindSmallItemPrefabForDig();
+        if (prefab == null)
+        {
+            Debug.LogWarning("[MapGameplayBootstrap] SmallItem prefab missing; dig drop skipped for " + itemId);
+            return;
+        }
+
+        IWorldGrid grid = null;
+        TileMapManager map = Object.FindFirstObjectByType<TileMapManager>();
+        if (map != null)
+            grid = map.WorldGrid;
+
+        SmallItemSpawner.Spawn(prefab, item, count, world, grid);
+    }
+
+    static SmallItemObject FindSmallItemPrefabForDig()
+    {
+        SmallItemObject[] all = Resources.FindObjectsOfTypeAll<SmallItemObject>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            SmallItemObject obj = all[i];
+            if (obj == null || obj.gameObject.scene.IsValid())
+                continue;
+            return obj;
+        }
+
+        return Object.FindFirstObjectByType<SmallItemObject>(FindObjectsInactive.Include);
     }
 
     public void BindSpawnedCharacter(GameObject instance)
@@ -47,13 +147,15 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (instance == null)
             return;
 
+        CharacterBodyRefs.EnsureResolved(instance);
+
         if (_tileMapManager == null)
             _tileMapManager = GetComponent<TileMapManager>();
         if (_tileMapManager == null)
             return;
 
         IWorldGrid worldGrid = _tileMapManager.WorldGrid;
-        CharacterState state = instance.GetComponent<CharacterState>();
+        CharacterState state = instance.GetBodyComponent<CharacterState>();
         if (state != null && worldGrid != null)
             state.BindWorldGrid(worldGrid);
 
@@ -64,12 +166,12 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (services == null)
             return;
 
-        CharacterMotor motor = instance.GetComponent<CharacterMotor>();
+        CharacterMotor motor = instance.GetBodyComponent<CharacterMotor>();
         motor?.BindMapCollision(services);
 
         EnsureSwimHosts(instance);
         EnsureVaultHost(instance, services, _vaultClipCatalog);
-        EnsureFishWorkHost(instance, _fishWorkClipCatalog);
+        EnsureFishCellActionHost(instance, _fishWorkClipCatalog);
 
         CharacterAttacker attacker = instance.GetBodyComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
@@ -105,7 +207,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindCharacterHearing(services.LineCast);
         EnsureSwimHostsOnSceneCharacters();
         EnsureVaultHostsOnSceneCharacters(services, _vaultClipCatalog);
-        EnsureFishWorkHostsOnSceneCharacters(_fishWorkClipCatalog);
+        EnsureFishCellActionHostsOnSceneCharacters(_fishWorkClipCatalog);
+        BindWorkAnimOnSceneCharacters();
 
         var attackers = FindObjectsByType<CharacterAttacker>(
             FindObjectsInactive.Include,
@@ -124,7 +227,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             FindObjectsSortMode.None);
         for (int i = 0; i < raycasters.Length; i++)
         {
-            var state = raycasters[i].GetComponent<CharacterState>();
+            var state = raycasters[i].GetBodyComponent<CharacterState>();
             if (state == null)
                 continue;
 
@@ -216,31 +319,44 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             EnsureVaultHost(states[i].gameObject, services, vaultClips);
     }
 
+    static void BindWorkAnimOnSceneCharacters()
+    {
+        var roots = FindObjectsByType<CharacterBodyRoot>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < roots.Length; i++)
+            CharacterWorkAnimBinder.BindBody(roots[i].gameObject);
+    }
+
     static void EnsureVaultHost(
         GameObject instance,
         MapCollisionServices services,
         VaultClipCatalog vaultClips)
     {
-        if (instance == null || instance.GetComponent<CharacterMotor>() == null)
+        if (instance == null || instance.GetBodyComponent<CharacterMotor>() == null)
             return;
 
-        CharacterVaultHost vault = instance.GetComponent<CharacterVaultHost>();
+        CharacterVaultHost vault = instance.GetBodyComponent<CharacterVaultHost>();
         if (vault == null)
-            vault = instance.AddComponent<CharacterVaultHost>();
+        {
+            Debug.LogError(
+                $"[MapGameplayBootstrap] '{instance.name}' needs CharacterVaultHost on prefab.",
+                instance);
+            return;
+        }
+
         vault.BindMapCollision(services);
         if (vaultClips != null)
             vault.SetClipCatalog(vaultClips);
 
-        Animator animator = instance.GetComponentInChildren<Animator>();
+        Animator animator = instance.GetComponentInChildren<Animator>(true);
         if (animator != null && animator.GetComponent<CharacterVaultIkHost>() == null)
             animator.gameObject.AddComponent<CharacterVaultIkHost>();
-
-        CharacterWorkLayerAnim.ValidateOrLog(animator, instance);
     }
 
-    static void EnsureFishWorkHostsOnSceneCharacters(FishWorkClipCatalog fishClips)
+    static void EnsureFishCellActionHostsOnSceneCharacters(FishWorkClipCatalog fishClips)
     {
-        var hosts = FindObjectsByType<CharacterFishWorkHost>(
+        var hosts = FindObjectsByType<FishCellActionHost>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
         for (int i = 0; i < hosts.Length; i++)
@@ -250,13 +366,12 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         }
     }
 
-    static void EnsureFishWorkHost(GameObject instance, FishWorkClipCatalog fishClips)
+    static void EnsureFishCellActionHost(GameObject instance, FishWorkClipCatalog fishClips)
     {
         if (instance == null || fishClips == null)
             return;
 
-        CharacterFishWorkHost host = instance.GetComponent<CharacterFishWorkHost>();
-        if (host != null)
-            host.SetClipCatalog(fishClips);
+        FishCellActionHost host = instance.GetBodyComponent<FishCellActionHost>();
+        host?.SetClipCatalog(fishClips);
     }
 }

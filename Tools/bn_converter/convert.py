@@ -95,6 +95,8 @@ MINUTES_PER_DAY = 24 * 60
 FARMING_FLAGS = frozenset({
     "PLANTABLE",
     "PLOWABLE",
+    "DIGGABLE",
+    "MINEABLE",
     "PLANT",
     "GROWTH_SEED",
     "GROWTH_SEEDLING",

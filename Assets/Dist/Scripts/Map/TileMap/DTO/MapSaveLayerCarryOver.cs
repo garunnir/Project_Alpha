@@ -67,7 +67,8 @@ namespace IsoTilemap
             MapSaveJsonDto existing,
             MapLiquidHost liquidHost,
             MapBloodHost bloodHost,
-            MapPlantHost plantHost)
+            MapPlantHost plantHost,
+            MapDigColumnHost digHost = null)
         {
             if (target == null)
                 return;
@@ -105,6 +106,12 @@ namespace IsoTilemap
             // plantCells는 OccupiedCell 타일로 이주 완료 — 타일 스냅샷이 복원하므로 계승 대상이 아니다.
             if (plantHost != null)
                 plantHost.WriteToDto(target);
+
+            MapDigColumnHost digRuntime = digHost != null ? digHost : MapDigColumnHost.Runtime;
+            if (digRuntime != null)
+                digRuntime.WriteToDto(target);
+            else
+                CarryStratumSeed(target, existing);
 
             // 훅이 없으면 WriteToDto가 hasClockSnapshot을 false로 눕힌다. 그때만 디스크 시각을 되살린다.
             MapClockSnapshot.WriteToDto(target);
@@ -172,6 +179,14 @@ namespace IsoTilemap
 
             target.hasPlayerProgressSnapshot = true;
             target.playerProgressJson = existing.playerProgressJson;
+        }
+
+        static void CarryStratumSeed(MapSaveJsonDto target, MapSaveJsonDto existing)
+        {
+            if (existing == null)
+                return;
+
+            target.stratumSeed = existing.stratumSeed;
         }
     }
 }

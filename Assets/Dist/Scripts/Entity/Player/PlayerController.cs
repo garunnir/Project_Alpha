@@ -1,6 +1,7 @@
 // ============================================================
 // PlayerController — 오브젝트의 플레이어 기능을 통합 관리하는 컴포넌트
 // ============================================================
+// 레거시: NpcSample·possess 경로는 PlayerPossessedInputHost. 이 타입은 씬 레거시용.
 using UnityEngine;
 using Interactions;
 using Sirenix.OdinInspector;

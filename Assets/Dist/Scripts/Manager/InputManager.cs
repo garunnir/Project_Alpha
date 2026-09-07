@@ -165,6 +165,28 @@ public class InputManager : SceneSingleton<InputManager>
         return true;
     }
 
+    /// <summary>포인터 primary press가 현재 눌려 있는지.</summary>
+    public bool TryReadPointerHeld(out bool isHeld)
+    {
+        isHeld = false;
+        if (IsGameplayBlocked)
+            return false;
+
+        if (Pointer.current != null)
+        {
+            isHeld = Pointer.current.press.isPressed;
+            return true;
+        }
+
+        if (Mouse.current != null)
+        {
+            isHeld = Mouse.current.leftButton.isPressed;
+            return true;
+        }
+
+        return false;
+    }
+
     public bool TryReadPointerScreenPosition(out Vector2 position)
     {
         position = Vector2.zero;

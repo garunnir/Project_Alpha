@@ -11,6 +11,7 @@ namespace IsoTilemap
         public const string Plantable = "PLANTABLE";
         public const string Plowable = "PLOWABLE";
         public const string Diggable = "DIGGABLE";
+        public const string Mineable = "MINEABLE";
         public const string Plant = "PLANT";
         public const string GrowthSeed = "GROWTH_SEED";
         public const string GrowthSeedling = "GROWTH_SEEDLING";
@@ -27,6 +28,10 @@ namespace IsoTilemap
             HasFlag(definition, Water)
             || HasFlag(definition, ShallowWater)
             || HasFlag(definition, DeepWater);
+
+        /// <summary>MINEABLE 또는 DIGGABLE — 채굴·굴착 대상 바닥재.</summary>
+        public static bool IsDiggableTarget(TileDefinition definition) =>
+            HasFlag(definition, Mineable) || HasFlag(definition, Diggable);
 
         public static bool HasFlag(TileDefinition definition, string flag)
         {

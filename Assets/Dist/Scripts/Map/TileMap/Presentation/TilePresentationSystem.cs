@@ -13,6 +13,7 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
 
     TileViewPresentationApplier _applier;
     Guid _activeLootTileId = Guid.Empty;
+    Guid _activeDigTileId = Guid.Empty;
 
     public void Initialize(TileViewPresentationApplier applier) => _applier = applier;
 
@@ -33,7 +34,11 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
             Instance = null;
     }
 
-    void OnDisable() => ClearLootHighlight();
+    void OnDisable()
+    {
+        ClearLootHighlight();
+        ClearDigHighlight();
+    }
 
     public void SetLootHighlight(Guid presentationTileId, bool highlighted) =>
         SetLootContainerHighlight(presentationTileId, highlighted);
@@ -74,5 +79,38 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
 
         _applier.SetSelected(_activeLootTileId, false);
         _activeLootTileId = Guid.Empty;
+    }
+
+    public void SetDigHighlight(Guid presentationTileId, bool highlighted)
+    {
+        if (_applier == null || presentationTileId == Guid.Empty)
+            return;
+
+        if (highlighted)
+        {
+            if (_activeDigTileId != Guid.Empty && _activeDigTileId != presentationTileId)
+                _applier.SetSelected(_activeDigTileId, false);
+
+            _applier.SetSelected(presentationTileId, true);
+            _activeDigTileId = presentationTileId;
+            return;
+        }
+
+        if (_activeDigTileId == presentationTileId)
+            _activeDigTileId = Guid.Empty;
+
+        _applier.SetSelected(presentationTileId, false);
+    }
+
+    public void ClearDigHighlight()
+    {
+        if (_applier == null || _activeDigTileId == Guid.Empty)
+        {
+            _activeDigTileId = Guid.Empty;
+            return;
+        }
+
+        _applier.SetSelected(_activeDigTileId, false);
+        _activeDigTileId = Guid.Empty;
     }
 }

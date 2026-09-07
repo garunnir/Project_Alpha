@@ -12,6 +12,7 @@
 | Weather / climate field | [`weather/WEATHER.md`](weather/WEATHER.md) | (`WorldWeatherHost` · Phase D Parked) |
 | Map / TileMap | [`map/SYSTEM.md`](map/SYSTEM.md) → TileMap 세부 | `map-system.mdc` · `tile-chunk-streaming.mdc` |
 | Map liquid (water sim) | [`map/LIQUID.md`](map/LIQUID.md) | — |
+| Map dig (mining / till vs break) | [`map/DIG.md`](map/DIG.md) | — |
 | Inventory UI | [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) | `inventory-ui.mdc` |
 | Item catalog locale (name / desc / recipe cat / quality) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
 | Equipment / Wear·Wield | [`equipment/GEAR.md`](equipment/GEAR.md) | (Character window · transfer duration) |

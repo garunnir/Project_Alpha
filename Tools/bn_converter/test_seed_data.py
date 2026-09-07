@@ -113,9 +113,22 @@ def test_terrain_furniture_farming_whitelist():
     )
     _eq(terrain["id"], "t_dirtmound", "terrain id")
     _eq(terrain["name"], "mound of dirt", "terrain name")
-    _eq(terrain["flags"], ["PLANTABLE"], "terrain farming flags")
+    _eq(terrain["flags"], ["DIGGABLE", "PLANTABLE"], "terrain farming flags")
     for key in ("symbol", "color", "looks_like", "bash", "plant_data"):
         _eq(key in terrain, False, f"terrain {key}")
+
+    mineable = export_terrain_entry(
+        {
+            "type": "terrain",
+            "id": "t_rock_wall",
+            "name": "stone wall",
+            "flags": ["NOITEM", "SUPPORTS_ROOF", "WALL", "MINEABLE", "BLOCK_WIND"],
+            "bash": {"str_min": 80, "str_max": 200},
+        },
+        "t_rock_wall",
+    )
+    _eq(mineable["flags"], ["MINEABLE"], "mineable terrain flag")
+    _eq("bash" in mineable, False, "mineable terrain bash dropped")
 
     furniture = export_furniture_entry(
         {

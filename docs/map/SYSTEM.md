@@ -125,6 +125,10 @@ graph TD
 
 경로: `Assets/Dist/Scripts/Map/Liquid/`. `TileMapManager`가 `MapLiquidHost`를 바인딩·DTO `liquidCells` 로드. 모델(스파스 ml 오버레이)은 청크 unload와 무관하게 유지; 수면 뷰는 `MapLiquidSurfaceRenderer`가 **로드된 청크 + 변경 셀**만 메시화. Flow는 `WorldClock.MinuteChanged` + dirty 큐(정지 바다 비용 0). 계약: [`docs/map/LIQUID.md`](LIQUID.md).
 
+### 맵 굴착 (dig-break)
+
+경로: `Assets/Dist/Scripts/Map/Dig/`. `TileMapManager`가 `MapDigColumnHost`를 바인딩·DTO `stratumSeed` 로드. LMB 홀드 채굴은 `PlayerDigController` → `MapDigService` → face 제거·지층 생성. BN `MINEABLE`/`DIGGABLE` → TileDefinition flags. 경작(till)과 별도 — [`docs/farming/FARMING.md`](../farming/FARMING.md). 계약: [`docs/map/DIG.md`](DIG.md). Pit floor 가시성 = Phase C pending (`FloorVisibilitySyncPlanner`).
+
 ---
 
 ## 데이터 흐름 요약

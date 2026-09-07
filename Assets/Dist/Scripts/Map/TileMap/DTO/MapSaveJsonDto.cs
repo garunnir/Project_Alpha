@@ -60,5 +60,11 @@ namespace IsoTilemap
 
         /// <summary><see cref="PlayerProgressSaveDto"/> JsonUtility JSON.</summary>
         public string playerProgressJson;
+
+        /// <summary>
+        /// 지층 생성 시드 (schema ≥ <see cref="MapSaveSchema.StratumSeedV3"/>).
+        /// 0·누락(구 JSON)이면 최초 굴착 시 런타임이 할당한다.
+        /// </summary>
+        public int stratumSeed;
     }
 }

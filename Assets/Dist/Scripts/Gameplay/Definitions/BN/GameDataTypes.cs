@@ -44,7 +44,7 @@ namespace Garunnir.Runtime.Gameplay.Data
     {
         public string id;
         public string name;
-        /// <summary>Farming-flag whitelist only (PLANTABLE, PLOWABLE, …).</summary>
+        /// <summary>Farming-flag whitelist only (PLANTABLE, PLOWABLE, DIGGABLE, MINEABLE, …).</summary>
         public List<string> flags;
         /// <summary>Cooking environment whitelist (FIRE, LIT, LIGHT_*, …).</summary>
         public List<string> crafting_flags;
@@ -64,7 +64,7 @@ namespace Garunnir.Runtime.Gameplay.Data
     {
         public string id;
         public string name;
-        /// <summary>Farming-flag whitelist only (PLANT, GROWTH_*, PLANTABLE, …).</summary>
+        /// <summary>Farming-flag whitelist only (PLANT, GROWTH_*, PLANTABLE, DIGGABLE, MINEABLE, …).</summary>
         public List<string> flags;
         /// <summary>Cooking environment whitelist (FIRE, LIT, SMOKE, LIGHT_*, …).</summary>
         public List<string> crafting_flags;

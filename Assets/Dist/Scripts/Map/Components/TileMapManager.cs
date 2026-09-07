@@ -20,6 +20,10 @@ public class TileMapManager : MonoBehaviour
     [Header("Map plant overlay")]
     [SerializeField] private MapPlantHost _plantHost;
 
+    [Header("Map dig overlay")]
+    [SerializeField] private MapDigColumnHost _digHost;
+    [SerializeField] private StratumProfile _stratumProfile;
+
     [Header("Map liquid overlay")]
     [SerializeField] private MapLiquidHost _liquidHost;
 
@@ -275,6 +279,7 @@ public class TileMapManager : MonoBehaviour
         SetupMapCollisionServices();
         SetupMapBlood();
         SetupMapPlant();
+        SetupMapDig();
         SetupMapLiquid();
         SetupMapHearingPing();
 
@@ -343,6 +348,17 @@ public class TileMapManager : MonoBehaviour
         MapClockSnapshot.RestoreFromDto(_loader != null ? _loader.LastLoadedDto : null);
         PlayerProgressSnapshotPending.SetFromMapDto(_loader != null ? _loader.LastLoadedDto : null);
         _plantHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
+    }
+
+    void SetupMapDig()
+    {
+        _digHost ??= GetComponent<MapDigColumnHost>();
+        if (_digHost == null)
+            _digHost = gameObject.AddComponent<MapDigColumnHost>();
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        _digHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB, _controller, _stratumProfile);
+        _digHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
     void SetupMapLiquid()
