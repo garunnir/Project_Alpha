@@ -705,7 +705,7 @@ public static class MapPlantService
     {
         cell = default;
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear != null && gear.TryGetComponent(out CharacterState state))
+        if (gear != null && CharacterBodyResolve.TryGetInBody(gear, out CharacterState state))
         {
             cell = state.GridPos;
             return true;
@@ -795,7 +795,7 @@ public static class MapPlantService
     {
         world = default;
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear != null && gear.TryGetComponent(out CharacterState state))
+        if (gear != null && CharacterBodyResolve.TryGetInBody(gear, out CharacterState state))
         {
             world = state.BodyWorldPoint.sqrMagnitude > 1e-6f
                 ? state.BodyWorldPoint

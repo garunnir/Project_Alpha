@@ -40,9 +40,7 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 | 소비자 | 역할 |
 |--------|------|
 | `CharacterArriveHost` | 셀/월드 목표 자동이동 |
-| `FarmCellActionHost` / `CharacterFarmWorkHost` | 농사 |
-| `FishCellActionHost` | 낚시 |
-| `ConstructionActionHost` | 건설 |
+| `CharacterActionHost` Cell pipelines | 농사·낚시·건설 (`CharacterCellFarmPipeline` / Fish / Construction) |
 | `CharacterVaultHost` | vault |
 
 ### Work Layer (Cell 소비자 공통)
@@ -61,7 +59,7 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 
 | Kind | busy일 때 | 이유 |
 |------|-----------|------|
-| Gear / Inventory / Craft / Cell | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. **Cell** = 그리드/월드 셀 스크립트 행동 (`CharacterArriveHost` 도착 · `CharacterFarmWorkHost`/`FishCellActionHost` 작업 · vault · 건설). Arrive 중 게이지는 `Img_AutoProgressIcon`. TileMap 시스템과 무관 |
+| Gear / Inventory / Craft / Cell | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. **Cell** = 그리드/월드 셀 스크립트 행동 (`CharacterArriveHost` 도착 · ActionHost Cell pipeline 작업 · vault). Arrive 중 게이지는 `Img_AutoProgressIcon`. TileMap 시스템과 무관 |
 | Combat | 큐에 **최대 1개**. 이미 Combat이 있으면 Start만 교체 | LMB 연타는 “지금 한 대”이지 N대 예약이 아님 |
 
 교차 종류는 그대로 한 줄: 착용 중 공격은 Combat 1칸이 뒤에 앉는다. 쿨 중 연타는 그 1칸만 최신 클릭으로 덮는다.

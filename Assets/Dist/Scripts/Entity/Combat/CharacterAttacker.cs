@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterAimIntent))]
 [RequireComponent(typeof(CharacterSkillsHost))]
 public sealed class CharacterAttacker : MonoBehaviour
 {
@@ -31,12 +30,14 @@ public sealed class CharacterAttacker : MonoBehaviour
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
     [SerializeField] WeaponAction _selectedAction = WeaponAction.Swing;
     [SerializeField] WieldHand _activeWieldHand = WieldHand.TwoHand;
+    [SerializeField] string _preferredPartId = BodyPartIds.Torso;
+    [SerializeField] TimeScaleChannel _combatVfxTimeChannel = TimeScaleChannel.World;
     ItemInstance _wieldedInstance;
     ItemStack _wieldedStack;
     WieldSlotId _lastDualSlot;
     bool _hasLastDualSlot;
+    bool _aimHeld;
 
-    CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
     PlayerGearHost _gearHost;
     CharacterClimateHost _climateHost;
@@ -46,9 +47,9 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterPainHost _painHost;
     CharacterImbalanceHost _imbalanceHost;
     CharacterState _characterState;
-    PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
-    CharacterHitStop _hitStop;
+    CharacterHitStopState _hitStop;
+    CharacterAttackerCombatVfx _combatVfx;
     MapTopologyLineCast _mapLineCast;
     CharacterBodyHost _bodyHost;
     Collider _selfCollider;
@@ -156,11 +157,19 @@ public sealed class CharacterAttacker : MonoBehaviour
     public WeaponAction SelectedAction => _selectedAction;
     public WieldHand ActiveWieldHand => _activeWieldHand;
 
-    /// <summary>CharacterState.IsAiming. NPC Attack은 SetAimDir. CharacterState 없으면 AimIntent.AimHeld.</summary>
+    /// <summary>CharacterState.IsAiming. NPC Attack은 SetAimDir. CharacterState 없으면 AimHeld.</summary>
     public bool IsAiming =>
         _characterState != null
             ? _characterState.IsAiming
-            : _aimIntent != null && _aimIntent.AimHeld;
+            : _aimHeld;
+
+    public string PreferredPartId =>
+        string.IsNullOrEmpty(_preferredPartId) ? BodyPartIds.Torso : _preferredPartId;
+
+    public void SetPreferredPart(string partId) =>
+        _preferredPartId = string.IsNullOrEmpty(partId) ? BodyPartIds.Torso : partId;
+
+    public void SetAimHeld(bool held) => _aimHeld = held;
 
     /// <summary>raise_guard 핸들러가 판정한 가드 유지.</summary>
     public bool IsRaiseActive { get; private set; }
@@ -187,23 +196,10 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void Awake()
     {
-        _aimIntent = GetComponent<CharacterAimIntent>();
-        _skillsHost = GetComponent<CharacterSkillsHost>();
-        TryGetComponent(out _gearHost);
-        TryGetComponent(out _climateHost);
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _motor);
-        TryGetComponent(out _appearance);
-        TryGetComponent(out _painHost);
-        TryGetComponent(out _imbalanceHost);
-        TryGetComponent(out _characterState);
-        TryGetComponent(out _aimController);
-        TryGetComponent(out _locAnim);
-        if (_locAnim == null)
-            _locAnim = GetComponentInChildren<CharacterLocomotionAnim>();
-        TryGetComponent(out _bodyHost);
-        _hitStop = CharacterHitStop.Find(this);
-        _selfCollider = GetComponentInChildren<Collider>();
+        ResolveBodyRefs();
+        _hitStop = CharacterHitStopState.Find(this);
+        _combatVfx = new CharacterAttackerCombatVfx(this, _combatVfxTimeChannel);
+        _combatVfx.Bind();
         if (_presentation != null)
             _presentation.RebuildSupportedActions();
         RefreshPresentationFromCatalog();
@@ -211,12 +207,53 @@ public sealed class CharacterAttacker : MonoBehaviour
         ApplySelectedFromInstance();
     }
 
+    /// <summary>NpcSample GameplayCore 분리 후 루트·자식 SSOT. 스폰 1회 <see cref="CharacterBodyRefs"/> 캐시.</summary>
+    void ResolveBodyRefs()
+    {
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _skillsHost = refs.SkillsHost;
+            _gearHost = refs.GearHost;
+            refs.TryGet(out _climateHost);
+            _actionHost = refs.ActionHost;
+            _painHost = refs.PainHost;
+            refs.TryGet(out _imbalanceHost);
+            _bodyHost = refs.BodyHost;
+            _characterState = refs.State;
+            _motor = refs.Motor;
+            _appearance = refs.Appearance;
+            _locAnim = refs.LocomotionAnim;
+        }
+        else
+        {
+            _skillsHost = GetComponent<CharacterSkillsHost>();
+            _gearHost = GetComponent<PlayerGearHost>();
+            _climateHost = GetComponent<CharacterClimateHost>();
+            _actionHost = GetComponent<CharacterActionHost>();
+            _painHost = GetComponent<CharacterPainHost>();
+            _imbalanceHost = GetComponent<CharacterImbalanceHost>();
+            _bodyHost = GetComponent<CharacterBodyHost>();
+            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+            _appearance = CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
+            _locAnim = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
+            if (_bodyHost == null)
+                _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
+        }
+
+        _selfCollider = ResolveSelfCollider();
+    }
+
+    Collider ResolveSelfCollider() => CharacterBodyResolve.GetBodyCollider(this);
+
     void OnEnable()
     {
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (skills != null)
             skills.Refreshed += OnSkillsRefreshed;
         Camera.onPostRender += OnCameraPostRender;
+        _combatVfx?.Bind();
     }
 
     void OnDisable()
@@ -227,6 +264,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             skills.Refreshed -= OnSkillsRefreshed;
         CancelAllPendingCues();
         ApplyRaiseFromHandler(false);
+        _combatVfx?.Unbind();
     }
 
     void Update()
@@ -375,7 +413,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             return PerformRaise(action, targetHost, offenseFactor, item);
 
         WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
-        Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
+        Vector3 origin = ResolveOrigin();
         AttackPerformResult gate = GateAction(action, item);
         // Cooling/pending/원거리 NoAmmo만 시전을 막는다.
         // 타깃·사거리는 시전 게이트가 아님 (근접=cue 히트박스, 원거리=조준축 발사).
@@ -454,7 +492,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         if (targetHost == null)
             return null;
-        if (targetHost.TryGetComponent(out PlayerGearHost gear))
+        if (CharacterBodyResolve.TryGetInBody(targetHost, out PlayerGearHost gear))
             return gear.Wear;
         return null;
     }
@@ -488,7 +526,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (targetHost == null || targetHost.Body == null)
             return ResolveAimImpact(origin, item, action);
 
-        Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
+        Collider targetCollider = CharacterBodyResolve.GetBodyCollider(targetHost);
         Vector3 targetCenter = ResolveBodyCenter(targetHost.transform, targetCollider);
         return ResolveImpactPoint(targetCollider, targetCenter, origin);
     }
@@ -507,17 +545,12 @@ public sealed class CharacterAttacker : MonoBehaviour
             if (dir.sqrMagnitude > 1e-6f)
             {
                 float dist = _characterState.InteractionReach;
-                if (dist <= 0f && _aimController != null)
-                    dist = _aimController.MaxAimDistance;
                 if (dist > 0f)
                     return origin + dir.normalized * dist;
             }
         }
 
-        Vector3 fallbackDir = transform.forward;
-        fallbackDir.y = 0f;
-        if (fallbackDir.sqrMagnitude < 1e-6f)
-            fallbackDir = Vector3.forward;
+        Vector3 fallbackDir = ResolveBodyForwardXZ();
 
         float fallbackDist = CombatMath.RangeMeters(
             item,
@@ -805,8 +838,12 @@ public sealed class CharacterAttacker : MonoBehaviour
     public ItemData ItemFor(string itemId) =>
         string.IsNullOrEmpty(itemId) ? null : GameplayData.GetItem(itemId);
 
-    public Vector3 ResolveOrigin() =>
-        ResolveBodyCenter(transform, _selfCollider);
+    public Vector3 ResolveOrigin()
+    {
+        GameObject root = CharacterBodyResolve.GetBodyRoot(gameObject);
+        Transform basis = root != null ? root.transform : transform;
+        return ResolveBodyCenter(basis, _selfCollider);
+    }
 
     /// <summary>원거리 발사 방향. 엔티티 락온 없음 — 조준축과 동일.</summary>
     public Vector3 ResolveFireDirection() => ResolveSwingAxis();
@@ -838,7 +875,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     float ResolveAim01(ItemData item)
     {
-        if (_aimIntent != null && _aimIntent.AimHeld)
+        if (_aimHeld)
             return 1f;
         if (!IsAiming)
             return 0f;
@@ -903,12 +940,21 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         if (dir.sqrMagnitude < 1e-6f)
-            dir = transform.forward;
+            dir = ResolveBodyForwardXZ();
 
         dir.y = 0f;
         if (dir.sqrMagnitude < 1e-6f)
             return Vector3.forward;
         return dir.normalized;
+    }
+
+    Vector3 ResolveBodyForwardXZ()
+    {
+        GameObject root = CharacterBodyResolve.GetBodyRoot(gameObject);
+        Transform basis = root != null ? root.transform : transform;
+        Vector3 dir = basis.forward;
+        dir.y = 0f;
+        return dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
     }
 
     public bool IsOwnCollider(Collider collider) =>
@@ -1177,12 +1223,12 @@ public sealed class CharacterAttacker : MonoBehaviour
             return 0f;
         }
 
-        Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
+        Collider targetCollider = CharacterBodyResolve.GetBodyCollider(targetHost);
         Vector3 targetCenter = ResolveBodyCenter(targetHost.transform, targetCollider);
 
         if (!AimPartResolver.TryResolve(
                 targetHost.Body,
-                _aimIntent != null ? _aimIntent.PreferredPartId : BodyPartIds.Torso,
+                PreferredPartId,
                 out string aimedPart))
         {
             EmitJudgedGate(context, resolveMode, AttackPerformResult.NoTarget, item, origin);
@@ -1290,7 +1336,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             damage = 0;
 
         if (surpriseMelee == SurpriseMeleeKind.Stun &&
-            targetHost.TryGetComponent(out CharacterPainHost targetPain))
+            CharacterBodyResolve.TryGetInBody(targetHost, out CharacterPainHost targetPain))
             targetPain.ApplySurpriseStun(CombatSurprise.StunSeconds);
 
         float jinIn = impulseJinOverride >= 0f
@@ -1453,7 +1499,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void TickAimProgress(float dt)
     {
-        if (_aimIntent != null && _aimIntent.AimHeld)
+        if (_aimHeld)
         {
             _aim01 = 1f;
             return;

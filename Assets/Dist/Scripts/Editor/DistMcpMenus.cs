@@ -86,6 +86,8 @@ internal static class DistMcpMenus
         Root + "/Character/Ensure Combat Hit Stop";
     public const string CharacterOrganizeNpcSampleBody =
         Root + "/Character/Organize NpcSample Body Hierarchy";
+    public const string CharacterEnsureNpcSampleBodyRefs =
+        Root + "/Character/Ensure NpcSample Body Refs";
     public const string CharacterEnsureEmote =
         Root + "/Character/Ensure Character Emote";
 

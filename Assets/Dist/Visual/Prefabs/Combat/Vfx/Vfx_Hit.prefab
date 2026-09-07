@@ -224,7 +224,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0.25, b: 0.2, a: 1}
+      maxColor: {r: 1, g: 0.81892806, b: 0.8066038, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -4908,4 +4908,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::VfxChannelTicker
   _timeChannel: 1
+  _persist: 0
   _maxLifetimeSeconds: 0.65

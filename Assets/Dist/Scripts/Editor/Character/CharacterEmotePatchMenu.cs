@@ -230,21 +230,24 @@ public static class CharacterEmotePatchMenu
             changed = true;
         }
 
-        if (go.GetComponent<CharacterMoodEmoteSource>() == null)
+        // Strip legacy glue MBs folded into CharacterEmoteHost.
+        Component mood = go.GetComponent("CharacterMoodEmoteSource");
+        if (mood != null)
         {
             if (recordUndo)
-                Undo.AddComponent<CharacterMoodEmoteSource>(go);
+                Undo.DestroyObjectImmediate(mood);
             else
-                go.AddComponent<CharacterMoodEmoteSource>();
+                UnityEngine.Object.DestroyImmediate(mood);
             changed = true;
         }
 
-        if (go.GetComponent<CharacterCombatEmoteBridge>() == null)
+        Component combat = go.GetComponent("CharacterCombatEmoteBridge");
+        if (combat != null)
         {
             if (recordUndo)
-                Undo.AddComponent<CharacterCombatEmoteBridge>(go);
+                Undo.DestroyObjectImmediate(combat);
             else
-                go.AddComponent<CharacterCombatEmoteBridge>();
+                UnityEngine.Object.DestroyImmediate(combat);
             changed = true;
         }
 

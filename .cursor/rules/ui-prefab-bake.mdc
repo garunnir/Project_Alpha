@@ -1,6 +1,7 @@
 ---
 description: UI 프리팹 전체 베이크는 일회성 — 베이크 후 스크립트 삭제 (손수 레이아웃 덮어쓰기 방지)
-alwaysApply: true
+globs: Assets/Dist/Scripts/Editor/**/*,Assets/Dist/MCP/**/*
+alwaysApply: false
 ---
 
 # Prefab Bake Scripts (일회성)

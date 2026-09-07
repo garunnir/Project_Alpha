@@ -88,7 +88,7 @@ public sealed class CharacterClimateHost : MonoBehaviour
         TryGetComponent(out _gearHost);
         _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
         _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _movement);
+        _movement = CharacterBodyResolve.GetInBody<PlayerMovement>(this);
         _bodyTemp.Changed += OnBodyTempChanged;
     }
 
@@ -243,7 +243,8 @@ public sealed class CharacterClimateHost : MonoBehaviour
 
     float ResolveLiquidWetnessGain()
     {
-        if (!TryGetComponent(out CharacterState state))
+        CharacterState state = _characterState;
+        if (state == null)
             return 0f;
 
         if (state.IsDiving)

@@ -46,8 +46,11 @@ public static class PlayerSightVisionBinder
         innerSpotAngleDegrees = CharacterVisionDefaults.SpotAngleDegrees * CharacterVisionDefaults.InnerSpotAngleRatio;
 
         CharacterVision vision = s_boundVision;
-        if (vision == null && s_boundState != null)
-            s_boundState.TryGetComponent(out vision);
+        if (vision == null)
+        {
+            vision = ResolveVision(s_boundState);
+            s_boundVision = vision;
+        }
 
         if (vision == null)
             return false;
@@ -85,9 +88,7 @@ public static class PlayerSightVisionBinder
         }
 
         s_boundState = state;
-        s_boundVision = null;
-        if (state != null)
-            state.TryGetComponent(out s_boundVision);
+        s_boundVision = ResolveVision(state);
 
         s_lastRange = -1f;
         s_lastSpotAngle = -1f;
@@ -153,7 +154,10 @@ public static class PlayerSightVisionBinder
 
         CharacterVision vision = s_boundVision;
         if (vision == null)
-            host.Body.TryGetComponent(out vision);
+        {
+            vision = ResolveVision(host.Body);
+            s_boundVision = vision;
+        }
 
         float targetRange = vision != null
             ? vision.EffectiveDetectRadius
@@ -207,4 +211,10 @@ public static class PlayerSightVisionBinder
 
         return s_spotLight != null;
     }
+
+    static CharacterVision ResolveVision(Component bodyMember) =>
+        bodyMember != null ? CharacterBodyResolve.GetInBody<CharacterVision>(bodyMember) : null;
+
+    static CharacterVision ResolveVision(GameObject body) =>
+        body != null ? body.GetBodyComponent<CharacterVision>() : null;
 }

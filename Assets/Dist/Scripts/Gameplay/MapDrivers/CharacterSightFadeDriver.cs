@@ -29,7 +29,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         _playerState = playerState;
         _playerVision = null;
         if (_playerState != null)
-            _playerState.TryGetComponent(out _playerVision);
+            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
     }
 
     public void SetPlayerBody(Transform playerBody) => _playerBody = playerBody;
@@ -51,8 +51,8 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         if (!_isActive || _playerState == null || _playerBody == null)
             return;
 
-        if (_playerVision == null)
-            _playerState.TryGetComponent(out _playerVision);
+        if (_playerVision == null && _playerState != null)
+            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
 
         float radius = _playerVision != null
             ? _playerVision.EffectiveDetectRadius
@@ -87,7 +87,8 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
             if (bodyHost == null)
                 continue;
 
-            if (!bodyHost.TryGetComponent(out CharacterSightFadeHost fadeHost))
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            if (fadeHost == null)
                 continue;
 
             fadeHost.ConfigureSettings(in _settings);
@@ -134,7 +135,8 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         for (int i = 0; i < CharacterBodyHost.ActiveCount; i++)
         {
             CharacterBodyHost bodyHost = CharacterBodyHost.GetActive(i);
-            if (bodyHost == null || !bodyHost.TryGetComponent(out CharacterSightFadeHost fadeHost))
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            if (fadeHost == null)
                 continue;
 
             fadeHost.SetPossessedSkip(true);

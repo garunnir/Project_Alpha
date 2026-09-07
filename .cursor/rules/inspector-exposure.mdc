@@ -1,6 +1,7 @@
 ---
 description: Inspector — 무의미 편집 비노출 / 유의미 편집 필수 노출
-alwaysApply: true
+globs: Assets/Dist/Scripts/**/*,Assets/Dist/SOData/**/*
+alwaysApply: false
 ---
 
 # Inspector Exposure

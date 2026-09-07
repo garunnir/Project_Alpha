@@ -36,7 +36,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     CharacterLocomotion _locomotion;
     MapCollisionServices _pendingMapCollision;
     ICharacterMotorDrive _drive;
-    CharacterHitStop _hitStop;
+    CharacterHitStopState _hitStop;
     bool _possessed;
     int _scriptedLocomotionDepth;
     bool _hasTravelLimit;
@@ -139,7 +139,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             _collision.TopologyPushMaxIterations);
         _locomotion.BindMapCollision(_pendingMapCollision);
         _possessed = false;
-        _hitStop = CharacterHitStop.Find(this);
+        _hitStop = CharacterHitStopState.Find(this);
     }
 
     void FixedUpdate()

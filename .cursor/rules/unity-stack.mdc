@@ -1,6 +1,6 @@
 ---
-description: Unity 버전·UniTask·Input·Odin·asmdef (Assets)
-globs: Assets/**
+description: Unity 버전·UniTask·Input·Odin·asmdef (Dist)
+globs: Assets/Dist/**/*
 alwaysApply: false
 ---
 

@@ -16,6 +16,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
     [SerializeField] VaultClipCatalog _vaultClipCatalog;
     [SerializeField] FishingLootCatalog _fishingLootCatalog;
     [SerializeField] FishWorkClipCatalog _fishWorkClipCatalog;
+    [SerializeField] FarmWorkClipCatalog _farmWorkClipCatalog;
 
     void Start()
     {
@@ -34,6 +35,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         CharacterHostility.BindCatalog(_factionCatalog);
         MapFishRuntimeBridge.BindCatalogs(_fishingLootCatalog, _fishWorkClipCatalog);
+        FarmWorkClipCatalog.BindRuntime(_farmWorkClipCatalog);
 
         IWorldGrid worldGrid = _tileMapManager.WorldGrid;
         if (worldGrid != null)
@@ -171,7 +173,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         EnsureSwimHosts(instance);
         EnsureVaultHost(instance, services, _vaultClipCatalog);
-        EnsureFishCellActionHost(instance, _fishWorkClipCatalog);
+        BindCellWorkClips(instance, _farmWorkClipCatalog, _fishWorkClipCatalog);
 
         CharacterAttacker attacker = instance.GetBodyComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
@@ -207,7 +209,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindCharacterHearing(services.LineCast);
         EnsureSwimHostsOnSceneCharacters();
         EnsureVaultHostsOnSceneCharacters(services, _vaultClipCatalog);
-        EnsureFishCellActionHostsOnSceneCharacters(_fishWorkClipCatalog);
+        BindCellWorkClipsOnSceneCharacters(_farmWorkClipCatalog, _fishWorkClipCatalog);
         BindWorkAnimOnSceneCharacters();
 
         var attackers = FindObjectsByType<CharacterAttacker>(
@@ -302,10 +304,12 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (instance.GetBodyComponent<CharacterBodyHost>() == null)
             return;
 
-        if (instance.GetComponent<CharacterSwimHost>() == null)
-            instance.AddComponent<CharacterSwimHost>();
-        if (instance.GetComponent<CharacterBreathHost>() == null)
-            instance.AddComponent<CharacterBreathHost>();
+        if (instance.GetBodyComponent<CharacterSwimHost>() != null)
+            return;
+
+        Debug.LogError(
+            $"[MapGameplayBootstrap] '{instance.name}' needs CharacterSwimHost on the prefab (root with CharacterState).",
+            instance);
     }
 
     static void EnsureVaultHostsOnSceneCharacters(
@@ -351,27 +355,47 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         Animator animator = instance.GetComponentInChildren<Animator>(true);
         if (animator != null && animator.GetComponent<CharacterVaultIkHost>() == null)
-            animator.gameObject.AddComponent<CharacterVaultIkHost>();
-    }
-
-    static void EnsureFishCellActionHostsOnSceneCharacters(FishWorkClipCatalog fishClips)
-    {
-        var hosts = FindObjectsByType<FishCellActionHost>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < hosts.Length; i++)
         {
-            if (fishClips != null)
-                hosts[i].SetClipCatalog(fishClips);
+            Debug.LogError(
+                $"[MapGameplayBootstrap] '{instance.name}' needs CharacterVaultIkHost on the Animator GO (prefab).",
+                animator);
         }
     }
 
-    static void EnsureFishCellActionHost(GameObject instance, FishWorkClipCatalog fishClips)
+    static void BindCellWorkClipsOnSceneCharacters(
+        FarmWorkClipCatalog farmClips,
+        FishWorkClipCatalog fishClips)
     {
-        if (instance == null || fishClips == null)
+        var hosts = FindObjectsByType<CharacterActionHost>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < hosts.Length; i++)
+            ApplyCellWorkClips(hosts[i], farmClips, fishClips);
+    }
+
+    static void BindCellWorkClips(
+        GameObject instance,
+        FarmWorkClipCatalog farmClips,
+        FishWorkClipCatalog fishClips)
+    {
+        if (instance == null)
             return;
 
-        FishCellActionHost host = instance.GetBodyComponent<FishCellActionHost>();
-        host?.SetClipCatalog(fishClips);
+        CharacterActionHost host = instance.GetBodyComponent<CharacterActionHost>();
+        ApplyCellWorkClips(host, farmClips, fishClips);
+    }
+
+    static void ApplyCellWorkClips(
+        CharacterActionHost host,
+        FarmWorkClipCatalog farmClips,
+        FishWorkClipCatalog fishClips)
+    {
+        if (host == null)
+            return;
+
+        if (farmClips != null)
+            host.SetFarmWorkClips(farmClips);
+        if (fishClips != null)
+            host.SetFishWorkClips(fishClips);
     }
 }

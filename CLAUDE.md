@@ -12,7 +12,8 @@
 ### Before Starting Any Task
 1. Read the relevant skill file from `.claude/skills/` when creating or modifying Unity scripts — skip for docs-only, config, or single-line fixes
 2. If the task is complex (>30 min estimated), write a plan first and wait for approval
-3. Break large tasks into small, verifiable steps
+3. Large tasks: break into **verifiable execution steps** (order/phasing — not “minimum diff” optimization). Plan/Handoff에 **Done·하지 말 것·검증** 블록 (`agent-completion-gate.mdc`)
+4. **Scope:** match the **user's requested scope** — neither shrink for "minimum diff" nor expand for drive-by refactors. If your estimate **exceeds** what they asked, confirm before editing (`agent-scope.mdc` §Scope)
 
 ### While Working
 - Make one logical change at a time
@@ -23,6 +24,7 @@
 ### After Completing Any Task
 - List all files created or modified
 - If something feels uncertain, flag it explicitly
+- **agent completion gate** (`.claude/checklists/agent-completion-gate.md` + `agent-completion-gate.mdc`): 구현·리팩터·이주·프리팹·런타임 동작 — **컴파일만 Done 금지**. 보고: Done / Incomplete / Partial
 - **post-task checklist** (`.claude/checklists/post-task.md`):
   - **Skip** (token/속도 우선): ≤2 files, net ≤40 lines, typo/comment/format, handoff 구현만
   - **Required**: ≥3 files, public API·직렬화·새 타입/파이프라인, migration-parity 해당

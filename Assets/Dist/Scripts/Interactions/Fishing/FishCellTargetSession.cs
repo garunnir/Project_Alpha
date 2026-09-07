@@ -5,12 +5,12 @@
 using IsoTilemap;
 using UnityEngine;
 
-public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSession, IUiCancelConsumer
+public sealed class FishCellTargetSession : IFarmCellTargetSession, ICellTargetSessionTickable
 {
     static FishCellTargetSession _active;
 
     GridCursor _gridCursor;
-    FishCellActionHost _actionHost;
+    CharacterActionHost _actionHost;
     FishCellActionKind _kind;
     ItemStack _stack;
     InventoryContainer _container;
@@ -27,8 +27,18 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         if (IsActive || UIConstruction.IsOpen || ConstructionCellTargetSession.IsActive)
             return false;
 
-        FishCellTargetSession session = EnsureInstance();
-        return session.BeginInternal(kind, stack, container);
+        var session = new FishCellTargetSession();
+        if (!session.BeginInternal(kind, stack, container))
+            return false;
+
+        if (!CellTargetSessionDriver.TrySetActive(session))
+        {
+            session.EndTargeting();
+            return false;
+        }
+
+        _active = session;
+        return true;
     }
 
     public static bool TryConsumeRightClick()
@@ -40,21 +50,7 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         return true;
     }
 
-    static FishCellTargetSession EnsureInstance()
-    {
-        if (_active != null)
-            return _active;
-
-        var go = new GameObject(nameof(FishCellTargetSession));
-        _active = go.AddComponent<FishCellTargetSession>();
-        return _active;
-    }
-
-    void OnEnable() => UiCancelRouter.Register(this);
-
-    void OnDisable() => UiCancelRouter.Unregister(this);
-
-    void Update()
+    public void Tick()
     {
         _gridCursor?.SyncFromPointer();
         TryHandlePrimaryClick();
@@ -80,37 +76,53 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         _stack = stack;
         _container = container;
 
-        _gridCursor = FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
+        _gridCursor = Object.FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
         if (_gridCursor == null)
         {
             Debug.LogError("[FishCellTargetSession] GridCursor not found.");
             return false;
         }
 
-        ResolveActionHost();
+        _actionHost = ResolvePossessedActionHost();
         if (_actionHost == null)
         {
-            Debug.LogError("[FishCellTargetSession] FishCellActionHost missing on possessed body.");
+            Debug.LogError("[FishCellTargetSession] CharacterActionHost missing on possessed body.");
             return false;
         }
 
-        _active = this;
+        BindWorkAnimOnGearHost(PlayerGearHost.Active);
+
         _gridCursor.BeginTargeting(this);
         return true;
     }
 
-    void ResolveActionHost()
+    static CharacterActionHost ResolvePossessedActionHost()
     {
-        _actionHost = null;
+        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        if (session != null)
+            return session;
+
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            if (!gear.TryGetComponent(out _actionHost))
-                _actionHost = gear.gameObject.AddComponent<FishCellActionHost>();
+            CharacterActionHost fromGear = gear.GetBodyComponent<CharacterActionHost>();
+            if (fromGear != null)
+                return fromGear;
         }
 
-        if (_actionHost == null && PlayerInventoryRuntime.Active?.Host != null)
-            PlayerInventoryRuntime.Active.Host.TryGetComponent(out _actionHost);
+        return PlayerInventoryRuntime.Active?.Host != null
+            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+            : null;
+    }
+
+    static void BindWorkAnimOnGearHost(PlayerGearHost gear)
+    {
+        if (gear == null)
+            return;
+
+        CharacterBodyRoot bodyRoot = gear.GetComponentInParent<CharacterBodyRoot>();
+        if (bodyRoot != null)
+            CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
     }
 
     public bool CanApply(Vector3Int cell)
@@ -144,11 +156,10 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         FishCellActionKind kind = _kind;
         ItemStack stack = _stack;
         InventoryContainer container = _container;
-        FishCellActionHost host = _actionHost;
+        CharacterActionHost host = _actionHost;
 
         EndTargeting();
-        host.TryRun(kind, cell, stack, container);
-        Destroy(gameObject);
+        host.TryRunFish(kind, cell, stack, container);
         return true;
     }
 
@@ -160,7 +171,6 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
             return;
 
         EndTargeting();
-        Destroy(gameObject);
     }
 
     public bool TryHandleCancel()
@@ -175,9 +185,8 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
     void EndTargeting()
     {
         _gridCursor?.EndTargeting();
+        CellTargetSessionDriver.ClearActive(this);
         if (ReferenceEquals(_active, this))
             _active = null;
     }
-
-    void OnDestroy() => EndTargeting();
 }

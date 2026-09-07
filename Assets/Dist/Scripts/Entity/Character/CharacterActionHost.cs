@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using UnityEngine;
 
 [DefaultExecutionOrder(-50)]
@@ -18,6 +19,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     }
 
     [SerializeField] UICraftingController _crafting;
+    [SerializeField] FarmWorkClipCatalog _farmWorkClips;
+    [SerializeField] FishWorkClipCatalog _fishWorkClips;
 
     readonly List<Job> _queue = new();
     readonly List<BodyPartEffect> _effectScratch = new(16);
@@ -27,11 +30,12 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     InventoryTimedMoveHost _moveHost;
     CharacterAttacker _attacker;
     CharacterArriveHost _arriveHost;
-    FarmCellActionHost _farmActionHost;
-    FishCellActionHost _fishActionHost;
     CharacterVaultHost _vaultHost;
-    CharacterActionKind _currentKind;
     CharacterMotor _motor;
+    CharacterCellFarmPipeline _farm;
+    CharacterCellFishPipeline _fish;
+    CharacterCellConstructionPipeline _construction;
+    CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
 
@@ -74,9 +78,11 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                 case CharacterActionKind.Cell:
                     if (_vaultHost != null && _vaultHost.IsBusy)
                         return _vaultHost.Progress01;
-                    if (_fishActionHost != null && _fishActionHost.IsBusy)
-                        return _fishActionHost.WorkProgress01;
-                    return _farmActionHost != null ? _farmActionHost.WorkProgress01 : 0f;
+                    if (_construction != null && _construction.IsBusy)
+                        return _construction.WorkProgress01;
+                    if (_fish != null && _fish.IsBusy)
+                        return _fish.WorkProgress01;
+                    return _farm != null ? _farm.WorkProgress01 : 0f;
                 default:
                     return 0f;
             }
@@ -85,18 +91,48 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
 
     void Awake()
     {
-        TryGetComponent(out _bodyHost);
-        TryGetComponent(out _gearHost);
-        TryGetComponent(out _moveHost);
-        TryGetComponent(out _attacker);
-        TryGetComponent(out _arriveHost);
-        TryGetComponent(out _farmActionHost);
-        TryGetComponent(out _fishActionHost);
-        TryGetComponent(out _vaultHost);
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+        ResolveBodyRefs();
+        EnsureCellPipelines();
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
+    }
+
+    void ResolveBodyRefs()
+    {
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _bodyHost = refs.BodyHost;
+            _gearHost = refs.GearHost;
+            _attacker = refs.Attacker;
+            _motor = refs.Motor;
+            _vaultHost = refs.VaultHost;
+        }
+        else
+        {
+            TryGetComponent(out _bodyHost);
+            TryGetComponent(out _gearHost);
+            TryGetComponent(out _attacker);
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+            _vaultHost = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
+        }
+
+        if (_moveHost == null)
+            TryGetComponent(out _moveHost);
+        _arriveHost = CharacterBodyResolve.GetInBody<CharacterArriveHost>(this);
+    }
+
+    void EnsureCellPipelines()
+    {
+        if (_farmWorkClips == null)
+            _farmWorkClips = FarmWorkClipCatalog.Runtime;
+        if (_fishWorkClips == null)
+            _fishWorkClips = FishWorkClipCatalog.Runtime;
+
+        _farm ??= new CharacterCellFarmPipeline(this, _arriveHost, _motor, _farmWorkClips);
+        _fish ??= new CharacterCellFishPipeline(this, _arriveHost, _motor, _fishWorkClips);
+        _construction ??= new CharacterCellConstructionPipeline(this, _arriveHost, _motor);
     }
 
     void OnEnable() => UiCancelRouter.Register(this);
@@ -108,6 +144,9 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         if (_currentKind != CharacterActionKind.Combat)
             CancelCurrentWork();
         _currentKind = CharacterActionKind.None;
+        _farm?.OnOwnerDisabled();
+        _fish?.OnOwnerDisabled();
+        _construction?.OnOwnerDisabled();
     }
 
     public bool TryHandleCancel()
@@ -125,6 +164,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     {
         // Rule 6: scratch 재사용. TickScale·소스 idle 폴링만. 할당 없음.
         RefreshTickScale();
+        TickCellWork();
+
         if (_currentKind == CharacterActionKind.None)
         {
             TryDequeue();
@@ -137,6 +178,73 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         _currentKind = CharacterActionKind.None;
         Changed?.Invoke();
         TryDequeue();
+    }
+
+    void TickCellWork()
+    {
+        if (_currentKind != CharacterActionKind.Cell)
+            return;
+
+        float dt = TimeScaleService.Delta(
+            _motor != null && _motor.IsPossessed
+                ? TimeScaleChannel.Player
+                : TimeScaleChannel.World);
+        dt *= _tickScale;
+
+        if (_farm != null && _farm.IsBusy)
+            _farm.Tick(dt);
+        if (_fish != null && _fish.IsBusy)
+            _fish.Tick(dt);
+        if (_construction != null && _construction.IsBusy)
+            _construction.Tick(dt);
+    }
+
+    public void BindCellWorkAnim(Animator animator, int workLayerIndex)
+    {
+        EnsureCellPipelines();
+        _farm?.BindWorkAnim(animator, workLayerIndex);
+        _fish?.BindWorkAnim(animator, workLayerIndex);
+        _construction?.BindWorkAnim(animator, workLayerIndex);
+    }
+
+    public void SetFishWorkClips(FishWorkClipCatalog clips)
+    {
+        _fishWorkClips = clips;
+        EnsureCellPipelines();
+        _fish?.SetClipCatalog(clips);
+    }
+
+    public void SetFarmWorkClips(FarmWorkClipCatalog clips)
+    {
+        _farmWorkClips = clips;
+        EnsureCellPipelines();
+        _farm?.SetClipCatalog(clips);
+    }
+
+    public bool TryRunFarm(
+        FarmCellActionKind kind,
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container)
+    {
+        EnsureCellPipelines();
+        return _farm != null && _farm.TryRun(kind, cell, stack, container);
+    }
+
+    public bool TryRunFish(
+        FishCellActionKind kind,
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container)
+    {
+        EnsureCellPipelines();
+        return _fish != null && _fish.TryRun(kind, cell, stack, container);
+    }
+
+    public bool TryRunConstruction(ConstructionData data, Vector3Int cell, int facingQuarters)
+    {
+        EnsureCellPipelines();
+        return _construction != null && _construction.TryRun(data, cell, facingQuarters);
     }
 
     public bool TryRunOrEnqueue(CharacterActionKind kind, Func<bool> start)
@@ -253,8 +361,9 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
             case CharacterActionKind.Combat:
                 return _attacker != null && _attacker.IsActionBusy;
             case CharacterActionKind.Cell:
-                return (_farmActionHost != null && _farmActionHost.IsBusy) ||
-                       (_fishActionHost != null && _fishActionHost.IsBusy) ||
+                return (_farm != null && _farm.IsBusy) ||
+                       (_fish != null && _fish.IsBusy) ||
+                       (_construction != null && _construction.IsBusy) ||
                        (_arriveHost != null && _arriveHost.IsBusy) ||
                        (_vaultHost != null && _vaultHost.IsBusy);
             default:
@@ -276,12 +385,12 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                 _crafting?.CancelRunningCraft();
                 break;
             case CharacterActionKind.Cell:
-                _farmActionHost?.Cancel();
-                _fishActionHost?.Cancel();
+                _farm?.Cancel();
+                _fish?.Cancel();
+                _construction?.Cancel();
                 _arriveHost?.Cancel();
                 _vaultHost?.Cancel();
                 break;
         }
     }
-
 }

@@ -51,17 +51,22 @@ public sealed class CharacterHitReact : MonoBehaviour
     void Awake()
     {
         _bodyHost = GetComponent<CharacterBodyHost>();
-        TryGetComponent(out _motor);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _attacker);
-        TryGetComponent(out _appearance);
+        _appearance = CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
         TryGetComponent(out _gear);
         TryGetComponent(out _pain);
         TryGetComponent(out _skillsHost);
         TryGetComponent(out _imbalance);
-        TryGetComponent(out _animator);
+        _animator = CharacterBodyResolve.GetInBody<Animator>(this);
         if (_animator == null)
-            _animator = GetComponentInChildren<Animator>();
+        {
+            Debug.LogError(
+                $"[CharacterHitReact] '{name}' needs an Animator under the body root.",
+                this);
+        }
+
         CacheHurtParams();
     }
 

@@ -7,12 +7,12 @@ using IsoTilemap;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTargetSession, IUiCancelConsumer
+public sealed class ConstructionCellTargetSession : IFarmCellTargetSession, ICellTargetSessionTickable
 {
     static ConstructionCellTargetSession _active;
 
     GridCursor _gridCursor;
-    ConstructionActionHost _actionHost;
+    CharacterActionHost _actionHost;
     ConstructionData _data;
     CellTargetPreview3D _preview;
     CraftingMaterialPool _pool;
@@ -32,8 +32,18 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
             FishCellTargetSession.IsActive)
             return false;
 
-        ConstructionCellTargetSession session = EnsureInstance();
-        return session.BeginInternal(data);
+        var session = new ConstructionCellTargetSession();
+        if (!session.BeginInternal(data))
+            return false;
+
+        if (!CellTargetSessionDriver.TrySetActive(session))
+        {
+            session.EndTargeting();
+            return false;
+        }
+
+        _active = session;
+        return true;
     }
 
     public static bool TryConsumeRightClick()
@@ -45,21 +55,7 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
         return true;
     }
 
-    static ConstructionCellTargetSession EnsureInstance()
-    {
-        if (_active != null)
-            return _active;
-
-        var go = new GameObject(nameof(ConstructionCellTargetSession));
-        _active = go.AddComponent<ConstructionCellTargetSession>();
-        return _active;
-    }
-
-    void OnEnable() => UiCancelRouter.Register(this);
-
-    void OnDisable() => UiCancelRouter.Unregister(this);
-
-    void Update()
+    public void Tick()
     {
         _gridCursor?.SyncFromPointer();
         TryHandleRotate();
@@ -92,19 +88,19 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
     {
         _data = data;
         _pool = ConstructionService.CreatePoolFromActivePlayer();
-        _mapManager = FindFirstObjectByType<TileMapManager>();
+        _mapManager = Object.FindFirstObjectByType<TileMapManager>();
 
-        _gridCursor = FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
+        _gridCursor = Object.FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
         if (_gridCursor == null)
         {
             Debug.LogError("[ConstructionCellTargetSession] GridCursor not found.");
             return false;
         }
 
-        ResolveActionHost();
+        _actionHost = ResolvePossessedActionHost();
         if (_actionHost == null)
         {
-            Debug.LogError("[ConstructionCellTargetSession] ConstructionActionHost missing on possessed body.");
+            Debug.LogError("[ConstructionCellTargetSession] CharacterActionHost missing on possessed body.");
             return false;
         }
 
@@ -121,27 +117,27 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
             _preview.SetTileGhostPrefab(def.prefab);
         }
 
-        _active = this;
         _gridCursor.BeginTargeting(this);
         return true;
     }
 
-    void ResolveActionHost()
+    static CharacterActionHost ResolvePossessedActionHost()
     {
-        _actionHost = null;
+        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        if (session != null)
+            return session;
+
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            if (!gear.TryGetComponent(out _actionHost))
-                _actionHost = gear.gameObject.AddComponent<ConstructionActionHost>();
+            CharacterActionHost fromGear = gear.GetBodyComponent<CharacterActionHost>();
+            if (fromGear != null)
+                return fromGear;
         }
 
-        if (_actionHost == null && PlayerInventoryRuntime.Active?.Host != null)
-        {
-            if (!PlayerInventoryRuntime.Active.Host.TryGetComponent(out _actionHost))
-                _actionHost = PlayerInventoryRuntime.Active.Host.gameObject
-                    .AddComponent<ConstructionActionHost>();
-        }
+        return PlayerInventoryRuntime.Active?.Host != null
+            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+            : null;
     }
 
     public bool CanApply(Vector3Int cell)
@@ -170,7 +166,6 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
 
     void NotifyHoverForCurrent()
     {
-        // Force hover refresh after rotate — GridCursor keeps last cell via Sync.
         _gridCursor?.SyncFromPointer();
     }
 
@@ -181,11 +176,10 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
 
         ConstructionData data = _data;
         int facing = _preview != null ? _preview.FacingQuarters : 0;
-        ConstructionActionHost host = _actionHost;
+        CharacterActionHost host = _actionHost;
 
         EndTargeting();
-        host.TryRun(data, cell, facing);
-        Destroy(gameObject);
+        host.TryRunConstruction(data, cell, facing);
         return true;
     }
 
@@ -197,7 +191,6 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
             return;
 
         EndTargeting();
-        Destroy(gameObject);
     }
 
     public bool TryHandleCancel()
@@ -214,12 +207,8 @@ public sealed class ConstructionCellTargetSession : MonoBehaviour, IFarmCellTarg
         _gridCursor?.EndTargeting();
         _preview?.Dispose();
         _preview = null;
+        CellTargetSessionDriver.ClearActive(this);
         if (ReferenceEquals(_active, this))
             _active = null;
-    }
-
-    void OnDestroy()
-    {
-        EndTargeting();
     }
 }

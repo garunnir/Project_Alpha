@@ -1,6 +1,6 @@
 ---
-description: Assets 작업 시 Rule 2/6·프리팹 AddComponent 금지
-globs: Assets/**
+description: Dist Assets 작업 시 Rule 2/6·프리팹 AddComponent 금지
+globs: Assets/Dist/**/*
 alwaysApply: false
 ---
 

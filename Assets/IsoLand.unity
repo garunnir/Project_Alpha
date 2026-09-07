@@ -16427,6 +16427,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::TileMapManager
   _bloodHost: {fileID: 0}
   _plantHost: {fileID: 0}
+  _digHost: {fileID: 0}
+  _stratumProfile: {fileID: 0}
   _liquidHost: {fileID: 0}
   _loader: {fileID: 1243572175}
   _saver: {fileID: 1243572173}
@@ -16539,6 +16541,8 @@ MonoBehaviour:
   _fishingLootCatalog: {fileID: 11400000, guid: 8ea655a79277e3b4c9c5ba9b7f911e6f,
     type: 2}
   _fishWorkClipCatalog: {fileID: 11400000, guid: 4f62a6e58fb313e41bd9d650e82578c0,
+    type: 2}
+  _farmWorkClipCatalog: {fileID: 11400000, guid: bc90b230790101844b130f59dbff8d7a,
     type: 2}
 --- !u!114 &299715463
 MonoBehaviour:

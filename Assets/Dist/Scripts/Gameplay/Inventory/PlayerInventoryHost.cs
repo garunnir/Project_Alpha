@@ -256,7 +256,7 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
         if (hub == null)
             return null;
 
-        return hub.TryGetComponent(out CharacterState state) ? state.gameObject : null;
+        return CharacterBodyResolve.TryGetInBody(hub, out CharacterState state) ? state.gameObject : null;
     }
 
     public bool RegisterToSession(InventorySession session) =>

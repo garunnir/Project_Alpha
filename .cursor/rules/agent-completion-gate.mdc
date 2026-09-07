@@ -1,0 +1,38 @@
+---
+description: 범용 완료 게이트 — 컴파일/패치만으로 Done 금지, Plan Done·정적·런타임 검증 (Dist 구현 시)
+globs: Assets/Dist/**/*
+alwaysApply: false
+---
+
+# Agent Completion Gate
+
+## When
+구현·리팩터·이주·프리팹/씬·런타임 동작에 손대는 **Agent 턴**.  
+경량 예외: ≤2파일·net ≤40줄·typo/handoff 좁은 패치 — `.claude/checklists/agent-completion-gate.md` §When.
+
+## Why
+「핵심 패치만 하고 Done」→ 하이브리드·미배선·Play 회귀를 사용자 재현으로 메우는 실패 패턴 (리팩터·이주 공통).
+
+## MUST
+1. **Plan/Handoff에 Done(완료 조건)·하지 말 것·검증** 블록이 있어야 Agent 구현 시작 (없으면 먼저 적거나 사용자 확인).
+2. 완료 보고 전 **`.claude/checklists/agent-completion-gate.md`** 해당 항목 충족.
+3. `migration-parity` 해당 → `.claude/checklists/migration-parity.md` 추가.
+4. 동작·입력·표시를 건드렸으면 Play(또는 Plan에 적은 동등 검증). **못 하면 Done 아님** — `Incomplete` / Play Pending.
+5. **Unity 콘솔 Error 0** (MCP `Unity_GetConsoleLogs` / `Unity_ReadConsole`). 컴파일 에러 남으면 Done 금지.
+6. 보고는 **Done · Incomplete · Partial** 중 하나 (Pending 명시).
+
+## MUST NOT
+- 컴파일·린트만으로 **Done**
+- Plan Done 미충족·범위 밖 혼입을 침묵
+- 하이브리드 resolve/입력 경로를 기본 경로로 켠 채 완료
+- Play 검증 생략 후 사용자에게만 「확인해 주세요」하고 **Done**
+
+## OK
+| OK | Condition |
+|----|-----------|
+| Incomplete + Pending | MCP/Play 막힘 — 막힌 것·다음 검증 한 줄 |
+| Partial | 명시 Pending; 기본 경로 on 선언 없음 |
+| 경량 스킵 | 체크리스트 §When 경량 예외 |
+
+## See also
+`.claude/checklists/agent-completion-gate.md` · `agent-scope.mdc` · `migration-parity.mdc` · `post-task.md`

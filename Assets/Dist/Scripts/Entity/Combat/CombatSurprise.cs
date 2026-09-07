@@ -46,7 +46,7 @@ public static class CombatSurprise
         Vector3 selfFeet = CharacterFeetPose.GetFeetWorld(observerTf);
         Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(subject.transform);
 
-        observer.TryGetComponent(out CharacterState state);
+        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(observer);
         Vector3 forward = CharacterSightForward.ResolveXZ(state, observerTf);
 
         bool visionLock = false;
@@ -54,7 +54,7 @@ public static class CombatSurprise
         if (npcManager != null)
             visionLock = npcManager.TryGetVisionLock(observer, subject);
 
-        observer.TryGetComponent(out CharacterVision vision);
+        CharacterVision vision = CharacterBodyResolve.GetInBody<CharacterVision>(observer);
         return CharacterSightForward.IsWithinCone(
             vision,
             selfFeet,
@@ -79,7 +79,7 @@ public static class CombatSurprise
     public static int ResolveStrength(CharacterBodyHost host)
     {
         if (host != null &&
-            host.TryGetComponent(out CharacterSkillsHost skillsHost) &&
+            CharacterBodyResolve.TryGetInBody(host, out CharacterSkillsHost skillsHost) &&
             skillsHost.Skills != null)
             return skillsHost.Skills.Level(AttributeIds.Str);
         return CombatMath.StrengthBaseline;
@@ -121,7 +121,8 @@ public static class CombatSurprise
         Vector3 origin = CharacterFeetPose.GetFeetWorld(tf);
         Vector3 aimDir = tf.forward;
         float range = 2.5f;
-        if (attacker.TryGetComponent(out CharacterState state))
+        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(attacker);
+        if (state != null)
         {
             Vector3 sight = state.SightDir;
             if (sight.sqrMagnitude > 1e-6f)
@@ -135,7 +136,8 @@ public static class CombatSurprise
             }
         }
 
-        if (attacker.TryGetComponent(out CharacterAttacker atk))
+        CharacterAttacker atk = CharacterBodyResolve.GetInBody<CharacterAttacker>(attacker);
+        if (atk != null)
         {
             ItemData item = atk.ItemFor(atk.ItemId);
             float r = CombatMath.RangeMeters(item, atk.SelectedAction, null);

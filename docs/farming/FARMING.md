@@ -118,8 +118,8 @@ inspect/harvest CatchUp는 이 Kind를 쓴다.
 1. **타겟팅** — `FarmCellTargetSession` + `GridCursor`. 셀 해석은 **카메라 스크린 레이** → `MapPlantHost.ResolveCellFromWorld` (Physics miss 시 발 높이 수평면). 호버 셀마다 커서 표시. `CanApply(cell)` 기준 **녹색=가능 / 붉은색=불가**. 심기 프리뷰는 `Resources/Farming/FarmPlantTargetPreview` (MeshVisual + SpriteVisual 자식 — 같은 GO에 MeshFilter/SpriteRenderer 금지).
 2. **확정** — 녹색 칸에서만 LMB·UiSubmit. 붉은 칸 클릭 무시.
 3. **취소** — 타겟팅 중 RMB·ESC (`UiCancelPriority.FarmCellTarget`). 건설 UI 열림·농사 세션 동시 불가.
-4. **Arrive** — `FarmCellActionHost` → `CharacterArriveHost` + `NpcSteer` (possessed도 `CharacterMotor.ScriptedLocomotion`, Player TimeScale). 이동 목표는 클릭 셀 중심. **심기**는 목표 셀 기준 XZ Chebyshev ≤ `MapPlantConsts.PlantActionRangeCells`(1)이면 Work 진입(셀 중심 불필요). 경작·비료·수확은 `CellArriveStoppingDistance`(= CellSize × 0.55) 월드 도착. 자동이동 중 공통 게이지 위치에 `Img_AutoProgressIcon` 표시(fill 숨김).
-5. **Work** — 심기·경작·수확: `CharacterFarmWorkHost` + `FarmWorkClipCatalog`. 심기/경작 대기초(`PlantWorkDurationSeconds`/`TillWorkDurationSeconds`, Catalog Inspector)와 클립 length의 max. `CharacterActionHost.Progress01`(Map) → 공통 게이지 fill. 비료는 Work 없음.
+4. **Arrive** — `CharacterActionHost.TryRunFarm` → `CharacterCellFarmPipeline` → `CharacterArriveHost` + `NpcSteer` (possessed도 `CharacterMotor.ScriptedLocomotion`, Player TimeScale). 이동 목표는 클릭 셀 중심. **심기**는 목표 셀 기준 XZ Chebyshev ≤ `MapPlantConsts.PlantActionRangeCells`(1)이면 Work 진입(셀 중심 불필요). 경작·비료·수확은 `CellArriveStoppingDistance`(= CellSize × 0.55) 월드 도착. 자동이동 중 공통 게이지 위치에 `Img_AutoProgressIcon` 표시(fill 숨김).
+5. **Work** — 심기·경작·수확: `CharacterTimedWorkPlayback` + `FarmWorkClipCatalog`. 심기/경작 대기초(`PlantWorkDurationSeconds`/`TillWorkDurationSeconds`, Catalog Inspector)와 클립 length의 max. `CharacterActionHost.Progress01`(Cell) → 공통 게이지 fill. 비료는 Work 없음.
 6. **적용** — `MapPlantService.Try*At(cell)` (발밑 게이트 없음). 심기는 Apply 직전 `IsWithinPlantActionRange` 재검증.
 
 `GetDisabledReason`(메뉴)은 아이템 소유·무드·DIG 품질 등 **세션 시작 가능**만. 특정 칸 가능 여부는 타겟팅 프리뷰가 담당.

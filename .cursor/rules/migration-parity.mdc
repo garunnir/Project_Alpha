@@ -1,12 +1,12 @@
 ---
-description: 스택/경로 교체·하이브리드 도입 시 동작 패리티 선확보 — 반쯤 켠 채 사용자 재현 뺑뺑이 금지
-alwaysApply: true
+description: 스택/경로 교체·하이브리드 도입 시 동작 패리티 선확보 — 반쯤 켠 채 사용자 재현 뺑뺑이 금지 (이주·교체 작업 시 읽기)
+alwaysApply: false
 ---
 
 # Migration Parity (반쯤 켠 채 금지)
 
 ## When
-라이브러리·렌더·입력·UI·저장 등 **기존 경로를 새 경로로 바꾸거나 둘을 섞을 때** (부분 교체·플래그·하이브리드 포함).
+라이브러리·렌더·입력·UI·저장 등 **기존 경로를 새 경로로 바꾸거나 둘을 섞을 때** (부분 교체·플래그·하이브리드 포함). **On-demand** — 이주·교체 작업 시 이 파일을 읽는다.
 
 **기능 불변** 최적화·리팩터·내부 구현 교체(가상화·풀링·캐시·렌더 경로만 변경 등)도 동일 — 사용자-facing 동작을 바꾸지 않는다고 해도 **패리티 계약 + 검증 체크리스트** 대상.
 
@@ -36,4 +36,4 @@ alwaysApply: true
 | 경량 스킵 | §C 경량 예외 충족 — 풀 체크리스트 생략, 도메인 스모크만 |
 
 ## See also
-`.claude/checklists/migration-parity.md` · `collaboration-rules.mdc` · `00-rules-index.mdc`
+`.claude/checklists/migration-parity.md` · `agent-completion-gate.mdc` · `collaboration-rules.mdc` · `00-rules-index.mdc`

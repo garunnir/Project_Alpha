@@ -1,63 +1,69 @@
 // ============================================================
-// CharacterHitStop — 이 캐릭터만 애니·이동·공격을 잠시 멈춤 (전역 TimeScale 아님)
+// CharacterHitStopState — 이 캐릭터만 애니·이동·공격을 잠시 멈춤 (plain, BodyHost 소유)
 // ============================================================
 
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-public sealed class CharacterHitStop : MonoBehaviour
+public sealed class CharacterHitStopState
 {
     public const string DefaultSettingsPath = CombatHitStopSettings.DefaultAssetPath;
 
-    [SerializeField] CombatHitStopSettings _settings;
-
+    readonly CharacterBodyHost _bodyHost;
+    CombatHitStopSettings _settings;
     CharacterAttacker _attacker;
-    CharacterBodyHost _bodyHost;
     float _remaining;
+    bool _bound;
+
+    public CharacterHitStopState(CharacterBodyHost bodyHost, CombatHitStopSettings settings)
+    {
+        _bodyHost = bodyHost;
+        _settings = settings;
+    }
 
     public bool IsFrozen => _remaining > 0f;
 
     /// <summary>시뮬 배율. 경직 중 0, 아니면 1. Update 할당 없음.</summary>
     public float SimScale => _remaining > 0f ? 0f : 1f;
 
-    public static CharacterHitStop Find(Component origin) =>
-        CharacterBodyResolve.GetInBody<CharacterHitStop>(origin);
+    public void SetSettings(CombatHitStopSettings settings) => _settings = settings;
 
-    void Awake()
+    public static CharacterHitStopState Find(Component origin)
     {
-        TryGetComponent(out _attacker);
-        TryGetComponent(out _bodyHost);
-#if UNITY_EDITOR
-        if (_settings == null)
-        {
-            _settings = UnityEditor.AssetDatabase.LoadAssetAtPath<CombatHitStopSettings>(
-                DefaultSettingsPath);
-        }
-#endif
+        CharacterBodyHost host = CharacterBodyResolve.GetInBody<CharacterBodyHost>(origin);
+        return host != null ? host.HitStop : null;
     }
 
-    void OnEnable()
+    public void Bind()
     {
+        if (_bound)
+            return;
+
+        if (_attacker == null && _bodyHost != null)
+            _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(_bodyHost);
+
         if (_attacker != null)
             _attacker.AttackJudged += OnAttackerJudged;
         CharacterAttacker.AnyAttackJudged += OnAnyAttackJudged;
+        _bound = true;
     }
 
-    void OnDisable()
+    public void Unbind()
     {
+        if (!_bound)
+            return;
+
         if (_attacker != null)
             _attacker.AttackJudged -= OnAttackerJudged;
         CharacterAttacker.AnyAttackJudged -= OnAnyAttackJudged;
         _remaining = 0f;
+        _bound = false;
     }
 
-    void LateUpdate()
+    public void Tick(float realtimeDelta)
     {
-        // 할당 없음. Realtime이라 Pause·배속 HUD와 지속시간이 분리됨.
         if (_remaining <= 0f)
             return;
-        _remaining -= TimeScaleService.Delta(TimeScaleChannel.Realtime);
+        _remaining -= realtimeDelta;
         if (_remaining < 0f)
             _remaining = 0f;
     }
@@ -70,8 +76,7 @@ public sealed class CharacterHitStop : MonoBehaviour
             _remaining = seconds;
     }
 
-    void OnAttackerJudged(AttackOutcome outcome) =>
-        ApplyResolved(outcome);
+    void OnAttackerJudged(AttackOutcome outcome) => ApplyResolved(outcome);
 
     void OnAnyAttackJudged(AttackOutcome outcome)
     {

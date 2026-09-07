@@ -29,6 +29,7 @@ alwaysApply: true
 | 3 | Scope & Questions | 요청 범위만. 질문 ≤1; 독립 전제 ≥2면 같은 턴 ≤3. 명확화 턴은 Mermaid/코드블록 생략. Task 서브에이전트는 사용자에게 묻지 말고 `Ambiguity:` |
 | 4 | Existing Decisions | 현재 스레드 사용자 이유 없이 라이브러리/아키텍처 교체 금지. 거절안 재제안 금지 |
 | 5 | Impact | 코드 전 Tier1(직접 참조·구독·Inspector). 2+ hop은 `Potential Impact` |
+| 7 | Completion | Dist 구현 시 `agent-scope.mdc` §Completion 요약 · `agent-completion-gate.mdc` |
 
 Rule **2**(Mermaid)·**6**(hot-path): `collaboration-unity.mdc`.
 

@@ -6,12 +6,12 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
-public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSession, IUiCancelConsumer
+public sealed class FarmCellTargetSession : IFarmCellTargetSession, ICellTargetSessionTickable
 {
     static FarmCellTargetSession _active;
 
     GridCursor _gridCursor;
-    FarmCellActionHost _actionHost;
+    CharacterActionHost _actionHost;
     FarmCellActionKind _kind;
     ItemStack _stack;
     InventoryContainer _container;
@@ -30,8 +30,18 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         if (IsActive || UIConstruction.IsOpen || ConstructionCellTargetSession.IsActive)
             return false;
 
-        FarmCellTargetSession session = EnsureInstance();
-        return session.BeginInternal(kind, stack, container);
+        var session = new FarmCellTargetSession();
+        if (!session.BeginInternal(kind, stack, container))
+            return false;
+
+        if (!CellTargetSessionDriver.TrySetActive(session))
+        {
+            session.EndTargeting();
+            return false;
+        }
+
+        _active = session;
+        return true;
     }
 
     public static bool TryConsumeRightClick()
@@ -43,21 +53,7 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         return true;
     }
 
-    static FarmCellTargetSession EnsureInstance()
-    {
-        if (_active != null)
-            return _active;
-
-        var go = new GameObject(nameof(FarmCellTargetSession));
-        _active = go.AddComponent<FarmCellTargetSession>();
-        return _active;
-    }
-
-    void OnEnable() => UiCancelRouter.Register(this);
-
-    void OnDisable() => UiCancelRouter.Unregister(this);
-
-    void Update()
+    public void Tick()
     {
         _gridCursor?.SyncFromPointer();
         TryHandlePrimaryClick();
@@ -84,19 +80,21 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         _container = container;
         _showPlantPreview = kind == FarmCellActionKind.Plant;
 
-        _gridCursor = FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
+        _gridCursor = Object.FindFirstObjectByType<GridCursor>(FindObjectsInactive.Include);
         if (_gridCursor == null)
         {
             Debug.LogError("[FarmCellTargetSession] GridCursor not found.");
             return false;
         }
 
-        ResolveActionHost();
+        _actionHost = ResolvePossessedActionHost();
         if (_actionHost == null)
         {
-            Debug.LogError("[FarmCellTargetSession] FarmCellActionHost missing on possessed body.");
+            Debug.LogError("[FarmCellTargetSession] CharacterActionHost missing on possessed body.");
             return false;
         }
+
+        BindWorkAnimOnGearHost(PlayerGearHost.Active);
 
         if (_showPlantPreview)
         {
@@ -104,23 +102,37 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
             _preview.BeginPlantMode();
         }
 
-        _active = this;
         _gridCursor.BeginTargeting(this);
         return true;
     }
 
-    void ResolveActionHost()
+    static CharacterActionHost ResolvePossessedActionHost()
     {
-        _actionHost = null;
+        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        if (session != null)
+            return session;
+
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            if (!gear.TryGetComponent(out _actionHost))
-                _actionHost = gear.gameObject.AddComponent<FarmCellActionHost>();
+            CharacterActionHost fromGear = gear.GetBodyComponent<CharacterActionHost>();
+            if (fromGear != null)
+                return fromGear;
         }
 
-        if (_actionHost == null && PlayerInventoryRuntime.Active?.Host != null)
-            PlayerInventoryRuntime.Active.Host.TryGetComponent(out _actionHost);
+        return PlayerInventoryRuntime.Active?.Host != null
+            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+            : null;
+    }
+
+    static void BindWorkAnimOnGearHost(PlayerGearHost gear)
+    {
+        if (gear == null)
+            return;
+
+        CharacterBodyRoot bodyRoot = gear.GetComponentInParent<CharacterBodyRoot>();
+        if (bodyRoot != null)
+            CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
     }
 
     public bool CanApply(Vector3Int cell) =>
@@ -155,11 +167,10 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         FarmCellActionKind kind = _kind;
         ItemStack stack = _stack;
         InventoryContainer container = _container;
-        FarmCellActionHost host = _actionHost;
+        CharacterActionHost host = _actionHost;
 
         EndTargeting();
-        host.TryRun(kind, cell, stack, container);
-        Destroy(gameObject);
+        host.TryRunFarm(kind, cell, stack, container);
         return true;
     }
 
@@ -171,7 +182,6 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
             return;
 
         EndTargeting();
-        Destroy(gameObject);
     }
 
     public bool TryHandleCancel()
@@ -188,12 +198,8 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         _gridCursor?.EndTargeting();
         _preview?.Dispose();
         _preview = null;
+        CellTargetSessionDriver.ClearActive(this);
         if (ReferenceEquals(_active, this))
             _active = null;
-    }
-
-    void OnDestroy()
-    {
-        EndTargeting();
     }
 }

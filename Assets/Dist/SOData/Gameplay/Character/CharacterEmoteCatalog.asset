@@ -14,35 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterEmoteCatalog
   _entries:
   - Id: 1
-    Sprite: {fileID: 21300000, guid: 69b2c5636e89dfd428e745a1a437dacb, type: 3}
+    Sprite: {fileID: 21300000, guid: 58bc4dfe3bcdfbe4cabf0d734caf558b, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 2
-    Sprite: {fileID: 21300000, guid: b012f2983a7379e4f9b1c3fa7f89b40b, type: 3}
+    Sprite: {fileID: 21300000, guid: e4daa4f414938934aa284bf6cf5797ba, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 3
-    Sprite: {fileID: 21300000, guid: e4454c54e8ba69946888a4ce0d8844dc, type: 3}
+    Sprite: {fileID: 21300000, guid: 45b242bbc8a7bc0408bb72875ed3adb9, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 4
-    Sprite: {fileID: 21300000, guid: 05b9b9d7422dfcf47a56d8708731fdb4, type: 3}
+    Sprite: {fileID: 21300000, guid: 677dc45e5cbc3ed48b8aa81a068ce573, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 5
-    Sprite: {fileID: 21300000, guid: 8528e5ec3acb6644c99957f8c821b556, type: 3}
+    Sprite: {fileID: 21300000, guid: c81fdef6d3cb5b64fad149074848a80a, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 6
-    Sprite: {fileID: 21300000, guid: 6137c0c82270fb741ae267edb3e7be4c, type: 3}
+    Sprite: {fileID: 21300000, guid: 309d8832fdeb87f4d8ebbb10930d2a59, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 7
-    Sprite: {fileID: 21300000, guid: bc0061b2b06c9694bb70ad8d5d5f0572, type: 3}
+    Sprite: {fileID: 21300000, guid: fcd57c2c487728647bd053203eefbc81, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 8
-    Sprite: {fileID: 21300000, guid: 480fbfab54fa6d0409ca87362a5f9b13, type: 3}
+    Sprite: {fileID: 21300000, guid: 4325b02891c75cd46bd8b5e82b3a8e1b, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 100

@@ -19,6 +19,14 @@ public sealed class FarmWorkClipCatalog : ScriptableObject
     [SerializeField, Min(0f)] float _tillDurationSeconds = MapPlantConsts.TillWorkDurationSeconds;
     [SerializeField, Min(0f)] float _chopDurationSeconds = MapPlantConsts.ChopWorkDurationSeconds;
 
+    /// <summary>MapGameplayBootstrap이 주입. Resources 폴백 없음.</summary>
+    public static FarmWorkClipCatalog Runtime { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void DomainReset() => Runtime = null;
+
+    public static void BindRuntime(FarmWorkClipCatalog catalog) => Runtime = catalog;
+
     public AnimationClip Resolve(FarmCellActionKind kind)
     {
         switch (kind)

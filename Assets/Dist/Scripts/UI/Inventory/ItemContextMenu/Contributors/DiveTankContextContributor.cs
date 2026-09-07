@@ -31,13 +31,21 @@ public sealed class DiveTankContextContributor : IContextMenuContributor
 
     static CharacterBreathHost ResolveBreath()
     {
-        CharacterSessionHub session = CharacterSessionHub.Player;
-        if (session != null && session.TryGetComponent(out CharacterBreathHost breath))
-            return breath;
-
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear != null && gear.TryGetComponent(out breath))
-            return breath;
+        if (gear != null)
+        {
+            CharacterSwimHost swim = gear.GetBodyComponent<CharacterSwimHost>();
+            if (swim?.Breath != null)
+                return swim.Breath;
+        }
+
+        CharacterSessionHub session = CharacterSessionHub.Player;
+        if (session != null)
+        {
+            CharacterSwimHost swim = session.GetBodyComponent<CharacterSwimHost>();
+            if (swim?.Breath != null)
+                return swim.Breath;
+        }
 
         return null;
     }

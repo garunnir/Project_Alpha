@@ -23,8 +23,8 @@ public sealed class CharacterArriveHost : MonoBehaviour
 
     void Awake()
     {
-        TryGetComponent(out _motor);
-        TryGetComponent(out _actionHost);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+        _actionHost = CharacterBodyResolve.GetInBody<CharacterActionHost>(this);
     }
 
     void FixedUpdate()

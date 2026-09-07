@@ -1,52 +1,25 @@
 // ============================================================
-// FarmCellActionHost — 농사 Arrive + Work + MapPlantService 적용
+// CharacterCellFarmPipeline — 농사 Arrive + Work + MapPlantService
 // ============================================================
 
 using IsoTilemap;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-[DisallowMultipleComponent]
-public sealed class FarmCellActionHost : MonoBehaviour
+public sealed class CharacterCellFarmPipeline : CharacterCellPipelineBase
 {
-    CharacterActionHost _actionHost;
-    CharacterArriveHost _arriveHost;
-    CharacterFarmWorkHost _workHost;
-    bool _moveCancelSubscribed;
-    bool _pipelineActive;
+    FarmWorkClipCatalog _clips;
 
-    public bool IsBusy =>
-        _pipelineActive ||
-        (_arriveHost != null && _arriveHost.IsBusy) ||
-        (_workHost != null && _workHost.IsBusy);
-
-    public float WorkProgress01 =>
-        _workHost != null && _workHost.IsBusy ? _workHost.Progress01 : 0f;
-
-    void Awake()
+    public CharacterCellFarmPipeline(
+        CharacterActionHost actionHost,
+        CharacterArriveHost arriveHost,
+        CharacterMotor motor,
+        FarmWorkClipCatalog clips)
+        : base(actionHost, arriveHost, motor)
     {
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _arriveHost);
-        TryGetComponent(out _workHost);
-        if (_arriveHost == null)
-            _arriveHost = gameObject.AddComponent<CharacterArriveHost>();
-        if (_workHost == null)
-            _workHost = gameObject.AddComponent<CharacterFarmWorkHost>();
+        _clips = clips;
     }
 
-    void OnDisable()
-    {
-        UnsubscribeMoveCancel();
-        _pipelineActive = false;
-    }
-
-    public void Cancel()
-    {
-        UnsubscribeMoveCancel();
-        _pipelineActive = false;
-        _arriveHost?.Cancel();
-        _workHost?.Cancel();
-    }
+    public void SetClipCatalog(FarmWorkClipCatalog clips) => _clips = clips;
 
     public bool TryRun(
         FarmCellActionKind kind,
@@ -54,13 +27,13 @@ public sealed class FarmCellActionHost : MonoBehaviour
         ItemStack stack,
         InventoryContainer container)
     {
-        if (_arriveHost == null)
+        if (ArriveHost == null)
             return false;
 
-        if (_actionHost == null)
+        if (ActionHost == null)
             return BeginPipeline(kind, cell, stack, container);
 
-        return _actionHost.TryRunOrEnqueue(
+        return ActionHost.TryRunOrEnqueue(
             CharacterActionKind.Cell,
             () => BeginPipeline(kind, cell, stack, container));
     }
@@ -82,20 +55,11 @@ public sealed class FarmCellActionHost : MonoBehaviour
                 MapPlantService.IsWithinPlantActionRange(playerCell, cell);
         }
 
-        bool started = _arriveHost.TryBegin(
+        return BeginArrive(
             destination,
             stopping,
             () => OnArrived(kind, cell, stack, container),
-            onCancelled: EndPipeline,
-            suppressInput: true,
-            tryIsArrived: tryIsArrived);
-
-        if (!started)
-            return false;
-
-        _pipelineActive = true;
-        SubscribeMoveCancel();
-        return true;
+            tryIsArrived);
     }
 
     void OnArrived(
@@ -119,14 +83,9 @@ public sealed class FarmCellActionHost : MonoBehaviour
             return;
         }
 
-        if (_workHost == null)
-        {
-            Apply(kind, cell, stack, container);
-            EndPipeline();
-            return;
-        }
-
-        if (!_workHost.TryBegin(kind, () =>
+        AnimationClip clip = _clips != null ? _clips.Resolve(kind) : null;
+        float configured = ResolveConfiguredDuration(kind);
+        if (!Work.TryBegin(clip, configured, () =>
             {
                 Apply(kind, cell, stack, container);
                 EndPipeline();
@@ -136,57 +95,25 @@ public sealed class FarmCellActionHost : MonoBehaviour
         }
     }
 
-    void EndPipeline()
-    {
-        UnsubscribeMoveCancel();
-        _pipelineActive = false;
-    }
-
-    void SubscribeMoveCancel()
-    {
-        if (_moveCancelSubscribed)
-            return;
-
-        InputManager input = InputManager.Instance;
-        if (input == null)
-            return;
-
-        input.PlayerMovePerformed += OnMovePerformedWhileBusy;
-        _moveCancelSubscribed = true;
-    }
-
-    void UnsubscribeMoveCancel()
-    {
-        if (!_moveCancelSubscribed)
-            return;
-
-        InputManager input = InputManager.Instance;
-        if (input != null)
-            input.PlayerMovePerformed -= OnMovePerformedWhileBusy;
-
-        _moveCancelSubscribed = false;
-    }
-
-    void OnMovePerformedWhileBusy(InputAction.CallbackContext ctx)
-    {
-        if (!IsBusy)
-            return;
-
-        Vector2 dir = ctx.ReadValue<Vector2>();
-        if (dir.sqrMagnitude <= Mathf.Epsilon)
-            return;
-
-        if (_actionHost != null)
-            _actionHost.CancelAll();
-        else
-            Cancel();
-    }
-
     static bool NeedsWork(FarmCellActionKind kind) =>
         kind == FarmCellActionKind.Plant ||
         kind == FarmCellActionKind.Till ||
         kind == FarmCellActionKind.Harvest ||
         kind == FarmCellActionKind.Chop;
+
+    float ResolveConfiguredDuration(FarmCellActionKind kind)
+    {
+        if (_clips != null)
+            return _clips.ResolveDuration(kind);
+
+        return kind switch
+        {
+            FarmCellActionKind.Plant => MapPlantConsts.PlantWorkDurationSeconds,
+            FarmCellActionKind.Till => MapPlantConsts.TillWorkDurationSeconds,
+            FarmCellActionKind.Chop => MapPlantConsts.ChopWorkDurationSeconds,
+            _ => 0f,
+        };
+    }
 
     static void Apply(
         FarmCellActionKind kind,

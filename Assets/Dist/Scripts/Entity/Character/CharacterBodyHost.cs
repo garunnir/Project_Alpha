@@ -12,8 +12,10 @@ public sealed class CharacterBodyHost : MonoBehaviour
     [SerializeField] bool _useGameplayDataBody;
     [SerializeField] int _seedStrength = 8;
     [SerializeField] bool _prototypeSeed;
+    [SerializeField] CombatHitStopSettings _hitStopSettings;
 
     ICharacterBody _body;
+    CharacterHitStopState _hitStop;
 
     static readonly List<CharacterBodyHost> s_active = new(16);
 
@@ -27,6 +29,15 @@ public sealed class CharacterBodyHost : MonoBehaviour
         }
     }
 
+    public CharacterHitStopState HitStop
+    {
+        get
+        {
+            EnsureHitStop();
+            return _hitStop;
+        }
+    }
+
     public bool UseGameplayDataBody => _useGameplayDataBody;
 
     public void ConfigureUseGameplayDataBody(bool useGameplayDataBody)
@@ -34,19 +45,57 @@ public sealed class CharacterBodyHost : MonoBehaviour
         _useGameplayDataBody = useGameplayDataBody;
     }
 
+    public void ConfigureHitStopSettings(CombatHitStopSettings settings)
+    {
+        _hitStopSettings = settings;
+        if (_hitStop != null)
+            _hitStop.SetSettings(settings);
+    }
+
     public static int ActiveCount => s_active.Count;
 
     public static CharacterBodyHost GetActive(int index) => s_active[index];
 
-    void Awake() => EnsureBody();
+    void Awake()
+    {
+        EnsureBody();
+        EnsureHitStop();
+    }
 
     void OnEnable()
     {
         if (!s_active.Contains(this))
             s_active.Add(this);
+        HitStop?.Bind();
     }
 
-    void OnDisable() => s_active.Remove(this);
+    void OnDisable()
+    {
+        s_active.Remove(this);
+        _hitStop?.Unbind();
+    }
+
+    void LateUpdate()
+    {
+        if (_hitStop == null)
+            return;
+        _hitStop.Tick(TimeScaleService.Delta(TimeScaleChannel.Realtime));
+    }
+
+    void EnsureHitStop()
+    {
+        if (_hitStop != null)
+            return;
+
+#if UNITY_EDITOR
+        if (_hitStopSettings == null)
+        {
+            _hitStopSettings = UnityEditor.AssetDatabase.LoadAssetAtPath<CombatHitStopSettings>(
+                CharacterHitStopState.DefaultSettingsPath);
+        }
+#endif
+        _hitStop = new CharacterHitStopState(this, _hitStopSettings);
+    }
 
     void EnsureBody()
     {

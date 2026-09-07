@@ -21,6 +21,7 @@ public sealed class CharacterEmoteHost : MonoBehaviour
 
     CharacterMotor _motor;
     CharacterSightFadeHost _fadeHost;
+    CharacterMoodHost _moodHost;
     readonly SourceSlot[] _slots = new SourceSlot[SourceSlotCount];
 
     EmoteId _resolvedId = EmoteId.None;
@@ -43,10 +44,70 @@ public sealed class CharacterEmoteHost : MonoBehaviour
 
     void Awake()
     {
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _fadeHost);
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _motor = refs.Motor;
+            _fadeHost = refs.SightFade;
+            refs.TryGet(out _moodHost);
+        }
+        else
+        {
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+            _fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(this);
+            _moodHost = CharacterBodyResolve.GetInBody<CharacterMoodHost>(this);
+        }
+
         RebuildResolved();
     }
+
+    void OnEnable()
+    {
+        if (_moodHost != null)
+            _moodHost.Changed += OnMoodChanged;
+        RefreshMoodEmote();
+    }
+
+    void OnDisable()
+    {
+        if (_moodHost != null)
+            _moodHost.Changed -= OnMoodChanged;
+    }
+
+    void OnMoodChanged() => RefreshMoodEmote();
+
+    void RefreshMoodEmote()
+    {
+        if (_motor == null || !_motor.IsPossessed || _moodHost == null)
+        {
+            Clear(EmoteSource.Mood);
+            return;
+        }
+
+        EmoteId id = CharacterMoodEmoteMapper.FromMood(_moodHost.Mood);
+        Request(new EmoteRequest(id, EmoteSource.Mood));
+    }
+
+    public void SetAlertSpotted()
+    {
+        if (!CanApplyObserverEmote())
+            return;
+
+        Request(new EmoteRequest(EmoteId.AlertSpotted, EmoteSource.Combat));
+    }
+
+    public void SetAlertSuspicious()
+    {
+        if (!CanApplyObserverEmote())
+            return;
+
+        Request(new EmoteRequest(EmoteId.AlertSuspicious, EmoteSource.Combat));
+    }
+
+    public void ClearCombat() => Clear(EmoteSource.Combat);
+
+    bool CanApplyObserverEmote() =>
+        _motor == null || !_motor.IsPossessed;
 
     void Update()
     {

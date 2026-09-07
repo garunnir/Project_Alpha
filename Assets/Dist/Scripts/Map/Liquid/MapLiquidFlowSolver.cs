@@ -67,7 +67,7 @@ namespace IsoTilemap
             Vector3Int below = self + Vector3Int.down;
             if (IsVerticalOpen(self)
                 && _hub.IsInMapBounds(below.x, below.y, below.z)
-                && !IsSolidAt(below))
+                && CanHoldLiquid(below))
             {
                 int totalMl = _overlay.GetEffectiveMl(self) + _overlay.GetEffectiveMl(below);
                 int belowTarget = StableBelowMl(totalMl, capMl, MapLiquidConsts.OverCompressMl);
@@ -160,22 +160,42 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 수평·상향 equalize 대상 — mapBounds XZ 안 + topology 점유 + 비고체.
+        /// 수평·상향 equalize 대상 — mapBounds XZ 안 + topology 점유 + 비고체 + 논리 벽 아님.
         /// AirGap(점유 없음)으로는 옆/위 확산하지 않는다.
         /// </summary>
         bool IsHorizontalFlowTarget(Vector3Int cell) =>
             _hub.IsInMapBoundsXZ(cell.x, cell.z)
             && _hub.CellHasOccupancy(cell.x, cell.z, cell.y)
-            && !IsSolidAt(cell);
+            && CanHoldLiquid(cell);
+
+        /// <summary>액체 ml이 들어갈 수 있는 셀 — AirGap transit OK, 얼음·<see cref="TileCollisionFlags.BlocksOccupiedCells"/> 제외.</summary>
+        bool CanHoldLiquid(Vector3Int cell)
+        {
+            if (IsSolidAt(cell))
+                return false;
+
+            if (!_hub.CellHasOccupancy(cell.x, cell.z, cell.y))
+                return true;
+
+            return !_hub.CellHasSolidWall(cell.x, cell.z, cell.y);
+        }
 
         bool IsSolidAt(Vector3Int cell) =>
             _overlay.TryGetCell(cell, out MapLiquidCell c) && !c.IsEmpty && c.IsSolid;
 
-        bool IsHorizontalOpen(Vector3Int a, Vector3Int b)
+        /// <summary>
+        /// from→to 한 스텝 카드널 경계 — <see cref="MapTopologyGridSegment"/>와 동일(점유 벽 + EdgeWall).
+        /// </summary>
+        bool IsHorizontalOpen(Vector3Int from, Vector3Int to) =>
+            !CellOrEdgeBlocks(from, to);
+
+        bool CellOrEdgeBlocks(Vector3Int from, Vector3Int to)
         {
-            if (_hub.TryGetEdgeBetween(a, b, out TileData edge))
-                return !TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
-            return true;
+            if (_hub.CellHasSolidWall(to.x, to.z, to.y))
+                return true;
+
+            return _hub.TryGetEdgeBetween(from, to, out TileData edge)
+                && TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
         }
 
         /// <summary>(하단, upper) 경계가 열려 있는지 — upper 셀에 바닥이 없으면 개방.</summary>

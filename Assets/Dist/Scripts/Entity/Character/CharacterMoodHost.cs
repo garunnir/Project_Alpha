@@ -60,7 +60,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     void Awake()
     {
-        TryGetComponent(out _motor);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _pain);
         TryGetComponent(out _action);
         TryGetComponent(out _bodyHost);

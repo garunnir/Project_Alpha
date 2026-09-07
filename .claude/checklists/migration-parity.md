@@ -2,7 +2,7 @@
 
 **목적:** 경로/스택을 갈아끼우거나 섞은 뒤, 예전 동작을 증상별로 사용자에게 재현시키며 메우지 않는다.
 
-**관련 룰:** `.cursor/rules/migration-parity.mdc` (always)
+**관련 룰:** `.cursor/rules/migration-parity.mdc` (always) · 완료 선언: `.cursor/rules/agent-completion-gate.mdc` · `.claude/checklists/agent-completion-gate.md`
 
 **완료 조건:** 아래 계약을 **기본 경로로 켜기 전에** 통과. 도메인 세부 항목은 해당 UI/시스템 문서에만 두고, 여기엔 넣지 않는다.
 

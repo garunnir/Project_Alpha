@@ -354,6 +354,15 @@ namespace IsoTilemap
         public bool CellHasFloor(int x, int cellY, int z) =>
             Topology.CellHasFloor(x, cellY, z);
 
+        /// <summary>점유 셀에 <see cref="TileCollisionFlags.BlocksOccupiedCells"/> 타일이 있는지 — 이동·액체 차단 SSOT.</summary>
+        public bool CellHasSolidWall(int x, int z, int cellY)
+        {
+            if (!TryGetCellTiles(x, z, cellY, out List<TileData> list))
+                return false;
+
+            return FloorMapIndex.CellHasSolidWall(list);
+        }
+
         public void CollectStructuralOccludersAtOccupiedCell(
             Vector3Int occupiedCell,
             List<TileData> cellTilesOut,

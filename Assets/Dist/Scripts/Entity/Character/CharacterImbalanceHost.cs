@@ -42,7 +42,7 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
     void Awake()
     {
         _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _movement);
+        _movement = CharacterBodyResolve.GetInBody<PlayerMovement>(this);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _attacker);
     }

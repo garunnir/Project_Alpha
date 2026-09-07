@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterBreathHost — BloodOxygen01·합산 O2·DIVE_TANK
+// CharacterBreathHost — BloodOxygen01·합산 O2·DIVE_TANK (plain, SwimHost 소유)
 // ============================================================
 
 using System;
@@ -7,28 +7,25 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-[DefaultExecutionOrder(6)]
-public sealed class CharacterBreathHost : MonoBehaviour
+public sealed class CharacterBreathHost
 {
-    CharacterBodyHost _bodyHost;
-    CharacterPainHost _pain;
+    readonly CharacterBodyHost _bodyHost;
+    readonly CharacterPainHost _pain;
     ItemStack _activeTank;
     float _o2SecondsRemaining = -1f;
     float _tankChargeAccum;
+
+    public CharacterBreathHost(CharacterBodyHost bodyHost, CharacterPainHost pain)
+    {
+        _bodyHost = bodyHost;
+        _pain = pain;
+    }
 
     public bool IsDiveTankActive => _activeTank?.Instance != null
         && _activeTank.Instance.ToolCharges > 0
         && DiveTankService.IsDiveTankItem(_activeTank.Item);
 
     public event Action Changed;
-
-    void Awake()
-    {
-        _bodyHost = GetComponent<CharacterBodyHost>();
-        TryGetComponent(out _pain);
-    }
 
     public void TickSwim(float dt, MapSwimImmersion immersion)
     {

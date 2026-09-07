@@ -58,7 +58,7 @@ public static class CharacterWorkLayerAnim
         animator.SetLayerWeight(layerIndex, 0f);
     }
 
-    /// <summary>맵 바인드·Play 직전 — 레이어 없으면 LogError.</summary>
+    /// <summary>맵 바인드·LocomotionAnim 바인드 후 — 레이어 없으면 LogError.</summary>
     public static bool ValidateOrLog(Animator animator, Object context = null)
     {
         if (animator == null)

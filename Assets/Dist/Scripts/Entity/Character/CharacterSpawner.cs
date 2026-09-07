@@ -74,16 +74,18 @@ public sealed class CharacterSpawner : MonoBehaviour
             if (instance == null)
                 continue;
 
+            AssignBodyInventoryId(instance, entry.role);
+            instance.SetActive(true);
+            CharacterWorkAnimBinder.BindBody(instance);
+
             if (_mapBootstrap != null)
                 _mapBootstrap.BindSpawnedCharacter(instance);
             else if (worldGrid != null)
             {
-                CharacterState state = instance.GetComponent<CharacterState>();
+                CharacterState state = instance.GetBodyComponent<CharacterState>();
                 state?.BindWorldGrid(worldGrid);
             }
 
-            AssignBodyInventoryId(instance, entry.role);
-            instance.SetActive(true);
             CharacterSpawnGearApplier.Apply(entry.definition, instance);
 
             if (entry.role == CharacterSpawnRole.Possessed)

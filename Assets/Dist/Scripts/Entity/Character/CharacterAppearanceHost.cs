@@ -53,12 +53,13 @@ public sealed class CharacterAppearanceHost : MonoBehaviour
         return Loc.Get(_id);
     }
 
-    void Awake() => TryGetComponent(out _bodyHost);
+    void Awake() =>
+        _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
 
     void RecalcRemainingMass()
     {
         if (_bodyHost == null)
-            TryGetComponent(out _bodyHost);
+            _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
 
         float remaining = _bodyMassKg;
         ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;

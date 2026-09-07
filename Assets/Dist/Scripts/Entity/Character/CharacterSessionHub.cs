@@ -111,7 +111,10 @@ public sealed class CharacterSessionHub : MonoBehaviour
         if (_traitsHost != null)
             GameplayPlayerRuntime.RegisterPossessedTraitsResolver(() => _traitsHost.Traits);
 
-        if (movement != null && TryGetComponent(out CharacterDefinitionBinder binder))
+        CharacterDefinitionBinder binder = this.GetBodyRefs()?.DefinitionBinder;
+        if (binder == null)
+            binder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
+        if (movement != null && binder != null)
             movement.ApplyWalkSpeedFromDefinition(binder.Definition);
 
         PlayerStatusUIBridge.RebindFromGameplayData();

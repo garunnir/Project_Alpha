@@ -1,6 +1,6 @@
 ---
 description: URP — MPB 금지·머티리얼 인스턴스·RenderingLayer 후처리
-globs: Assets/**
+globs: Assets/Dist/Visual/**/*,Assets/Dist/Scripts/**/*Render*,Assets/Dist/Scripts/**/*Shader*,Assets/Dist/Visual/ProPixelizer/**/*
 alwaysApply: false
 ---
 

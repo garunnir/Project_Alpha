@@ -6,13 +6,12 @@ using IsoTilemap;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[DefaultExecutionOrder(-35)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterState))]
 [RequireComponent(typeof(CharacterMotor))]
 public sealed class CharacterVaultHost : MonoBehaviour
 {
-    public const string WorkLayerName = CharacterFarmWorkHost.WorkLayerName;
+    public const string WorkLayerName = CharacterWorkLayerAnim.LayerName;
 
     [SerializeField] VaultClipCatalog _clips;
 
@@ -74,15 +73,32 @@ public sealed class CharacterVaultHost : MonoBehaviour
 
     void Awake()
     {
+        ResolveBodyRefs();
+        TryGetComponent(out _rigidbody);
+    }
+
+    void ResolveBodyRefs()
+    {
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _state = refs.State;
+            _motor = refs.Motor;
+            _actionHost = refs.ActionHost;
+            return;
+        }
+
         _state = GetComponent<CharacterState>();
         _motor = GetComponent<CharacterMotor>();
         TryGetComponent(out _actionHost);
-        TryGetComponent(out _rigidbody);
-        _animator = GetComponentInChildren<Animator>();
-        if (_animator != null)
+    }
+
+    public void Bind(CharacterLocomotionAnim locomotion)
+    {
+        if (locomotion == null || !locomotion.TryGetWorkAnim(out _animator, out _workLayerIndex))
         {
-            _workLayerIndex = _animator.GetLayerIndex(WorkLayerName);
-            CharacterWorkLayerAnim.ValidateOrLog(_animator, this);
+            _animator = null;
+            _workLayerIndex = -1;
         }
     }
 

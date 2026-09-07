@@ -64,7 +64,7 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
 
     void Awake()
     {
-        TryGetComponent(out _state);
+        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
         EnsureCache();
     }
 

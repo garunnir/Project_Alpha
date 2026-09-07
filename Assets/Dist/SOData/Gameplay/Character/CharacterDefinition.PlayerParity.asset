@@ -33,6 +33,7 @@ MonoBehaviour:
   _hipCm: 0
   _partMasses: []
   _prototypeSeed: 0
+  _gridFootprint: {x: 1, y: 2, z: 1}
   _spotAngleDegrees: 179
   _senses:
     sightDetectMeters: 10
@@ -52,8 +53,8 @@ MonoBehaviour:
     count: 1
   - itemId: consumable_egg
     count: 3
-  - itemId: candy
-    count: 3
+  - itemId: shovel
+    count: 1
   - itemId: bandages
     count: 3
   - itemId: seed_oats

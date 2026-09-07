@@ -125,7 +125,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
             return false;
         if (!ReferenceEquals(host.Body, CharacterSessionHub.SessionBody))
             return false;
-        return host.TryGetComponent(out CharacterMotor motor) && motor.IsPossessed;
+        return CharacterBodyResolve.TryGetInBody(host, out CharacterMotor motor) && motor.IsPossessed;
     }
 
     void OnDefeatChanged()

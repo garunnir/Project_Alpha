@@ -117,6 +117,7 @@ public class PlayerAimController : MonoBehaviour
         if (!InputManager.Instance.IsPlayerActionEnabled(PlayerAction.Aim))
         {
             _isAiming = false;
+            _characterState?.ClearAim();
             return;
         }
 

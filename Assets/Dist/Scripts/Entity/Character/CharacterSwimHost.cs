@@ -26,16 +26,29 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
     public MapSwimImmersion LastImmersion => _last;
     public bool DiveHeld => _diveHeld;
+    public CharacterBreathHost Breath => _breath;
 
     void Awake()
     {
-        _state = GetComponent<CharacterState>();
-        TryGetComponent(out _motor);
-        TryGetComponent(out _movement);
-        TryGetComponent(out _bodyHost);
-        TryGetComponent(out _breath);
-        if (_breath == null)
-            _breath = gameObject.AddComponent<CharacterBreathHost>();
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _state = refs.State;
+            _motor = refs.Motor;
+            _bodyHost = refs.BodyHost;
+            refs.TryGet(out CharacterPainHost pain);
+            _breath = new CharacterBreathHost(_bodyHost, pain);
+        }
+        else
+        {
+            _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+            _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
+            CharacterBodyResolve.TryGetInBody(this, out CharacterPainHost pain);
+            _breath = new CharacterBreathHost(_bodyHost, pain);
+        }
+
+        _movement = CharacterBodyResolve.GetInBody<PlayerMovement>(this);
     }
 
     void OnEnable()
@@ -89,6 +102,11 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
     void RefreshImmersion()
     {
+        if (_state == null)
+            _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        if (_state == null)
+            return;
+
         Vector3 feet = CharacterFeetPose.GetFeetWorld(transform.position, CharacterFeetPose.GetFeetOffset(transform));
         ResolveCellSize();
         bool diveWanted = _diveHeld && (_motor == null || _motor.IsPossessed);
@@ -133,6 +151,9 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
     void ApplyVerticalInput()
     {
+        if (_state == null)
+            return;
+
         if (!_last.CanSwim
             || _last.Mode == MapSwimMode.Dry
             || _last.Mode == MapSwimMode.Wade)

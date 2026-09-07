@@ -1,6 +1,7 @@
 ---
 description: 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼만
-alwaysApply: true
+globs: Assets/ProPixelizer/**/*,Assets/Plugins/**/*,Packages/**/*
+alwaysApply: false
 ---
 
 # Vendor / Third-Party Sources

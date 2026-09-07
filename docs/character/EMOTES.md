@@ -20,9 +20,7 @@ PlayerStatus HUD 칩·Mood 수치와 **별개** — 월드 머리 위 1슬롯 �
 |------|------|
 | `EmoteId` | 감정·전투 ! 통합 카탈로그 키 (`MoodIconId`와 별개) |
 | `CharacterEmoteCatalog` | sprite / tint / `ObserverOnly` SSOT |
-| `CharacterEmoteHost` | 소스별 Request·우선순위·필터·가시성 게이트 |
-| `CharacterMoodEmoteSource` | possessed `CharacterMoodHost` → 감정 이모트 |
-| `CharacterCombatEmoteBridge` | NPC 전투/감각 경계 → 색채 ! |
+| `CharacterEmoteHost` | 소스별 Request·우선순위·필터·가시성 게이트 (+ possessed Mood 구독, NPC combat alert API) |
 | `UICharacterEmote` | WorldSpace Canvas + `WorldBillboard` presenter |
 
 ---
@@ -80,7 +78,7 @@ v1: `CharacterMoodEmoteSource`는 possessed만 갱신. NPC Mood는 후속.
 
 ## NPC 전투 연동
 
-`NpcManager` → `CharacterCombatEmoteBridge` (UI 직접 참조 없음):
+`NpcManager` → `CharacterEmoteHost combat API` (UI 직접 참조 없음):
 
 | 전이 | Emote |
 |------|-------|

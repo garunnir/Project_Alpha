@@ -156,7 +156,6 @@ public sealed class NpcManager : MonoBehaviour
         Transform _transform;
         CharacterMotor _motor;
         CharacterAttacker _attacker;
-        CharacterAimIntent _aimIntent;
         CharacterSkillsHost _skillsHost;
         CharacterState _characterState;
         CharacterBodyHost _selfHost;
@@ -164,7 +163,7 @@ public sealed class NpcManager : MonoBehaviour
         CharacterFactionHost _selfFactionHost;
         CharacterVision _vision;
         CharacterHearing _hearing;
-        CharacterCombatEmoteBridge _combatEmote;
+        CharacterEmoteHost _emote;
         ICharacterDefeat _defeat;
 
         NpcCombatState _state = NpcCombatState.Idle;
@@ -185,7 +184,6 @@ public sealed class NpcManager : MonoBehaviour
 
             _motor = go.GetBodyComponent<CharacterMotor>();
             _attacker = go.GetBodyComponent<CharacterAttacker>();
-            _aimIntent = go.GetBodyComponent<CharacterAimIntent>();
             _skillsHost = go.GetBodyComponent<CharacterSkillsHost>();
             _characterState = go.GetBodyComponent<CharacterState>();
             _selfHost = go.GetBodyComponent<CharacterBodyHost>();
@@ -193,7 +191,7 @@ public sealed class NpcManager : MonoBehaviour
             _selfFactionHost = go.GetBodyComponent<CharacterFactionHost>();
             _vision = go.GetBodyComponent<CharacterVision>();
             _hearing = go.GetBodyComponent<CharacterHearing>();
-            _combatEmote = go.GetBodyComponent<CharacterCombatEmoteBridge>();
+            _emote = go.GetBodyComponent<CharacterEmoteHost>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -225,7 +223,7 @@ public sealed class NpcManager : MonoBehaviour
             _defeat = null;
             NpcSteer.Stop(_motor);
             ReleaseCombatAim();
-            _combatEmote?.ClearCombat();
+            _emote?.ClearCombat();
         }
 
         public bool TryGetVisionLock(CharacterBodyHost observer, CharacterBodyHost subject)
@@ -446,7 +444,7 @@ public sealed class NpcManager : MonoBehaviour
 
                 Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(_target.transform);
                 _distanceToTarget = HorizontalDistance(_target.transform.position);
-                _target.TryGetComponent(out CharacterMotor targetMotor);
+                CharacterBodyResolve.TryGetInBody(_target, out CharacterMotor targetMotor);
 
                 bool visionKeep = EvaluateVisionKeep(selfFeet, forward, _target);
                 bool hearingKeep = EvaluateHearingDetect(selfFeet, _target, targetMotor);
@@ -475,7 +473,7 @@ public sealed class NpcManager : MonoBehaviour
 
                 Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
                 float dist = HorizontalDistance(host.transform.position);
-                host.TryGetComponent(out CharacterMotor targetMotor);
+                CharacterBodyResolve.TryGetInBody(host, out CharacterMotor targetMotor);
 
                 bool visionDetect = EvaluateVisionDetect(selfFeet, forward, host);
                 if (visionDetect && dist < bestDist)
@@ -498,7 +496,7 @@ public sealed class NpcManager : MonoBehaviour
 
                     Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
                     float dist = HorizontalDistance(host.transform.position);
-                    host.TryGetComponent(out CharacterMotor targetMotor);
+                    CharacterBodyResolve.TryGetInBody(host, out CharacterMotor targetMotor);
                     if (!EvaluateHearingDetect(selfFeet, host, targetMotor) || dist >= bestDist)
                         continue;
 
@@ -530,13 +528,13 @@ public sealed class NpcManager : MonoBehaviour
 
         void SyncCombatEmoteForContact()
         {
-            if (_combatEmote == null || _target == null || _contact == SenseContactChannel.None)
+            if (_emote == null || _target == null || _contact == SenseContactChannel.None)
                 return;
 
             if (_contact == SenseContactChannel.Vision)
-                _combatEmote.SetAlertSpotted();
+                _emote.SetAlertSpotted();
             else if (_contact == SenseContactChannel.Hearing)
-                _combatEmote.SetAlertSuspicious();
+                _emote.SetAlertSuspicious();
         }
 
         void ClearTarget()
@@ -544,7 +542,7 @@ public sealed class NpcManager : MonoBehaviour
             BindTarget(null, float.MaxValue, SenseContactChannel.None);
             _heardCell = default;
             _heardWorld = default;
-            _combatEmote?.ClearCombat();
+            _emote?.ClearCombat();
         }
 
         void UpdateHeardLocation(Vector3 targetFeet)
@@ -622,9 +620,9 @@ public sealed class NpcManager : MonoBehaviour
             ICharacterBody body = host.Body;
             if (body == null || body.IsDeadState)
                 return false;
-            if (host.TryGetComponent(out CharacterPainHost painHost) && painHost.IsPainShocked)
+            if (CharacterBodyResolve.TryGetInBody(host, out CharacterPainHost painHost) && painHost.IsPainShocked)
                 return false;
-            if (host.TryGetComponent(out CharacterSkillsHost skillsHost) &&
+            if (CharacterBodyResolve.TryGetInBody(host, out CharacterSkillsHost skillsHost) &&
                 skillsHost.Defeat != null &&
                 skillsHost.Defeat.IsDefeated)
                 return false;
@@ -655,7 +653,7 @@ public sealed class NpcManager : MonoBehaviour
         static float ResolveStoppingDistance(MovementStyle style) =>
             style != null ? style.StoppingDistance : NpcAgentDefaults.StoppingDistance;
 
-        void SetAimHeld(bool held) => _aimIntent?.SetAimHeld(held);
+        void SetAimHeld(bool held) => _attacker?.SetAimHeld(held);
 
         void ReleaseCombatAim()
         {
@@ -701,7 +699,7 @@ public sealed class NpcManager : MonoBehaviour
             _alertTimer = _entry.alertSeconds;
             NpcSteer.Stop(_motor);
             _motor.SetActiveMovementStyle(_entry.holdStyle);
-            _combatEmote?.SetAlertSpotted();
+            _emote?.SetAlertSpotted();
         }
 
         void EnterChase()
@@ -710,9 +708,9 @@ public sealed class NpcManager : MonoBehaviour
             ReleaseCombatAim();
             _motor.SetActiveMovementStyle(_entry.chaseStyle);
             if (_contact == SenseContactChannel.Hearing)
-                _combatEmote?.SetAlertSuspicious();
+                _emote?.SetAlertSuspicious();
             else
-                _combatEmote?.ClearCombat();
+                _emote?.ClearCombat();
         }
 
         void EnterAttack()
@@ -742,7 +740,7 @@ public sealed class NpcManager : MonoBehaviour
             NpcSteer.Stop(_motor);
             _motor.SetActiveMovementStyle(_entry.holdStyle);
             _motor.SetDesiredWorldDir(Vector3.zero);
-            _combatEmote?.ClearCombat();
+            _emote?.ClearCombat();
         }
 
         void OnDefeatChanged()
@@ -761,10 +759,10 @@ public sealed class NpcManager : MonoBehaviour
 
         void ApplyAimPreference()
         {
-            if (_aimIntent == null)
+            if (_attacker == null)
                 return;
 
-            _aimIntent.SetPreferredPart(
+            _attacker.SetPreferredPart(
                 _entry.suppressMode ? BodyPartIds.LegL : BodyPartIds.Torso);
         }
     }

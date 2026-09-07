@@ -1,35 +1,42 @@
 // ============================================================
-// CharacterCombatVfx — Action 시전 VFX + Hit(특성) + 자상/절단 피 오버레이 + Reaction
+// CharacterAttackerCombatVfx — Action 시전 VFX + Hit + 피 오버레이 (plain)
 // ============================================================
 
 using Lean.Pool;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterCombatVfx : MonoBehaviour
+public sealed class CharacterAttackerCombatVfx
 {
-    [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    readonly CharacterAttacker _attacker;
+    readonly TimeScaleChannel _timeChannel;
+    bool _bound;
 
-    CharacterAttacker _attacker;
-
-    void Awake() => _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
-
-    void OnEnable()
+    public CharacterAttackerCombatVfx(CharacterAttacker attacker, TimeScaleChannel timeChannel)
     {
-        if (_attacker == null)
+        _attacker = attacker;
+        _timeChannel = timeChannel;
+    }
+
+    public void Bind()
+    {
+        if (_attacker == null || _bound)
             return;
+
         _attacker.AttackResolved += OnAttackResolved;
         _attacker.AttackJudged += OnAttackJudged;
         _attacker.AttackCueFired += OnAttackCueFired;
+        _bound = true;
     }
 
-    void OnDisable()
+    public void Unbind()
     {
-        if (_attacker == null)
+        if (_attacker == null || !_bound)
             return;
+
         _attacker.AttackResolved -= OnAttackResolved;
         _attacker.AttackJudged -= OnAttackJudged;
         _attacker.AttackCueFired -= OnAttackCueFired;
+        _bound = false;
     }
 
     void OnAttackResolved(AttackOutcome outcome)
@@ -57,7 +64,6 @@ public sealed class CharacterCombatVfx : MonoBehaviour
                 SpawnImpactKind(ArmImpactKind.Blocked, outcome.OriginPoint, outcome.Direction);
         }
 
-        // Cooling/NoTarget 등 게이트 실패는 Hit/Miss 연출 대상이 아님
         if (!obstructed &&
             outcome.Result != AttackPerformResult.Performed &&
             outcome.Result != AttackPerformResult.Miss)
@@ -122,7 +128,7 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         if (_attacker != null &&
             !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
             return;
-        SpawnImpactKind(ArmImpactKind.Recoil, _attacker.ResolveOrigin(), transform.forward);
+        SpawnImpactKind(ArmImpactKind.Recoil, _attacker.ResolveOrigin(), _attacker.transform.forward);
     }
 
     void SpawnImpactKind(ArmImpactKind kind, Vector3 origin, Vector3 forward)
@@ -137,7 +143,7 @@ public sealed class CharacterCombatVfx : MonoBehaviour
     {
         if (_attacker?.Catalog != null && _attacker.Catalog.AnimPipeline != null)
             return _attacker.Catalog.AnimPipeline;
-        CharacterLocomotionAnim loc = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
+        CharacterLocomotionAnim loc = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(_attacker);
         return loc != null ? loc.ArmSlotCatalog : null;
     }
 
@@ -157,7 +163,6 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         return instance;
     }
 
-    /// <summary>true = 트레이서가 착탄 VFX를 맡음. false = 호출측이 즉시 스폰.</summary>
     bool SpawnTracer(
         GameObject prefab,
         AttackOutcome outcome,

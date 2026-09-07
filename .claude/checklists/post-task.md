@@ -1,6 +1,8 @@
 # Post-Task Checklist
 
-Before reporting completion, verify ALL of the following:
+Before reporting completion, verify ALL of the following.
+
+**범용 완료 게이트 (구현·리팩터·이주·프리팹·런타임 동작):** `.claude/checklists/agent-completion-gate.md` — 경량 예외는 그 파일 §When. 보고 상태는 **Done / Incomplete / Partial** 중 하나.
 
 ## Code Quality
 - [ ] No hardcoded values that should be constants or config

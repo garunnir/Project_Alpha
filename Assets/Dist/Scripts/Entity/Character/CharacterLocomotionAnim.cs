@@ -69,7 +69,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
     CharacterAttacker _attacker;
     PlayerGearHost _gearHost;
     CharacterSkillsHost _skillsHost;
-    CharacterHitStop _hitStop;
+    CharacterHitStopState _hitStop;
+    CharacterVaultHost _vaultHost;
     ICharacterLocomotion _locomotion;
     bool _manualControl;
     bool _pendingBind = true;
@@ -172,16 +173,20 @@ public class CharacterLocomotionAnim : MonoBehaviour
     const byte AttackLatchPlaying = 2;
 
     public Animator Animator => _animator;
+    public int WorkLayerIndex { get; private set; } = -1;
     public ArmAnimSlotCatalog ArmSlotCatalog => _armSlotCatalog;
+
+    public bool TryGetWorkAnim(out Animator animator, out int workLayerIndex)
+    {
+        animator = _animator;
+        workLayerIndex = WorkLayerIndex;
+        return _animator != null && WorkLayerIndex >= 0;
+    }
 
     void Awake()
     {
-        _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
-        _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
-        _skillsHost = CharacterBodyResolve.GetInBody<CharacterSkillsHost>(this);
-        _locomotion = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        _hitStop = CharacterHitStop.Find(this);
+        ResolveBodyRefs();
+        _hitStop = CharacterHitStopState.Find(this);
 
         if (_animator == null)
             _animator = GetComponentInChildren<Animator>();
@@ -191,6 +196,28 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         ApplyWeaponAnimOverride(forceRebind: false);
         CacheAnimatorParameters();
+    }
+
+    void ResolveBodyRefs()
+    {
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        if (refs != null)
+        {
+            _characterState = refs.State;
+            _attacker = refs.Attacker;
+            _gearHost = refs.GearHost;
+            _skillsHost = refs.SkillsHost;
+            _locomotion = refs.Motor;
+            _vaultHost = refs.VaultHost;
+            return;
+        }
+
+        _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
+        _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
+        _skillsHost = CharacterBodyResolve.GetInBody<CharacterSkillsHost>(this);
+        _locomotion = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+        _vaultHost = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
     }
 
     void OnEnable()
@@ -657,6 +684,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _animator.runtimeAnimatorController = next;
 
         CacheAnimatorParameters();
+        RefreshWorkLayerIndex();
 
         if (forceRebind || _manualControl)
         {
@@ -684,6 +712,13 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         return controller;
+    }
+
+    void RefreshWorkLayerIndex()
+    {
+        WorkLayerIndex = _animator != null
+            ? CharacterWorkLayerAnim.ResolveLayerIndex(_animator)
+            : -1;
     }
 
     void TickAttackCues()
@@ -972,8 +1007,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void SyncVaultLayerWeights(float channelDelta)
     {
-        CharacterVaultHost vault = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
-        if (vault == null || !vault.IsBusy || _animator == null)
+        if (_vaultHost == null || !_vaultHost.IsBusy || _animator == null)
             return;
 
         SuppressLocomotionLayers(channelDelta);
@@ -990,8 +1024,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void SyncArmLayerWeights(float channelDelta)
     {
-        CharacterVaultHost vault = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
-        if (vault != null && vault.IsBusy)
+        if (_vaultHost != null && _vaultHost.IsBusy)
             return;
 
         bool twoHand = false;

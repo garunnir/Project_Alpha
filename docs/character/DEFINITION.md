@@ -131,6 +131,22 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 
 `CharacterKind`로 PC/NPC를 나누지 않는다. 조종 여부는 `CharacterMotor.IsPossessed` (`PlayerManager.Possess`).
 
+## NpcSample 본체 계층 (에디터 SSOT)
+
+**SSOT:** `CharacterBodyPrefabOrganizeMenu` (`Dist/MCP/Character/Organize NpcSample Body Hierarchy` · `Ensure NpcSample Body Refs`).  
+**Resolve:** 루트 `CharacterBodyRefs` — 스폰 시 1회 `ResolveFromHierarchy`, 소비자는 `GetBodyRefs()` / `GetInBody` (캐시 우선). **Update 등 hot path에서 `GetInBody` 금지** — Awake·바인드 시 캐시.
+
+| GO | 역할 | 대표 컴포넌트 |
+|----|------|----------------|
+| **루트** | 물리·정의·애니·resolve 캐시 | `Rigidbody`, `CapsuleCollider`, `CharacterBodyRoot`, `CharacterBodyRefs`, `CharacterState`, `CharacterMotor`, `CharacterDefinitionBinder`, `CharacterLocomotionAnim`, `CharacterVaultHost`, `CharacterFootDustVfx` |
+| **GameplayCore** | 몸 데이터·세션·전투·기분·기후 | `CharacterBodyHost`, `CharacterSessionHub`, `CharacterActionHost`, `CharacterArriveHost`, `CharacterAttacker`, `PlayerGearHost`, `PlayerInventoryHost`, … (`CharacterBodyPrefabOrganizeMenu.GameplayCoreTypes`) |
+| **Senses** | 시야·청각·Presence | `CharacterVision`, `CharacterHearing`, `CharacterPresenceHost`, `CharacterSenseGizmo` |
+| **Presentation** | 이모트·페이드·외형 | `CharacterSightFadeHost`, `CharacterAppearanceHost`, `CharacterEmoteHost` |
+
+**MUST NOT:** 자식 GO에 `CharacterBodyRoot` / `CharacterBodyRefs` 중복. `PlayerController`를 NpcSample에 올리지 않음 (입력은 `PlayerPossessedInputHost`).
+
+**Work Layer / Cell:** `CharacterTimedWorkPlayback` + `CharacterActionHost` Cell pipelines (`CharacterCellFarmPipeline` / Fish / Construction). Farm/Fish/Construction ActionHost MB·`CharacterFarmWorkHost` / `CharacterFishWorkHost` 삭제됨.
+
 ## 샘플
 
 | 에셋 | 용도 |

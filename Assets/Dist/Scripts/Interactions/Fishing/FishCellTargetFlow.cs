@@ -14,24 +14,38 @@ public static class FishCellTargetFlow
 
     public static void BeginCollectTrap(Vector3Int cell)
     {
-        FishCellActionHost host = ResolveActionHost();
-        host?.TryRun(FishCellActionKind.CollectTrap, cell, null, null);
+        CharacterActionHost host = ResolveActionHost();
+        host?.TryRunFish(FishCellActionKind.CollectTrap, cell, null, null);
     }
 
-    static FishCellActionHost ResolveActionHost()
+    static CharacterActionHost ResolveActionHost()
     {
-        PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear != null)
+        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        if (session != null)
         {
-            if (!gear.TryGetComponent(out FishCellActionHost host))
-                host = gear.gameObject.AddComponent<FishCellActionHost>();
-            return host;
+            PlayerGearHost gear = PlayerGearHost.Active;
+            if (gear != null)
+            {
+                CharacterBodyRoot bodyRoot = gear.GetComponentInParent<CharacterBodyRoot>();
+                if (bodyRoot != null)
+                    CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
+            }
+
+            return session;
         }
 
-        if (PlayerInventoryRuntime.Active?.Host != null &&
-            PlayerInventoryRuntime.Active.Host.TryGetComponent(out FishCellActionHost inventoryHost))
-            return inventoryHost;
+        PlayerGearHost activeGear = PlayerGearHost.Active;
+        if (activeGear != null)
+        {
+            CharacterActionHost fromGear = activeGear.GetBodyComponent<CharacterActionHost>();
+            CharacterBodyRoot bodyRoot = activeGear.GetComponentInParent<CharacterBodyRoot>();
+            if (bodyRoot != null)
+                CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
+            return fromGear;
+        }
 
-        return null;
+        return PlayerInventoryRuntime.Active?.Host != null
+            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+            : null;
     }
 }

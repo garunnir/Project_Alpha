@@ -219,7 +219,7 @@ public static class PlayerProgressSaveBridge
 
         body.transform.position = pos;
 
-        if (body.TryGetComponent(out CharacterState state))
+        if (CharacterBodyResolve.TryGetInBody(body.transform, out CharacterState state))
             state.SnapWorldPosition(pos);
 
         Vector3 facing = new Vector3(snapshot.facingX, 0f, snapshot.facingZ);

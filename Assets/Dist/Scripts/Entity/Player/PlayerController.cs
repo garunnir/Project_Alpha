@@ -64,10 +64,14 @@ public class PlayerController : MonoBehaviour, IPlayControllable
 
     void EnsureRuntimeComponents()
     {
-        if (_tileObjectPointer == null)
+        if (_tileObjectPointer != null)
+            return;
+
+        if (!TryGetComponent(out _tileObjectPointer))
         {
-            if (!TryGetComponent(out _tileObjectPointer))
-                _tileObjectPointer = gameObject.AddComponent<TileObjectPointerController>();
+            Debug.LogError(
+                $"[PlayerController] '{name}' needs TileObjectPointerController on the prefab.",
+                this);
         }
     }
 

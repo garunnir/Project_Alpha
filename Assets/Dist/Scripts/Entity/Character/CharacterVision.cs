@@ -148,15 +148,15 @@ public sealed class CharacterVision : MonoBehaviour
     void Awake()
     {
         if (_gearHost == null)
-            TryGetComponent(out _gearHost);
+            _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
         if (_definitionBinder == null)
-            TryGetComponent(out _definitionBinder);
+            _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
     }
 
     float ResolveBaseSpotAngle()
     {
         if (_definitionBinder == null)
-            TryGetComponent(out _definitionBinder);
+            _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
 
         CharacterDefinition def = _definitionBinder != null ? _definitionBinder.Definition : null;
         if (def != null)

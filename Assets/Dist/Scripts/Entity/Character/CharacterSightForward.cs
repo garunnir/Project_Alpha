@@ -15,7 +15,7 @@ public static class CharacterSightForward
     public static Vector3 ResolveXZ(CharacterState state, Transform bodyTransform)
     {
         if (state != null &&
-            state.TryGetComponent(out CharacterMotor motor) &&
+            CharacterBodyResolve.TryGetInBody(state, out CharacterMotor motor) &&
             motor.IsPossessed &&
             PlayerSightVisionBinder.TryGetSightForwardXZ(out Vector3 spotForward))
         {

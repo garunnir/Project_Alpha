@@ -34,9 +34,9 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         _playerFaction = null;
         if (_playerState != null)
         {
-            _playerState.TryGetComponent(out _playerVision);
-            _playerState.TryGetComponent(out _playerHearing);
-            _playerState.TryGetComponent(out _playerFaction);
+            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
+            _playerHearing = CharacterBodyResolve.GetInBody<CharacterHearing>(_playerState);
+            _playerFaction = CharacterBodyResolve.GetInBody<CharacterFactionHost>(_playerState);
         }
     }
 
@@ -99,9 +99,10 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
                 continue;
             if (!IsPreferredHostile(bodyHost))
                 continue;
-            if (!bodyHost.TryGetComponent(out CharacterSightFadeHost fadeHost))
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            if (fadeHost == null)
                 continue;
-            if (!bodyHost.TryGetComponent(out CharacterMotor targetMotor))
+            if (!CharacterBodyResolve.TryGetInBody(bodyHost, out CharacterMotor targetMotor))
                 continue;
 
             Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(bodyHost.transform);
@@ -186,9 +187,9 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
     void EnsurePlayerComponents()
     {
         if (_playerVision == null && _playerState != null)
-            _playerState.TryGetComponent(out _playerVision);
+            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
         if (_playerHearing == null && _playerState != null)
-            _playerState.TryGetComponent(out _playerHearing);
+            _playerHearing = CharacterBodyResolve.GetInBody<CharacterHearing>(_playerState);
         if (_playerFaction == null && _playerState != null)
             _playerFaction = CharacterBodyResolve.GetInBody<CharacterFactionHost>(_playerState);
     }

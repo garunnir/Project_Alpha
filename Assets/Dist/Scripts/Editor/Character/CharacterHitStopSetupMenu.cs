@@ -22,7 +22,7 @@ public static class CharacterHitStopSetupMenu
             EditorSceneManager.SaveOpenScenes();
         Debug.Log(
             $"[CharacterHitStopSetupMenu] Settings {SettingsPath}. " +
-            $"Prefab added={prefabAdded}, scene added={sceneAdded}.",
+            $"Prefab patched={prefabAdded}, scene patched={sceneAdded}.",
             settings);
     }
 
@@ -40,7 +40,7 @@ public static class CharacterHitStopSetupMenu
 
         try
         {
-            int added = EnsureHitStopOn(root, settings, recordUndo: false) ? 1 : 0;
+            int added = EnsureHitStopOn(root, settings) ? 1 : 0;
             PrefabUtility.SaveAsPrefabAsset(root, NpcSamplePath);
             return added;
         }
@@ -53,47 +53,51 @@ public static class CharacterHitStopSetupMenu
     static int PatchOpenSceneHosts(CombatHitStopSettings settings)
     {
         int added = 0;
-        CharacterHitReact[] hosts = Object.FindObjectsByType<CharacterHitReact>(
+        CharacterBodyHost[] hosts = Object.FindObjectsByType<CharacterBodyHost>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
         for (int i = 0; i < hosts.Length; i++)
         {
-            CharacterHitReact host = hosts[i];
+            CharacterBodyHost host = hosts[i];
             if (host == null)
                 continue;
-            if (EnsureHitStopOn(host.gameObject, settings, recordUndo: true))
+            if (EnsureHitStopOn(host.gameObject, settings))
                 added++;
         }
 
         return added;
     }
 
-    static bool EnsureHitStopOn(
-        GameObject go,
-        CombatHitStopSettings settings,
-        bool recordUndo)
+    static bool EnsureHitStopOn(GameObject go, CombatHitStopSettings settings)
     {
-        CharacterHitStop hitStop = go.GetComponent<CharacterHitStop>();
-        bool added = false;
-        if (hitStop == null)
+        CharacterBodyHost bodyHost = go.GetComponentInChildren<CharacterBodyHost>(true);
+        if (bodyHost == null)
+            return false;
+
+        // Strip legacy MB if present from prior versions.
+        Component[] behaviours = go.GetComponentsInChildren<Component>(true);
+        for (int i = 0; i < behaviours.Length; i++)
         {
-            hitStop = recordUndo
-                ? Undo.AddComponent<CharacterHitStop>(go)
-                : go.AddComponent<CharacterHitStop>();
-            added = true;
+            Component component = behaviours[i];
+            if (component == null)
+                continue;
+            if (component.GetType().Name == "CharacterHitStop")
+                Undo.DestroyObjectImmediate(component);
         }
 
-        SerializedObject so = new(hitStop);
-        SerializedProperty settingsProp = so.FindProperty("_settings");
-        if (settingsProp != null &&
-            settingsProp.objectReferenceValue != settings)
+        SerializedObject so = new(bodyHost);
+        SerializedProperty settingsProp = so.FindProperty("_hitStopSettings");
+        bool changed = false;
+        if (settingsProp != null && settingsProp.objectReferenceValue != settings)
         {
             settingsProp.objectReferenceValue = settings;
             so.ApplyModifiedPropertiesWithoutUndo();
+            changed = true;
         }
 
-        EditorUtility.SetDirty(go);
-        return added;
+        bodyHost.ConfigureHitStopSettings(settings);
+        EditorUtility.SetDirty(bodyHost);
+        return changed;
     }
 }
 #endif

@@ -56,10 +56,10 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 **고체 셀은 즉시 반환**한다 — 얼음은 흐르지 않고, 받지도 않는다. 순서:
 
 0. **OutOfMap** — `!hub.IsInMapBounds(self)`이면 ml 제거 후 return (저장 `mapBounds` SSOT)
-1. **중력** — self에 바닥이 없으면(`!hub.CellHasFloor(self)`) **AirGap(점유 없음) 포함** 아래 칸과 stable-state까지 채움. below도 bounds 안이어야 함
-2. **수평 equalize** — 4방향. 대상은 `IsHorizontalFlowTarget`: bounds XZ 안 + `CellHasOccupancy` + 비고체 (AirGap으로 옆 확산 금지)
+1. **중력** — self에 바닥이 없으면(`!hub.CellHasFloor(self)`) **AirGap(점유 없음) 포함** 아래 칸과 stable-state까지 채움. below는 bounds 안·`CanHoldLiquid`(얼음·`BlocksOccupiedCells` 제외)이어야 함
+2. **수평 equalize** — 4방향. 대상은 `IsHorizontalFlowTarget`: bounds XZ 안 + `CellHasOccupancy` + `CanHoldLiquid` (AirGap으로 옆 확산 금지)
 3. **수직 탈출** — 2번에서 옮길 곳이 없고 압축 상한 초과 시, 위 칸이 `IsHorizontalFlowTarget`이면 초과분 이동
-4. 차단: `TryGetEdgeBetween` + `EdgeBlocksPassage`(수평), `CellHasFloor`(수직), `mapBounds`(맵 밖)
+4. 차단: `MapTopologyGridSegment`와 동일 — 수평 한 스텝에서 `CellHasSolidWall`(목표 셀 `BlocksOccupiedCells`) + `TryGetEdgeBetween`·`EdgeBlocksPassage`(EdgeWall). 수직은 `CellHasFloor`(논리 바닥). `mapBounds`(맵 밖). **엣지 타일이 없어도** 점유 벽(`ThickWall` 등)만으로 pit 테두리를 만들면 `CellHasSolidWall`로 막힌다.
 
 **거절이 없는 이유**: 오픈 지형에서 위 칸은 거의 항상 열려 있으므로 3번이 항상 탈출구를 제공한다. 완전 밀폐(위도 막힘)는 지형이 아니라 컨테이너(아이템/탱크) 정의의 몫이며, 그 경우는 `MapLiquidMlBridge.Pour` 호출 이전에 소비자가 걸러야 한다.
 
