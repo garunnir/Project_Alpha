@@ -1004,6 +1004,28 @@ public sealed class CharacterAttacker : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Excavate face 조준 미리보기. DIG quality + resolve + <see cref="MapDigService.CanBreak"/>.
+    /// 시전 없음. resolve SSOT는 <paramref name="host"/>.
+    /// </summary>
+    public bool TryPreviewMeleeBlockTarget(
+        PlayerCombatController host,
+        out DigTileTarget target)
+    {
+        target = default;
+        if (CombatLeafUtil.Normalize(_selectedLeaf) != CombatLeaf.Excavate)
+            return false;
+
+        ItemData item = CurrentItem;
+        if (item == null || !MapPlantService.HasDigQuality(item))
+            return false;
+
+        if (host == null || !host.TryResolveDigTargetFromAim(out target))
+            return false;
+
+        return MapDigService.CanBreak(target);
+    }
+
     float ResolveAim01(ItemData item)
     {
         if (_aimHeld)

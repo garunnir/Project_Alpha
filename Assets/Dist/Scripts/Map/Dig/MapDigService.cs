@@ -90,12 +90,7 @@ namespace IsoTilemap
                 return false;
             }
 
-            int dx = Mathf.Abs(actorCell.x - targetCell.x);
-            int dz = Mathf.Abs(actorCell.z - targetCell.z);
-            if (actorCell.y != targetCell.y)
-                return false;
-
-            return Mathf.Max(dx, dz) <= MapDigConsts.DigActionRangeCells;
+            return MapDigConsts.IsWithinActionRange(actorCell, targetCell);
         }
 
         static void GrantBreakDrop(string prefabId, Vector3 world)

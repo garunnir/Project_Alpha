@@ -9,13 +9,16 @@
 ```mermaid
 flowchart TB
   subgraph L1["① 조준"]
-    RMB[RMB] --> Aim[IAimSightProvider]
-    Aim --> CS[CharacterState<br/>AimWorldPoint / IsAiming]
+    RMB[RMB] --> Sight[IAimSightProvider]
+    Sight --> CS[CharacterState<br/>AimWorldPoint / InteractionDir]
+    CS --> Resolve[TargetResolve<br/>Leaf·ResolveMode]
+    Resolve --> Preview[ICombatTargetingPreview]
   end
 
   subgraph L2["② 시전"]
     LMB[LMB click / hold] --> Drv[ICombatPerformDriver]
     CS -.->|조준 상태| Drv
+    Resolve -.->|동일 타겟 SSOT| Drv
     Drv --> TP[TryPerform Leaf]
   end
 
@@ -31,6 +34,16 @@ flowchart TB
   H --> Chop[melee_plant_target]
   H --> Guard[raise_guard]
 ```
+
+### Layer1 조준 3단
+
+| 단 | 역할 | Excavate |
+|----|------|----------|
+| **Sight** | 시선·월드점 (Y 평면화) | `PlayerAimController` + `IAimSightProvider` |
+| **Resolve** | typed 타겟 + 사거리 clamp | `DigTileTargetResolver.TryResolveFromCombatAim` (유클리드 3D ≤ `DigActionRangeCells`) |
+| **Preview** | 피드백 consumer | `MeleeBlockAimPreview` → `TilePresentationSystem.SetDigHighlight` |
+
+`ICombatTargetingPreview`는 `ICombatPerformDriver`와 대칭 — `PlayerCombatController`가 perform Tick **이후** preview Tick. 원거리 Preview는 `UIAimPointer` + `TryPreviewRangedSpread` (후속 `RangedAimPreview` 이주 가능). Farm/건설 셀 세션은 입력·확정이 달라 합치지 않음.
 
 ---
 
@@ -105,10 +118,11 @@ flowchart TB
 ## 코드 위치
 
 ```text
-Aim/          ①
+Aim/          ① Sight
+Targeting/    ① Preview (ICombatTargetingPreview)
 Perform/      ②  PlayerCombatController
 Combat/       ③  CharacterAttacker · Handlers · Catalog
-Character/Cell/   Dig·Chop Pipeline
+Map/Dig/      Resolve (DigTileTargetResolver) · Dig·Chop Pipeline
 ```
 
 Data Definitions: **Combat** 루트 허브 → ① Catalog → ② Baselines/Quality → ③ Attacks → ④ Fallbacks. Catalog·허브에 Resolve 미리보기.

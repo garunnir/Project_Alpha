@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerCombatController — ICombatPerformDriver 라우트·틱 (Layer2 host)
+// PlayerCombatController — ICombatPerformDriver + TargetingPreview 라우트 (Layer2)
 // ============================================================
 
 using System.Collections.Generic;
@@ -23,6 +23,10 @@ public sealed class PlayerCombatController : MonoBehaviour
         new AutoHoldPerformDriver(),
         new ExcavateHoldPerformDriver(),
         new ChopHoldPerformDriver(),
+    };
+    readonly ICombatTargetingPreview[] _previewDrivers =
+    {
+        new MeleeBlockAimPreview(),
     };
     bool _connected;
     bool _inputEnabled = true;
@@ -94,6 +98,10 @@ public sealed class PlayerCombatController : MonoBehaviour
         CombatPerformContext ctx = BuildContext();
         for (int i = 0; i < _drivers.Length; i++)
             _drivers[i].Tick(ctx);
+
+        // perform Clear(LMB up) 이후 같은 프레임에 RMB-only highlight 복구.
+        for (int i = 0; i < _previewDrivers.Length; i++)
+            _previewDrivers[i].TickPreview(ctx);
     }
 
     void OnCombatCycle(InputAction.CallbackContext context)
@@ -127,6 +135,9 @@ public sealed class PlayerCombatController : MonoBehaviour
         CombatPerformContext ctx = BuildContext();
         for (int i = 0; i < _drivers.Length; i++)
             _drivers[i].Clear(ctx);
+
+        for (int i = 0; i < _previewDrivers.Length; i++)
+            _previewDrivers[i].ClearPreview();
     }
 
     /// <summary>GraphicRaycaster UI가 포인터를 가로채면 시전·Excavate 차단.</summary>
@@ -138,7 +149,10 @@ public sealed class PlayerCombatController : MonoBehaviour
         return IsPointerBlockedByUiAt(screenPos);
     }
 
-    /// <summary>CharacterState.AimWorldPoint → DigTileTarget (카메라 ScreenPointToRay 없음).</summary>
+    /// <summary>
+    /// CharacterState.AimWorldPoint → DigTileTarget (combat clamp SSOT).
+    /// hold·preview 공용. 카메라 ScreenPointToRay 없음.
+    /// </summary>
     public bool TryResolveDigTargetFromAim(out DigTileTarget target)
     {
         target = default;
@@ -154,12 +168,15 @@ public sealed class PlayerCombatController : MonoBehaviour
         TilePrefabDB prefabDb = ResolvePrefabDb();
         float feetY = CharacterFeetPose.GetFeetWorld(
             _characterState != null ? _characterState.transform : transform).y;
+        Vector3Int actorCell = _characterState.ResolveCurrentGridCell();
 
-        return DigTileTargetResolver.TryResolveFromWorldPoint(
+        return DigTileTargetResolver.TryResolveFromCombatAim(
             _characterState.AimWorldPoint,
+            _characterState.InteractionDir,
+            actorCell,
+            feetY,
             hub,
             cellSize,
-            feetY,
             prefabDb,
             out target);
     }

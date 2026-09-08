@@ -1,5 +1,5 @@
 // ============================================================
-// DigTileTargetResolver — AimWorldPoint / 카메라 레이 → HorizontalFace 굴착 타겟
+// DigTileTargetResolver — AimWorldPoint / combat clamp → HorizontalFace 굴착 타겟
 // ============================================================
 
 using UnityEngine;
@@ -12,8 +12,75 @@ namespace IsoTilemap
         static readonly RaycastHit[] PhysicsHits = new RaycastHit[PhysicsHitBufferSize];
 
         /// <summary>
+        /// 전투 Excavate SSOT. AimWorldPoint → face.
+        /// 유클리드 3D 반경(<see cref="MapDigConsts.DigActionRangeCells"/>) 밖이면
+        /// 액터→ideal 그리드 스텝으로 clamp (Y 포함).
+        /// </summary>
+        public static bool TryResolveFromCombatAim(
+            Vector3 aimWorldPoint,
+            Vector3 interactionDirFlat,
+            Vector3Int actorWalkableCell,
+            float actorFeetWorldY,
+            TileMapCacheHub hub,
+            float cellSize,
+            TilePrefabDB prefabDb,
+            out DigTileTarget target)
+        {
+            target = default;
+            if (hub == null)
+                return false;
+
+            if (!TryResolveFromWorldPoint(
+                    aimWorldPoint,
+                    hub,
+                    cellSize,
+                    actorFeetWorldY,
+                    prefabDb,
+                    out DigTileTarget ideal))
+            {
+                return false;
+            }
+
+            if (MapDigConsts.IsWithinActionRange(actorWalkableCell, ideal.WalkableCell))
+            {
+                target = ideal;
+                return true;
+            }
+
+            Vector3Int clamped = ClampWalkableTowardIdeal(
+                actorWalkableCell,
+                ideal.WalkableCell);
+
+            // interactionDirFlat: clamp가 액터에 머물 때 XZ 폴백 (희귀).
+            if (clamped == actorWalkableCell &&
+                interactionDirFlat.sqrMagnitude > 1e-6f)
+            {
+                Vector3 flat = interactionDirFlat;
+                flat.y = 0f;
+                if (flat.sqrMagnitude > 1e-6f)
+                {
+                    flat.Normalize();
+                    int span = MapDigConsts.DigActionRangeCells;
+                    int dx = Mathf.RoundToInt(flat.x * span);
+                    int dz = Mathf.RoundToInt(flat.z * span);
+                    if (dx != 0 || dz != 0)
+                    {
+                        clamped = ClampWalkableTowardIdeal(
+                            actorWalkableCell,
+                            new Vector3Int(
+                                actorWalkableCell.x + dx,
+                                actorWalkableCell.y,
+                                actorWalkableCell.z + dz));
+                    }
+                }
+            }
+
+            return TryBuildTargetFromWalkable(hub, clamped, prefabDb, out target);
+        }
+
+        /// <summary>
         /// 조준 월드점(AimWorldPoint) → FloorFace → DigTileTarget.
-        /// Excavate 기본 경로. 카메라 ScreenPointToRay 아님.
+        /// 사거리 clamp 없음. 카메라 ScreenPointToRay 아님.
         /// </summary>
         public static bool TryResolveFromWorldPoint(
             Vector3 worldPoint,
@@ -87,6 +154,55 @@ namespace IsoTilemap
                 prefabDb,
                 out target);
         }
+
+        /// <summary>
+        /// 액터→ideal 3축 Sign 스텝. 유클리드 반경 안인 마지막 셀.
+        /// </summary>
+        static Vector3Int ClampWalkableTowardIdeal(Vector3Int actor, Vector3Int ideal)
+        {
+            if (MapDigConsts.IsWithinActionRange(actor, ideal))
+                return ideal;
+
+            Vector3Int lastInRange = actor;
+            Vector3Int cur = actor;
+            int maxSteps = MapDigConsts.DigActionRangeCells * 4 + 8;
+            for (int step = 0; step < maxSteps; step++)
+            {
+                int rdx = ideal.x - cur.x;
+                int rdy = ideal.y - cur.y;
+                int rdz = ideal.z - cur.z;
+                if (rdx == 0 && rdy == 0 && rdz == 0)
+                    break;
+
+                cur = new Vector3Int(
+                    cur.x + MathSign(rdx),
+                    cur.y + MathSign(rdy),
+                    cur.z + MathSign(rdz));
+
+                if (!MapDigConsts.IsWithinActionRange(actor, cur))
+                    break;
+
+                lastInRange = cur;
+                if (cur.x == ideal.x && cur.y == ideal.y && cur.z == ideal.z)
+                    break;
+            }
+
+            return lastInRange;
+        }
+
+        static int MathSign(int v) =>
+            v > 0 ? 1 : v < 0 ? -1 : 0;
+
+        static bool TryBuildTargetFromWalkable(
+            TileMapCacheHub hub,
+            Vector3Int walkableCell,
+            TilePrefabDB prefabDb,
+            out DigTileTarget target) =>
+            TryBuildTarget(
+                hub,
+                FloorFaceKey.ForWalkableCell(walkableCell),
+                prefabDb,
+                out target);
 
         static bool TryBuildTarget(
             TileMapCacheHub hub,

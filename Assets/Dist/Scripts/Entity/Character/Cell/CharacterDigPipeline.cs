@@ -1,15 +1,11 @@
 // ============================================================
-// CharacterDigPipeline — Dig cue 맵 FloorFace HP + highlight + TryBreak
+// CharacterDigPipeline — Dig cue 맵 FloorFace HP + TryBreak
 // ============================================================
 
-using System;
 using IsoTilemap;
-using UnityEngine;
 
 public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigTileTarget>
 {
-    Guid _highlightTileId = Guid.Empty;
-
     protected override TileDefinition ResolveDefinition(in DigTileTarget target) =>
         target.Definition;
 
@@ -39,35 +35,4 @@ public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigT
 
     protected override void BreakTarget(in DigTileTarget target) =>
         MapDigService.TryBreak(target);
-
-    protected override void OnTargetBegun(in DigTileTarget target) =>
-        SetHighlight(target.FaceTile.tileDefId);
-
-    protected override void OnCleared() =>
-        ClearHighlight();
-
-    void SetHighlight(Guid presentationTileId)
-    {
-        if (presentationTileId == Guid.Empty)
-        {
-            ClearHighlight();
-            return;
-        }
-
-        if (_highlightTileId == presentationTileId)
-            return;
-
-        ClearHighlight();
-        _highlightTileId = presentationTileId;
-        TilePresentationSystem.Instance?.SetDigHighlight(presentationTileId, true);
-    }
-
-    void ClearHighlight()
-    {
-        if (_highlightTileId == Guid.Empty)
-            return;
-
-        TilePresentationSystem.Instance?.SetDigHighlight(_highlightTileId, false);
-        _highlightTileId = Guid.Empty;
-    }
 }

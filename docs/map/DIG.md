@@ -6,7 +6,7 @@
 
 ## 개요
 
-**Dig = 무기 Leaf 결과** (`CombatLeaf.Excavate`). 플레이어가 DIG 품질 무기를 **ActiveWieldHand**에 들고 **Excavate Leaf 선택** 후 **RMB 조준 + LMB 홀드**하면, Dig perform cue마다 **피해 채널(bash/cut) × TileDefinition 재질 resist**로 타일 내구도 피해를 주고, remaining ≤0이면 `AimWorldPoint`가 가리키는 **HorizontalFace**(walkable 셀 바로 아래 바닥면)를 파괴한다. 상층 바닥 face를 제거하고, 아래 walkable에 바닥이 없으면 `stratumSeed` 기반 결정론적 지층 바닥을 생성한다.
+**Dig = 무기 Leaf 결과** (`CombatLeaf.Excavate`). 플레이어가 DIG 품질 무기를 **ActiveWieldHand**에 들고 **Excavate Leaf 선택** 후 **RMB 조준 + LMB 홀드**하면, Dig perform cue마다 **피해 채널(bash/cut) × TileDefinition 재질 resist**로 타일 내구도 피해를 주고, remaining ≤0이면 `TryResolveFromCombatAim`이 고른 **HorizontalFace**(walkable 셀 바로 아래 바닥면, 유클리드 3D ≤ `DigActionRangeCells`)를 파괴한다. 상층 바닥 face를 제거하고, 아래 walkable에 바닥이 없으면 `stratumSeed` 기반 결정론적 지층 바닥을 생성한다.
 
 **타일 내구도**는 맵 SSOT(`MapDigColumnHost` remaining HP · `MapSaveJsonDto`)다. Dig·벽 HP·벌목은 동일 채널×재질 소비.
 
@@ -48,10 +48,11 @@ TileFlags.IsDiggableTarget(definition)
 | `MapDigService` | `CanBreak` / `TryBreak` / `TryBreakAt` — 도구·무드·사거리·플래그 게이트 |
 | `MapDigRuntimeHooks` | Dist.Map ↔ DistScript 브리지 (`MapGameplayBootstrap.BindMapDigService`) |
 | `MeleeBlockTargetHandler` | `melee_block_target` — Excavate cue → `CombatMath.ResolveExcavateDamage` → `ApplyDamage` |
-| `DigTileTargetResolver` | `AimWorldPoint` → `FloorFacePicker` → `DigTileTarget` (레거시 카메라 레이 유틸 유지) |
-| `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). 타겟·맵 remaining HP·하이라이트·`TryBreak` |
+| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → FloorFace + 유클리드 3D clamp (`DigActionRangeCells`); hold·preview 공용 |
+| `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). 타겟·맵 remaining HP·`TryBreak` (하이라이트는 Preview) |
 | `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — RMB + LMB hold → Dig + `TryPerform(Excavate)` |
-| `PlayerCombatController` | Layer2 host — `ICombatPerformDriver` 라우트·틱 |
+| `MeleeBlockAimPreview` | `ICombatTargetingPreview` — RMB + `CanBreak` → `SetDigHighlight` |
+| `PlayerCombatController` | Layer2 host — `ICombatPerformDriver` + `ICombatTargetingPreview` 라우트·틱 |
 | `StratumProfile` (SO) | 깊이별 prefabId 레이어 목록 (`TileMapManager` Inspector) |
 | `StratumGenerator` | `MixSeed(stratumSeed, x, z, depth)` 결정론적 선택 |
 | `TileDefinition` | `materials`·`breakDurability`·`materialThickness` — 타일 재질·내구도 SSOT |
@@ -74,7 +75,7 @@ TileFlags.IsDiggableTarget(definition)
 | Excavate 피해 | `CombatMath.ResolveExcavateDamage` | 채널별 `DamageForTag` + DIG potency(첫 채널) → `MitigateStructureDamage` |
 | `DefaultDigDurability` | 5 | breakDurability 미지정 폴백 |
 | `BaseBreakSeconds` | 2.5 | 벽시계 패리티 대략치 |
-| `DigActionRangeCells` | 1 | 액터 점유 셀 기준 XZ Chebyshev (동일 Y) |
+| `DigActionRangeCells` | 2 | 액터→목표 walkable 셀 유클리드 `√(dx²+dy²+dz²)` ≤ 2 (`MapDigConsts.IsWithinActionRange`). 초과 조준은 액터→ideal 3축 스텝 clamp |
 | `MaxRayDistance` | 200 | 타겟 레이 최대 거리 |
 | `DefaultStratumFloorPrefabId` | `Floor/Floor` | `StratumProfile` 비었을 때 폴백 |
 
@@ -113,8 +114,8 @@ sequenceDiagram
 **바인딩**
 
 - **입력:** `PlayerPossessedInputHost` → `PlayerCombatController` (Layer2 drivers). dig 전용 MB **없음**.
-- **조준:** Layer1 `IAimSightProvider` → `CharacterState.AimWorldPoint`. Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
-- **행동:** `CharacterAttacker.PerformDig` + `CharacterActionHost.DigPipeline`. `CancelAll` / LMB release / RMB release → pipeline Clear.
+- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`, 유클리드 3D ≤ `DigActionRangeCells`) → Preview (`MeleeBlockAimPreview` → face highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
+- **행동:** `CharacterAttacker.PerformDig` + `CharacterActionHost.DigPipeline`. `CancelAll` / LMB release → pipeline Clear; RMB 유지 시 Preview가 하이라이트 유지.
 - **손 게이트:** 일반 combat **ActiveWieldHand** 스택 — Dig 전용 손 스캔 아님. `HasDigQuality`(DIG level ≥1)면 Dig Leaf 가능.
 - **애니:** `AttackResolved` → 기존 Attack overlay 큐 (`CombatLeaf.Excavate` Leaf / Catalog). Farm Work Layer·presentation-only 큐 **아님**. AnimatorController에 Dig 상태 이름 **미추가**.
 - `TileMapManager.SetupMapDig()` — `MapDigColumnHost.BindMapContext` + DTO 로드.
@@ -132,7 +133,7 @@ sequenceDiagram
 | 도구 | DIG 품질 (`HasDigQuality`) | 동일 + ActiveWield Dig Leaf |
 | 타이밍 | Farm Work 게이지 (`TillWorkDurationSeconds`) | Dig cue × session proxy (`DefaultDigDurability` / DIG level) |
 | 애니 | Farm **Work Layer** (`FarmWorkClipCatalog`) | Dig Leaf → **Attack overlay** (Melee Family) |
-| 사거리 | Farm 파이프라인 (`MapPlantConsts` / arrive) | `DigActionRangeCells` Chebyshev 1 |
+| 사거리 | Farm 파이프라인 (`MapPlantConsts` / arrive) | `DigActionRangeCells` 유클리드 3D 반경 2 (+ combat clamp) |
 | 연관 문서 | [`docs/farming/FARMING.md`](../farming/FARMING.md) | 이 문서 · [`GEAR.md`](../equipment/GEAR.md) Dig Leaf |
 
 **요약:** till은 같은 walkable 셀 바닥을 `Tilled`로 **덮어쓰기**만 한다. dig-break는 셀 **아래 face를 깎고** 수직으로 한 단 deeper 노출·생성한다. `PLOWABLE`-only 바닥은 경작만, `MINEABLE`-only는 dig-break만.
@@ -158,7 +159,11 @@ sequenceDiagram
 |------|------|
 | RMB 없이 LMB | Excavate/Strike/Trigger 불가 |
 | RMB + LMB click | Swing/Trigger `TryPerformSelected` |
-| RMB + LMB hold (Excavate) | Dig 연속, AimWorldPoint=face |
+| DIG + Excavate + RMB (유클리드 ≤2 diggable) | face 블록 하이라이트 (다른 Y 포함) |
+| 반경 밖 조준 | 액터→ideal 3축 스텝 clamp 사거리 끝 face 하이라이트 |
+| DIG 도구 없음 / `CanBreak` false | 하이라이트 없음 |
+| RMB + LMB hold (Excavate) | Dig 연속, 하이라이트 유지, AimWorldPoint=face |
+| LMB up, RMB 유지 | 하이라이트 깜빡임 없음 |
 | DIG 없는 무기 | `CanPerform(Excavate)` false |
 | Error 0 | Unity Console |
 
@@ -169,6 +174,7 @@ sequenceDiagram
 | 서비스·호스트 | `Map/Dig/MapDigService.cs`, `MapDigColumnHost.cs`, `MapDigConsts.cs`, `MapDigRuntimeHooks.cs` |
 | 핸들러 | `Entity/Combat/MeleeBlockTargetHandler.cs` (`melee_block_target`) |
 | 타겟·지층 | `DigTileTarget.cs`, `DigTileTargetResolver.cs`, `StratumGenerator.cs`, `StratumProfile.cs` |
+| Preview | `Entity/Player/Combat/Targeting/ICombatTargetingPreview.cs`, `MeleeBlockAimPreview.cs` |
 | 플레이어·파이프라인 | `PlayerCombatController`, `MeleeStructureHoldPerformDriver` / Dig·Chop 파생, `CharacterStructureTargetPipeline`, `IAimSightProvider` |
 | DIG potency | `MapPlantService.ResolveDigQualityLevel` / `HasDigQuality` |
 | 타일 combat | `Map/TileMap/TileDefinition.cs`, `TileDefinitionCombat.cs` |
