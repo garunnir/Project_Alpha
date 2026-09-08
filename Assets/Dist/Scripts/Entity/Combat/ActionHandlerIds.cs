@@ -10,14 +10,24 @@ public static class ActionHandlerIds
     public const string MeleeHit = "melee_hit";
     public const string SpawnProjectile = "spawn_projectile";
     public const string RaiseGuard = "raise_guard";
+    public const string MeleeBlockTarget = "melee_block_target";
+    /// <summary>레거시 직렬화 id — <see cref="MeleeBlockTarget"/>로 대체.</summary>
+    public const string MapDigBreak = "map_dig_break";
+    public const string MeleePlantTarget = "melee_plant_target";
 
-    public static string DefaultFor(WeaponAction action)
+    public static string DefaultFor(CombatLeaf leaf)
     {
-        switch (WeaponActionUtil.ToAnimVerb(action))
+        leaf = CombatLeafUtil.Normalize(leaf);
+        if (leaf == CombatLeaf.Excavate)
+            return MeleeBlockTarget;
+        if (leaf == CombatLeaf.Chop)
+            return MeleePlantTarget;
+
+        switch (CombatLeafUtil.ToAnimVerb(leaf))
         {
-            case WeaponAction.Trigger:
+            case AnimVerb.Trigger:
                 return SpawnProjectile;
-            case WeaponAction.Raise:
+            case AnimVerb.Raise:
                 return RaiseGuard;
             default:
                 return MeleeHit;
@@ -40,7 +50,7 @@ public static class AttackDamageTags
     public static string Fallback => Bash;
 
     /// <summary>첫 채널. Practice·단일 키용. 한 타 합산은 WriteChannels.</summary>
-    public static string Resolve(ItemData item, WeaponAction action, ItemData ammo = null)
+    public static string Resolve(ItemData item, CombatLeaf action, ItemData ammo = null)
     {
         string[] scratch = ChannelScratch;
         int n = WriteChannels(item, action, scratch, ammo);
@@ -52,14 +62,14 @@ public static class AttackDamageTags
     /// </summary>
     public static int WriteChannels(
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         string[] dest,
         ItemData ammo = null)
     {
         if (dest == null || dest.Length == 0)
             return 0;
 
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
         {
             dest[0] = FromAmmoDamageType(ammo);
             return 1;
@@ -109,6 +119,8 @@ public static class ActionHandlerRegistry
     static readonly MeleeHitHandler Melee = new MeleeHitHandler();
     static readonly SpawnProjectileHandler Projectile = new SpawnProjectileHandler();
     static readonly RaiseGuardHandler Raise = new RaiseGuardHandler();
+    static readonly MeleeBlockTargetHandler MeleeBlock = new MeleeBlockTargetHandler();
+    static readonly MeleePlantTargetHandler MeleePlant = new MeleePlantTargetHandler();
 
     public static bool TryGet(string logicId, out IActionHandler handler)
     {
@@ -131,10 +143,23 @@ public static class ActionHandlerRegistry
             return true;
         }
 
+        if (string.Equals(logicId, ActionHandlerIds.MeleeBlockTarget, StringComparison.Ordinal)
+            || string.Equals(logicId, ActionHandlerIds.MapDigBreak, StringComparison.Ordinal))
+        {
+            handler = MeleeBlock;
+            return true;
+        }
+
+        if (string.Equals(logicId, ActionHandlerIds.MeleePlantTarget, StringComparison.Ordinal))
+        {
+            handler = MeleePlant;
+            return true;
+        }
+
         return false;
     }
 
-    public static IActionHandler Resolve(WeaponAttack attack, WeaponAction action)
+    public static IActionHandler Resolve(WeaponAttack attack, CombatLeaf action)
     {
         string logicId = attack != null && !string.IsNullOrEmpty(attack.LogicId)
             ? attack.LogicId

@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Weapon_Unarmed
   m_EditorClassIdentifier: DistScript::WeaponPresentation
   _entries:
-  - action: 0
+  - leaf: 0
     attack: {fileID: 11400000, guid: 6dae4093cb51786ad3f208e6c91547b3, type: 2}
     useHold: 0
+    actionCooldownSeconds: 0
     holdClips:
       leftBase: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}
       rightBase: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}
@@ -28,6 +29,10 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 60e74730ee2e7604fb9452edb47e8560, type: 2}
       rightBase: {fileID: 7400000, guid: 60e74730ee2e7604fb9452edb47e8560, type: 2}
       twoHandBase: {fileID: 7400000, guid: 184e9d34afb00f64d9648b86daa2e806, type: 2}
+    surpriseAttackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     recoilClips:
       leftBase: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}
       rightBase: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}

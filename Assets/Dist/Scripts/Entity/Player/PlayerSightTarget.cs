@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerSightTarget — PlayerAimController 시선 월드점 해석 SSOT
+// PlayerSightTarget — 시선 월드점 해석 SSOT (IAimSightProvider / 농사·건설 레이)
 // ============================================================
 
 using IsoTilemap;

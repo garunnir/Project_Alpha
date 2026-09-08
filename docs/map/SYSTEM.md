@@ -127,7 +127,7 @@ graph TD
 
 ### 맵 굴착 (dig-break)
 
-경로: `Assets/Dist/Scripts/Map/Dig/`. `TileMapManager`가 `MapDigColumnHost`를 바인딩·DTO `stratumSeed` 로드. LMB 홀드 채굴은 `PlayerDigController` → `MapDigService` → face 제거·지층 생성. BN `MINEABLE`/`DIGGABLE` → TileDefinition flags. 경작(till)과 별도 — [`docs/farming/FARMING.md`](../farming/FARMING.md). 계약: [`docs/map/DIG.md`](DIG.md). Pit floor 가시성 = Phase C pending (`FloorVisibilitySyncPlanner`).
+경로: `Assets/Dist/Scripts/Map/Dig/`. `TileMapManager`가 `MapDigColumnHost`를 바인딩·DTO `stratumSeed`/`columnDepths`/`tileDurabilities` 로드. Dig = Layer2 `ExcavateHoldPerformDriver` (RMB 조준 + LMB hold → `AimWorldPoint`) → Excavate cue → 채널×`TileDefinition.materials` 피해 → 맵 remaining HP → `MapDigService` face 제거·지층 생성. BN `MINEABLE`/`DIGGABLE` → TileDefinition flags. 경작(till)과 별도 — [`docs/farming/FARMING.md`](../farming/FARMING.md). 계약: [`docs/map/DIG.md`](DIG.md). Pit 가시성 = dig-break 후 floor visibility lastCtx 무효화.
 
 ---
 

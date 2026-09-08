@@ -346,7 +346,7 @@ public sealed class NpcManager : MonoBehaviour
             }
 
             if (CharacterSenseContactResolver.AllowsAttack(_contact) &&
-                IsSelectedActionInRange(_distanceToTarget))
+                IsSelectedLeafInRange(_distanceToTarget))
             {
                 EnterAttack();
                 return;
@@ -378,7 +378,7 @@ public sealed class NpcManager : MonoBehaviour
                 return;
             }
 
-            if (!IsSelectedActionInRange(_distanceToTarget))
+            if (!IsSelectedLeafInRange(_distanceToTarget))
             {
                 EnterChase();
                 return;
@@ -400,8 +400,8 @@ public sealed class NpcManager : MonoBehaviour
 
             AimAtTarget(_target);
 
-            WeaponAction action = _attacker.SelectedAction;
-            if (action == WeaponAction.Raise)
+            CombatLeaf action = _attacker.SelectedLeaf;
+            if (action == CombatLeaf.Raise)
                 return;
 
             AttackPerformResult result = _attacker.TryPerformSelected(_target);
@@ -636,11 +636,11 @@ public sealed class NpcManager : MonoBehaviour
             return offset.magnitude;
         }
 
-        bool IsSelectedActionInRange(float distance)
+        bool IsSelectedLeafInRange(float distance)
         {
             if (_attacker == null)
                 return false;
-            WeaponAction action = _attacker.SelectedAction;
+            CombatLeaf action = _attacker.SelectedLeaf;
             if (!_attacker.CanPerform(action))
                 return false;
             ItemData item = _attacker.ItemFor(_attacker.ItemId);

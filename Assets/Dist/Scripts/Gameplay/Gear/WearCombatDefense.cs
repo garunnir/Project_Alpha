@@ -36,6 +36,9 @@ public static class WearCombatDefense
     /// <summary>WearEncAccuracyFactor 최대 감소량 (0.35 = 최대 −35%).</summary>
     public const float WearEncHitPenaltyCap = 0.35f;
 
+    /// <summary>구조물·타일 deterministic 완화용. rating=100 → 약 50% 감쇠 기준.</summary>
+    public const float StructureMitigationScale = 100f;
+
     const int CoverScratchCap = 16;
 
     static readonly CoverPiece[] CoverScratch = new CoverPiece[CoverScratchCap];
@@ -141,6 +144,33 @@ public static class WearCombatDefense
         return new ArmorMitigateResult(Mathf.RoundToInt(remaining), resultTag);
     }
 
+    /// <summary>
+    /// 구조물·타일 deterministic 완화. Wear 3단 주사 대신 rating 비례 감쇠.
+    /// 채널·MaterialData resist는 Wear와 동일 SSOT.
+    /// </summary>
+    public static int MitigateStructureDamage(
+        IReadOnlyList<string> materialIds,
+        int materialThickness,
+        int rawDamage,
+        string damageTag)
+    {
+        if (rawDamage <= 0)
+            return 0;
+
+        int resist = MaxMaterialResist(materialIds, damageTag);
+        if (resist <= 0 && materialThickness <= 0)
+            return rawDamage;
+
+        float rating = ArmorRating(materialThickness, resist);
+        float ap = ResolveArmorPenetration(rawDamage, 0);
+        float effective = Mathf.Max(0f, rating - ap);
+        if (effective <= 0f)
+            return rawDamage;
+
+        float absorb = effective / (effective + StructureMitigationScale);
+        return Mathf.Max(0, Mathf.RoundToInt(rawDamage * (1f - absorb)));
+    }
+
     public static float ResolveArmorPenetration(int rawDamage, int ammoPierce)
     {
         if (ammoPierce > 0)
@@ -239,15 +269,17 @@ public static class WearCombatDefense
         }
     }
 
-    static int MaxMaterialResist(ItemData item, string damageTag)
+    public static int MaxMaterialResist(
+        IReadOnlyList<string> materialIds,
+        string damageTag)
     {
-        if (item?.materials == null || item.materials.Count == 0)
+        if (materialIds == null || materialIds.Count == 0)
             return 0;
 
         int best = 0;
-        for (int i = 0; i < item.materials.Count; i++)
+        for (int i = 0; i < materialIds.Count; i++)
         {
-            string materialId = item.materials[i];
+            string materialId = materialIds[i];
             if (string.IsNullOrEmpty(materialId))
                 continue;
 
@@ -262,6 +294,9 @@ public static class WearCombatDefense
 
         return best;
     }
+
+    static int MaxMaterialResist(ItemData item, string damageTag) =>
+        item != null ? MaxMaterialResist(item.materials, damageTag) : 0;
 
     static int ResistForTag(MaterialData material, string damageTag)
     {

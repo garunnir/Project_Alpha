@@ -9,6 +9,7 @@ public sealed class ItemInstanceSaveDto
 {
     public string uid;
     public int damageLevel;
+    /// <summary>JSON 키 유지 — C#은 <see cref="ItemInstance.SelectedLeaf"/>.</summary>
     public bool hasSelectedAction;
     public int selectedAction;
     public int chamberRounds;

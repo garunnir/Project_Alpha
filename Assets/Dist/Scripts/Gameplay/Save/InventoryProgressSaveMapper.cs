@@ -167,8 +167,8 @@ public static class InventoryProgressSaveMapper
         {
             uid = instance.Uid.ToString("N"),
             damageLevel = instance.DamageLevel,
-            hasSelectedAction = instance.SelectedAction.HasValue,
-            selectedAction = instance.SelectedAction.HasValue ? (int)instance.SelectedAction.Value : 0,
+            hasSelectedAction = instance.SelectedLeaf.HasValue,
+            selectedAction = instance.SelectedLeaf.HasValue ? (int)instance.SelectedLeaf.Value : 0,
             chamberRounds = instance.ChamberRounds,
             chamberAmmoId = instance.ChamberAmmoId,
             supplyRounds = instance.SupplyRounds,

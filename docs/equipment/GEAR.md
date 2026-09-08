@@ -1,9 +1,10 @@
-# Gear (Wear / Wield) — M0
+﻿# Gear (Wear / Wield) — M0
 
 Canonical for BN-style **착용(Wear)** vs **들기(Wield)** and the Character window equipment tab.
 
 Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Status parity lives in Character **상태** tab (`UICharacterWindow`).  
 Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).  
+**액션·무기·도구 파이프라인 매뉴얼:** [`COMBAT_PIPELINE.md`](COMBAT_PIPELINE.md) (Layer1–3 · Leaf · Catalog Resolve · Dig/Chop).  
 Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기는 [`DEFINITION.md`](../character/DEFINITION.md)).
 
 ## Terms
@@ -14,9 +15,9 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | Wield | L/R hand slots (weapons/tools). Two-hand = same stack on both slots; **no extra UI cell** |
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = `StatusToggle` (`Tab`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
-| SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 **Leaf** (`WeaponAction`). 영속은 인스턴스 |
-| Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **동작 줄 클립** = 그 무기 그 Leaf Hold/Aim/Attack/**기습 Attack**/Recoil/Blocked (비면 Catalog; 기습 Attack은 Melee만). 클립 옆 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
-| Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + **Hold/Aim/Attack 클립** + 연출 + `useHold` + **동작 쿨**). 클립·VFX 비면 Catalog 같은 Leaf. 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
+| SelectedLeaf | `ItemInstance.SelectedLeaf` — 손별 선택 **Leaf** (`CombatLeaf`). 영속은 인스턴스 |
+| Action layers | **Family** = 에디터·UI 묶음 — **Melee**(Strike/Pierce), **Trigger**(Semi/Burst/Auto), **Etc**(Excavate/Chop/Raise; 미분류 묶음). **Leaf** (`CombatLeaf`) = 선택·시전 슬롯. **동작 SSOT** = Entry `Attack.logicId` → handler. **AnimVerb** (Swing/Thrust/Dig/…) = Pipeline·슬롯 클립만. Excavate = `MeleeBlock`·`melee_block_target`. Chop = `MeleePlant`·`melee_plant_target`. 플레이어 조준·시전 3층: `IAimSightProvider` · `ICombatAttackInput`/`ICombatPerformDriver` · `CharacterAttacker`/`IActionHandler` — [`ACTION.md`](../character/ACTION.md) · [`DIG.md`](../map/DIG.md) · [`BN_BAKE.md`](BN_BAKE.md) |
+| Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + **Hold/Aim/Attack 클립** + 연출 + `useHold` + **동작 쿨**). 클립·VFX 비면 Catalog 같은 Leaf. 가용 SSOT = Entry 존재 → `CombatLeafRows.Available` |
 | Action VFX coalesce | Action: Entry.vfx → Catalog **같은 Leaf** 행. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
 | Action clip coalesce | Action: Entry Hold/Aim/Attack 손 클립 → Catalog **같은 Leaf** 손 클립. Recoil/Blocked: Entry → Catalog Impact 행. Override 클립 맵 없음 |
 | Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / item·skill·category → Presentation |
@@ -36,8 +37,8 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
 | `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + `HelmetVision` + Kind **포워드** (`WorldWeatherHost`). BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
 | `CharacterSpawnGearApplier` | 스폰 직후 Definition 로드아웃 즉시 Wear/Wield + 총 탄 채움 (`WeaponAmmoService` 타이머 아님) |
-| `ItemInstance.SelectedAction` | 선택 동사 SSOT |
-| `WeaponActionRows` | Presentation 행 → available / default / instance select |
+| `ItemInstance.SelectedLeaf` | 선택 동사 SSOT |
+| `CombatLeafRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |
 | `CharacterHandWork` | 손 비움(Unwield→body) → 대상 Wield → act. ESC=`CancelAll`, 완료 단계 유지(원복 아님). 섭취 등 |
@@ -57,8 +58,8 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: **코어** `BodyTemp.Feeling` + wetness → move / HitChance. 부위별 Feeling 아님 |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
-| `WeaponPresentationCatalog` | 허브. Resolve = 아이템 id → `gun.skill` → `weapon_category` → Unarmed. Entry = Leaf 라우팅 |
-| `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 클립·VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
+| `WeaponPresentationCatalog` | 허브. Resolve = 베이스(아이템 → `gun.skill` → `weapon_category` → Unarmed) 후 **By Quality Id**로 Leaf 합산(베이스에 없는 행만). Entry = Leaf 라우팅 |
+| `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Dig/Semi/Burst/Auto 줄 필수. Entry 빈 클립·VFX → 같은 Leaf 행(없으면 thin). 표시=Melee/Trigger/Etc 묶음 |
 | `WeaponAnimClipSpeeds` | Override 서브에셋. 할당한 클립→재생 배속. thin 슬롯 속도 아님. 없으면 1 |
 | `WeaponAttack` | 핸들러·cue·발사체·Recoil/Blocked·근접 히트박스 (`Attack_MeleeHit` = logic 이름, **채널 아님**). 동작 쿨 아님 |
 | `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
@@ -98,6 +99,11 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 
 NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전은 조준(RMB) 입력 게이트 유지.
 
+### 플레이어 조준·시전 3층 (Layer1–3)
+
+전체 표·Resolve·확장 체크리스트: [`COMBAT_PIPELINE.md`](COMBAT_PIPELINE.md).  
+Excavate: **RMB 조준** + LMB hold → `AimWorldPoint` → Dig ([`DIG.md`](../map/DIG.md)).
+
 ### Ranged fire (조준축)
 
 원거리는 엔티티 락온을 쓰지 않는다. 유도탄 핸들러가 생기면 그 경로만 예외.
@@ -109,7 +115,7 @@ NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전�
 | 연결 | Attack 프리팹 있으면 `DistProjectile` 비행. 없으면 cue `CombatHitscan` |
 | 조임 | RMB `IsAiming` 동안 `aim01` 0→1. `aim_speed` 0/없음=즉시 1. NPC `AimHeld`=즉시 1. `sight_dispersion*(1-aim01)` |
 | 조준 포인터 | 원거리만. RMB + `TryPreviewRangedSpread` 성공 시 `UIAimPointer`(TopMost). 센터는 프리팹 고정 아트. 퍼짐은 `Dist/UI/AimRing` SDF 쿼드(반경=`sizeDelta`, 두께=`_strokePx`→UV fraction, 반경과 무관). UI는 식을 복제하지 않음. 근접 Pending |
-| 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. 마스크 기본 `~0`(Character 포함). 자기 콜라이더는 `IsOwnCollider`/`IsSelf` 제외. 맵 벽은 `MapTopologyLineCast`(조준과 동일)에서 멈추고 `Obstructed`+`ImpactPoint` — 이후 벽 HP 훅. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
+| 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. 마스크 기본 `~0`(Character 포함). 자기 콜라이더는 `IsOwnCollider`/`IsSelf` 제외. 맵 벽은 `MapTopologyLineCast`(조준과 동일)에서 멈추고 `Obstructed`+`ImpactPoint` — `MapStructureDamageSink` Occupied 벽 remaining HP. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
 
 동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략). 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피). 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
 
@@ -168,7 +174,7 @@ flowchart LR
 
 | Corner | Content |
 |--------|---------|
-| Top-left | Action mode label (`WeaponActionRows.ResolveSelected`, none=`—`) |
+| Top-left | Action mode label (`CombatLeafRows.ResolveSelected`, none=`—`) |
 | Top-right | Gun rounds only: mag-fed=`{Supply}/{cap}+{Chamber}` (`ItemAmmo.WieldGunRounds`); clip-fed=`{Chamber}/{clip_size}` (`ItemAmmo.WieldClipRounds`); non-gun hidden |
 
 Fire consume → `CharacterAttacker.CommitAttempt` → `NotifyAmmoChanged` → both surfaces re-Bind.
@@ -653,7 +659,7 @@ Last run: **2026-08-06 post-P0** (Play MCP smoke Pass).
 | S2 | Wield: **action** top-left; **ammo** top-right (gun only) | Pass | `ActionIcon` left; `Ammo` = `ItemAmmoLabels.FormatWieldGunRounds` |
 | S3 | Worn: **icon** + name + covers + name-overlay bar | Pass | `UICharacterWornRow` Icon + Label + `ItemNameStatusBar` |
 | H1 | Hover = text hover (strain/need Str hover-only) | Pass | `UITextHoverService` + Worn `AppendItemArmorHover` |
-| A1 | Slot RMB = **사용 액션** group (WeaponActionRows.Available+None) + **잡기**(반대손/양손) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` + `WieldGripGroup` |
+| A1 | Slot RMB = **사용 액션** group (CombatLeafRows.Available+None) + **잡기**(반대손/양손) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` + `WieldGripGroup` |
 | F1 | Worn filter by body **click** (toggle); FilterLabel clears | Pass | `OnPartClick` / not hover sticky |
 | T1 | Enc tab: enc body + worn; wield hidden | Pass | `showWield` Equipment-only |
 | T2 | BodyTemp tab: warmth + BodyTemp totals | Pass | `FormatBodyTempTotals` |

@@ -27,13 +27,14 @@ public static class CharacterGearLabels
     const string KeyDropFloor = "Character.DropFloor";
     const string KeyHandActionGroup = "Character.HandActionGroup";
     const string KeyActionNone = "Character.ActionNone";
-    const string DisplaySwing = "SWING";
-    const string DisplayThrust = "THRUST";
+    const string DisplayStrike = "STRIKE";
+    const string DisplayPierce = "PIERCE";
     const string DisplaySemi = "SEMI";
     const string DisplayBurst = "BURST";
     const string DisplayAuto = "AUTO";
     const string DisplayRaise = "RAISE";
-    const string DisplayTrigger = "TRIGGER";
+    const string DisplayExcavate = "EXCAVATE";
+    const string DisplayChop = "CHOP";
     const string KeySlotLeft = "Character.SlotLeft";
     const string KeySlotRight = "Character.SlotRight";
     const string KeyWornFilterAll = "Character.WornFilterAll";
@@ -102,28 +103,35 @@ public static class CharacterGearLabels
     public static string HandActionGroup => GetOr(KeyHandActionGroup, "사용 액션");
     public static string FamilyMelee => "Melee";
     public static string FamilyTrigger => "Trigger";
+    public static string FamilyEtc => "Etc";
     public static string ActionNone => GetOr(KeyActionNone, "없음");
-    public static string ActionSwing => ActionLabel(WeaponAction.Swing);
-    public static string ActionThrust => ActionLabel(WeaponAction.Thrust);
-    public static string ActionTrigger => ActionLabel(WeaponAction.Semi);
-    public static string ActionRaise => ActionLabel(WeaponAction.Raise);
+    public static string ActionStrike => ActionLabel(CombatLeaf.Strike);
+    public static string ActionPierce => ActionLabel(CombatLeaf.Pierce);
+    public static string ActionTrigger => ActionLabel(CombatLeaf.Semi);
+    public static string ActionRaise => ActionLabel(CombatLeaf.Raise);
+    public static string ActionExcavate => ActionLabel(CombatLeaf.Excavate);
+    public static string ActionChop => ActionLabel(CombatLeaf.Chop);
 
-    /// <summary>Leaf 표시. AnimVerb/Override와 별개.</summary>
-    public static string ActionLabel(WeaponAction action)
+    /// <summary>Leaf 표시. 동작 SSOT는 Attack.logicId.</summary>
+    public static string ActionLabel(CombatLeaf leaf)
     {
-        switch (WeaponActionUtil.Normalize(action))
+        switch (CombatLeafUtil.Normalize(leaf))
         {
-            case WeaponAction.Swing:
-                return DisplaySwing;
-            case WeaponAction.Thrust:
-                return DisplayThrust;
-            case WeaponAction.Semi:
+            case CombatLeaf.Strike:
+                return DisplayStrike;
+            case CombatLeaf.Pierce:
+                return DisplayPierce;
+            case CombatLeaf.Excavate:
+                return DisplayExcavate;
+            case CombatLeaf.Chop:
+                return DisplayChop;
+            case CombatLeaf.Semi:
                 return DisplaySemi;
-            case WeaponAction.Burst:
+            case CombatLeaf.Burst:
                 return DisplayBurst;
-            case WeaponAction.Auto:
+            case CombatLeaf.Auto:
                 return DisplayAuto;
-            case WeaponAction.Raise:
+            case CombatLeaf.Raise:
                 return DisplayRaise;
             default:
                 return ActionNone;

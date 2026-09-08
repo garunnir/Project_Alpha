@@ -1,8 +1,10 @@
 // ============================================================
-// WeaponPresentationCatalog — 진입점 바인딩 (item → gun.skill → category → Unarmed)
+// WeaponPresentationCatalog — 진입점 바인딩 + quality Leaf 합산
 // ============================================================
 
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -23,7 +25,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [Serializable]
     public sealed class Binding
     {
-        [Tooltip("아이템 id, gun.skill, 또는 weapon_category id.")]
+        [Tooltip("아이템 id, gun.skill, weapon_category, 또는 quality id (DIG/AXE…).")]
         [LabelText("Id")]
         public string id;
 
@@ -34,9 +36,9 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     }
 
     [InfoBox(
-        "【진입점】 무기가 들릴 때 Presentation(Leaf 목록)을 고릅니다.\n" +
-        "순서: 아이템 전용 → gun.skill → weapon_category → 맨손. Leaf·Attack·Override는 Presentation을 펼쳐 편집.\n" +
-        "Fallbacks = AnimVerb Pipeline·Hit VFX·발사체 공용(거의 안 건드림). Semi/Burst/Auto는 Presentation Leaf.",
+        "【진입점】 베이스: 아이템 → gun.skill → weapon_category → 맨손.\n" +
+        "그 다음 By Quality Id로 Leaf 합산(베이스에 없는 Leaf만 추가). level은 바인딩에 안 씀.\n" +
+        "Fallbacks = AnimVerb Pipeline·Hit VFX·발사체 공용.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
 
@@ -47,7 +49,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [SerializeField] WeaponPresentation _unarmed;
 
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
-    [Tooltip("특정 아이템 id에만 쓰는 동작 목록입니다. 찾을 때 가장 먼저 봅니다.")]
+    [Tooltip("특정 아이템 id에만 쓰는 동작 목록입니다. 찾을 때 이걸 먼저 봅니다.")]
     [LabelText("By Item Id")]
     [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
 
@@ -60,6 +62,18 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [Tooltip("아이템의 weapon_category에 맞춰 쓰는 동작 목록입니다. 아이템·숙련이 없을 때 사용합니다.")]
     [LabelText("By Category Id")]
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
+
+    [InfoBox(
+        "qualities[].id (DIG/AXE…) → 이 표의 Presentation을 베이스에 합산.\n" +
+        "베이스에 없는 Leaf만 추가(덮어쓰기 없음). level은 무시.\n" +
+        "템플릿은 Excavate/Chop 등 보강 행만. 조합별 최종 SO bake 금지(런타임 캐시).",
+        InfoMessageType.None)]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [Tooltip(
+        "qualities[].id (DIG/AXE…). 베이스 Presentation에 없는 Leaf만 합산. " +
+        "템플릿은 Excavate/Chop 등 보강 행만 두는 것이 안전합니다.")]
+    [LabelText("By Quality Id")]
+    [SerializeField] Binding[] _byQualityId = Array.Empty<Binding>();
 
     [FoldoutGroup("폴백 (거의 안 건드림)", Expanded = false)]
     [InfoBox(
@@ -80,11 +94,16 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 #endif
     }
 
+    readonly Dictionary<string, WeaponPresentation> _mergeCache = new();
+    readonly List<WeaponPresentation> _overlayScratch = new(4);
+    readonly StringBuilder _keyScratch = new(64);
+
     public WeaponPresentation Unarmed => _unarmed;
     public WeaponCombatFallbacks Fallbacks => _fallbacks;
     public Binding[] ByItemId => _byItemId;
     public Binding[] BySkillId => _bySkillId;
     public Binding[] ByCategoryId => _byCategoryId;
+    public Binding[] ByQualityId => _byQualityId;
     public ArmAnimSlotCatalog AnimPipeline =>
         _fallbacks != null ? _fallbacks.AnimPipeline : null;
     public WeaponImpactVfxDefaults ImpactVfxDefaults =>
@@ -108,7 +127,29 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
         _fallbacks.SetAnimPipeline(pipeline);
     }
 
+    /// <summary>
+    /// 베이스 Resolve 후 quality 템플릿 Leaf 합산(캐시). 디스크 최종본 SO 없음.
+    /// </summary>
     public WeaponPresentation Resolve(string itemId, ItemData item)
+    {
+        WeaponPresentation baseline = ResolveBaseline(itemId, item);
+        CollectQualityOverlays(item, _overlayScratch);
+        if (_overlayScratch.Count == 0)
+            return baseline;
+
+        string key = BuildMergeCacheKey(baseline, _overlayScratch);
+        if (_mergeCache.TryGetValue(key, out WeaponPresentation cached) && cached != null)
+            return cached;
+
+        WeaponPresentation merged = WeaponPresentation.CreateRuntimeMerged(
+            baseline,
+            _overlayScratch);
+        _mergeCache[key] = merged;
+        return merged;
+    }
+
+    /// <summary>item → skill → category → Unarmed. quality 합산 없음.</summary>
+    public WeaponPresentation ResolveBaseline(string itemId, ItemData item)
     {
         if (!string.IsNullOrEmpty(itemId) &&
             TryFind(_byItemId, itemId, out WeaponPresentation byItem))
@@ -184,7 +225,65 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
         Array.Resize(ref _byItemId, keep);
     }
 
-    static bool TryFind(Binding[] bindings, string id, out WeaponPresentation presentation)
+    void CollectQualityOverlays(ItemData item, List<WeaponPresentation> into)
+    {
+        into.Clear();
+        if (item?.qualities == null || _byQualityId == null || _byQualityId.Length == 0)
+            return;
+
+        for (int i = 0; i < item.qualities.Count; i++)
+        {
+            QualityEntry quality = item.qualities[i];
+            if (quality == null || string.IsNullOrEmpty(quality.id))
+                continue;
+            if (quality.level < 1)
+                continue;
+            if (!TryFindIgnoreCase(_byQualityId, quality.id, out WeaponPresentation overlay) ||
+                overlay == null)
+                continue;
+
+            bool dup = false;
+            for (int j = 0; j < into.Count; j++)
+            {
+                if (into[j] == overlay)
+                {
+                    dup = true;
+                    break;
+                }
+            }
+
+            if (!dup)
+                into.Add(overlay);
+        }
+    }
+
+    string BuildMergeCacheKey(WeaponPresentation baseline, List<WeaponPresentation> overlays)
+    {
+        _keyScratch.Clear();
+        _keyScratch.Append(baseline != null ? baseline.GetInstanceID() : 0);
+        for (int i = 0; i < overlays.Count; i++)
+        {
+            _keyScratch.Append('|');
+            _keyScratch.Append(overlays[i] != null ? overlays[i].GetInstanceID() : 0);
+        }
+
+        return _keyScratch.ToString();
+    }
+
+    static bool TryFind(Binding[] bindings, string id, out WeaponPresentation presentation) =>
+        TryFindCore(bindings, id, StringComparison.Ordinal, out presentation);
+
+    static bool TryFindIgnoreCase(
+        Binding[] bindings,
+        string id,
+        out WeaponPresentation presentation) =>
+        TryFindCore(bindings, id, StringComparison.OrdinalIgnoreCase, out presentation);
+
+    static bool TryFindCore(
+        Binding[] bindings,
+        string id,
+        StringComparison comparison,
+        out WeaponPresentation presentation)
     {
         presentation = null;
         if (bindings == null || string.IsNullOrEmpty(id))
@@ -195,7 +294,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
             Binding binding = bindings[i];
             if (binding == null ||
                 binding.presentation == null ||
-                !string.Equals(binding.id, id, StringComparison.Ordinal))
+                !string.Equals(binding.id, id, comparison))
                 continue;
             presentation = binding.presentation;
             return true;
@@ -203,4 +302,6 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 
         return false;
     }
+
+    void OnDisable() => _mergeCache.Clear();
 }

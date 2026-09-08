@@ -49,8 +49,6 @@ public static class ArmOverlayAnimatorBuilder
             return;
         }
 
-        EnsureThinSlotClips();
-        EnsureImpactThinClips();
         EnsureHurtThinClips();
         EnsureParameters(controller);
         RebuildLayers(controller);
@@ -67,56 +65,6 @@ public static class ArmOverlayAnimatorBuilder
         AssetDatabase.SaveAssets();
         Debug.Log(
             "[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Flinch + Hurt + Work Layer (no AnimVerb on controller).");
-    }
-
-    static void EnsureThinSlotClips()
-    {
-        for (int h = 0; h < Hands.Length; h++)
-        {
-            string hand = Hands[h];
-            EnsureClipCopy($"HoldSwing_{hand}_Slot", $"Hold_{hand}_Slot");
-            EnsureClipCopy($"AimSwing_{hand}_Slot", $"Aim_{hand}_Slot");
-            EnsureClipCopy($"AttackSwing_{hand}_Slot", $"Attack_{hand}_Slot");
-        }
-    }
-
-    static void EnsureImpactThinClips()
-    {
-        foreach (ArmImpactKind kindEnum in System.Enum.GetValues(typeof(ArmImpactKind)))
-        {
-            string kind = kindEnum.ToString();
-            string thin = "Impact" + kind + "_Slot";
-            EnsureClipCopy("Impact" + kind + "_Right_Slot", thin);
-            if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{thin}.anim") == null)
-                EnsureClipCopy("Attack_Right_Slot", thin);
-        }
-    }
-
-    static void EnsureClipCopy(string sourceName, string destName)
-    {
-        string destPath = $"{SlotDir}/{destName}.anim";
-        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath) != null)
-            return;
-
-        string sourcePath = $"{SlotDir}/{sourceName}.anim";
-        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(sourcePath) == null)
-        {
-            Debug.LogWarning($"[ArmOverlayAnimatorBuilder] Missing source clip {sourcePath}");
-            return;
-        }
-
-        if (!AssetDatabase.CopyAsset(sourcePath, destPath))
-        {
-            Debug.LogError($"[ArmOverlayAnimatorBuilder] Failed to create {destPath}");
-            return;
-        }
-
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath);
-        if (clip != null)
-        {
-            clip.name = destName.Replace(".anim", string.Empty);
-            EditorUtility.SetDirty(clip);
-        }
     }
 
     static void EnsureParameters(AnimatorController controller)

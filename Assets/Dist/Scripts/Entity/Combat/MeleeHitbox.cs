@@ -62,7 +62,7 @@ public static class MeleeHitbox
     public static bool TryGetPose(
         CharacterAttacker attacker,
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         WeaponAttack attack,
         out MeleeHitboxPose pose)
     {
@@ -88,7 +88,7 @@ public static class MeleeHitbox
     public static int Collect(
         CharacterAttacker attacker,
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         WeaponAttack attack,
         Collider[] colliderBuffer,
         CharacterBodyHost[] hosts,

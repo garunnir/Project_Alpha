@@ -40,7 +40,7 @@ public sealed class CombatHitStopSettings : ScriptableObject
 
     public float ResolveDuration(in AttackOutcome outcome)
     {
-        if (WeaponActionUtil.IsRanged(outcome.Action))
+        if (CombatLeafUtil.IsRanged(outcome.Action))
             return 0f;
 
         float duration;

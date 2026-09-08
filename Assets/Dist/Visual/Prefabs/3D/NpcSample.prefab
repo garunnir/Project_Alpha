@@ -358,7 +358,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 119
   _timeChannel: 1
-  _selectedAction: 0
+  _selectedLeaf: 0
   _activeWieldHand: 2
   _preferredPartId: torso
   _combatVfxTimeChannel: 1

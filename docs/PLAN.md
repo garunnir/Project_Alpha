@@ -63,27 +63,16 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md)
 
-### Auto 홀드 연사
-
-지금은 클릭당 볼리. Semi/Burst/Auto는 Catalog 행이 각각 있다.
-
-**지침**
-- Leaf(Semi/Burst/Auto)를 Trigger로 접어 폴백을 없애지 않는다.
-- 컨트롤러에 동작 이름·`LibraryKeys`를 넣지 않는다 (`arm-anim-layers.mdc`).
-- 홀드는 입력 유지 → 같은 Auto Leaf 재시전. 클릭 볼리 상한(`AutoClickVolleyMax`) 계약을 확인한 뒤 확장한다.
-
-**도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) · [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md)
-
 ### 충전 공격 (후순위)
 
-조준+좌클릭은 즉시 시전만. 홀드 충전·차지 클립/VFX 없음. **우선 낮음 — Auto 홀드 연사와 입력이 겹침.**
+조준+좌클릭은 즉시 시전만. 홀드 충전·차지 클립/VFX 없음. **우선 낮음 — Auto 홀드(`AimHoldAttackInput`)와 LMB hold가 겹침.**
 
 **지침**
 - 새 Charge Leaf / Catalog Charge 행 / 컨트롤러 Charge 상태·`LibraryKeys` 금지 (`arm-anim-layers.mdc`).
 - 입력은 `performed` 시전을 나누지 말고 `started`/`canceled` 프레스 래치. 충전 off=눌림 즉시, on=릴리즈. 탭=`Charge01=0` 패리티.
 - Entry `allowCharge` + 선택 `chargeClips`/`chargeVfx`. 클립 있으면 Aim thin 덮고 Aim `Play(0)`, 논루프면 `normalizedTime` 끝 고정. 진행도=포즈면 충전 중에만 `Play(Aim, layer, Charge01)` — 상태 Motion Time은 컨트롤러 고정(런타임 토글 없음)이라 쓰지 않음. Attack Speed Parameter / `CueNormalizedTime`과 섞지 않음. 클립 적용은 Override thin 덮기만이 후보 아님 — Playable·직접 재생 등 Override 밖도 검토(미정). VFX는 Entry → `WeaponCombatFallbacks` 기본 루프, Catalog 동사 행 폴백 없음.
 - `Charge01`은 `ActionHandlerContext`/`PendingAttack`에만. Animator float 아님. `offenseFactor`와 섞지 않음. HP/J 배율은 `WeaponAttack` SSOT.
-- `allowCharge` Auto는 릴리즈 1볼리. 위 Auto 홀드 연사와 동시에 켜지 않는다.
+- `allowCharge` Auto는 릴리즈 1볼리. Auto 홀드 연사와 동시에 켜지 않는다.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md)
 
@@ -96,17 +85,6 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 - BN `gun.modes` JSON은 아직 Parked. Dist Leaf 마스크로 먼저 합산하고, bake promote는 Dist 소비처가 생긴 뒤에.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md)
-
-### 벽 HP
-
-원거리 막힘은 `AttackPerformResult.Obstructed` + `ImpactPoint`만. 타일 체력·파괴 없음.
-
-**지침**
-- 새 Miss/판정 값을 만들지 않는다. `Obstructed`에 붙인다 (히트스캔·비행 공통).
-- 맵 벽은 `MapTopologyLineCast` 착탄. 물리 콜라이더 벽은 레이 히트 포인트. 둘을 다른 Result로 쪼개지 않는다.
-- 관통은 몸만. 벽에 닿으면 중단한 뒤 그 점에 피해.
-
-**도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`map/SYSTEM.md`](map/SYSTEM.md)
 
 ### Wear/Wield → 숙련 modifier
 

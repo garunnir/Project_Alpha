@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00900423e44b6474a9b7ac9e5c311606, type: 3}
+  m_Name: Weapon_Quality_Dig
+  m_EditorClassIdentifier: DistScript::WeaponPresentation
+  _entries:
+  - leaf: 8
+    attack: {fileID: 11400000, guid: fe8a1024ab264ca46b32e31ab891b9b2, type: 2}
+    useHold: 1
+    actionCooldownSeconds: 0
+    holdClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aimClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
+    surpriseAttackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    recoilClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    blockedClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    effectSeeds: []
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}
+  _supportedActions: 256
+  _defaultEntryIndex: 0
+  _animatorOverride: {fileID: 0}
+  _animClipSpeeds: {fileID: -3711712379296556945, guid: a797d5132a0a14344a3c6abe8f4079bf,
+    type: 2}

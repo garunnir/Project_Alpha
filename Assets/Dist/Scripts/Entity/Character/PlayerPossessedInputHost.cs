@@ -65,7 +65,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
 
         _movement?.BindBody(motor, _bodyState, facing);
         _aimController?.BindBody(_bodyState, _bodyTransform);
-        _combatController?.BindBody(attacker, _bodyState, actionHost);
+        _combatController?.BindBody(attacker, _bodyState, actionHost, Camera.main);
         _stealthController?.BindBody(_bodyState, _movement);
 
         _floorVisibility?.SetPlayerState(_bodyState);

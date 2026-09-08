@@ -9,7 +9,16 @@ namespace IsoTilemap
 {
     public static class MapDigConsts
     {
+        /// <summary>벽시계 홀드 대략치(문서·패리티). 실제 break는 Dig cue 피해 누적.</summary>
         public const float BaseBreakSeconds = 2.5f;
+
+        /// <summary>
+        /// TileDefinition.breakDurability 미지정 폴백 (level 1 삽 ≈ 5 cue break 패리티).
+        /// cue당 피해 SSOT는 <see cref="CombatMath.ResolveExcavateDamage"/> /
+        /// <see cref="CombatMath.ResolveStructureDamage"/>.
+        /// </summary>
+        public const int DefaultDigDurability = 5;
+
         public const float MaxRayDistance = 200f;
 
         /// <summary>액터 점유셀에서 목표 walkable 셀까지 XZ Chebyshev 반경 (목표 포함).</summary>
@@ -39,6 +48,7 @@ namespace IsoTilemap
 
             return map;
         }
+
 
         public static bool TryGetDropItemId(string prefabId, out string itemId)
         {

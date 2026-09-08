@@ -14,36 +14,39 @@ public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContribut
         ItemStack stack = request.Gear.Wield?.Get(request.Slot);
         if (stack?.Item != null)
         {
-            WeaponPresentation presentation = WeaponActionRows.Resolve(
+            WeaponPresentation presentation = CombatLeafRows.Resolve(
                 request.Gear.PresentationCatalog,
                 stack);
-            WeaponActionMask mask = WeaponActionRows.Available(presentation);
-            var actionChildren = new List<ContextMenuEntry>(WeaponActionUtil.All.Length + 4);
+            CombatLeafMask mask = CombatLeafRows.Available(presentation);
+            var actionChildren = new List<ContextMenuEntry>(CombatLeafUtil.All.Length + 4);
 
             var melee = new List<ContextMenuEntry>(2);
             var trigger = new List<ContextMenuEntry>(3);
-            var leaves = new List<WeaponAction>(WeaponActionUtil.All.Length);
-            WeaponActionUtil.CollectAvailableLeaves(mask, leaves);
+            var etc = new List<ContextMenuEntry>(4);
+            var leaves = new List<CombatLeaf>(CombatLeafUtil.All.Length);
+            CombatLeafUtil.CollectAvailableLeaves(mask, leaves);
             for (int i = 0; i < leaves.Count; i++)
             {
-                WeaponAction leaf = leaves[i];
-                string id = "hand-" + WeaponActionUtil.LeafLabel(leaf).ToLowerInvariant();
+                CombatLeaf leaf = leaves[i];
+                string id = "hand-" + CombatLeafUtil.LeafLabel(leaf).ToLowerInvariant();
                 string label = CharacterGearLabels.ActionLabel(leaf);
                 var entry = ContextMenuEntry.Leaf(
                     id,
                     label,
                     new SetHandActionContextAction(request, leaf));
 
-                if (!WeaponActionUtil.TryGetFamily(leaf, out WeaponActionFamily family))
+                if (!CombatLeafUtil.TryGetFamily(leaf, out CombatLeafFamily family))
                 {
                     actionChildren.Add(entry);
                     continue;
                 }
 
-                if (family == WeaponActionFamily.Melee)
+                if (family == CombatLeafFamily.Melee)
                     melee.Add(entry);
-                else if (family == WeaponActionFamily.Trigger)
+                else if (family == CombatLeafFamily.Trigger)
                     trigger.Add(entry);
+                else if (family == CombatLeafFamily.Etc)
+                    etc.Add(entry);
             }
 
             if (melee.Count > 0)
@@ -60,6 +63,14 @@ public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContribut
                     "hand-family-trigger",
                     CharacterGearLabels.FamilyTrigger,
                     trigger));
+            }
+
+            if (etc.Count > 0)
+            {
+                actionChildren.Add(ContextMenuEntry.Group(
+                    "hand-family-etc",
+                    CharacterGearLabels.FamilyEtc,
+                    etc));
             }
 
             actionChildren.Add(ContextMenuEntry.Leaf(

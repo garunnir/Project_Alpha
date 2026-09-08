@@ -73,7 +73,7 @@ public static class CombatImpulse
         return kg > 0f ? kg : UnarmedMassKg;
     }
 
-    public static float MeleeJin(ItemData item, WeaponAction action, int strength)
+    public static float MeleeJin(ItemData item, CombatLeaf action, int strength)
     {
         float t = CombatMath.AttackIntervalSeconds(item, action);
         if (t < 0.01f)

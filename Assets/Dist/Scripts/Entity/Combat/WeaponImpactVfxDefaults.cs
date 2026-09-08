@@ -23,7 +23,7 @@ public sealed class WeaponImpactVfxDefaults : ScriptableObject
 
         [HorizontalGroup("Row")]
         [HideLabel]
-        public WeaponActionVfx vfx = new WeaponActionVfx();
+        public CombatLeafVfx vfx = new CombatLeafVfx();
     }
 
     [InfoBox(
@@ -45,7 +45,7 @@ public sealed class WeaponImpactVfxDefaults : ScriptableObject
 
     public GameObject SeverBleedVfx => _severBleedVfx;
 
-    public bool TryGetVfx(string impactTag, out WeaponActionVfx vfx)
+    public bool TryGetVfx(string impactTag, out CombatLeafVfx vfx)
     {
         vfx = null;
         if (_entries == null || string.IsNullOrEmpty(impactTag))

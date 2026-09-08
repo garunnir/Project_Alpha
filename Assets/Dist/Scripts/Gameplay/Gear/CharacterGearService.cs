@@ -408,11 +408,11 @@ public sealed class CharacterGearService
 
     public void DepositToBody(ItemStack stack) => DepositStack(stack, toFloor: false);
 
-    public bool TrySetHandAction(ItemStack stack, WeaponAction? action)
+    public bool TrySetHandAction(ItemStack stack, CombatLeaf? action)
     {
         if (stack?.Instance == null)
             return false;
-        stack.Instance.SelectedAction = action;
+        stack.Instance.SelectedLeaf = action;
         NotifyPrimaryDirty();
         return true;
     }

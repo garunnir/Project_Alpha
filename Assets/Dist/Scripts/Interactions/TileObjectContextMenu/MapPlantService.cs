@@ -161,7 +161,28 @@ public static class MapPlantService
     }
 
     public static bool HasAxeQuality(ItemData item) =>
-        ItemQualityUtil.HasQuality(item, MapPlantConsts.AxeQualityId, MapPlantConsts.MinAxeQualityLevel);
+        ResolveAxeQualityLevel(item) >= MapPlantConsts.MinAxeQualityLevel;
+
+    /// <summary>아이템 AXE quality 최고 level. 없으면 0.</summary>
+    public static int ResolveAxeQualityLevel(ItemData item)
+    {
+        if (item?.qualities == null)
+            return 0;
+
+        int best = 0;
+        for (int i = 0; i < item.qualities.Count; i++)
+        {
+            QualityEntry quality = item.qualities[i];
+            if (quality == null || string.IsNullOrEmpty(quality.id))
+                continue;
+            if (!quality.id.Equals(MapPlantConsts.AxeQualityId, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (quality.level > best)
+                best = quality.level;
+        }
+
+        return best;
+    }
 
     public static string GetChopSessionBlockedReason()
     {
@@ -190,11 +211,16 @@ public static class MapPlantService
         return null;
     }
 
-    public static bool HasDigQuality(ItemData item)
+    public static bool HasDigQuality(ItemData item) =>
+        ResolveDigQualityLevel(item) >= MapPlantConsts.MinDigQualityLevel;
+
+    /// <summary>아이템 DIG quality 최고 level. 없으면 0.</summary>
+    public static int ResolveDigQualityLevel(ItemData item)
     {
         if (item?.qualities == null)
-            return false;
+            return 0;
 
+        int best = 0;
         for (int i = 0; i < item.qualities.Count; i++)
         {
             QualityEntry quality = item.qualities[i];
@@ -202,11 +228,11 @@ public static class MapPlantService
                 continue;
             if (!quality.id.Equals(MapPlantConsts.DigQualityId, StringComparison.OrdinalIgnoreCase))
                 continue;
-            if (quality.level >= MapPlantConsts.MinDigQualityLevel)
-                return true;
+            if (quality.level > best)
+                best = quality.level;
         }
 
-        return false;
+        return best;
     }
 
     public static bool IsFertilizerItem(ItemData item)

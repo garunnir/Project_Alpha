@@ -1,0 +1,51 @@
+---
+description: Dist Editor MenuItem·Ensure·Patch·Setup — 신규 추가 금지·일회성 삭제·사람/에이전트 경계
+globs: Assets/Dist/Scripts/Editor/**/*,Assets/Dist/MCP/**/*
+alwaysApply: false
+---
+
+# Editor Automation Hygiene
+
+## When
+`Assets/Dist/Scripts/Editor/**` · `Dist/MCP/**` · `Tools/Data Definitions` · Unity `[MenuItem]` · Ensure/Setup/Patch 스크립트를 **추가·수정**할 때.
+
+## Audience
+| 경로 | 누가 씀 |
+|------|---------|
+| `Tools/Data Definitions` | **디자이너** — 게임 데이터 SO·Catalog JSON |
+| `Dist/MCP/*` (Unity 메뉴) | **에이전트/MCP** — 씬·프리팹 bootstrap (디자이너 일상 UX 아님) |
+| `Create → Dist/...` | 에셋 생성 단축 (CreateAssetMenu) |
+
+대화 한 턴의 “앞으로 안 함”은 다음 세션에 전달되지 않는다. **이 파일이 SSOT.**
+
+## MUST NOT (신규 추가 — 사용자 명시 승인 없으면)
+1. **`[MenuItem("Dist/MCP/...")]`** · `DistMcpMenus` 상수 · `*SetupMenu.cs` · `*PatchMenu.cs` · `*EnsureMenu.cs` **새 파일/항목**
+2. **Data Definitions**에 `LoadOrCreate` / Ensure-on-open (`AddEnsureAssetLeaf` 등) — 싱글톤 SO 자동 생성
+3. **동일 SO/프리팹**에 대한 Ensure 진입점 중복 (이미 `DistSoSampleEnsureMenu`·`DistScriptableObjectEnsure`·기존 `Dist/MCP` 있으면 재사용)
+4. **완료 조건**을 “메뉴 추가함”으로 두기
+
+## MUST (에이전트·MCP)
+1. **기존** `Dist/MCP` 항목·`DistMcpMenus` 경로·`execute_menu_item` **재사용** — 없을 때만 사용자에게 승인 요청 후 추가
+2. 가능하면 `[MenuItem]` 없이 **`public static` API**만 두고 MCP/에디터 코드가 직접 호출 (메뉴 노출은 bootstrap 일괄 메뉴에만)
+3. **일회성** full bake / Patch / 씬 마이그레이션 → 반영 확인 후 **같은 작업 범위에서 메뉴+스크립트 삭제** (`ui-prefab-bake.mdc`)
+4. 신규 클론·에셋 누락 → `Dist/MCP/Ensure Sample ScriptableObject Assets` (`DistSoSampleEnsureMenu`) **한 곳**만
+
+## Data Definitions (사람용)
+| OK | MUST NOT |
+|----|----------|
+| `+ Create *` (Odin `*CreateAction`) — Tile, Presentation, Attack, Faction, CharacterDefinition | Ensure-on-open · `Dist/MCP` 항목 복제 |
+| `AddTypedAssets` / `AddAssetLeaf` — **있는 에셋만** 목록 (없으면 Missing 안내) | 창 열 때 `LoadOrCreate` |
+| Catalog Items의 Presentation **Ensure** (아이템 바인딩) | — |
+
+Locomotion `MovementStyle` 등 **사용자가 편집하지 않는** 트리에 `+ Create` 추가 금지 (명시 요청 시만).
+
+## Patch vs Setup vs Ensure
+| 종류 | 수명 | 예 |
+|------|------|-----|
+| **Patch** | 일회성 마이그레이션 → **삭제** | scrollbar/resize/필드 배선 YAML 수정 |
+| **Setup In Open Scene** | bootstrap — **기존 메뉴 재사용**, 신규 금지 | Canvas overlay 배선 |
+| **CreatePrefabIfMissing** | bootstrap — **기존 메뉴 재사용**, 신규 금지 | HUD 프리팹 자리 |
+| **Ensure (도메인)** | 데이터 **행/Leaf 보강** — 기존 Ensurer 재사용 | Dig/Chop Leaf, Arm slot catalog |
+
+## See also
+`collaboration-unity.mdc` §Unity MCP · `ui-prefab-bake.mdc` · `DistMcpMenus.cs` · `docs/inventory/ITEM_NAMES.md` (Data Definitions 트리)

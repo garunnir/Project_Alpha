@@ -9,6 +9,8 @@ using UnityEngine;
 [HideReferenceObjectPicker]
 public sealed class CharacterDefinitionCreateAction
 {
+    const string DraftKey = "CharacterDefinition";
+
     bool AlwaysShow => true;
 
     [Title("Create Character Definition", "Characters / Definitions", TitleAlignments.Split)]
@@ -22,15 +24,27 @@ public sealed class CharacterDefinitionCreateAction
     string Badge =>
         "<color=#77ff99><b>NEW</b></color>  ·  CharacterDefinition SO";
 
+    [LabelText("Base name")]
+    [PropertyOrder(-1)]
+    [OnValueChanged(nameof(SaveDraft))]
+    public string BaseName;
+
+    [OnInspectorInit]
+    void InitBaseName()
+    {
+        BaseName = DataDefinitionsCreateNameDraft.GetOrRecommend(
+            DraftKey,
+            DataDefinitionsSoCatalogs.RecommendCharacterDefinitionBaseName);
+    }
+
     [Button(SdfIconType.PlusCircleFill, "Create Character Definition")]
     [GUIColor(0.4f, 0.95f, 0.55f)]
     [PropertyOrder(0)]
     void Create()
     {
-        CharacterDefinition def = CharacterDefinitionCatalog.CreateNew();
-        Selection.activeObject = def;
-        EditorGUIUtility.PingObject(def);
-        if (EditorWindow.HasOpenInstances<DataDefinitionsWindow>())
-            EditorWindow.GetWindow<DataDefinitionsWindow>().ForceMenuTreeRebuild();
+        DataDefinitionsSoCatalogs.FinishCreate(
+            DataDefinitionsSoCatalogs.CreateCharacterDefinition(BaseName));
     }
+
+    void SaveDraft() => DataDefinitionsCreateNameDraft.Set(DraftKey, BaseName);
 }

@@ -97,9 +97,9 @@ public static class WeaponRangedLeafEnsurer
         }
 
         bool changed = false;
-        changed |= EnsureLeaf(entries, WeaponAction.Semi, attackTemplate);
-        changed |= EnsureLeaf(entries, WeaponAction.Burst, attackTemplate);
-        changed |= EnsureLeaf(entries, WeaponAction.Auto, attackTemplate);
+        changed |= EnsureLeaf(entries, CombatLeaf.Semi, attackTemplate);
+        changed |= EnsureLeaf(entries, CombatLeaf.Burst, attackTemplate);
+        changed |= EnsureLeaf(entries, CombatLeaf.Auto, attackTemplate);
 
         if (!changed)
             return false;
@@ -117,7 +117,7 @@ public static class WeaponRangedLeafEnsurer
         for (int i = 0; i < presentation.Entries.Length; i++)
         {
             WeaponPresentation.Entry e = presentation.Entries[i];
-            if (e != null && WeaponActionUtil.IsRanged(e.action))
+            if (e != null && CombatLeafUtil.IsRanged(e.leaf))
                 return true;
         }
 
@@ -131,7 +131,7 @@ public static class WeaponRangedLeafEnsurer
         for (int i = 0; i < presentation.Entries.Length; i++)
         {
             WeaponPresentation.Entry e = presentation.Entries[i];
-            if (e != null && WeaponActionUtil.IsRanged(e.action) && e.attack != null)
+            if (e != null && CombatLeafUtil.IsRanged(e.leaf) && e.attack != null)
                 return e.attack;
         }
 
@@ -146,23 +146,23 @@ public static class WeaponRangedLeafEnsurer
 
     static bool EnsureLeaf(
         List<WeaponPresentation.Entry> entries,
-        WeaponAction leaf,
+        CombatLeaf leaf,
         WeaponAttack attack)
     {
-        WeaponAction want = WeaponActionUtil.Normalize(leaf);
+        CombatLeaf want = CombatLeafUtil.Normalize(leaf);
         for (int i = 0; i < entries.Count; i++)
         {
             if (entries[i] != null &&
-                WeaponActionUtil.Normalize(entries[i].action) == want)
+                CombatLeafUtil.Normalize(entries[i].leaf) == want)
                 return false;
         }
 
         entries.Add(new WeaponPresentation.Entry
         {
-            action = want,
+            leaf = want,
             attack = attack,
             effectSeeds = System.Array.Empty<WeaponPresentation.EffectSeed>(),
-            vfx = new WeaponActionVfx()
+            vfx = new CombatLeafVfx()
         });
         return true;
     }

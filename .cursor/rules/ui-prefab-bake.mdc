@@ -16,21 +16,22 @@ alwaysApply: false
 1. Full bake는 **임시** 스크립트/메뉴만 허용 (승인된 일회 작업).
 2. 베이크 **성공 확인 직후** 해당 bake 스크립트·메뉴를 **삭제**한다 (`.cs` + `.meta`).
 3. Setup/씬 배선은 기존 프리팹을 **로드만** 한다. 없으면 LogError — **자동 bake 금지**.
-4. 레이아웃 유지 수정은 **Patch**(필드 배선·스크롤바·열 sync 등)만 상시 유지.
+4. **Patch**(필드 배선·스크롤바·열 sync 등)는 **일회성 마이그레이션** — 반영 확인 후 메뉴·스크립트 **삭제** (`editor-automation-hygiene.mdc`). 레포에 상시 Patch 류를 늘리지 않는다.
 
 ## MUST NOT
 - `Dist/*/Bake * Prefab(s)` 같은 **상시** full-bake 메뉴를 레포에 남기기
 - Setup이 프리팹 없을 때 factory로 재생성
 - 손수 레이아웃 프리팹을 factory `SaveAsPrefabAsset`으로 덮기 (명시 예외·승인 없으면)
+- **신규** `Dist/MCP` Patch/Setup MenuItem (`editor-automation-hygiene.mdc`)
 
-## OK (예외 — 상시 유지 가능)
+## OK (예외)
 | OK | Condition |
 |----|-----------|
-| Patch 메뉴 | `Dist/MCP/...` — 기존 계층 유지, SerializeField·부분 geometry만 (MCP/에이전트용) |
-| Overlay Setup | `Dist/MCP/...` — 고스트/컨텍스트 등 ephemeral 프리팹 Ensure (창 본체 full bake 아님) |
+| **기존** Patch/Setup 메뉴 재실행 | MCP·에이전트가 **이미 있는** `DistMcpMenus` 경로만 |
+| Overlay Setup (기존) | ephemeral 프리팹 — **새 메뉴 추가 금지** |
 | 일회 bake | 사용자 승인 + 베이크 후 **즉시 삭제** |
 
-`Dist/MCP/*` 는 Unity MCP·에이전트 자동화용이다. `Create → Dist/...` (CreateAssetMenu) 와 별개.
+`Dist/MCP/*` 는 Unity MCP·에이전트 자동화용 (디자이너 일상 메뉴 아님). 신규 항목은 승인 후만. `Create → Dist/...` (CreateAssetMenu) 와 별개.
 
 ## See also
-`ui-prefab-layout.mdc` · `00-rules-index.mdc`
+`ui-prefab-layout.mdc` · `editor-automation-hygiene.mdc` · `00-rules-index.mdc`

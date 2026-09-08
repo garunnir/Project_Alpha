@@ -1,16 +1,18 @@
-// ============================================================
-// ArmAnimSlotCatalogBaker — Leaf마다 폴백 행·슬롯 Ensure (MCP)
+﻿// ============================================================
+// ArmAnimSlotCatalogBaker — Leaf마다 Catalog 폴백 행 Ensure (MCP)
 // ============================================================
 
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// WeaponActionUtil.All(Leaf) / ArmImpactKind 기준으로 슬롯·Catalog 행을 Ensure한다.
-/// Semi/Burst/Auto도 각자 폴백 줄이 있어야 한다. 표시는 DropdownPath(Melee/Trigger).
+/// CombatLeafUtil.All(Leaf) / ArmImpactKind 기준으로 Catalog 행만 Ensure한다.
+/// 슬롯 .anim 복제 없음 — thin(Hold/Aim/Attack)·Impact thin·Hurt만 유지.
 /// </summary>
 public static class ArmAnimSlotCatalogBaker
 {
@@ -18,119 +20,59 @@ public static class ArmAnimSlotCatalogBaker
     const string CatalogPath = ArmAnimSlotCatalog.DefaultAssetPath;
     const string PresentationCatalogPath = WeaponPresentationCatalog.DefaultAssetPath;
 
-    static readonly string[] Hands = { "Left", "Right", "TwoHand" };
-    static readonly string[] Phases = { "Hold", "Aim", "Attack" };
+    static readonly Regex KeepSlotPattern = new Regex(
+        @"^(Hold|Aim|Attack)_(Left|Right|TwoHand)_Slot\.anim$|" +
+        @"^Impact(Recoil|Blocked)_Slot\.anim$|" +
+        @"^Hit(Flinch|Stagger|PainDown|Dead)_Slot\.anim$",
+        RegexOptions.CultureInvariant);
 
     [MenuItem("Dist/MCP/Ensure Arm Anim Pipeline")]
     [MenuItem("Dist/MCP/Ensure Arm Anim Slot Catalog")]
     public static void Bake()
     {
-        if (!AssetDatabase.IsValidFolder(SlotDir))
+        string slotDir = SlotDir;
+        if (!AssetDatabase.IsValidFolder(slotDir))
         {
-            Debug.LogError("[ArmAnimSlotCatalogBaker]Slots folder missing.");
+            Debug.LogError("[ArmAnimSlotCatalogBaker] Slots folder missing.");
             return;
         }
 
-        EnsureActionLibrarySlots();
-        EnsureImpactLibrarySlots();
-        EnsureThinSlots();
-        EnsureImpactThinSlots();
-        DeleteOrphanHandlessSlots();
+        PruneObsoleteSlotClips(slotDir);
+        DeleteOrphanHandlessSlots(slotDir);
         EnsureCatalog();
         WirePresentationCatalog();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log(
             "[ArmAnimSlotCatalogBaker] Ensured Leaf fallback verbs=" +
-            WeaponActionUtil.All.Length +
+            CombatLeafUtil.All.Length +
             " impacts=" +
             Enum.GetValues(typeof(ArmImpactKind)).Length);
     }
 
-    static void EnsureActionLibrarySlots()
+    static void PruneObsoleteSlotClips(string slotDir)
     {
-        WeaponAction[] actions = WeaponActionUtil.All;
-        for (int a = 0; a < actions.Length; a++)
-        {
-            string action = ClipStem(actions[a]);
-            for (int p = 0; p < Phases.Length; p++)
-            {
-                string phase = Phases[p];
-                for (int h = 0; h < Hands.Length; h++)
-                {
-                    string hand = Hands[h];
-                    string dest = phase + action + "_" + hand + "_Slot";
-                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + dest + ".anim") != null)
-                        continue;
+        string absDir = Path.GetFullPath(slotDir);
+        if (!Directory.Exists(absDir))
+            return;
 
-                    string seed = PickSeedClip(phase, hand, actions[a]);
-                    EnsureCopy(seed, dest);
-                }
-            }
-        }
-    }
-
-    static string PickSeedClip(string phase, string hand, WeaponAction leaf)
-    {
-        if (WeaponActionUtil.IsRanged(leaf))
+        int removed = 0;
+        foreach (string path in Directory.GetFiles(absDir, "*_Slot.anim", SearchOption.TopDirectoryOnly))
         {
-            string trigger = phase + "Trigger_" + hand + "_Slot";
-            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + trigger + ".anim") != null)
-                return trigger;
+            string fileName = Path.GetFileName(path);
+            if (KeepSlotPattern.IsMatch(fileName))
+                continue;
+
+            string assetPath = slotDir + "/" + fileName;
+            if (AssetDatabase.DeleteAsset(assetPath))
+                removed++;
         }
 
-        string swing = phase + "Swing_" + hand + "_Slot";
-        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + swing + ".anim") != null)
-            return swing;
-
-        return phase + "_" + hand + "_Slot";
+        if (removed > 0)
+            Debug.Log("[ArmAnimSlotCatalogBaker] Pruned obsolete slot clips=" + removed);
     }
 
-    static void EnsureImpactLibrarySlots()
-    {
-        foreach (ArmImpactKind kindEnum in Enum.GetValues(typeof(ArmImpactKind)))
-        {
-            string kind = kindEnum.ToString();
-            for (int h = 0; h < Hands.Length; h++)
-            {
-                string hand = Hands[h];
-                string dest = "Impact" + kind + "_" + hand + "_Slot";
-                if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + dest + ".anim") != null)
-                    continue;
-
-                string seed = "AttackSwing_" + hand + "_Slot";
-                if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + seed + ".anim") == null)
-                    seed = "Attack_" + hand + "_Slot";
-                EnsureCopy(seed, dest);
-            }
-        }
-    }
-
-    static void EnsureThinSlots()
-    {
-        for (int h = 0; h < Hands.Length; h++)
-        {
-            string hand = Hands[h];
-            EnsureCopy("HoldSwing_" + hand + "_Slot", "Hold_" + hand + "_Slot");
-            EnsureCopy("AimSwing_" + hand + "_Slot", "Aim_" + hand + "_Slot");
-            EnsureCopy("AttackSwing_" + hand + "_Slot", "Attack_" + hand + "_Slot");
-        }
-    }
-
-    static void EnsureImpactThinSlots()
-    {
-        foreach (ArmImpactKind kindEnum in Enum.GetValues(typeof(ArmImpactKind)))
-        {
-            string kind = kindEnum.ToString();
-            string thin = "Impact" + kind + "_Slot";
-            string seed = "Impact" + kind + "_Right_Slot";
-            EnsureCopy(seed, thin);
-            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + thin + ".anim") == null)
-                EnsureCopy("Attack_Right_Slot", thin);
-        }
-    }
-
-    static void DeleteOrphanHandlessSlots()
+    static void DeleteOrphanHandlessSlots(string slotDir)
     {
         string[] orphans =
         {
@@ -142,29 +84,10 @@ public static class ArmAnimSlotCatalogBaker
         };
         for (int i = 0; i < orphans.Length; i++)
         {
-            string path = SlotDir + "/" + orphans[i] + ".anim";
+            string path = slotDir + "/" + orphans[i] + ".anim";
             if (AssetDatabase.LoadAssetAtPath<AnimationClip>(path) == null)
                 continue;
             AssetDatabase.DeleteAsset(path);
-        }
-    }
-
-    static void EnsureCopy(string sourceName, string destName)
-    {
-        string destPath = SlotDir + "/" + destName + ".anim";
-        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath) != null)
-            return;
-
-        string sourcePath = SlotDir + "/" + sourceName + ".anim";
-        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(sourcePath) == null)
-            return;
-
-        AssetDatabase.CopyAsset(sourcePath, destPath);
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath);
-        if (clip != null)
-        {
-            clip.name = destName;
-            EditorUtility.SetDirty(clip);
         }
     }
 
@@ -177,15 +100,19 @@ public static class ArmAnimSlotCatalogBaker
         catalog.SetAimThin(LoadHandClips("Aim"));
         catalog.SetAttackThin(LoadHandClips("Attack"));
         catalog.SetImpactThin(
-            LoadFlatSlot("ImpactRecoil_Slot"),
-            LoadFlatSlot("ImpactBlocked_Slot"));
+            catalog.ImpactRecoilThin != null
+                ? catalog.ImpactRecoilThin
+                : LoadFlatSlot("ImpactRecoil_Slot"),
+            catalog.ImpactBlockedThin != null
+                ? catalog.ImpactBlockedThin
+                : LoadFlatSlot("ImpactBlocked_Slot"));
 
-        WeaponActionVfx rangedVfxTemplate = FindRangedVfxTemplate(catalog);
-        WeaponActionVfx meleeVfxTemplate = FindMeleeVfxTemplate(catalog);
+        CombatLeafVfx rangedVfxTemplate = FindRangedVfxTemplate(catalog);
+        CombatLeafVfx meleeVfxTemplate = FindMeleeVfxTemplate(catalog);
 
         var verbs = new List<ArmAnimSlotCatalog.ActionLibraryEntry>();
         var seen = new HashSet<int>();
-        WeaponAction[] all = WeaponActionUtil.All;
+        CombatLeaf[] all = CombatLeafUtil.All;
         for (int i = 0; i < all.Length; i++)
             verbs.Add(BuildVerbEntry(catalog, all[i], seen, rangedVfxTemplate, meleeVfxTemplate));
 
@@ -196,9 +123,9 @@ public static class ArmAnimSlotCatalogBaker
                 ArmAnimSlotCatalog.ActionLibraryEntry orphan = catalog.Verbs[i];
                 if (orphan == null)
                     continue;
-                WeaponAction leaf = WeaponActionUtil.Normalize(orphan.action);
-                if (leaf == WeaponAction.Trigger)
-                    leaf = WeaponAction.Semi;
+                CombatLeaf leaf = CombatLeafUtil.Normalize(orphan.leaf);
+                if (leaf == CombatLeaf.Trigger)
+                    leaf = CombatLeaf.Semi;
                 if (seen.Contains((int)leaf))
                     continue;
                 verbs.Add(BuildVerbEntry(catalog, leaf, seen, rangedVfxTemplate, meleeVfxTemplate));
@@ -227,7 +154,7 @@ public static class ArmAnimSlotCatalogBaker
         EditorUtility.SetDirty(catalog);
     }
 
-    static WeaponActionVfx FindRangedVfxTemplate(ArmAnimSlotCatalog catalog)
+    static CombatLeafVfx FindRangedVfxTemplate(ArmAnimSlotCatalog catalog)
     {
         if (catalog.Verbs == null)
             return null;
@@ -236,14 +163,14 @@ public static class ArmAnimSlotCatalogBaker
             ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
             if (e == null || e.vfx == null || !HasAnyVfx(e.vfx))
                 continue;
-            if (WeaponActionUtil.IsRanged(e.action) || e.action == WeaponAction.Trigger)
+            if (CombatLeafUtil.IsRanged(e.leaf) || e.leaf == CombatLeaf.Trigger)
                 return CloneVfx(e.vfx);
         }
 
         return null;
     }
 
-    static WeaponActionVfx FindMeleeVfxTemplate(ArmAnimSlotCatalog catalog)
+    static CombatLeafVfx FindMeleeVfxTemplate(ArmAnimSlotCatalog catalog)
     {
         if (catalog.Verbs == null)
             return null;
@@ -252,8 +179,9 @@ public static class ArmAnimSlotCatalogBaker
             ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
             if (e == null || e.vfx == null || !HasAnyVfx(e.vfx))
                 continue;
-            WeaponAction leaf = WeaponActionUtil.Normalize(e.action);
-            if (leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust)
+            CombatLeaf leaf = CombatLeafUtil.Normalize(e.leaf);
+            if (leaf == CombatLeaf.Strike || leaf == CombatLeaf.Pierce ||
+                leaf == CombatLeaf.Excavate || leaf == CombatLeaf.Chop)
                 return CloneVfx(e.vfx);
         }
 
@@ -262,40 +190,43 @@ public static class ArmAnimSlotCatalogBaker
 
     static ArmAnimSlotCatalog.ActionLibraryEntry BuildVerbEntry(
         ArmAnimSlotCatalog catalog,
-        WeaponAction action,
+        CombatLeaf action,
         HashSet<int> seen,
-        WeaponActionVfx rangedVfxTemplate,
-        WeaponActionVfx meleeVfxTemplate)
+        CombatLeafVfx rangedVfxTemplate,
+        CombatLeafVfx meleeVfxTemplate)
     {
-        WeaponAction leaf = WeaponActionUtil.Normalize(action);
+        CombatLeaf leaf = CombatLeafUtil.Normalize(action);
         seen.Add((int)leaf);
-        string name = ClipStem(leaf);
 
         ArmAnimSlotCatalog.ActionLibraryEntry existing = FindExact(catalog, leaf);
-        WeaponActionVfx vfx = existing?.vfx != null && HasAnyVfx(existing.vfx)
+        CombatLeafVfx vfx = existing?.vfx != null && HasAnyVfx(existing.vfx)
             ? CloneVfx(existing.vfx)
-            : new WeaponActionVfx();
+            : new CombatLeafVfx();
 
-        if (!HasAnyVfx(vfx) && WeaponActionUtil.IsRanged(leaf) && rangedVfxTemplate != null)
+        if (!HasAnyVfx(vfx) && CombatLeafUtil.IsRanged(leaf) && rangedVfxTemplate != null)
             vfx = CloneVfx(rangedVfxTemplate);
         if (!HasAnyVfx(vfx) &&
-            (leaf == WeaponAction.Raise || leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust) &&
+            (leaf == CombatLeaf.Raise ||
+             leaf == CombatLeaf.Strike ||
+             leaf == CombatLeaf.Pierce ||
+             leaf == CombatLeaf.Excavate ||
+             leaf == CombatLeaf.Chop) &&
             meleeVfxTemplate != null)
             vfx = CloneVfx(meleeVfxTemplate);
 
         return new ArmAnimSlotCatalog.ActionLibraryEntry
         {
-            action = leaf,
-            hold = LoadHandClips("Hold" + name),
-            aim = LoadHandClips("Aim" + name),
-            attack = LoadHandClips("Attack" + name),
+            leaf = leaf,
+            hold = new ArmAnimSlotCatalog.HandClips(),
+            aim = new ArmAnimSlotCatalog.HandClips(),
+            attack = new ArmAnimSlotCatalog.HandClips(),
             vfx = vfx
         };
     }
 
     static ArmAnimSlotCatalog.ActionLibraryEntry FindExact(
         ArmAnimSlotCatalog catalog,
-        WeaponAction leaf)
+        CombatLeaf leaf)
     {
         if (catalog.Verbs == null)
             return null;
@@ -304,9 +235,9 @@ public static class ArmAnimSlotCatalogBaker
             ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
             if (e == null)
                 continue;
-            if (WeaponActionUtil.Normalize(e.action) == leaf)
+            if (CombatLeafUtil.Normalize(e.leaf) == leaf)
                 return e;
-            if (leaf == WeaponAction.Semi && e.action == WeaponAction.Trigger)
+            if (leaf == CombatLeaf.Semi && e.leaf == CombatLeaf.Trigger)
                 return e;
         }
 
@@ -326,17 +257,17 @@ public static class ArmAnimSlotCatalogBaker
         return new ArmAnimSlotCatalog.ImpactLibraryEntry
         {
             kind = kind,
-            clips = LoadHandClips("Impact" + kind),
+            clips = new ArmAnimSlotCatalog.HandClips(),
             thin = thin,
-            vfx = existing?.vfx != null ? CloneVfx(existing.vfx) : new WeaponActionVfx()
+            vfx = existing?.vfx != null ? CloneVfx(existing.vfx) : new CombatLeafVfx()
         };
     }
 
-    static WeaponActionVfx CloneVfx(WeaponActionVfx src)
+    static CombatLeafVfx CloneVfx(CombatLeafVfx src)
     {
         if (src == null)
-            return new WeaponActionVfx();
-        return new WeaponActionVfx
+            return new CombatLeafVfx();
+        return new CombatLeafVfx
         {
             actionVfx = src.actionVfx,
             tracerVfx = src.tracerVfx,
@@ -345,7 +276,7 @@ public static class ArmAnimSlotCatalogBaker
         };
     }
 
-    static bool HasAnyVfx(WeaponActionVfx vfx) =>
+    static bool HasAnyVfx(CombatLeafVfx vfx) =>
         vfx != null &&
         (vfx.actionVfx != null ||
          vfx.tracerVfx != null ||
@@ -364,10 +295,6 @@ public static class ArmAnimSlotCatalogBaker
         if (presentation.Fallbacks != null)
             EditorUtility.SetDirty(presentation.Fallbacks);
     }
-
-    /// <summary>슬롯 파일 스템 = Normalize(Leaf) 이름.</summary>
-    static string ClipStem(WeaponAction action) =>
-        WeaponActionUtil.Normalize(action).ToString();
 
     static ArmAnimSlotCatalog.HandClips LoadHandClips(string stem) =>
         new ArmAnimSlotCatalog.HandClips

@@ -2,6 +2,7 @@
 // CombatMath — ItemData·스탯 기반 데미지/공속/명중 가산 파이프
 // ============================================================
 
+using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
@@ -37,9 +38,11 @@ public static class CombatMath
     /// <summary>handling 0이면 킥 배율 1. handling=이 값이면 킥 0.5.</summary>
     const float HandlingRef = 10f;
 
-    public static string SkillId(ItemData item, WeaponAction action)
+    static readonly string[] ExcavateChannelScratch = new string[AttackDamageTags.MaxChannels];
+
+    public static string SkillId(ItemData item, CombatLeaf action)
     {
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
             return CombatSkillIds.Gun;
 
         if (item == null)
@@ -48,11 +51,11 @@ public static class CombatMath
         return CombatSkillIds.Melee;
     }
 
-    public static int PracticeXp(WeaponAction action) => PracticeXpPerAttack;
+    public static int PracticeXp(CombatLeaf action) => PracticeXpPerAttack;
 
-    public static float RangeMeters(ItemData item, WeaponAction action, ItemData ammo = null)
+    public static float RangeMeters(ItemData item, CombatLeaf action, ItemData ammo = null)
     {
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
         {
             int gunRange = item?.gun != null ? item.gun.range : 0;
             int ammoRange = ammo?.ammo != null ? ammo.ammo.range : 0;
@@ -63,9 +66,9 @@ public static class CombatMath
         return MeleeReachMeters;
     }
 
-    public static int AttackMoves(ItemData item, WeaponAction action)
+    public static int AttackMoves(ItemData item, CombatLeaf action)
     {
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
             return GunFireMoves;
 
         int weight = item != null ? Mathf.Max(0, item.weight_g) : 0;
@@ -75,7 +78,7 @@ public static class CombatMath
             + weight / MeleeMovesWeightDiv;
     }
 
-    public static float AttackIntervalSeconds(ItemData item, WeaponAction action) =>
+    public static float AttackIntervalSeconds(ItemData item, CombatLeaf action) =>
         AttackMoves(item, action) / MovesPerSecond;
 
     /// <summary>반동 수치(총+탄). handling 전 킥.</summary>
@@ -240,7 +243,7 @@ public static class CombatMath
     public static int Damage(
         ItemData item,
         WeaponAttack attack,
-        WeaponAction action,
+        CombatLeaf action,
         int strength,
         int skillLevel,
         ItemData ammo = null)
@@ -298,14 +301,14 @@ public static class CombatMath
     /// <summary>원거리 확정 히트에서 조준 부위 유지 확률. 실패는 인접 산란·피해 유지. 근접 연결은 미사용.</summary>
     public static float HitChance(
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         int skillLevel,
         string aimedPartId,
         ItemData ammo = null,
         float rangedEffectiveDispersion = -1f)
     {
         float chance;
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
         {
             float effective = rangedEffectiveDispersion >= 0f
                 ? rangedEffectiveDispersion
@@ -327,4 +330,76 @@ public static class CombatMath
     /// <summary>약실에 1발 이상. 메거진 보급·자동 장전은 WeaponChamber.</summary>
     public static bool CanFireGun(ItemData item, ItemInstance instance) =>
         item?.gun != null && instance != null && instance.ChamberRounds > 0;
+
+    /// <summary>
+    /// 구조물 cue 피해 — 채널(bash/cut/bullet) × 재질 resist + optional tool potency(첫 채널).
+    /// Dig/Chop/벽 HP 공용. Dig 게이트(품질≥1)는 호출부가 담당.
+    /// </summary>
+    public static int ResolveStructureDamage(
+        ItemData item,
+        CombatLeaf action,
+        int strength,
+        int skillLevel,
+        IReadOnlyList<string> targetMaterials,
+        int targetMaterialThickness,
+        float offenseFactor = 1f,
+        ItemData ammo = null,
+        int toolPotencyBonus = 0)
+    {
+        int channelCount = AttackDamageTags.WriteChannels(
+            item,
+            action,
+            ExcavateChannelScratch,
+            ammo);
+        if (channelCount <= 0)
+            return 0;
+
+        float factor = Mathf.Max(0f, offenseFactor);
+        int total = 0;
+        for (int i = 0; i < channelCount; i++)
+        {
+            string damageTag = ExcavateChannelScratch[i];
+            int raw = DamageForTag(item, damageTag, strength, skillLevel, ammo);
+            if (i == 0 && toolPotencyBonus > 0)
+                raw += toolPotencyBonus;
+            raw = Mathf.Max(0, Mathf.RoundToInt(raw * factor));
+            total += WearCombatDefense.MitigateStructureDamage(
+                targetMaterials,
+                targetMaterialThickness,
+                raw,
+                damageTag);
+        }
+
+        return total;
+    }
+
+    /// <summary>
+    /// Excavate cue 피해 — DIG potency 게이트 + <see cref="ResolveStructureDamage"/>.
+    /// <paramref name="digPotencyLevel"/>는 <see cref="MapPlantService.ResolveDigQualityLevel"/> 결과.
+    /// </summary>
+    public static int ResolveExcavateDamage(
+        ItemData item,
+        CombatLeaf action,
+        int digPotencyLevel,
+        int strength,
+        int skillLevel,
+        IReadOnlyList<string> targetMaterials,
+        int targetMaterialThickness,
+        float offenseFactor = 1f,
+        ItemData ammo = null)
+    {
+        if (digPotencyLevel < 1)
+            return 0;
+
+        return ResolveStructureDamage(
+            item,
+            action,
+            strength,
+            skillLevel,
+            targetMaterials,
+            targetMaterialThickness,
+            offenseFactor,
+            ammo,
+            digPotencyLevel);
+    }
 }

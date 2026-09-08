@@ -296,14 +296,14 @@ public sealed class UICharacterWieldSlotView :
             _itemIcon.color = Color.white;
         }
 
-        WeaponPresentation presentation = WeaponActionRows.Resolve(gear.PresentationCatalog, stack);
-        WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
+        WeaponPresentation presentation = CombatLeafRows.Resolve(gear.PresentationCatalog, stack);
+        CombatLeaf action = CombatLeafRows.ResolveSelected(stack.Instance, presentation);
         SetActionVisual(action);
         SetAmmoVisual(stack);
         RefreshNameBar();
     }
 
-    void SetActionVisual(WeaponAction? action)
+    void SetActionVisual(CombatLeaf? action)
     {
         if (_actionLabel == null)
             return;

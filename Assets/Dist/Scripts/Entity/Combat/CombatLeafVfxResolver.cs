@@ -1,32 +1,32 @@
 // ============================================================
-// WeaponActionVfxResolver — 무기 Entry VFX + Pipeline 동사 행 coalesce
+// CombatLeafVfxResolver — 무기 Entry VFX + Pipeline 동사 행 coalesce
 // ============================================================
 
 using UnityEngine;
 
-public static class WeaponActionVfxResolver
+public static class CombatLeafVfxResolver
 {
     /// <summary>
     /// 무기 Presentation Entry 슬롯을 우선하고, null은 Pipeline 동사 행 VFX로 채운다.
     /// </summary>
-    public static WeaponActionVfx Resolve(
+    public static CombatLeafVfx Resolve(
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         ArmAnimSlotCatalog pipeline)
     {
-        WeaponActionVfx weapon = null;
+        CombatLeafVfx weapon = null;
         if (presentation != null &&
             presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
             weapon = entry?.vfx;
 
-        WeaponActionVfx verb = null;
+        CombatLeafVfx verb = null;
         if (pipeline != null)
             pipeline.TryGetVerbVfx(action, out verb);
 
         if (weapon == null && verb == null)
             return null;
 
-        return new WeaponActionVfx
+        return new CombatLeafVfx
         {
             actionVfx = Coalesce(weapon?.actionVfx, verb?.actionVfx),
             tracerVfx = Coalesce(weapon?.tracerVfx, verb?.tracerVfx),
@@ -39,29 +39,29 @@ public static class WeaponActionVfxResolver
     /// Hit VFX: Entry(+Pipeline) → Attack VFX → Defaults[특성 키] → fallback.
     /// Reaction(Recoil/Blocked)은 ResolveImpactKind.
     /// </summary>
-    public static WeaponActionVfx ResolveImpact(
+    public static CombatLeafVfx ResolveImpact(
         WeaponAttack attack,
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         ArmAnimSlotCatalog pipeline,
         WeaponImpactVfxDefaults defaults,
         string impactTag)
     {
-        WeaponActionVfx entry = Resolve(presentation, action, pipeline);
-        WeaponActionVfx weapon = attack != null ? attack.AttackVfx : null;
+        CombatLeafVfx entry = Resolve(presentation, action, pipeline);
+        CombatLeafVfx weapon = attack != null ? attack.AttackVfx : null;
 
         string tag = string.IsNullOrEmpty(impactTag)
             ? AttackImpactTags.Fallback
             : impactTag;
 
-        WeaponActionVfx tagVfx = null;
+        CombatLeafVfx tagVfx = null;
         if (defaults != null && !defaults.TryGetVfx(tag, out tagVfx))
             defaults.TryGetVfx(AttackImpactTags.Fallback, out tagVfx);
 
         if (entry == null && weapon == null && tagVfx == null)
             return null;
 
-        return new WeaponActionVfx
+        return new CombatLeafVfx
         {
             actionVfx = null,
             tracerVfx = Coalesce(
@@ -77,11 +77,11 @@ public static class WeaponActionVfxResolver
     }
 
     /// <summary>Pipeline Reaction Kind 행 VFX (Recoil/Blocked).</summary>
-    public static WeaponActionVfx ResolveImpactKind(
+    public static CombatLeafVfx ResolveImpactKind(
         ArmAnimSlotCatalog pipeline,
         ArmImpactKind kind)
     {
-        if (pipeline == null || !pipeline.TryGetImpactVfx(kind, out WeaponActionVfx vfx))
+        if (pipeline == null || !pipeline.TryGetImpactVfx(kind, out CombatLeafVfx vfx))
             return null;
         return vfx;
     }

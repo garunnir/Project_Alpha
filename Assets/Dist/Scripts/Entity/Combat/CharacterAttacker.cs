@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // CharacterAttacker — 들기 손 시전(듀얼 포함) + 클립 큐에서 IActionHandler 실행
 // ============================================================
 
@@ -28,7 +28,8 @@ public sealed class CharacterAttacker : MonoBehaviour
     [Tooltip("원거리 레이/탄 장애물. Character 포함(~0 권장). 자기 콜라이더는 IsOwnCollider로 제외.")]
     [SerializeField] LayerMask _rangedObstructionMask = ~0;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
-    [SerializeField] WeaponAction _selectedAction = WeaponAction.Swing;
+    [FormerlySerializedAs("_selectedAction")]
+    [SerializeField] CombatLeaf _selectedLeaf = CombatLeaf.Strike;
     [SerializeField] WieldHand _activeWieldHand = WieldHand.TwoHand;
     [SerializeField] string _preferredPartId = BodyPartIds.Torso;
     [SerializeField] TimeScaleChannel _combatVfxTimeChannel = TimeScaleChannel.World;
@@ -69,7 +70,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     readonly string[] _hitChannelScratch = new string[AttackDamageTags.MaxChannels];
 
     public event Action AvailableActionsChanged;
-    public event Action SelectedActionChanged;
+    public event Action SelectedLeafChanged;
     public event Action PresentationChanged;
     public event Action ActiveWieldHandChanged;
 
@@ -85,7 +86,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     public static event Action<AttackOutcome> AnyAttackJudged;
 
     /// <summary>공격 클립 cue 도달. Impact Recoil 연출용.</summary>
-    public event Action<WieldHand, WeaponAction> AttackCueFired;
+    public event Action<WieldHand, CombatLeaf> AttackCueFired;
 
     public bool HasPendingAttackCue
     {
@@ -153,8 +154,8 @@ public sealed class CharacterAttacker : MonoBehaviour
     public string ItemId => _itemId;
     public ItemInstance WieldedInstance => _wieldedInstance;
     public ItemStack WieldedStack => _wieldedStack;
-    public WeaponActionMask AvailableActions { get; private set; }
-    public WeaponAction SelectedAction => _selectedAction;
+    public CombatLeafMask AvailableActions { get; private set; }
+    public CombatLeaf SelectedLeaf => _selectedLeaf;
     public WieldHand ActiveWieldHand => _activeWieldHand;
 
     /// <summary>CharacterState.IsAiming. NPC Attack은 SetAimDir. CharacterState 없으면 AimHeld.</summary>
@@ -345,47 +346,47 @@ public sealed class CharacterAttacker : MonoBehaviour
         RefreshPresentationFromCatalog();
     }
 
-    public bool CanPerform(WeaponAction action) =>
-        (AvailableActions & WeaponActionUtil.ToMask(action)) != 0;
+    public bool CanPerform(CombatLeaf action) =>
+        (AvailableActions & CombatLeafUtil.ToMask(action)) != 0;
 
-    public void CycleSelectedAction()
+    public void CycleSelectedLeaf()
     {
-        if (!WeaponActionUtil.TryNextAvailable(
+        if (!CombatLeafUtil.TryNextAvailable(
                 AvailableActions,
-                _selectedAction,
-                out WeaponAction next))
+                _selectedLeaf,
+                out CombatLeaf next))
             return;
 
-        if (next == _selectedAction)
+        if (next == _selectedLeaf)
             return;
 
-        _selectedAction = next;
+        _selectedLeaf = next;
         WriteSelectedToInstance(next);
-        SelectedActionChanged?.Invoke();
+        SelectedLeafChanged?.Invoke();
     }
 
-    public bool TrySelectAction(WeaponAction action)
+    public bool TrySelectLeaf(CombatLeaf action)
     {
         if (!CanPerform(action))
             return false;
         WriteSelectedToInstance(action);
-        if (_selectedAction == action)
+        if (_selectedLeaf == action)
             return true;
-        _selectedAction = action;
-        SelectedActionChanged?.Invoke();
+        _selectedLeaf = action;
+        SelectedLeafChanged?.Invoke();
         return true;
     }
 
-    [Obsolete("Use SelectedAction / TryPerformSelected. Distance no longer picks an action.")]
-    public bool TryGetBestAction(float distance, out WeaponAction action)
+    [Obsolete("Use SelectedLeaf / TryPerformSelected. Distance no longer picks an action.")]
+    public bool TryGetBestAction(float distance, out CombatLeaf action)
     {
-        action = _selectedAction;
-        if (!CanPerform(_selectedAction))
+        action = _selectedLeaf;
+        if (!CanPerform(_selectedLeaf))
             return false;
         if (GetCooldown(_activeWieldHand) > 0f)
             return false;
 
-        float range = CombatMath.RangeMeters(CurrentItem, _selectedAction, WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
+        float range = CombatMath.RangeMeters(CurrentItem, _selectedLeaf, WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
         return distance <= range;
     }
 
@@ -396,7 +397,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         IsRaiseActive = active;
 
     public AttackPerformResult TryPerform(
-        WeaponAction action,
+        CombatLeaf action,
         CharacterBodyHost targetHost,
         float offenseFactor = 1f)
     {
@@ -409,10 +410,14 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         ItemData item = CurrentItem;
-        if (action == WeaponAction.Raise)
+        if (action == CombatLeaf.Raise)
             return PerformRaise(action, targetHost, offenseFactor, item);
+        if (action == CombatLeaf.Excavate)
+            return PerformDig(action, targetHost, offenseFactor, item);
+        if (action == CombatLeaf.Chop)
+            return PerformChop(action, targetHost, offenseFactor, item);
 
-        WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
+        WeaponResolveMode resolveMode = CombatLeafUtil.ResolveMode(action);
         Vector3 origin = ResolveOrigin();
         AttackPerformResult gate = GateAction(action, item);
         // Cooling/pending/원거리 NoAmmo만 시전을 막는다.
@@ -432,7 +437,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         return signal;
     }
 
-    AttackPerformResult GateAction(WeaponAction action, ItemData item)
+    AttackPerformResult GateAction(CombatLeaf action, ItemData item)
     {
         if (GetCooldown(_activeWieldHand) > 0f)
             return AttackPerformResult.Cooling;
@@ -451,10 +456,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (HasPendingFor(_activeWieldHand))
             return AttackPerformResult.Cooling;
 
-        if (action == WeaponAction.Raise)
+        if (action == CombatLeaf.Raise)
             return AttackPerformResult.Performed;
 
-        if (WeaponActionUtil.IsRanged(action) &&
+        if (CombatLeafUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, _wieldedInstance, _wieldedStack, AttackFor(action)))
             return AttackPerformResult.NoAmmo;
 
@@ -498,7 +503,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     }
 
     AttackPerformResult ResolveActionSignal(
-        WeaponAction action,
+        CombatLeaf action,
         WeaponResolveMode resolveMode,
         AttackPerformResult result,
         CharacterBodyHost targetHost,
@@ -521,7 +526,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         CharacterBodyHost targetHost,
         Vector3 origin,
         ItemData item,
-        WeaponAction action)
+        CombatLeaf action)
     {
         if (targetHost == null || targetHost.Body == null)
             return ResolveAimImpact(origin, item, action);
@@ -531,7 +536,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         return ResolveImpactPoint(targetCollider, targetCenter, origin);
     }
 
-    Vector3 ResolveAimImpact(Vector3 origin, ItemData item, WeaponAction action)
+    Vector3 ResolveAimImpact(Vector3 origin, ItemData item, CombatLeaf action)
     {
         if (_characterState != null)
         {
@@ -562,7 +567,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     }
 
     AttackPerformResult Resolve(
-        WeaponAction action,
+        CombatLeaf action,
         WeaponResolveMode resolveMode,
         AttackPerformResult result,
         CharacterBodyHost target,
@@ -573,8 +578,8 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         bool useSurpriseClip = false;
         if (result == AttackPerformResult.Performed &&
-            !WeaponActionUtil.IsRanged(action) &&
-            !WeaponActionUtil.SuppressesAttackTrigger(action))
+            !CombatLeafUtil.IsRanged(action) &&
+            !CombatLeafUtil.SuppressesAttackTrigger(action))
         {
             CharacterBodyHost primary = target;
             if (primary == null)
@@ -655,7 +660,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             _hasLastDualSlot = false;
             SyncActiveHandFromGear();
-            return TryPerform(_selectedAction, targetHost);
+            return TryPerform(_selectedLeaf, targetHost);
         }
 
         bool hasPrimary = primary.Action != null && primary.Stack?.Item != null;
@@ -667,7 +672,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             _hasLastDualSlot = false;
             SyncActiveHandFromGear();
-            return TryPerform(_selectedAction, targetHost);
+            return TryPerform(_selectedLeaf, targetHost);
         }
 
         if (!hasSecondary)
@@ -745,7 +750,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     }
 
     AttackPerformResult PerformRaise(
-        WeaponAction action,
+        CombatLeaf action,
         CharacterBodyHost targetHost,
         float offenseFactor,
         ItemData item)
@@ -778,10 +783,136 @@ public sealed class CharacterAttacker : MonoBehaviour
             impact);
     }
 
+    /// <summary>
+    /// Dig Leaf outcome. ActiveWield 무기 스택의 DIG quality(level ≥ MinDig)가
+    /// cue당 타일 내구도 피해 최소 조건. Dig 전용 손 스캔 아님.
+    /// </summary>
+    AttackPerformResult PerformDig(
+        CombatLeaf action,
+        CharacterBodyHost targetHost,
+        float offenseFactor,
+        ItemData item)
+    {
+        if (item == null || !MapPlantService.HasDigQuality(item))
+            return AttackPerformResult.Unsupported;
+
+        AttackPerformResult gate = GateAction(action, item);
+        if (gate != AttackPerformResult.Performed)
+            return gate;
+
+        BeginActionCooldown(_activeWieldHand, ResolveActionCooldown(action));
+        ArmPendingCue(action, targetHost, offenseFactor);
+
+        Vector3 origin = ResolveOrigin();
+        Vector3 impact = ResolveOutcomeImpact(targetHost, origin, item, action);
+        AttackPerformResult signal = Resolve(
+            action,
+            WeaponResolveMode.MeleeBlock,
+            AttackPerformResult.Performed,
+            targetHost,
+            string.Empty,
+            0,
+            origin,
+            impact);
+
+        if (!HasAttackOverlayWatch)
+            NotifyAttackCue();
+
+        return signal;
+    }
+
+    /// <summary>
+    /// Chop Leaf outcome. ActiveWield 무기 AXE quality(level ≥ MinAxe)가
+    /// cue당 나무 OccupiedCell 피해 최소 조건.
+    /// </summary>
+    AttackPerformResult PerformChop(
+        CombatLeaf action,
+        CharacterBodyHost targetHost,
+        float offenseFactor,
+        ItemData item)
+    {
+        if (item == null || !MapPlantService.HasAxeQuality(item))
+            return AttackPerformResult.Unsupported;
+
+        AttackPerformResult gate = GateAction(action, item);
+        if (gate != AttackPerformResult.Performed)
+            return gate;
+
+        BeginActionCooldown(_activeWieldHand, ResolveActionCooldown(action));
+        ArmPendingCue(action, targetHost, offenseFactor);
+
+        Vector3 origin = ResolveOrigin();
+        Vector3 impact = ResolveOutcomeImpact(targetHost, origin, item, action);
+        AttackPerformResult signal = Resolve(
+            action,
+            WeaponResolveMode.MeleePlant,
+            AttackPerformResult.Performed,
+            targetHost,
+            string.Empty,
+            0,
+            origin,
+            impact);
+
+        if (!HasAttackOverlayWatch)
+            NotifyAttackCue();
+
+        return signal;
+    }
+
+    /// <summary>
+    /// Excavate cue당 인접 face 블록 피해. 채널 × TileDefinition 재질 + DIG potency.
+    /// </summary>
+    public int ResolveMeleeBlockBreakDamage(
+        in ActionHandlerContext context,
+        TileDefinition targetDefinition)
+    {
+        ItemData item = context.Stack?.Item ?? ItemFor(context.ItemId);
+        int digLevel = MapPlantService.ResolveDigQualityLevel(item);
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        int skillLevel = skills != null ? skills.Level(CombatSkillIds.Melee) : 0;
+        int strength = skills != null
+            ? skills.Level(AttributeIds.Str)
+            : CombatMath.StrengthBaseline;
+        return CombatMath.ResolveExcavateDamage(
+            item,
+            context.Leaf,
+            digLevel,
+            strength,
+            skillLevel,
+            targetDefinition?.materials,
+            TileDefinitionCombat.MaterialThickness(targetDefinition),
+            context.OffenseFactor);
+    }
+
+    /// <summary>Chop cue당 나무 OccupiedCell 피해. 채널 × 재질 + AXE potency.</summary>
+    public int ResolveMeleePlantChopDamage(in ActionHandlerContext context)
+    {
+        ItemData item = context.Stack?.Item ?? ItemFor(context.ItemId);
+        int axeLevel = MapPlantService.ResolveAxeQualityLevel(item);
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        int skillLevel = skills != null ? skills.Level(CombatSkillIds.Melee) : 0;
+        int strength = skills != null
+            ? skills.Level(AttributeIds.Str)
+            : CombatMath.StrengthBaseline;
+
+        CharacterActionHost host = CharacterBodyResolve.GetInBody<CharacterActionHost>(this);
+        TileDefinition definition = host != null ? host.ChopPipeline.ActiveDefinition : null;
+        return CombatMath.ResolveStructureDamage(
+            item,
+            context.Leaf,
+            strength,
+            skillLevel,
+            definition?.materials,
+            TileDefinitionCombat.MaterialThickness(definition),
+            context.OffenseFactor,
+            ammo: null,
+            toolPotencyBonus: axeLevel);
+    }
+
     void TickRaiseGuard()
     {
-        bool shouldRaise = CanPerform(WeaponAction.Raise)
-            && _selectedAction == WeaponAction.Raise
+        bool shouldRaise = CanPerform(CombatLeaf.Raise)
+            && _selectedLeaf == CombatLeaf.Raise
             && IsAiming;
         if (shouldRaise == IsRaiseActive)
             return;
@@ -793,9 +924,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         var context = new ActionHandlerContext(
-            WeaponAction.Raise,
+            CombatLeaf.Raise,
             _activeWieldHand,
-            AttackFor(WeaponAction.Raise),
+            AttackFor(CombatLeaf.Raise),
             null,
             1f,
             _itemId ?? string.Empty,
@@ -863,7 +994,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         effectiveDispersion = 0f;
         ItemData item = CurrentItem;
-        if (item?.gun == null || !WeaponActionUtil.IsRanged(_selectedAction))
+        if (item?.gun == null || !CombatLeafUtil.IsRanged(_selectedLeaf))
             return false;
 
         effectiveDispersion = RangedEffectiveDispersion(
@@ -915,9 +1046,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
     }
 
-    float ResolveImpulseJin(ItemData item, WeaponAction action, ItemData ammo)
+    float ResolveImpulseJin(ItemData item, CombatLeaf action, ItemData ammo)
     {
-        if (WeaponActionUtil.IsRanged(action))
+        if (CombatLeafUtil.IsRanged(action))
             return CombatImpulse.ShotJin(item, ammo);
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
@@ -962,7 +1093,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public int CollectMeleeHits(
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         WeaponAttack attack,
         CharacterBodyHost[] hosts,
         MeleeHitContact[] contacts)
@@ -1052,7 +1183,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         _locAnim != null && _locAnim.HasAttackTrigger;
 
     void ArmPendingCue(
-        WeaponAction action,
+        CombatLeaf action,
         CharacterBodyHost targetHost,
         float offenseFactor)
     {
@@ -1086,15 +1217,15 @@ public sealed class CharacterAttacker : MonoBehaviour
         };
     }
 
-    public WeaponAttack ResolveAttack(WeaponAction action) => AttackFor(action);
+    public WeaponAttack ResolveAttack(CombatLeaf action) => AttackFor(action);
 
-    public bool AllowsImpactReaction(WeaponAction action, ArmImpactKind kind) =>
+    public bool AllowsImpactReaction(CombatLeaf action, ArmImpactKind kind) =>
         WeaponAttack.AllowsImpactReaction(AttackFor(action), kind);
 
-    WeaponAttack AttackFor(WeaponAction action) =>
+    WeaponAttack AttackFor(CombatLeaf action) =>
         EntryFor(action)?.attack;
 
-    WeaponPresentation.Entry EntryFor(WeaponAction action)
+    WeaponPresentation.Entry EntryFor(CombatLeaf action)
     {
         if (_presentation != null &&
             _presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
@@ -1102,7 +1233,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         return null;
     }
 
-    float ResolveActionCooldown(WeaponAction action)
+    float ResolveActionCooldown(CombatLeaf action)
     {
         WeaponPresentation.Entry entry = EntryFor(action);
         return entry != null ? entry.ActionCooldownSeconds : 0f;
@@ -1159,7 +1290,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             Vector3 origin = ResolveOrigin();
             EmitJudgedGate(
                 context,
-                WeaponActionUtil.ResolveMode(pending.Action),
+                CombatLeafUtil.ResolveMode(pending.Action),
                 AttackPerformResult.Unsupported,
                 item,
                 origin);
@@ -1187,7 +1318,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         ItemData item,
         Vector3 origin)
     {
-        Vector3 impact = ResolveOutcomeImpact(context.Target, origin, item, context.Action);
+        Vector3 impact = ResolveOutcomeImpact(context.Target, origin, item, context.Leaf);
         EmitJudged(
             context,
             resolveMode,
@@ -1241,7 +1372,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         int channelCount = AttackDamageTags.WriteChannels(
-            item, context.Action, _hitChannelScratch, ammo);
+            item, context.Leaf, _hitChannelScratch, ammo);
         string hitTag = channelCount > 0
             ? _hitChannelScratch[0]
             : AttackDamageTags.Fallback;
@@ -1256,7 +1387,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             float hitChance = CombatMath.HitChance(
                     item,
-                    context.Action,
+                    context.Leaf,
                     skillLevel,
                     aimedPart,
                     ammo,
@@ -1272,7 +1403,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         bool isSurprise = CombatSurprise.IsSurpriseHit(_bodyHost, targetHost);
         SurpriseMeleeKind surpriseMelee = SurpriseMeleeKind.None;
-        if (isSurprise && !WeaponActionUtil.IsRanged(context.Action))
+        if (isSurprise && !CombatLeafUtil.IsRanged(context.Leaf))
         {
             int defStr = CombatSurprise.ResolveStrength(targetHost);
             surpriseMelee = CombatSurprise.RollMeleeSpecial(strength, defStr);
@@ -1312,7 +1443,7 @@ public sealed class CharacterAttacker : MonoBehaviour
                 CombatImpulse.ArmorPen(ammo));
             BodyPartEffect[] seeds =
                 string.Equals(mitigated.DamageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
-                    ? BuildSeeds(_presentation, context.Action, context.Attack)
+                    ? BuildSeeds(_presentation, context.Leaf, context.Attack)
                     : null;
             BodyHitApplyResult applied = BodyDamageService.ApplyHit(
                 targetHost.Body,
@@ -1341,7 +1472,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         float jinIn = impulseJinOverride >= 0f
             ? impulseJinOverride
-            : ResolveImpulseJin(item, context.Action, ammo);
+            : ResolveImpulseJin(item, context.Leaf, ammo);
         float p = CombatImpulse.Penetration01(damage, rawDamage);
         EmitJudged(
             context,
@@ -1372,9 +1503,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         bool applyCooldown = true,
         bool practice = true)
     {
-        if (applyCooldown && !WeaponActionUtil.IsRanged(context.Action))
+        if (applyCooldown && !CombatLeafUtil.IsRanged(context.Leaf))
         {
-            float cooldown = CombatMath.AttackIntervalSeconds(item, context.Action);
+            float cooldown = CombatMath.AttackIntervalSeconds(item, context.Leaf);
             BeginWeaponCooldown(context.Hand, cooldown);
         }
 
@@ -1384,7 +1515,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             PlayerGearHost.Active?.Service?.NotifyAmmoChanged();
         }
         if (practice)
-            Practice(item, context.Attack, context.Action, ammo);
+            Practice(item, context.Attack, context.Leaf, ammo);
     }
 
     public void EmitJudged(
@@ -1409,17 +1540,17 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (item == null)
             item = ItemFor(context.ItemId);
         ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-        int n = AttackDamageTags.WriteChannels(item, context.Action, _hitChannelScratch, ammo);
+        int n = AttackDamageTags.WriteChannels(item, context.Leaf, _hitChannelScratch, ammo);
         string hitTag = n > 0 ? _hitChannelScratch[0] : AttackDamageTags.Fallback;
         float impulseJin = 0f;
         if (result == AttackPerformResult.Performed)
         {
             impulseJin = impulseJinOverride >= 0f
                 ? impulseJinOverride
-                : ResolveImpulseJin(item, context.Action, ammo);
+                : ResolveImpulseJin(item, context.Leaf, ammo);
         }
         var outcome = new AttackOutcome(
-            context.Action,
+            context.Leaf,
             context.Hand,
             resolveMode,
             result,
@@ -1567,7 +1698,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         return index;
     }
 
-    void Practice(ItemData item, WeaponAttack attack, WeaponAction action, ItemData ammo = null)
+    void Practice(ItemData item, WeaponAttack attack, CombatLeaf action, ItemData ammo = null)
     {
         if (_skillsHost == null)
             return;
@@ -1582,7 +1713,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     static BodyPartEffect[] BuildSeeds(
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         WeaponAttack attack)
     {
         if (presentation != null &&
@@ -1639,7 +1770,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         public bool CueFired;
         public bool SawAttackState;
         public bool SawCueWindup;
-        public WeaponAction Action;
+        public CombatLeaf Action;
         public WieldHand Hand;
         public CharacterBodyHost Target;
         public float OffenseFactor;
@@ -1670,8 +1801,8 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void RebuildAvailableActions()
     {
-        WeaponActionMask previous = AvailableActions;
-        AvailableActions = WeaponActionRows.Available(_presentation);
+        CombatLeafMask previous = AvailableActions;
+        AvailableActions = CombatLeafRows.Available(_presentation);
         if (previous != AvailableActions)
             AvailableActionsChanged?.Invoke();
         ApplySelectedFromInstance();
@@ -1679,19 +1810,19 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void ApplySelectedFromInstance()
     {
-        WeaponAction next = WeaponActionRows.ResolveSelected(_wieldedInstance, _presentation);
-        if (next == _selectedAction)
+        CombatLeaf next = CombatLeafRows.ResolveSelected(_wieldedInstance, _presentation);
+        if (next == _selectedLeaf)
             return;
 
-        _selectedAction = next;
-        SelectedActionChanged?.Invoke();
+        _selectedLeaf = next;
+        SelectedLeafChanged?.Invoke();
     }
 
-    void WriteSelectedToInstance(WeaponAction action)
+    void WriteSelectedToInstance(CombatLeaf action)
     {
         if (_wieldedInstance == null)
             return;
-        _wieldedInstance.SelectedAction = action;
+        _wieldedInstance.SelectedLeaf = action;
     }
 
     bool ShouldDrawMeleeHitbox => Config.DebugMode.MeleeHitbox;
@@ -1757,15 +1888,15 @@ public sealed class CharacterAttacker : MonoBehaviour
             return true;
         }
 
-        if (WeaponActionUtil.IsRanged(_selectedAction) ||
-            WeaponActionUtil.SuppressesAttackTrigger(_selectedAction))
+        if (CombatLeafUtil.IsRanged(_selectedLeaf) ||
+            CombatLeafUtil.SuppressesAttackTrigger(_selectedLeaf))
             return false;
 
         if (!MeleeHitbox.TryGetPose(
                 this,
                 CurrentItem,
-                _selectedAction,
-                AttackFor(_selectedAction),
+                _selectedLeaf,
+                AttackFor(_selectedLeaf),
                 out pose))
             return false;
 

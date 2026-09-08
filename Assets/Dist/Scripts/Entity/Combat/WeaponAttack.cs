@@ -26,6 +26,10 @@ public sealed class WeaponAttack : ScriptableObject
         "Assets/Dist/Scripts/Entity/Combat/SpawnProjectileHandler.cs";
     const string GuardHandlerPath =
         "Assets/Dist/Scripts/Entity/Combat/RaiseGuardHandler.cs";
+    const string MeleeBlockHandlerPath =
+        "Assets/Dist/Scripts/Entity/Combat/MeleeBlockTargetHandler.cs";
+    const string MeleePlantHandlerPath =
+        "Assets/Dist/Scripts/Entity/Combat/MeleePlantTargetHandler.cs";
 
     [Serializable]
     public sealed class EffectSeed
@@ -37,10 +41,10 @@ public sealed class WeaponAttack : ScriptableObject
 
     [InfoBox(
         "Logic Id = 실행할 전투 핸들러를 고르는 스위치입니다.\n" +
-        "비우면(동작 기본) 런타임 동작에 따름: Trigger→사격, Raise→가드, 그 외→근접.",
+        "비우면(동작 기본) 런타임 동작에 따름: Trigger→사격, Raise→가드, Dig→굴착, 그 외→근접.",
         InfoMessageType.None)]
     [ValueDropdown(nameof(LogicIdChoices))]
-    [Tooltip("전투 로직 핸들러. 비우면 WeaponAction 기본 매핑.")]
+    [Tooltip("전투 로직 핸들러. 비우면 CombatLeaf 기본 매핑.")]
     [LabelText("Logic Id")]
     [SerializeField] string _logicId = ActionHandlerIds.MeleeHit;
 
@@ -55,7 +59,7 @@ public sealed class WeaponAttack : ScriptableObject
             : DescribeHandler(_logicId);
 
     [SerializeField] EffectSeed[] _effectSeeds = Array.Empty<EffectSeed>();
-    [SerializeField] WeaponActionVfx _attackVfx = new WeaponActionVfx();
+    [SerializeField] CombatLeafVfx _attackVfx = new CombatLeafVfx();
     [SerializeField, Range(0f, 1f)] float _cueNormalizedTime = DefaultCueNormalizedTime;
     [Tooltip("켜면 발사 큐에서 약실이 비었을 때 메거진 1발을 올린 뒤 소모. 끄면 펌프/수동(빈 약실=NoAmmo).")]
     [SerializeField] bool _feedsChamberOnFire = true;
@@ -85,12 +89,12 @@ public sealed class WeaponAttack : ScriptableObject
     [LabelText("Blocked")]
     [SerializeField] bool _playBlockedImpact = true;
 
-    /// <summary>비우면 레지스트리가 WeaponAction 기본 핸들러를 씁니다.</summary>
+    /// <summary>비우면 레지스트리가 CombatLeaf 기본 핸들러를 씁니다.</summary>
     public string LogicId => _logicId ?? string.Empty;
 
     public EffectSeed[] EffectSeeds => _effectSeeds;
 
-    public WeaponActionVfx AttackVfx => _attackVfx;
+    public CombatLeafVfx AttackVfx => _attackVfx;
 
     public float CueNormalizedTime => Mathf.Clamp01(_cueNormalizedTime);
 
@@ -131,7 +135,7 @@ public sealed class WeaponAttack : ScriptableObject
     static IEnumerable<ValueDropdownItem<string>> LogicIdChoices()
     {
         yield return new ValueDropdownItem<string>(
-            "(동작 기본 — Trigger→사격 / Raise→가드 / 그 외→근접)",
+            "(동작 기본 — Trigger→사격 / Raise→가드 / Dig→굴착 / 그 외→근접)",
             string.Empty);
         yield return new ValueDropdownItem<string>(
             "근접 타격 → MeleeHitHandler (melee_hit)",
@@ -142,18 +146,29 @@ public sealed class WeaponAttack : ScriptableObject
         yield return new ValueDropdownItem<string>(
             "가드 → RaiseGuardHandler (raise_guard)",
             ActionHandlerIds.RaiseGuard);
+        yield return new ValueDropdownItem<string>(
+            "블록 타겟 → MeleeBlockTargetHandler (melee_block_target)",
+            ActionHandlerIds.MeleeBlockTarget);
+        yield return new ValueDropdownItem<string>(
+            "작물 타겟 → MeleePlantTargetHandler (melee_plant_target)",
+            ActionHandlerIds.MeleePlantTarget);
     }
 
     static string DescribeHandler(string logicId)
     {
         if (string.IsNullOrEmpty(logicId))
-            return "동작 기본 (런타임에 WeaponAction으로 선택)";
+            return "동작 기본 (런타임에 CombatLeaf으로 선택)";
         if (string.Equals(logicId, ActionHandlerIds.MeleeHit, StringComparison.Ordinal))
             return "MeleeHitHandler";
         if (string.Equals(logicId, ActionHandlerIds.SpawnProjectile, StringComparison.Ordinal))
             return "SpawnProjectileHandler";
         if (string.Equals(logicId, ActionHandlerIds.RaiseGuard, StringComparison.Ordinal))
             return "RaiseGuardHandler";
+        if (string.Equals(logicId, ActionHandlerIds.MeleeBlockTarget, StringComparison.Ordinal)
+            || string.Equals(logicId, ActionHandlerIds.MapDigBreak, StringComparison.Ordinal))
+            return "MeleeBlockTargetHandler";
+        if (string.Equals(logicId, ActionHandlerIds.MeleePlantTarget, StringComparison.Ordinal))
+            return "MeleePlantTargetHandler";
         return "알 수 없음 — 레지스트리에 없음";
     }
 
@@ -186,6 +201,11 @@ public sealed class WeaponAttack : ScriptableObject
             return ProjectileHandlerPath;
         if (string.Equals(logicId, ActionHandlerIds.RaiseGuard, StringComparison.Ordinal))
             return GuardHandlerPath;
+        if (string.Equals(logicId, ActionHandlerIds.MeleeBlockTarget, StringComparison.Ordinal)
+            || string.Equals(logicId, ActionHandlerIds.MapDigBreak, StringComparison.Ordinal))
+            return MeleeBlockHandlerPath;
+        if (string.Equals(logicId, ActionHandlerIds.MeleePlantTarget, StringComparison.Ordinal))
+            return MeleePlantHandlerPath;
         return null;
     }
 }

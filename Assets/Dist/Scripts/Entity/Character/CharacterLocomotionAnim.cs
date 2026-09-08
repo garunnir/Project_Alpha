@@ -8,7 +8,7 @@ using UnityEngine;
 /// <summary>
 /// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact + Hurt.
 /// TwoHand Attack stays UpperBody-masked (full-body replace looked unnatural on Idle).
-/// WeaponAction selects Entry clips then Catalog Leaf, projected onto thin keys via
+/// CombatLeaf selects Entry clips then Catalog Leaf, projected onto thin keys via
 /// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
 /// Hurt clips are controller thin only (no Catalog remap).
 /// Animation time advances via <see cref="TimeScaleService"/> only.
@@ -150,14 +150,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     public bool HasAttackTrigger => _hasAttackR || _hasAttackL || _hasAttack2H;
 
-    WeaponAction _mappedActionL = (WeaponAction)(-1);
-    WeaponAction _mappedActionR = (WeaponAction)(-1);
-    WeaponAction _mappedAction2H = (WeaponAction)(-1);
+    CombatLeaf _mappedActionL = (CombatLeaf)(-1);
+    CombatLeaf _mappedActionR = (CombatLeaf)(-1);
+    CombatLeaf _mappedAction2H = (CombatLeaf)(-1);
     WeaponPresentation _mappedPresentationL;
     WeaponPresentation _mappedPresentationR;
     WeaponPresentation _mappedPresentation2H;
 
-    readonly WeaponAction[] _attackActionQueue = new WeaponAction[2];
+    readonly CombatLeaf[] _attackActionQueue = new CombatLeaf[2];
     readonly WieldHand[] _attackHandQueue = new WieldHand[2];
     readonly bool[] _attackSurpriseQueue = new bool[2];
     bool _mappedSurpriseL;
@@ -304,7 +304,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_hasSwimming)
             _animator.SetBool(_hashSwimming, isSwimming);
 
-        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H);
         ResolveHandPresentations(
             out WeaponPresentation presentationL,
             out WeaponPresentation presentationR,
@@ -322,7 +322,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (_attackQueueCount > 0)
         {
-            WeaponAction attackAction = _attackActionQueue[_attackQueueHead];
+            CombatLeaf attackAction = _attackActionQueue[_attackQueueHead];
             WieldHand attackHand = _attackHandQueue[_attackQueueHead];
             bool surpriseAttack = _attackSurpriseQueue[_attackQueueHead];
             _attackQueueHead = (_attackQueueHead + 1) % _attackActionQueue.Length;
@@ -397,9 +397,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H,
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H,
         bool surpriseL = false,
         bool surpriseR = false,
         bool surprise2H = false)
@@ -446,7 +446,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (outcome.Result != AttackPerformResult.Performed)
             return;
-        if (WeaponActionUtil.SuppressesAttackTrigger(outcome.Action))
+        if (CombatLeafUtil.SuppressesAttackTrigger(outcome.Action))
             return;
         if (_attackQueueCount >= _attackActionQueue.Length)
             return;
@@ -458,7 +458,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attackQueueCount++;
     }
 
-    void OnAttackCueFired(WieldHand hand, WeaponAction action)
+    void OnAttackCueFired(WieldHand hand, CombatLeaf action)
     {
         if (_attacker != null &&
             !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
@@ -475,7 +475,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         PlayImpact(ArmImpactKind.Blocked, outcome.Hand, outcome.Action);
     }
 
-    void PlayImpact(ArmImpactKind kind, WieldHand hand, WeaponAction action)
+    void PlayImpact(ArmImpactKind kind, WieldHand hand, CombatLeaf action)
     {
         if (_animator == null || _armSlotCatalog == null || _resolvedOverride == null)
             return;
@@ -601,9 +601,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         // Dual hand swap only changes CharacterAttacker.Presentation.
         // Full rebind pops Attack overlay; thin remap from gear slots is enough.
-        _mappedActionL = (WeaponAction)(-1);
-        _mappedActionR = (WeaponAction)(-1);
-        _mappedAction2H = (WeaponAction)(-1);
+        _mappedActionL = (CombatLeaf)(-1);
+        _mappedActionR = (CombatLeaf)(-1);
+        _mappedAction2H = (CombatLeaf)(-1);
         _mappedSurpriseL = false;
         _mappedSurpriseR = false;
         _mappedSurprise2H = false;
@@ -640,9 +640,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         _weaponSourceController = source;
-        _mappedActionL = (WeaponAction)(-1);
-        _mappedActionR = (WeaponAction)(-1);
-        _mappedAction2H = (WeaponAction)(-1);
+        _mappedActionL = (CombatLeaf)(-1);
+        _mappedActionR = (CombatLeaf)(-1);
+        _mappedAction2H = (CombatLeaf)(-1);
         _mappedSurpriseL = false;
         _mappedSurpriseR = false;
         _mappedSurprise2H = false;
@@ -650,7 +650,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedPresentationR = null;
         _mappedPresentation2H = null;
 
-        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H);
         ResolveHandPresentations(
             out WeaponPresentation presentationL,
             out WeaponPresentation presentationR,
@@ -1047,7 +1047,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             ApplyActiveWieldHandFlags(ref twoHand, ref leftArmed, ref rightArmed);
         }
 
-        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H);
         WeaponPresentationCatalog catalog = gear?.PresentationCatalog
             ?? (_attacker != null ? _attacker.Catalog : null);
         bool isAiming = _characterState != null && _characterState.IsAiming;
@@ -1084,7 +1084,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         bool armed,
         WieldHand hand,
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         bool isAiming)
     {
         if (IsInAttackOverlay(hand) || HasQueuedAttack(hand) || HasAttackOverlayLatch(hand))
@@ -1182,12 +1182,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
             {
                 ItemStack stack = gear.Wield.Left ?? gear.Wield.Right;
                 if (stack?.Item != null)
-                    return WeaponActionRows.Resolve(catalog, stack);
+                    return CombatLeafRows.Resolve(catalog, stack);
             }
             else if (hand == WieldHand.Left && gear.Wield.Left != null)
-                return WeaponActionRows.Resolve(catalog, gear.Wield.Left);
+                return CombatLeafRows.Resolve(catalog, gear.Wield.Left);
             else if (hand == WieldHand.Right && gear.Wield.Right != null)
-                return WeaponActionRows.Resolve(catalog, gear.Wield.Right);
+                return CombatLeafRows.Resolve(catalog, gear.Wield.Right);
         }
 
         return _attacker != null ? _attacker.Presentation : null;
@@ -1234,19 +1234,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
         presentation2H = PresentationForHand(gear, catalog, WieldHand.TwoHand);
     }
 
-    void ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H)
+    void ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H)
     {
-        actionL = WeaponAction.Swing;
-        actionR = WeaponAction.Swing;
-        action2H = _attacker != null ? _attacker.SelectedAction : WeaponAction.Swing;
+        actionL = CombatLeaf.Strike;
+        actionR = CombatLeaf.Strike;
+        action2H = _attacker != null ? _attacker.SelectedLeaf : CombatLeaf.Strike;
 
         CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
         if (gear?.Wield == null)
         {
             if (_attacker != null)
             {
-                actionL = _attacker.SelectedAction;
-                actionR = _attacker.SelectedAction;
+                actionL = _attacker.SelectedLeaf;
+                actionR = _attacker.SelectedLeaf;
             }
             return;
         }
@@ -1267,16 +1267,16 @@ public class CharacterLocomotionAnim : MonoBehaviour
         actionR = ActionForStack(catalog, gear.Wield.Right, actionR);
     }
 
-    static WeaponAction ActionForStack(
+    static CombatLeaf ActionForStack(
         WeaponPresentationCatalog catalog,
         ItemStack stack,
-        WeaponAction fallback)
+        CombatLeaf fallback)
     {
         if (stack?.Item == null)
             return fallback;
 
-        WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
-        return WeaponActionRows.ResolveSelected(stack.Instance, presentation);
+        WeaponPresentation presentation = CombatLeafRows.Resolve(catalog, stack);
+        return CombatLeafRows.ResolveSelected(stack.Instance, presentation);
     }
 
     void TakeManualControl()

@@ -18,6 +18,12 @@ MonoBehaviour:
   category: 
   size: {x: 1, y: 1, z: 1}
   placementSlot: 3
+  flags:
+  - MINEABLE
+  materials:
+  - stone
+  breakDurability: 8
+  materialThickness: 1
   occupied:
     providesLogicalFloor: 1
     blocksPassageAndOcclusion: 0

@@ -35,6 +35,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     CharacterCellFarmPipeline _farm;
     CharacterCellFishPipeline _fish;
     CharacterCellConstructionPipeline _construction;
+    CharacterDigPipeline _dig;
+    CharacterChopPipeline _chop;
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
@@ -46,9 +48,28 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     public bool IsDispatching => _dispatching;
     public float ActionTickScale => _tickScale;
     public bool IsBusy => _currentKind != CharacterActionKind.None || _queue.Count > 0;
+    public CharacterDigPipeline DigPipeline
+    {
+        get
+        {
+            EnsureDigPipeline();
+            return _dig;
+        }
+    }
+
+    public CharacterChopPipeline ChopPipeline
+    {
+        get
+        {
+            EnsureChopPipeline();
+            return _chop;
+        }
+    }
 
     public bool HasCancellableWork =>
         _queue.Count > 0 ||
+        (_dig != null && _dig.IsActive) ||
+        (_chop != null && _chop.IsActive) ||
         (_currentKind != CharacterActionKind.None && _currentKind != CharacterActionKind.Combat);
 
     public event Action Changed;
@@ -133,7 +154,15 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         _farm ??= new CharacterCellFarmPipeline(this, _arriveHost, _motor, _farmWorkClips);
         _fish ??= new CharacterCellFishPipeline(this, _arriveHost, _motor, _fishWorkClips);
         _construction ??= new CharacterCellConstructionPipeline(this, _arriveHost, _motor);
+        EnsureDigPipeline();
+        EnsureChopPipeline();
     }
+
+    void EnsureDigPipeline() =>
+        _dig ??= new CharacterDigPipeline();
+
+    void EnsureChopPipeline() =>
+        _chop ??= new CharacterChopPipeline();
 
     void OnEnable() => UiCancelRouter.Register(this);
 
@@ -147,6 +176,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         _farm?.OnOwnerDisabled();
         _fish?.OnOwnerDisabled();
         _construction?.OnOwnerDisabled();
+        _dig?.Clear();
+        _chop?.Clear();
     }
 
     public bool TryHandleCancel()
@@ -267,6 +298,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     public void CancelAll()
     {
         _queue.Clear();
+        _dig?.Clear();
+        _chop?.Clear();
         if (_currentKind == CharacterActionKind.Combat)
         {
             Changed?.Invoke();

@@ -20,6 +20,11 @@ MonoBehaviour:
   placementSlot: 3
   flags:
   - PLANTABLE
+  - DIGGABLE
+  materials:
+  - soil
+  breakDurability: 5
+  materialThickness: 0
   occupied:
     providesLogicalFloor: 1
     blocksPassageAndOcclusion: 0

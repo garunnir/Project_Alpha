@@ -33,11 +33,12 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     public sealed class ActionLibraryEntry
     {
         [ReadOnly]
-        [LabelText("동작 (Leaf)")]
-        public WeaponAction action;
+        [LabelText("Leaf")]
+        [FormerlySerializedAs("action")]
+        public CombatLeaf leaf;
 
         [ShowInInspector, ReadOnly, LabelText("표시")]
-        string InspectorLabel => WeaponActionUtil.DropdownPath(action);
+        string InspectorLabel => CombatLeafUtil.DropdownPath(leaf);
 
         [FoldoutGroup("자세 Hold Aim", expanded: true)]
         [LabelText("Hold")]
@@ -53,7 +54,7 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
 
         [FoldoutGroup("VFX", expanded: true)]
         [HideLabel]
-        public WeaponActionVfx vfx = new WeaponActionVfx();
+        public CombatLeafVfx vfx = new CombatLeafVfx();
     }
 
     [Serializable]
@@ -74,14 +75,14 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
 
         [FoldoutGroup("VFX", expanded: true)]
         [HideLabel]
-        public WeaponActionVfx vfx = new WeaponActionVfx();
+        public CombatLeafVfx vfx = new CombatLeafVfx();
     }
 
     [InfoBox(
         "기본 동사 폴백: Leaf마다 행이 있어야 한다 (Swing/Thrust/Semi/Burst/Auto/Raise).\n" +
         "무기 동작 줄 클립이 비면 여기 클립·VFX로 채운다. Recoil/Blocked도 동작 줄 비면 Impact 행.\n" +
-        "표시는 Melee/Trigger 묶음. 컨트롤러에는 동작 이름을 넣지 않는다.\n" +
-        "Leaf 추가: WeaponActionUtil.All(+Mask) → Dist/MCP/Ensure Arm Anim Pipeline.\n" +
+        "표시는 Melee/Trigger/Etc 묶음. 컨트롤러에는 동작 이름을 넣지 않는다.\n" +
+        "Leaf 추가: CombatLeafUtil.All(+Mask) → Dist/MCP/Ensure Arm Anim Pipeline (행만; 클립 비어도 됨).\n" +
         "docs/equipment/GEAR.md · WEAPON_VISUAL.md · .cursor/rules/arm-anim-layers.mdc",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
@@ -162,25 +163,25 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     public void SetImpacts(ImpactLibraryEntry[] impacts) =>
         _impacts = impacts ?? Array.Empty<ImpactLibraryEntry>();
 
-    public ActionLibraryEntry FindAction(WeaponAction action)
+    public ActionLibraryEntry FindAction(CombatLeaf leaf)
     {
         if (_verbs == null)
             return null;
-        WeaponAction want = WeaponActionUtil.Normalize(action);
+        CombatLeaf want = CombatLeafUtil.Normalize(leaf);
         for (int i = 0; i < _verbs.Length; i++)
         {
             if (_verbs[i] == null)
                 continue;
-            if (WeaponActionUtil.Normalize(_verbs[i].action) == want)
+            if (CombatLeafUtil.Normalize(_verbs[i].leaf) == want)
                 return _verbs[i];
         }
 
         return null;
     }
 
-    public bool TryGetVerbVfx(WeaponAction action, out WeaponActionVfx vfx)
+    public bool TryGetVerbVfx(CombatLeaf leaf, out CombatLeafVfx vfx)
     {
-        ActionLibraryEntry entry = FindAction(action);
+        ActionLibraryEntry entry = FindAction(leaf);
         vfx = entry != null ? entry.vfx : null;
         return vfx != null;
     }
@@ -198,7 +199,7 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
         return null;
     }
 
-    public bool TryGetImpactVfx(ArmImpactKind kind, out WeaponActionVfx vfx)
+    public bool TryGetImpactVfx(ArmImpactKind kind, out CombatLeafVfx vfx)
     {
         ImpactLibraryEntry entry = FindImpact(kind);
         vfx = entry != null ? entry.vfx : null;

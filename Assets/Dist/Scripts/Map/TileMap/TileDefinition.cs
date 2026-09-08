@@ -35,6 +35,24 @@ namespace IsoTilemap
         [ListDrawerSettings(DraggableItems = true, ShowFoldout = false)]
         public List<string> flags = new List<string>();
 
+        [FoldoutGroup("Combat", expanded: false)]
+        [LabelText("재질")]
+        [Tooltip("BN MaterialData id 목록. 피해 채널(bash/cut)별 resist — Wear·구조물과 동일 SSOT.")]
+        [ListDrawerSettings(DraggableItems = true, ShowFoldout = false)]
+        public List<string> materials = new List<string>();
+
+        [FoldoutGroup("Combat")]
+        [LabelText("Break Durability")]
+        [Tooltip("파괴 내구도 HP. 0이면 MapDigConsts.DefaultDigDurability.")]
+        [Min(0)]
+        public int breakDurability;
+
+        [FoldoutGroup("Combat")]
+        [LabelText("Material Thickness")]
+        [Tooltip("재질 두께. WearCombatDefense.ArmorRating과 동일 스케일.")]
+        [Min(0)]
+        public int materialThickness;
+
 #if UNITY_EDITOR
         [FoldoutGroup("충돌·오클루전", expanded: true)]
         [PropertyOrder(-10)]

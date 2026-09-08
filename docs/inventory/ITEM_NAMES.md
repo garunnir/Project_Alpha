@@ -60,11 +60,12 @@ Default active language: **`ko`**.
 
 - Hub window: `Assets/Dist/Scripts/Editor/BN/DataDefinitionsWindow.cs` (`OdinMenuEditorWindow`). Menu tree:
   - **Catalog/** — Items Reference·Custom, Recipes Reference·Custom, Item Names (locale). Save Changes / Loc Bundle toolbar는 Catalog 선택 시에만.
-  - **Characters/** — Definitions · Factions · Faction/Emote Catalog
-  - **World/** — Clock · Weather · Needs · Mood
-  - **Combat/** — Catalog · Presentations · Attacks · Fallbacks
-  - **Locomotion/** — MovementStyle
-  - **Map/** — Tiles · Prefab DB · Farming · Fishing
+  - **Characters/** — `+ Create Definition` · `+ Create Faction` · Definitions · Factions · Faction/Emote Catalog
+  - **World/** — Clock · Weather · Needs · Mood (기존 에셋만; Ensure 없음)
+  - **Combat/** — `+ Create Presentation` · `+ Create Attack` · Catalog · Presentations · Attacks · Fallbacks
+  - **Locomotion/** — MovementStyle (읽기 전용; `+ Create` 없음)
+  - **Map/** — `+ Create Tile` · Tiles · Prefab DB · Farming · Fishing
+- Editor MenuItem/Ensure/Patch 신규 추가: `.cursor/rules/editor-automation-hygiene.mdc`
 - Characters are Dist SO under `SOData/Gameplay/Character/`; Tiles are Dist `TileDefinition` under `SOData/Tile/`. Not BN JSON.
 - Runtime: `UITextPresenter`, `ItemNameTable`, `LocalizationBundle`, `DistUiFont`
 - UI chrome keys remain `UI_ko` / `Loc` (separate from catalog locale)

@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerAimController — 마우스 기준 조준 SphereCast로 시야·상호작용 방향을 CharacterState에 전달
+// PlayerAimController — RMB 조준 입력 + IAimSightProvider 호출 (해석식 없음)
 // ============================================================
 using IsoTilemap;
 using UnityEngine;
@@ -20,6 +20,7 @@ public class PlayerAimController : MonoBehaviour
     private CharacterState _characterState;
     private Transform _bodyTransform;
     private MapTopologyLineCast _topologyLineCast;
+    private IAimSightProvider _sightProvider = new PlayerMouseSphereAimProvider();
     private bool _isAiming;
     private bool _connected;
 
@@ -29,6 +30,12 @@ public class PlayerAimController : MonoBehaviour
     public float SphereRadius => _sphereRadius;
     public float MaxAimDistance => _maxAimDistance;
 
+    public IAimSightProvider SightProvider => _sightProvider;
+
+    /// <summary>게임패드 등 교체용. null이면 default mouse/sphere.</summary>
+    public void SetSightProvider(IAimSightProvider provider) =>
+        _sightProvider = provider ?? new PlayerMouseSphereAimProvider();
+
     public bool TryResolveSightWorldPoint(out Vector3 aimWorldPoint) =>
         PlayerSightTarget.TryResolveWorldPoint(
             _bodyTransform != null ? _bodyTransform : transform,
@@ -37,20 +44,24 @@ public class PlayerAimController : MonoBehaviour
             BuildSightSettings(),
             out aimWorldPoint);
 
-    PlayerSightTarget.Settings BuildSightSettings() => new()
-    {
-        CastOriginYOffset = _castOriginYOffset,
-        SphereRadius = _sphereRadius,
-        MaxDistance = _maxAimDistance,
-        FlattenAimYToPlayerHeight = _flattenAimYToPlayerHeight,
-        ObstructionMask = _aimObstructionMask,
-    };
+    PlayerSightTarget.Settings BuildSightSettings() => BuildAimContext().ToSightSettings();
+
+    AimSightContext BuildAimContext() => new(
+        _refCam != null ? _refCam : Camera.main,
+        _topologyLineCast,
+        _castOriginYOffset,
+        _sphereRadius,
+        _maxAimDistance,
+        _flattenAimYToPlayerHeight,
+        _aimObstructionMask);
 
     void Awake()
     {
         _characterState = GetComponent<CharacterState>();
         if (_bodyTransform == null)
             _bodyTransform = transform;
+        if (_sightProvider == null)
+            _sightProvider = new PlayerMouseSphereAimProvider();
     }
 
     public void BindBody(CharacterState state, Transform bodyTransform)
@@ -121,20 +132,15 @@ public class PlayerAimController : MonoBehaviour
             return;
         }
 
-        if (!TryResolveSightWorldPoint(out Vector3 aimPoint))
-            return;
-
         Transform body = _bodyTransform != null ? _bodyTransform : transform;
-        Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
-        Vector3 sightFlat = aimPoint - origin;
-        sightFlat.y = 0f;
-        if (sightFlat.sqrMagnitude < 1e-4f)
+        if (!_sightProvider.TryUpdateSight(_characterState, body, BuildAimContext()))
             return;
-
-        _characterState.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
 
         if (ShouldDrawAimDebug)
-            Debug.DrawLine(origin, aimPoint, Color.red, 0f, false);
+        {
+            Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
+            Debug.DrawLine(origin, _characterState.AimWorldPoint, Color.red, 0f, false);
+        }
     }
 
     void OnDrawGizmos()

@@ -1,4 +1,4 @@
-# BN bake (converter whitelist)
+﻿# BN bake (converter whitelist)
 
 Canonical for `Tools/bn_converter/convert.py` → `Assets/StreamingAssets/BNData`.  
 Gear runtime (Wear/Wield) stays in [`GEAR.md`](GEAR.md). Catalog locale (names / descriptions / recipe categories / qualities): [`ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
@@ -52,7 +52,7 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | Block | Fields |
 |-------|--------|
 | armor | covers (L/R expand), coverage, encumbrance, max_encumbrance, warmth, environmental_protection, material_thickness, power_armor, storage, pockets[{volume_ml,moves}], layer, sided |
-| gun | skill (**Catalog By Skill Id** 모션 폴백), ammo, ranged_damage (flatten amount), range, dispersion, recoil, **sight_dispersion**, **aim_speed**, **handling**, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`), **magazines** `[{ammo_type, magazines[]}]` (장착 허용 탄창 id) |
+| gun | skill (**Catalog By Skill Id** 모션 폴백), ammo, ranged_damage (flatten amount), range, dispersion, recoil, **sight_dispersion**, **aim_speed**, **handling**, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `CombatLeafUtil.DefaultBurstShots`), **magazines** `[{ammo_type, magazines[]}]` (장착 허용 탄창 id) |
 | ammo | ammo_type, damage (flatten amount), pierce (AP), damage_type, range, dispersion, recoil, count, shot_damage, projectile_count, shot_spread, effects, casing, loudness |
 | magazine | ammo_type, capacity, default_ammo, reliability, reload_time |
 | tool | max/initial charges, charges_per_use, turns_per_charge, ammo, revert_to |
@@ -150,11 +150,11 @@ BN `use_action` is either a **string iuse** (`"ANTIBIOTIC"`) or an **actor objec
 | BN / Dist | Status |
 |-----------|--------|
 | `gun.burst` | **Baked** — Burst Leaf `ShotsPerPerform` (= burst, else default 3) |
-| `gun.clip_size` | **Baked** — Auto Leaf 클릭 볼리 상한(`AutoClickVolleyMax`와 min) |
+| `gun.clip_size` | **Baked** — 탄창/클립 용량 (`WeaponChamber`). Auto 연사는 hold 재시전당 1발 |
 | `gun.modes` JSON | **Parked** — 아직 컨버터 미반입. Dist는 Presentation Leaf(Semi/Burst/Auto) + UI Family `Trigger`로 대체 |
 | Leaf Ensure | Presentation: `Ensure Ranged Leaf Entries`. Catalog 폴백: `Ensure Arm Anim Pipeline` — **Semi/Burst/Auto 행 필수** |
-| Semi / Burst / Auto 시전 | `SpawnProjectileHandler` 볼리. Catalog는 Leaf마다 폴백 행 ([`LOCOMOTION.md`](../locomotion/LOCOMOTION.md)) |
-| Auto 홀드 연사 | **Pending** — 현재는 클릭당 볼리 |
+| Semi / Burst 시전 | `SpawnProjectileHandler` 볼리 (클릭). Catalog는 Leaf마다 폴백 행 ([`LOCOMOTION.md`](../locomotion/LOCOMOTION.md)) |
+| Auto 시전 | `AutoHoldPerformDriver` — RMB 조준 + LMB hold → 쿨 비는 동안 재시전(시전당 1발) |
 | `modes` bake | Promote when Dist maps BN mode ids → Leaf mask without manual Ensure |
 
 `gun.magazines` is **Baked** — Dist 장착/교체가 허용 탄창 id를 본다. Combat feed is `ItemStack.LoadedMagazine` + `SupplyRounds` (not Nested). Ammo `damage` / `damage_type` / `pierce` / `range` / `dispersion` still from chambered round.

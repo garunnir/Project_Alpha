@@ -11,7 +11,7 @@ public interface IActionHandler
 
 public readonly struct ActionHandlerContext
 {
-    public readonly WeaponAction Action;
+    public readonly CombatLeaf Leaf;
     public readonly WieldHand Hand;
     public readonly WeaponAttack Attack;
     public readonly CharacterBodyHost Target;
@@ -21,7 +21,7 @@ public readonly struct ActionHandlerContext
     public readonly ItemStack Stack;
 
     public ActionHandlerContext(
-        WeaponAction action,
+        CombatLeaf leaf,
         WieldHand hand,
         WeaponAttack attack,
         CharacterBodyHost target,
@@ -30,7 +30,7 @@ public readonly struct ActionHandlerContext
         ItemInstance instance,
         ItemStack stack)
     {
-        Action = action;
+        Leaf = leaf;
         Hand = hand;
         Attack = attack;
         Target = target;

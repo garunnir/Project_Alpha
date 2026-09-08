@@ -1,8 +1,8 @@
-# Character Action (게이지·큐)
+﻿# Character Action (게이지·큐)
 
 > LLM/에이전트용 행위자 행동 직렬화 SSOT.
 > 인덱스: [`docs/README.md`](../README.md)
-> 관련: [`DEFINITION.md`](DEFINITION.md) · [`../body/BODY.md`](../body/BODY.md) · [`../ui/SETTINGS.md`](../ui/SETTINGS.md) · [`../equipment/GEAR.md`](../equipment/GEAR.md)
+> 관련: [`DEFINITION.md`](DEFINITION.md) · [`../body/BODY.md`](../body/BODY.md) · [`../ui/SETTINGS.md`](../ui/SETTINGS.md) · [`../equipment/GEAR.md`](../equipment/GEAR.md) · **파이프라인 매뉴얼** [`../equipment/COMBAT_PIPELINE.md`](../equipment/COMBAT_PIPELINE.md)
 
 경로: `Assets/Dist/Scripts/Entity/Character/CharacterActionHost.cs`  
 지연: `CharacterActionDelayCatalog` / `CharacterActionDelay` (`Dist.Gameplay.Data`)  
@@ -64,7 +64,19 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 
 교차 종류는 그대로 한 줄: 착용 중 공격은 Combat 1칸이 뒤에 앉는다. 쿨 중 연타는 그 1칸만 최신 클릭으로 덮는다.
 
-애니 `_attackActionQueue`(길이 2, 초과 drop)와 별개. Auto 홀드 연사는 클릭 큐가 아니라 입력 유지 → 같은 Leaf 재시전 (`docs/PLAN.md`).
+**Dig** / **Chop**은 Combat perform 계열(홀드·Structure pipeline). 표·핸들러: [`COMBAT_PIPELINE.md`](../equipment/COMBAT_PIPELINE.md). 맵 파괴: [`DIG.md`](../map/DIG.md).
+
+### 플레이어 조준·시전 3층 파이프라인
+
+표·driver·Leaf↔handler·Catalog Resolve: **[`COMBAT_PIPELINE.md`](../equipment/COMBAT_PIPELINE.md)** (이 절은 ActionHost와의 경계만).
+
+| Layer | SSOT | 역할 |
+|-------|------|------|
+| 1 조준 해석 | `IAimSightProvider` | RMB → `CharacterState`. 소비자는 State만 |
+| 2 시전 입력 | `ICombatPerformDriver` + `ICombatAttackInput` | Host = `PlayerCombatController` |
+| 3 cue 실행 | `CharacterAttacker` · `IActionHandler` | Leaf `logicId` |
+
+애니 `_attackActionQueue`(길이 2, 초과 drop)와 별개. Combat 연타 큐 정책은 위 Kind 표.
 
 ```text
 현재 Gear, Combat 연타 → 큐 [Combat×1]

@@ -40,6 +40,7 @@ alwaysApply: true
 | `arm-anim-layers.mdc` | CharacterAnimator · Combat 팔 · Editor/Anim · equipment docs |
 | `legacy.mdc` | `Assets/Dist/Legacy/**` · `docs/legacy/**` |
 | `game-time.mdc` | Time 스크립트·SO · `docs/time/**` |
+| `editor-automation-hygiene.mdc` | Dist Editor `[MenuItem]` · Ensure/Setup/Patch · Data Definitions `+ Create` |
 
 ## On-demand (요청·해당 작업 시만 읽기)
 | File | When |

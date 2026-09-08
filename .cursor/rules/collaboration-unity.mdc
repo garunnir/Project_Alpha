@@ -39,14 +39,17 @@ Play 중이면 저장하지 않고, Play 종료 후 저장하거나 사용자에
 
 ## Unity MCP (MUST)
 
-`Dist/MCP/*` (`DistMcpMenus`, `ui-prefab-bake.mdc`)와 Unity MCP 도구(`execute_menu_item`, `manage_scene`, `manage_asset`, `read_console` 등)로 **에디터 안에서만** 맞출 수 있는 작업은 **MCP를 우선**한다.
+에디터 전용 작업은 **Unity MCP 우선** (`agent-scope.mdc`).  
+**신규 `Dist/MCP` MenuItem 추가·Setup/Patch 파일 생성은 `editor-automation-hygiene.mdc` — 사용자 승인 없으면 금지.**
 
-| MCP로 하는 것 (예) | 수동 대체 금지 (명시 승인 없으면) |
-|--------------------|-----------------------------------|
-| `Dist/MCP/Ensure Work Layer` · Rebuild Arm Overlay | 사용자 메뉴 클릭, `.controller` YAML 직편집 |
-| `Dist/MCP/*/Setup * In Open Scene` · Patch 메뉴 | “씬에서 손으로 배선” |
-| `manage_scene(save)` · Play/컴파일 확인 | MarkSceneDirty만 하고 끝 |
-| 카탈로그 저장 후 Work Layer 동기화 | Postprocessor가 돌 때까지 사용자 대기만 시키기 |
+| MCP로 하는 것 | MUST NOT (승인 없으면) |
+|---------------|------------------------|
+| **기존** `Dist/MCP/*` (`DistMcpMenus`) · `execute_menu_item` | **새** `[MenuItem]` · `*PatchMenu.cs` · `*SetupMenu.cs` |
+| `manage_scene(save)` · `manage_asset` · `read_console` | 사용자에게 수동 메뉴 클릭·YAML·`git checkout` 시키기 |
+| `Dist/MCP/Ensure Sample ScriptableObject Assets` (신규 클론) | Data Definitions Ensure-on-open · 도메인별 Ensure 메뉴 중복 |
+| 기존 Ensure Work Layer · Arm Overlay · 도메인 Ensurer | `.controller` YAML 직편집 |
+
+기존 Setup/Patch 메뉴가 있으면 **그 경로만** 재사용한다. 없으면 static API + 승인 후 최소 추가.
 
 ### MCP 연결 실패·타임아웃·`loading`/`needsAuth`일 때
 

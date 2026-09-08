@@ -1,4 +1,4 @@
-# Character Locomotion
+﻿# Character Locomotion
 
 > LLM/에이전트용 Dist 이동 SSOT.
 > 인덱스: `docs/README.md` · 룰: `.cursor/rules/locomotion.mdc`
@@ -217,9 +217,9 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 **Thin 키 (Hurt SM):** `HitFlinch_Slot` (Flinch Layer), `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot` (Hurt Layer) — Catalog·무기 Override 밖. Rebuild가 재생성.  
 **Pipeline 라이브러리 (컨트롤러 밖):** `Hold|Aim|Attack{Leaf}_{Hand}_Slot` — Catalog Leaf 행. SM에 동작 이름/LibraryKeys 없음.
 
-`WeaponAction` **Leaf** → Entry 클립, 비면 Catalog **같은 Leaf** 행을 thin에 리맵. Recoil/Blocked → Entry, 비면 Catalog Impact 행. Action 전환·듀얼 활성 손 교체는 **Rebind 없이** thin 키만 갱신. **슬롯 로드아웃**(빈 손↔스택, 든 아이템 교체) Presentation 교체에만 풀 resolve + Rebind. 듀얼 시전 `SetWieldedItem`은 로드아웃 변경이 아님.
+`CombatLeaf` **Leaf** → Entry 클립, 비면 Catalog **같은 Leaf** 행을 thin에 리맵. Recoil/Blocked → Entry, 비면 Catalog Impact 행. Action 전환·듀얼 활성 손 교체는 **Rebind 없이** thin 키만 갱신. **슬롯 로드아웃**(빈 손↔스택, 든 아이템 교체) Presentation 교체에만 풀 resolve + Rebind. 듀얼 시전 `SetWieldedItem`은 로드아웃 변경이 아님.
 
-**층:** Family(UI 묶음) / Leaf(선택·Catalog 폴백 행) / 동작 줄 클립(무기×Leaf, Recoil/Blocked 포함). Terms: [`GEAR.md`](../equipment/GEAR.md). Semi/Burst/Auto는 각자 Catalog 행(클릭 볼리; Auto 홀드 Pending).
+**층:** Family(UI 묶음 Melee/Trigger/Etc) / Leaf(선택·Catalog 폴백 행) / 동작 줄 클립(무기×Leaf, Recoil/Blocked 포함). Terms: [`GEAR.md`](../equipment/GEAR.md). Semi/Burst=클릭; Auto=`AimHoldAttackInput` 홀드 재시전(시전당 1발).
 
 무기 `AnimatorOverride`는 배속 테이블. Hold/Aim/Attack/Recoil/Blocked는 동작 줄 → Catalog. 재생 배속은 할당한 클립 기준(`WeaponAnimClipSpeeds`, 기본 1) — thin 슬롯 속도가 아님. cue는 `CueNormalizedTime`이라 정규화 시점은 같고 실제 초만 배속에 비례한다. 발사는 이번 사이클이 cue 미만을 지난 뒤에만 — 잔여 Attack에서 즉시 발사 없음. Attack 트리거는 자기 전이로 클립을 처음부터 다시 돌린다.
 
@@ -229,11 +229,11 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 - 폴더 맵: [`docs/equipment/WEAPON_VISUAL.md`](../equipment/WEAPON_VISUAL.md)  
 - 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator` (LibraryKeys **재생성 안 함**, Flinch+Hurt Layer는 재생성), `Dist/MCP/Ensure Arm Anim Pipeline`
 
-**액션 확장 (Leaf):** `WeaponActionUtil.All` + Ensure Pipeline → Catalog 행·슬롯. **컨트롤러 슬롯 증설 없음.**  
+**액션 확장 (Leaf):** `CombatLeafUtil.All` + Ensure Pipeline → Catalog 행·슬롯. **컨트롤러 슬롯 증설 없음.**  
 **Impact Kind 확장:** `ArmImpactKind` (Reaction: Recoil/Blocked) + Impact SM 상태·trigger·행.  
 **Hurt:** 컨트롤러 Flinch Layer(Additive) + Hurt Layer(Override). Catalog 행 추가 아님.
 
-**Pending:** BN `modes` JSON bake → Leaf 마스크 자동 매핑 ([`BN_BAKE.md`](../equipment/BN_BAKE.md)). Auto 홀드 연사(현재 클릭 볼리).
+**Pending:** BN `modes` JSON bake → Leaf 마스크 자동 매핑 ([`BN_BAKE.md`](../equipment/BN_BAKE.md)).
 
 ### 클립 resolve (Animator 밖)
 
@@ -254,7 +254,7 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 | L·R 듀얼 | 호출 1회=한 손 (`TryPerformSelected`). busy는 메서드 진입 게이트 | 양팔 overlay 유지 + 이번 손 Attack 트리거. 손·Entry 바뀌면 thin 리맵 (Rebind 아님) |
 | 한 손만 | 1회 | 해당 Arm layer + AttackR/L |
 
-- 플레이어 동사는 `WeaponAction` 유지. `TriggerPistol` 동명 액션 금지.
+- 플레이어 동사는 `CombatLeaf` 유지. `TriggerPistol` 동명 액션 금지.
 - 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
 - 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` 수동 틱).

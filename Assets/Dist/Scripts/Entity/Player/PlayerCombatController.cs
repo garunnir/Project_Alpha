@@ -1,8 +1,9 @@
 // ============================================================
-// PlayerCombatController — 조준(RMB) 중 LMB 시전 + 액션 선택
+// PlayerCombatController — ICombatPerformDriver 라우트·틱 (Layer2 host)
 // ============================================================
 
 using System.Collections.Generic;
+using IsoTilemap;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -15,16 +16,28 @@ public sealed class PlayerCombatController : MonoBehaviour
     CharacterState _characterState;
     CharacterActionHost _actionHost;
     readonly List<RaycastResult> _uiRaycastResults = new();
+    readonly ICombatPerformDriver[] _drivers =
+    {
+        new MeleeSwingPerformDriver(),
+        new RangedTriggerPerformDriver(),
+        new AutoHoldPerformDriver(),
+        new ExcavateHoldPerformDriver(),
+        new ChopHoldPerformDriver(),
+    };
     bool _connected;
+    bool _inputEnabled = true;
 
     public void BindBody(
         CharacterAttacker attacker,
         CharacterState characterState,
-        CharacterActionHost actionHost)
+        CharacterActionHost actionHost,
+        Camera camera = null)
     {
         _attacker = attacker;
         _characterState = characterState;
         _actionHost = actionHost;
+        // camera 인자는 하위 호환(구 ScreenPointToRay dig). AimWorldPoint 경로에서는 미사용.
+        _ = camera;
     }
 
     void Awake()
@@ -34,15 +47,23 @@ public sealed class PlayerCombatController : MonoBehaviour
         TryGetComponent(out _actionHost);
     }
 
-    void OnDisable() => DisconnectInput();
+    void OnDisable()
+    {
+        DisconnectInput();
+        ClearDrivers();
+    }
 
     /// <summary>PlayerController.SetControlEnabled 경로 — 조준/이동과 동일 소유권.</summary>
     public void SetEnabled(bool enabled)
     {
+        _inputEnabled = enabled;
         if (enabled)
             ConnectInput();
         else
+        {
             DisconnectInput();
+            ClearDrivers();
+        }
     }
 
     void ConnectInput()
@@ -68,45 +89,108 @@ public sealed class PlayerCombatController : MonoBehaviour
         _connected = false;
     }
 
+    void Update()
+    {
+        CombatPerformContext ctx = BuildContext();
+        for (int i = 0; i < _drivers.Length; i++)
+            _drivers[i].Tick(ctx);
+    }
+
     void OnCombatCycle(InputAction.CallbackContext context)
     {
         if (!context.performed)
             return;
-        _attacker.CycleSelectedAction();
+        _attacker?.CycleSelectedLeaf();
     }
 
     void OnCombatAttack(InputAction.CallbackContext context)
     {
-        if (!context.performed)
+        if (!context.performed || _attacker == null)
             return;
 
-        // RMB Hold 조준이 켜진 동안에만 시전.
-        if (_characterState == null || !_characterState.IsAiming)
-            return;
-
-        InputManager input = InputManager.Instance;
-        if (input != null &&
-            input.TryReadPointerScreenPosition(out Vector2 screenPos) &&
-            IsPointerBlockedByUiAt(screenPos))
+        CombatPerformContext ctx = BuildContext();
+        CombatLeaf leaf = _attacker.SelectedLeaf;
+        for (int i = 0; i < _drivers.Length; i++)
         {
-            return;
+            if (!_drivers[i].MatchesLeaf(leaf))
+                continue;
+            if (_drivers[i].TryOnAttackPerformed(ctx))
+                return;
         }
-
-        if (_actionHost != null)
-        {
-            _actionHost.TryRunOrEnqueue(CharacterActionKind.Combat, ExecuteAttack);
-            return;
-        }
-
-        ExecuteAttack();
     }
 
-    bool ExecuteAttack()
+    CombatPerformContext BuildContext() =>
+        new(_attacker, _characterState, _actionHost, _inputEnabled, this);
+
+    void ClearDrivers()
     {
-        if (_attacker == null)
+        CombatPerformContext ctx = BuildContext();
+        for (int i = 0; i < _drivers.Length; i++)
+            _drivers[i].Clear(ctx);
+    }
+
+    /// <summary>GraphicRaycaster UI가 포인터를 가로채면 시전·Excavate 차단.</summary>
+    public bool IsAttackBlockedByUi()
+    {
+        InputManager input = InputManager.Instance;
+        if (input == null || !input.TryReadPointerScreenPosition(out Vector2 screenPos))
             return false;
-        _attacker.TryPerformSelected(null);
-        return _attacker.IsActionBusy;
+        return IsPointerBlockedByUiAt(screenPos);
+    }
+
+    /// <summary>CharacterState.AimWorldPoint → DigTileTarget (카메라 ScreenPointToRay 없음).</summary>
+    public bool TryResolveDigTargetFromAim(out DigTileTarget target)
+    {
+        target = default;
+
+        if (_characterState == null || !_characterState.IsAiming)
+            return false;
+
+        TileMapCacheHub hub = TileMapCacheHub.Runtime;
+        if (hub == null)
+            return false;
+
+        float cellSize = ResolveCellSize();
+        TilePrefabDB prefabDb = ResolvePrefabDb();
+        float feetY = CharacterFeetPose.GetFeetWorld(
+            _characterState != null ? _characterState.transform : transform).y;
+
+        return DigTileTargetResolver.TryResolveFromWorldPoint(
+            _characterState.AimWorldPoint,
+            hub,
+            cellSize,
+            feetY,
+            prefabDb,
+            out target);
+    }
+
+    /// <summary>CharacterState.AimWorldPoint → ChopPlantTarget.</summary>
+    public bool TryResolveChopTargetFromAim(out ChopPlantTarget target)
+    {
+        target = default;
+        if (_characterState == null || !_characterState.IsAiming)
+            return false;
+
+        return ChopPlantTargetResolver.TryResolveFromWorldPoint(
+            _characterState.AimWorldPoint,
+            ResolveCellSize(),
+            out target);
+    }
+
+    static float ResolveCellSize()
+    {
+        MapDigColumnHost digHost = MapDigColumnHost.Runtime;
+        if (digHost != null)
+            return digHost.CellSize;
+
+        MapPlantHost plantHost = MapPlantHost.Runtime;
+        return plantHost != null ? plantHost.CellSize : 1f;
+    }
+
+    static TilePrefabDB ResolvePrefabDb()
+    {
+        TileMapManager map = FindFirstObjectByType<TileMapManager>();
+        return map != null ? map.PrefabDB : null;
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "WeaponPresentation",
@@ -24,10 +25,14 @@ public sealed class WeaponPresentation : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
-        [LabelText("동작 (Leaf)")]
+        [LabelText("Leaf")]
         [ValueDropdown(nameof(LeafDropdown))]
-        [Tooltip("Family 있으면 Melee/…·Trigger/… 로 묶임. Raise는 평면.")]
-        public WeaponAction action = WeaponAction.Swing;
+        [Tooltip("선택·시전 슬롯. 동작 SSOT = Attack.logicId. Family는 UI 묶음.")]
+        [FormerlySerializedAs("action")]
+        public CombatLeaf leaf = CombatLeaf.Strike;
+
+        [ShowInInspector, ReadOnly, HideLabel]
+        public string InspectorLeafLabel => CombatLeafUtil.DropdownPath(leaf);
 
         [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
         [Tooltip(
@@ -70,7 +75,7 @@ public sealed class WeaponPresentation : ScriptableObject
         [HideLabel]
         [LabelText("기습 Attack")]
         [ShowIf(nameof(ShowsSurpriseAttackClips))]
-        [Tooltip("기습 시전 시 Attack thin. 비면 위 Attack → Catalog. Melee(Swing/Thrust)만.")]
+        [Tooltip("기습 시전 시 Attack thin. 비면 위 Attack → Catalog. Melee(Strike/Pierce)만.")]
         public ArmAnimSlotCatalog.HandClips surpriseAttackClips = new ArmAnimSlotCatalog.HandClips();
 
         [FoldoutGroup("애니")]
@@ -86,42 +91,43 @@ public sealed class WeaponPresentation : ScriptableObject
         public ArmAnimSlotCatalog.HandClips blockedClips = new ArmAnimSlotCatalog.HandClips();
 
         public EffectSeed[] effectSeeds;
-        public WeaponActionVfx vfx = new();
+        public CombatLeafVfx vfx = new();
 
         public float ActionCooldownSeconds => Mathf.Max(0f, actionCooldownSeconds);
 
         bool ShowsSurpriseAttackClips()
         {
-            WeaponAction leaf = WeaponActionUtil.Normalize(action);
-            return leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust;
+            CombatLeaf normalized = CombatLeafUtil.Normalize(leaf);
+            return normalized == CombatLeaf.Strike || normalized == CombatLeaf.Pierce;
         }
 
-        static IEnumerable<ValueDropdownItem<WeaponAction>> LeafDropdown()
+        static IEnumerable<ValueDropdownItem<CombatLeaf>> LeafDropdown()
         {
-            WeaponAction[] all = WeaponActionUtil.All;
+            CombatLeaf[] all = CombatLeafUtil.All;
             for (int i = 0; i < all.Length; i++)
             {
-                WeaponAction leaf = all[i];
-                yield return new ValueDropdownItem<WeaponAction>(
-                    WeaponActionUtil.DropdownPath(leaf),
+                CombatLeaf leaf = all[i];
+                yield return new ValueDropdownItem<CombatLeaf>(
+                    CombatLeafUtil.DropdownPath(leaf),
                     leaf);
             }
         }
     }
 
     [InfoBox(
-        "Leaf = 선택·시전 단위(실체). Family(Melee/Trigger)는 에디터·UI 묶음만.\n" +
+        "Leaf = 선택·시전 슬롯. 동작 SSOT = 각 줄 Attack.logicId → handler.\n" +
+        "Family(Melee/Trigger/Etc)는 UI 묶음. AnimVerb(Swing/Dig/…)는 연출 슬롯만.\n" +
         "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 애니·VFX 비면 그 행 사용.\n" +
         "Hold/Aim/Attack/Recoil/Blocked 클립은 이 줄. 비면 Catalog. 클립 옆 Speed.\n" +
         "동작 쿨은 이 줄(Leaf). 무기 쿨은 ItemData→CombatMath.",
         InfoMessageType.None)]
     [LabelText("동작 줄")]
-    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "action")]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "InspectorLeafLabel")]
     [SerializeField] Entry[] _entries = Array.Empty<Entry>();
 
     [ReadOnly]
     [LabelText("Supported (자동)")]
-    [SerializeField] WeaponActionMask _supportedActions;
+    [SerializeField] CombatLeafMask _supportedActions;
 
     [Tooltip("기본 선택 행. 범위 밖이거나 빈 행이면 첫 유효 행.")]
     [LabelText("기본 줄 인덱스")]
@@ -136,7 +142,7 @@ public sealed class WeaponPresentation : ScriptableObject
     [HideInInspector]
     [SerializeField] WeaponAnimClipSpeeds _animClipSpeeds;
 
-    public WeaponActionMask SupportedActions => _supportedActions;
+    public CombatLeafMask SupportedActions => _supportedActions;
     public Entry[] Entries => _entries;
     public AnimatorOverrideController AnimatorOverride => _animatorOverride;
     public WeaponAnimClipSpeeds AnimClipSpeeds => _animClipSpeeds;
@@ -204,8 +210,8 @@ public sealed class WeaponPresentation : ScriptableObject
             Entry entry = _entries[i];
             if (entry == null)
                 continue;
-            if (entry.action == WeaponAction.Trigger)
-                entry.action = WeaponAction.Semi;
+            if (entry.leaf == CombatLeaf.Trigger)
+                entry.leaf = CombatLeaf.Semi;
         }
     }
 
@@ -224,7 +230,7 @@ public sealed class WeaponPresentation : ScriptableObject
 
     public void RebuildSupportedActions()
     {
-        WeaponActionMask mask = WeaponActionMask.None;
+        CombatLeafMask mask = CombatLeafMask.None;
         if (_entries == null)
         {
             _supportedActions = mask;
@@ -236,7 +242,7 @@ public sealed class WeaponPresentation : ScriptableObject
             Entry entry = _entries[i];
             if (entry == null)
                 continue;
-            mask |= WeaponActionUtil.ToMask(entry.action);
+            mask |= CombatLeafUtil.ToMask(entry.leaf);
         }
 
         _supportedActions = mask;
@@ -248,18 +254,87 @@ public sealed class WeaponPresentation : ScriptableObject
         RebuildSupportedActions();
     }
 
-    public bool TryGetEntry(WeaponAction action, out Entry entry)
+    /// <summary>
+    /// 런타임 합산본용. 베이스의 Override·기본 줄·클립 스피드를 복사한다 (에셋 디스크에 쓰지 않음).
+    /// </summary>
+    public void CopyRuntimeChromeFrom(WeaponPresentation source)
+    {
+        if (source == null)
+            return;
+        _animatorOverride = source._animatorOverride;
+        _animClipSpeeds = source._animClipSpeeds;
+        _defaultEntryIndex = source._defaultEntryIndex;
+    }
+
+    /// <summary>
+    /// 베이스 Entry + overlay에만 있는 Leaf 행을 합친 런타임 Presentation.
+    /// overlay가 없거나 추가 Leaf가 없으면 <paramref name="baseline"/> 그대로.
+    /// </summary>
+    public static WeaponPresentation CreateRuntimeMerged(
+        WeaponPresentation baseline,
+        System.Collections.Generic.List<WeaponPresentation> overlays)
+    {
+        if (baseline == null)
+            return null;
+        if (overlays == null || overlays.Count == 0)
+            return baseline;
+
+        CombatLeafMask have = CombatLeafMask.None;
+        Entry[] baseEntries = baseline._entries;
+        int baseLen = baseEntries != null ? baseEntries.Length : 0;
+        var list = new System.Collections.Generic.List<Entry>(baseLen + 4);
+        for (int i = 0; i < baseLen; i++)
+        {
+            Entry e = baseEntries[i];
+            if (e == null)
+                continue;
+            list.Add(e);
+            have |= CombatLeafUtil.ToMask(e.leaf);
+        }
+
+        bool added = false;
+        for (int o = 0; o < overlays.Count; o++)
+        {
+            WeaponPresentation overlay = overlays[o];
+            if (overlay == null || overlay._entries == null)
+                continue;
+            for (int i = 0; i < overlay._entries.Length; i++)
+            {
+                Entry e = overlay._entries[i];
+                if (e == null)
+                    continue;
+                CombatLeafMask bit = CombatLeafUtil.ToMask(e.leaf);
+                if (bit == CombatLeafMask.None || (have & bit) != 0)
+                    continue;
+                list.Add(e);
+                have |= bit;
+                added = true;
+            }
+        }
+
+        if (!added)
+            return baseline;
+
+        WeaponPresentation merged = CreateInstance<WeaponPresentation>();
+        merged.hideFlags = HideFlags.HideAndDontSave;
+        merged.name = baseline.name + "+quality";
+        merged.CopyRuntimeChromeFrom(baseline);
+        merged.SetEntries(list.ToArray());
+        return merged;
+    }
+
+    public bool TryGetEntry(CombatLeaf action, out Entry entry)
     {
         entry = null;
         if (_entries == null)
             return false;
 
-        WeaponAction want = WeaponActionUtil.Normalize(action);
+        CombatLeaf want = CombatLeafUtil.Normalize(action);
         for (int i = 0; i < _entries.Length; i++)
         {
             Entry candidate = _entries[i];
             if (candidate == null ||
-                WeaponActionUtil.Normalize(candidate.action) != want)
+                CombatLeafUtil.Normalize(candidate.leaf) != want)
                 continue;
             entry = candidate;
             return true;
@@ -269,7 +344,7 @@ public sealed class WeaponPresentation : ScriptableObject
     }
 
     /// <summary>Entry 없거나 useHold면 true. 비조준·비Attack 팔 overlay 게이트.</summary>
-    public bool UsesHold(WeaponAction action)
+    public bool UsesHold(CombatLeaf action)
     {
         if (!TryGetEntry(action, out Entry entry) || entry == null)
             return true;

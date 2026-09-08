@@ -36,7 +36,7 @@ public sealed class MeleeHitHandler : IActionHandler
 
         int hitCount = attacker.CollectMeleeHits(
             item,
-            context.Action,
+            context.Leaf,
             context.Attack,
             _hosts,
             _contacts);
@@ -45,7 +45,7 @@ public sealed class MeleeHitHandler : IActionHandler
             CharacterBodyHost host = _hosts[i];
             MeleeHitContact contact = _contacts[i];
             var hitContext = new ActionHandlerContext(
-                context.Action,
+                context.Leaf,
                 context.Hand,
                 context.Attack,
                 host,

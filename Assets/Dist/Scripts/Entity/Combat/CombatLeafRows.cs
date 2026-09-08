@@ -1,29 +1,29 @@
 // ============================================================
-// WeaponActionRows — Presentation 행 → available / default / instance select
+// CombatLeafRows — Presentation 행 → available / default / instance select
 // ============================================================
 
-public static class WeaponActionRows
+public static class CombatLeafRows
 {
-    public static WeaponActionMask Available(WeaponPresentation presentation)
+    public static CombatLeafMask Available(WeaponPresentation presentation)
     {
         if (presentation == null)
-            return WeaponActionMask.Swing;
+            return CombatLeafMask.Strike;
 
         presentation.RebuildSupportedActions();
-        WeaponActionMask mask = presentation.SupportedActions;
-        return mask == WeaponActionMask.None
-            ? WeaponActionMask.Swing
+        CombatLeafMask mask = presentation.SupportedActions;
+        return mask == CombatLeafMask.None
+            ? CombatLeafMask.Strike
             : mask;
     }
 
-    public static WeaponAction Default(WeaponPresentation presentation)
+    public static CombatLeaf Default(WeaponPresentation presentation)
     {
         if (presentation == null)
-            return WeaponAction.Swing;
+            return CombatLeaf.Strike;
 
         WeaponPresentation.Entry[] entries = presentation.Entries;
         if (entries == null || entries.Length == 0)
-            return WeaponAction.Swing;
+            return CombatLeaf.Strike;
 
         int index = presentation.DefaultEntryIndex;
         if (index < 0 || index >= entries.Length)
@@ -31,28 +31,28 @@ public static class WeaponActionRows
 
         WeaponPresentation.Entry entry = entries[index];
         if (entry != null)
-            return WeaponActionUtil.Normalize(entry.action);
+            return CombatLeafUtil.Normalize(entry.leaf);
 
         for (int i = 0; i < entries.Length; i++)
         {
             WeaponPresentation.Entry candidate = entries[i];
             if (candidate == null)
                 continue;
-            return WeaponActionUtil.Normalize(candidate.action);
+            return CombatLeafUtil.Normalize(candidate.leaf);
         }
 
-        return WeaponAction.Swing;
+        return CombatLeaf.Strike;
     }
 
-    public static WeaponAction ResolveSelected(
+    public static CombatLeaf ResolveSelected(
         ItemInstance instance,
         WeaponPresentation presentation)
     {
-        WeaponActionMask available = Available(presentation);
-        WeaponAction? stored = instance != null ? instance.SelectedAction : null;
+        CombatLeafMask available = Available(presentation);
+        CombatLeaf? stored = instance != null ? instance.SelectedLeaf : null;
         if (stored.HasValue &&
-            (available & WeaponActionUtil.ToMask(stored.Value)) != 0)
-            return WeaponActionUtil.Normalize(stored.Value);
+            (available & CombatLeafUtil.ToMask(stored.Value)) != 0)
+            return CombatLeafUtil.Normalize(stored.Value);
 
         return Default(presentation);
     }

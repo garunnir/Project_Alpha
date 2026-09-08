@@ -358,6 +358,8 @@ public class TileMapManager : MonoBehaviour
 
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
         _digHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB, _controller, _stratumProfile);
+        _digHost.SetPitTopologyChangedHandler(() =>
+            _presentationApplier?.ResetFloorVisibilityState());
         _digHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 

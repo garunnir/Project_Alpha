@@ -140,7 +140,7 @@ public static class CombatSurprise
         if (atk != null)
         {
             ItemData item = atk.ItemFor(atk.ItemId);
-            float r = CombatMath.RangeMeters(item, atk.SelectedAction, null);
+            float r = CombatMath.RangeMeters(item, atk.SelectedLeaf, null);
             if (r > 0f)
                 range = r;
         }

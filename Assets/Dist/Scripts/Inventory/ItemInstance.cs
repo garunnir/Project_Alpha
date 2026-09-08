@@ -6,7 +6,7 @@ using System;
 using Garunnir.Runtime.Gameplay.Data;
 
 /// <summary>
-/// 아이템 실체. 합칠지는 ItemMergePolicy. SelectedAction·Chamber는 여기만.
+/// 아이템 실체. 합칠지는 ItemMergePolicy. SelectedLeaf·Chamber는 여기만.
 /// Unset(null)이면 WeaponPresentation 기본 행. 약실은 탄 SSOT (메거진이 아님).
 /// </summary>
 public sealed class ItemInstance
@@ -18,7 +18,7 @@ public sealed class ItemInstance
     public Guid Uid { get; }
 
     /// <summary>null = unset → SO default row. 해제(unwield) 후에도 이 인스턴스에 유지.</summary>
-    public WeaponAction? SelectedAction { get; set; }
+    public CombatLeaf? SelectedLeaf { get; set; }
 
     /// <summary>약실 잔여. 발사 SSOT. 메거진 보급과 별개.</summary>
     public int ChamberRounds { get; private set; }
@@ -62,7 +62,7 @@ public sealed class ItemInstance
         Item = item ?? throw new ArgumentNullException(nameof(item));
         DamageLevel = Math.Max(0, damageLevel);
         Uid = uid == Guid.Empty ? Guid.NewGuid() : uid;
-        SelectedAction = null;
+        SelectedLeaf = null;
         ChamberRounds = 0;
         ChamberAmmoId = null;
         SupplyRounds = 0;
@@ -87,7 +87,7 @@ public sealed class ItemInstance
         if (dto == null)
             return;
 
-        SelectedAction = dto.hasSelectedAction ? (WeaponAction)dto.selectedAction : null;
+        SelectedLeaf = dto.hasSelectedAction ? (CombatLeaf)dto.selectedAction : null;
         RestoreChamber(dto.chamberRounds, dto.chamberAmmoId);
         RestoreSupply(dto.supplyRounds, dto.supplyAmmoId);
         SetToolCharges(dto.toolCharges);

@@ -66,5 +66,17 @@ namespace IsoTilemap
         /// 0·누락(구 JSON)이면 최초 굴착 시 런타임이 할당한다.
         /// </summary>
         public int stratumSeed;
+
+        /// <summary>
+        /// (x,z) dig-break 횟수 (schema ≥ <see cref="MapSaveSchema.TileDurabilityV4"/>).
+        /// 구 JSON 누락 시 empty.
+        /// </summary>
+        public List<ColumnDepthSaveData> columnDepths = new List<ColumnDepthSaveData>();
+
+        /// <summary>
+        /// 손상된 타일 remaining HP (schema ≥ <see cref="MapSaveSchema.TileDurabilityV4"/>).
+        /// 풀 HP는 저장하지 않는다. 구 JSON 누락 시 empty.
+        /// </summary>
+        public List<TileDurabilitySaveData> tileDurabilities = new List<TileDurabilitySaveData>();
     }
 }

@@ -187,6 +187,12 @@ namespace IsoTilemap
                 return;
 
             target.stratumSeed = existing.stratumSeed;
+            target.columnDepths = existing.columnDepths != null
+                ? new List<ColumnDepthSaveData>(existing.columnDepths)
+                : new List<ColumnDepthSaveData>();
+            target.tileDurabilities = existing.tileDurabilities != null
+                ? new List<TileDurabilitySaveData>(existing.tileDurabilities)
+                : new List<TileDurabilitySaveData>();
         }
     }
 }

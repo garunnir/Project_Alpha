@@ -20,7 +20,7 @@ public static class CombatHitscan
 
     public static float EffectiveRange(
         ItemData item,
-        WeaponAction action,
+        CombatLeaf action,
         ItemData ammo,
         Vector3 shooterOrigin,
         Vector3? shooterFeetWorld = null)

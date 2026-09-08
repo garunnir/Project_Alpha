@@ -12,7 +12,7 @@ public static class PrimaryWieldResolver
     {
         public WieldSlotId Slot;
         public ItemStack Stack;
-        public WeaponAction? Action;
+        public CombatLeaf? Action;
         public float Score;
         public bool IsOffHand;
     }
@@ -39,8 +39,8 @@ public static class PrimaryWieldResolver
             if (stack?.Item == null)
                 return false;
 
-            WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
-            WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
+            WeaponPresentation presentation = CombatLeafRows.Resolve(catalog, stack);
+            CombatLeaf action = CombatLeafRows.ResolveSelected(stack.Instance, presentation);
             primary = new HandScore
             {
                 Slot = WieldSlotId.Right,
@@ -71,7 +71,7 @@ public static class PrimaryWieldResolver
                 secondary.Score = ScoreHand(
                     secondary.Stack,
                     secondary.Action,
-                    WeaponActionRows.Resolve(catalog, secondary.Stack),
+                    CombatLeafRows.Resolve(catalog, secondary.Stack),
                     skills,
                     OffHandFactor(skills, WieldHand.Left));
             }
@@ -83,7 +83,7 @@ public static class PrimaryWieldResolver
                 secondary.Score = ScoreHand(
                     secondary.Stack,
                     secondary.Action,
-                    WeaponActionRows.Resolve(catalog, secondary.Stack),
+                    CombatLeafRows.Resolve(catalog, secondary.Stack),
                     skills,
                     OffHandFactor(skills, WieldHand.Right));
             }
@@ -97,13 +97,13 @@ public static class PrimaryWieldResolver
         return true;
     }
 
-    [Obsolete("Do not pick select by DPS. Use WeaponActionRows.ResolveSelected.")]
-    public static WeaponAction? BestActionForItem(
+    [Obsolete("Do not pick select by DPS. Use CombatLeafRows.ResolveSelected.")]
+    public static CombatLeaf? BestActionForItem(
         ItemData item,
         ICharacterSkills skills)
     {
         WeaponPresentation presentation = null;
-        return WeaponActionRows.Default(presentation);
+        return CombatLeafRows.Default(presentation);
     }
 
     public static float OffHandFactor(ICharacterSkills skills, WieldHand hand)
@@ -124,8 +124,8 @@ public static class PrimaryWieldResolver
         if (stack?.Item == null)
             return default;
 
-        WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
-        WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
+        WeaponPresentation presentation = CombatLeafRows.Resolve(catalog, stack);
+        CombatLeaf action = CombatLeafRows.ResolveSelected(stack.Instance, presentation);
         return new HandScore
         {
             Slot = slot,
@@ -138,7 +138,7 @@ public static class PrimaryWieldResolver
 
     static float ScoreHand(
         ItemStack stack,
-        WeaponAction? action,
+        CombatLeaf? action,
         WeaponPresentation presentation,
         ICharacterSkills skills,
         float offHandFactor)
@@ -151,7 +151,7 @@ public static class PrimaryWieldResolver
 
     static float Dps(
         ItemStack stack,
-        WeaponAction action,
+        CombatLeaf action,
         WeaponPresentation presentation,
         ICharacterSkills skills,
         float offHandFactor)
@@ -162,7 +162,7 @@ public static class PrimaryWieldResolver
             presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
             attack = entry.attack;
 
-        if (WeaponActionUtil.IsRanged(action) &&
+        if (CombatLeafUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, stack.Instance, stack, attack))
             return 0f;
 

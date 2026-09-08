@@ -16,6 +16,8 @@ namespace IsoTilemap
         public const int MinDigQualityLevel = 1;
         public const string AxeQualityId = "AXE";
         public const int MinAxeQualityLevel = 1;
+        /// <summary>나무 OccupiedCell breakDurability 미지정 폴백.</summary>
+        public const int DefaultChopDurability = 8;
         public const string FertilizerFlag = "FERTILIZER";
         public const int NoFruitHarvestMinute = -1;
         public const string GreenhouseFlag = "GREENHOUSE";

@@ -21,6 +21,11 @@ MonoBehaviour:
   flags:
   - PLOWABLE
   - PLANTABLE
+  - DIGGABLE
+  materials:
+  - soil
+  breakDurability: 5
+  materialThickness: 0
   occupied:
     providesLogicalFloor: 1
     blocksPassageAndOcclusion: 0
@@ -32,4 +37,5 @@ MonoBehaviour:
     blocksPassageAndOcclusion: 0
     splitPassageAndOcclusion: 0
     blocksEdge: 0
+    separatesRoom: 0
     occludesEdge: 0

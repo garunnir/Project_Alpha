@@ -50,15 +50,7 @@ public static class CharacterDefinitionCatalog
         return list;
     }
 
-    public static CharacterDefinition CreateNew()
-    {
-        EnsureFolder();
-        CharacterDefinition def = ScriptableObject.CreateInstance<CharacterDefinition>();
-        string path = AssetDatabase.GenerateUniqueAssetPath(
-            AssetFolder + "/CharacterDefinition.New.asset");
-        AssetDatabase.CreateAsset(def, path);
-        AssetDatabase.SaveAssets();
-        return def;
-    }
+    public static CharacterDefinition CreateNew(string baseName = "New") =>
+        DataDefinitionsSoCatalogs.CreateCharacterDefinition(baseName);
 }
 #endif

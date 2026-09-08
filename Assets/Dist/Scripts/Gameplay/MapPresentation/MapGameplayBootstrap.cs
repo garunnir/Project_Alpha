@@ -4,7 +4,6 @@
 
 using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
-using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(-49)]
@@ -62,35 +61,15 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
     static bool PlayerHasDigTool()
     {
-        InventoryContainer body = PlayerInventoryRuntime.Active?.Host?.Container;
-        if (body?.Stacks != null)
-        {
-            IReadOnlyList<ItemStack> stacks = body.Stacks;
-            for (int i = 0; i < stacks.Count; i++)
-            {
-                ItemStack stack = stacks[i];
-                if (stack?.Item != null && stack.Count > 0 && MapPlantService.HasDigQuality(stack.Item))
-                    return true;
-            }
-        }
+        PlayerGearHost gearHost = PlayerGearHost.Active;
+        if (gearHost == null)
+            return false;
 
-        WieldSlots wield = PlayerGearHost.Active?.Service?.Wield;
-        if (wield?.Left?.Item != null &&
-            wield.Left.Count > 0 &&
-            MapPlantService.HasDigQuality(wield.Left.Item))
-        {
-            return true;
-        }
-
-        if (wield?.Right?.Item != null &&
-            wield.Right != wield.Left &&
-            wield.Right.Count > 0 &&
-            MapPlantService.HasDigQuality(wield.Right.Item))
-        {
-            return true;
-        }
-
-        return false;
+        CharacterAttacker attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(gearHost);
+        ItemStack stack = attacker != null ? attacker.WieldedStack : null;
+        return stack?.Item != null &&
+               stack.Count > 0 &&
+               MapPlantService.HasDigQuality(stack.Item);
     }
 
     static void GrantDigItem(string itemId, int count, Vector3 world)

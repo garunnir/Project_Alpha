@@ -45,7 +45,7 @@ public sealed class CharacterAttackerCombatVfx
             return;
 
         ArmAnimSlotCatalog pipeline = ResolvePipeline();
-        WeaponActionVfx vfx = WeaponActionVfxResolver.Resolve(
+        CombatLeafVfx vfx = CombatLeafVfxResolver.Resolve(
             _attacker.Presentation,
             outcome.Action,
             pipeline);
@@ -74,7 +74,7 @@ public sealed class CharacterAttackerCombatVfx
             : null;
 
         GameObject woundPrefab = ResolveWoundOverlay(outcome, impactDefaults);
-        WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpact(
+        CombatLeafVfx vfx = CombatLeafVfxResolver.ResolveImpact(
             outcome.Attack,
             _attacker.Presentation,
             outcome.Action,
@@ -123,7 +123,7 @@ public sealed class CharacterAttackerCombatVfx
         return null;
     }
 
-    void OnAttackCueFired(WieldHand hand, WeaponAction action)
+    void OnAttackCueFired(WieldHand hand, CombatLeaf action)
     {
         if (_attacker != null &&
             !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
@@ -133,7 +133,7 @@ public sealed class CharacterAttackerCombatVfx
 
     void SpawnImpactKind(ArmImpactKind kind, Vector3 origin, Vector3 forward)
     {
-        WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpactKind(ResolvePipeline(), kind);
+        CombatLeafVfx vfx = CombatLeafVfxResolver.ResolveImpactKind(ResolvePipeline(), kind);
         if (vfx == null)
             return;
         Spawn(vfx.actionVfx, origin, forward);

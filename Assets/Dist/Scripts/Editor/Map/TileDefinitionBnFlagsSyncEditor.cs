@@ -18,6 +18,25 @@ namespace IsoTilemap.EditorTools
     {
         static readonly string[] SyncFlags = { TileFlags.Mineable, TileFlags.Diggable };
 
+        /// <summary>
+        /// Dist-owned prefabId → BN terrain id. Heuristic <c>t_</c>+snake는 Dist 경로
+        /// (<c>Floor/Floor</c>→<c>t_floor</c>)에 오매칭하므로 alias만 승격한다.
+        /// </summary>
+        static readonly (string PrefabId, string BnTerrainId)[] DistPrefabBnAliases =
+        {
+            ("Floor/GrassFloor", "t_grass"),
+        };
+
+        /// <summary>
+        /// Dist-authored dig floors: skip BN flag sync so empty BN (e.g. <c>t_floor</c>)
+        /// cannot strip MINEABLE / Dist combat authoring.
+        /// </summary>
+        static readonly string[] DistAuthoredDigPrefabIds =
+        {
+            "Floor/Floor",
+            "Floor/Tilled",
+        };
+
         [MenuItem("Tools/Map/Sync TileDefinition flags from BN")]
         static void SyncTileDefinitionFlagsFromBn()
         {
@@ -35,6 +54,12 @@ namespace IsoTilemap.EditorTools
                 {
                     TileDefinition def = db.entries[i];
                     if (def == null || string.IsNullOrEmpty(def.prefabId))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    if (IsDistAuthoredDigPrefab(def.prefabId))
                     {
                         skipped++;
                         continue;
@@ -78,6 +103,17 @@ namespace IsoTilemap.EditorTools
             Debug.Log($"[TileDefinitionBnFlagsSync] 완료: 갱신 {updated}개, 스킵 {skipped}개");
         }
 
+        static bool IsDistAuthoredDigPrefab(string prefabId)
+        {
+            for (int i = 0; i < DistAuthoredDigPrefabIds.Length; i++)
+            {
+                if (string.Equals(prefabId, DistAuthoredDigPrefabIds[i], StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
+        }
+
         static bool TryResolveTerrain(TileDefinition def, out BnTerrainData terrain)
         {
             terrain = null;
@@ -95,21 +131,30 @@ namespace IsoTilemap.EditorTools
         {
             if (!string.IsNullOrEmpty(def.prefabId))
             {
-                yield return def.prefabId;
-                string tail = def.prefabId;
-                int slash = def.prefabId.LastIndexOf('/');
-                if (slash >= 0)
-                    tail = def.prefabId.Substring(slash + 1);
+                // Dist path aliases first (authoritative for Dist-owned floors).
+                for (int a = 0; a < DistPrefabBnAliases.Length; a++)
+                {
+                    if (string.Equals(def.prefabId, DistPrefabBnAliases[a].PrefabId, StringComparison.Ordinal))
+                        yield return DistPrefabBnAliases[a].BnTerrainId;
+                }
 
-                yield return tail;
-                yield return "t_" + ToSnakeCase(tail);
-                yield return def.prefabId.Replace('/', '_');
+                yield return def.prefabId;
+
+                // BN ids are typically `t_*` / bare tokens without Dist category slash.
+                // Do not invent `t_`+snake from `Floor/Floor` — that false-matches `t_floor`.
+                if (def.prefabId.IndexOf('/') < 0)
+                {
+                    yield return "t_" + ToSnakeCase(def.prefabId);
+                }
             }
 
-            if (def.name != null)
+            if (!string.IsNullOrEmpty(def.name) &&
+                (string.IsNullOrEmpty(def.prefabId) ||
+                 !string.Equals(def.name, def.prefabId, StringComparison.Ordinal)))
             {
-                yield return def.name;
-                yield return "t_" + ToSnakeCase(def.name);
+                if (def.name.IndexOf('/') < 0 &&
+                    def.name.StartsWith("t_", StringComparison.OrdinalIgnoreCase))
+                    yield return def.name;
             }
         }
 

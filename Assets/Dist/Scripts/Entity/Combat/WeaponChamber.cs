@@ -85,7 +85,7 @@ public static class WeaponChamber
     public static bool TryConsume(ItemInstance instance) =>
         instance != null && instance.TryConsumeChamberRound();
 
-    /// <summary>기어/어택이 호출. 탄창 보급 1발 → 약실. WeaponAction.Reload 없음.</summary>
+    /// <summary>기어/어택이 호출. 탄창 보급 1발 → 약실. CombatLeaf.Reload 없음.</summary>
     public static bool TryReload(ItemInstance instance, ItemStack weapon, ItemData item) =>
         TryFeedFromMagazine(instance, weapon, item);
 

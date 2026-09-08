@@ -1,6 +1,7 @@
 # Weapon Visual (Anim / VFX / Combat SOData map)
 
 > 무기·팔 연출 에셋의 **폴더 = 의존 방향** SSOT. 런타임 계약은 [`GEAR.md`](GEAR.md) · [`LOCOMOTION.md`](../locomotion/LOCOMOTION.md).  
+> **파이프라인 매뉴얼** (Resolve·Leaf·Layer1–3): [`COMBAT_PIPELINE.md`](COMBAT_PIPELINE.md).  
 > Family / Leaf / AnimVerb / 동작 줄 클립(Hold/Aim/Attack/기습 Attack/Recoil/Blocked). 컨트롤러는 동작 모름: GEAR Terms · LOCOMOTION · `.cursor/rules/arm-anim-layers.mdc`. 총기 Leaf·`burst`: [`BN_BAKE.md`](BN_BAKE.md).
 
 ## 의존 (위 → 아래)
@@ -54,16 +55,23 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | Attack 레시피 | Data Definitions → **Combat/Attacks/** |
 | `spawn_projectile` | Attack.`ProjectilePrefab` 있으면 비행(pierce 0). 없으면 cue 히트스캔. `tracerVfx`는 히트스캔 연출 |
 | NPC 이동 프로파일 | Data Definitions → **Locomotion/** · `SOData/Locomotion/` |
-| thin/라이브러리 클립 시드 | `Dist/MCP/Ensure Arm Anim Pipeline` |
+| thin·Catalog 행 Ensure | `Dist/MCP/Ensure Arm Anim Pipeline` (Leaf 행 + thin/Impact/Hurt 슬롯 15개만 유지) |
 | Animator 레이어 재구성 | `Dist/MCP/Rebuild Arm Overlay Animator` |
 
-Catalog `Resolve` 순서 (아이템 전용 > `gun.skill` > `weapon_category` > Unarmed). BN 총은 `weapon_category`가 없고 `gun.skill`(`pistol`/`rifle`/`smg`/`shotgun`/`launcher`)으로 묶는다. Dist 시드 `gun`도 같은 표.
+Catalog `Resolve` = 베이스(아이템 > `gun.skill` > `weapon_category` > Unarmed) 후 **By Quality Id**로 없는 Leaf만 합산(런타임 캐시, bake 없음). 상세: [`COMBAT_PIPELINE.md`](COMBAT_PIPELINE.md) §4. BN 총은 보통 category 없이 `gun.skill`로 묶는다.
 
 ```mermaid
 flowchart LR
   item[ByItemId]
-  skill[BySkillId_gun_skill]
+  skill[BySkillId]
   cat[ByCategoryId]
   unarmed[Unarmed]
+  base[Baseline]
+  quality[Quality_merge_cache]
   item -->|miss| skill -->|miss| cat -->|miss| unarmed
+  item --> base
+  skill --> base
+  cat --> base
+  unarmed --> base
+  base --> quality
 ```

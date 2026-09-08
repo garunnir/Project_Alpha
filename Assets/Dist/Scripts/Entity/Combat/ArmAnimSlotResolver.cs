@@ -23,9 +23,9 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H)
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H)
     {
         if (baseOrWeapon == null || catalog == null)
             return null;
@@ -54,9 +54,9 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H,
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H,
         bool surpriseAttackL = false,
         bool surpriseAttackR = false,
         bool surpriseAttack2H = false)
@@ -84,9 +84,9 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H,
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H,
         bool surpriseAttackL = false,
         bool surpriseAttackR = false,
         bool surpriseAttack2H = false)
@@ -145,9 +145,9 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H,
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H,
         PoseKind pose,
         ArmAnimSlotCatalog.HandClips poseFallback,
         bool surpriseAttackL,
@@ -191,7 +191,7 @@ public static class ArmAnimSlotResolver
 
     static AnimationClip PoseClip(
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         ArmAnimSlotCatalog catalog,
         PoseKind pose,
         WieldHand hand,
@@ -217,7 +217,7 @@ public static class ArmAnimSlotResolver
 
     static ArmAnimSlotCatalog.HandClips EntryPose(
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         PoseKind pose,
         bool useSurpriseAttack)
     {
@@ -270,5 +270,28 @@ public static class ArmAnimSlotResolver
             return baseClip;
         AnimationClip mapped = overrideController[baseClip];
         return mapped != null ? mapped : baseClip;
+    }
+
+    /// <summary>무기 Entry → Catalog → thin Attack 클립 (dig·연출 타이밍용).</summary>
+    public static AnimationClip ResolvePresentationAttackClip(
+        ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentation,
+        CombatLeaf action,
+        WieldHand hand)
+    {
+        if (catalog == null)
+            return null;
+
+        ArmAnimSlotCatalog.HandClips attackThin = catalog.AttackThin;
+        AnimationClip thinClip = LibHand(attackThin, hand);
+        return PoseClip(
+            presentation,
+            CombatLeafUtil.Normalize(action),
+            catalog,
+            PoseKind.Attack,
+            hand,
+            catalog.HoldThin,
+            thinClip,
+            useSurpriseAttack: false);
     }
 }

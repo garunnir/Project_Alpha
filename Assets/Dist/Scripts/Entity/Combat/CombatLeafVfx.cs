@@ -1,12 +1,12 @@
 // ============================================================
-// WeaponActionVfx — 무기 액션 1개의 연출 프리팹 슬롯 묶음
+// CombatLeafVfx — Leaf 1개의 연출 프리팹 슬롯 묶음
 // ============================================================
 
 using System;
 using UnityEngine;
 
 [Serializable]
-public sealed class WeaponActionVfx
+public sealed class CombatLeafVfx
 {
     [Tooltip("시전 순간 공격자 쪽에 뜨는 연출 (근접 휘두름 / 원거리 총구).")]
     public GameObject actionVfx;

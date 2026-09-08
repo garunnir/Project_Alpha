@@ -88,6 +88,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             "CharacterDefinition · Faction · Emote.\n저장은 Unity 에셋(Ctrl+S).");
         AddLeaf(tree, "Characters/+ Create Definition", new CharacterDefinitionCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
         AddTypedAssets(tree, "Characters/Definitions", CharacterFolder, typeof(CharacterDefinition), false, EditorIcons.SingleUser);
+        AddLeaf(tree, "Characters/+ Create Faction", new CharacterFactionCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
         AddTypedAssets(tree, "Characters/Factions", CharacterFolder, typeof(CharacterFaction), false, EditorIcons.Flag);
         AddAssetLeaf(tree, "Characters/Faction Catalog", CharacterFactionCatalog.DefaultAssetPath, EditorIcons.Tag);
         AddAssetLeaf(tree, "Characters/Emote Catalog", CharacterEmoteCatalog.DefaultAssetPath, EditorIcons.SpeechBubbleSquare);
@@ -107,7 +108,9 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             tree, "Combat", EditorIcons.Crosshair, CombatTint,
             "Presentation Catalog → Presentations → Attacks.\nFallbacks는 공용 Pipeline/VFX.");
         AddTypedAssets(tree, "Combat/Catalog", CombatCatalogFolder, typeof(WeaponPresentationCatalog), false, EditorIcons.SettingsCog);
+        AddLeaf(tree, "Combat/+ Create Presentation", new WeaponPresentationCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
         AddTypedAssets(tree, "Combat/Presentations", CombatPresentationsFolder, typeof(WeaponPresentation), false, EditorIcons.Play);
+        AddLeaf(tree, "Combat/+ Create Attack", new WeaponAttackCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
         AddTypedAssets(tree, "Combat/Attacks", CombatAttacksFolder, typeof(WeaponAttack), false, EditorIcons.PacmanGhost);
         AddTypedAssets(tree, "Combat/Fallbacks", CombatFallbacksFolder, typeof(ScriptableObject), false, EditorIcons.Folder);
         StyleSubtree(combat, CombatTint);
@@ -121,6 +124,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         OdinMenuItem map = AddRoot(
             tree, "Map", EditorIcons.GridBlocks, MapTint,
             "TileDefinition · Prefab DB · Farming · Fishing.");
+        AddLeaf(tree, "Map/+ Create Tile", new TileDefinitionCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
         AddTypedAssets(tree, "Map/Tiles", TileFolder, typeof(TileDefinition), true, EditorIcons.GridLayout);
         AddAssetLeaf(tree, "Map/Tile Prefab DB", TilePrefabDbPath, EditorIcons.Table);
         AddAssetLeaf(tree, "Map/Farming/Work Clips", FarmWorkClipCatalog.DefaultAssetPath, EditorIcons.Tree);
@@ -190,7 +194,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
 
     static void AddAssetLeaf(OdinMenuTree tree, string menuPath, string assetPath, EditorIcon icon)
     {
-        Object asset = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
+        UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
         if (asset != null)
             AddWithIcon(tree, menuPath, asset, icon);
         else
@@ -275,6 +279,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         string domain = ResolveDomainLabel(selected, selection);
         Color tint = DomainTint(domain);
         DrawOdinDomainBanner(domain, selected, tint);
+        DrawDeletableSoToolbar(selected);
 
         bool catalogSelected =
             selected is CatalogItemBrowser
@@ -315,6 +320,20 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         SirenixEditorGUI.EndHorizontalToolbar();
     }
 
+    static void DrawDeletableSoToolbar(object selected)
+    {
+        if (selected is not UnityEngine.Object asset || !DataDefinitionsSoCatalogs.CanDelete(asset))
+            return;
+
+        SirenixEditorGUI.BeginHorizontalToolbar();
+        GUILayout.FlexibleSpace();
+        GUIHelper.PushColor(new Color(1f, 0.45f, 0.4f));
+        if (SirenixEditorGUI.ToolbarButton(new GUIContent("Delete Asset", EditorIcons.X.Active)))
+            DataDefinitionsSoCatalogs.TryDelete(asset);
+        GUIHelper.PopColor();
+        SirenixEditorGUI.EndHorizontalToolbar();
+    }
+
     static void DrawOdinDomainBanner(string domain, object selected, Color tint)
     {
         Rect rect = EditorGUILayout.GetControlRect(false, 32f);
@@ -335,7 +354,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
 
     static string FormatSelectionDetail(object selected)
     {
-        if (selected is Object uo && uo != null)
+        if (selected is UnityEngine.Object uo && uo != null)
             return uo.name;
         if (selected is CatalogItemBrowser itemBrowser)
             return itemBrowser.Source == CatalogSource.Custom ? "Items · Custom" : "Items · BN Reference";
@@ -349,6 +368,14 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             return "Trait Icons";
         if (selected is CharacterDefinitionCreateAction)
             return "Create Definition";
+        if (selected is CharacterFactionCreateAction)
+            return "Create Faction";
+        if (selected is TileDefinitionCreateAction)
+            return "Create Tile";
+        if (selected is WeaponPresentationCreateAction)
+            return "Create Presentation";
+        if (selected is WeaponAttackCreateAction)
+            return "Create Attack";
         return selected != null ? selected.GetType().Name : "—";
     }
 
@@ -372,6 +399,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             return "Catalog";
         if (selected is CharacterDefinition || selected is CharacterFaction || selected is CharacterFactionCatalog
             || selected is CharacterEmoteCatalog || selected is CharacterDefinitionCreateAction
+            || selected is CharacterFactionCreateAction
             || selected is CatalogTraitBrowser || selected is TraitIconCatalog)
             return "Characters";
         if (selected is WorldClockSettings || selected is WorldWeatherSettings
@@ -380,13 +408,15 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         if (selected is WeaponPresentationCatalog || selected is WeaponPresentation
             || selected is WeaponAttack || selected is ArmAnimSlotCatalog
             || selected is WeaponCombatFallbacks || selected is WeaponImpactVfxDefaults
-            || selected is CombatHitStopSettings)
+            || selected is CombatHitStopSettings
+            || selected is WeaponPresentationCreateAction || selected is WeaponAttackCreateAction)
             return "Combat";
         if (selected is MovementStyle)
             return "Locomotion";
         if (selected is TileDefinition || selected is TilePrefabDB
             || selected is FarmWorkClipCatalog || selected is PlantOverlaySpriteCatalog
-            || selected is FishingLootCatalog || selected is FishWorkClipCatalog)
+            || selected is FishingLootCatalog || selected is FishWorkClipCatalog
+            || selected is TileDefinitionCreateAction)
             return "Map";
 
         return "Data Definitions";

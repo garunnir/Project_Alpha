@@ -14,37 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::ArmAnimSlotCatalog
   _inspectorPad: 0
   _verbs:
-  - action: 0
+  - leaf: 0
     hold:
-      leftBase: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
-      rightBase: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     aim:
-      leftBase: {fileID: 7400000, guid: 3c48e06349016e7409e3131ff69994d0, type: 2}
-      rightBase: {fileID: 7400000, guid: 3c48e06349016e7409e3131ff69994d0, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 3c48e06349016e7409e3131ff69994d0, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     attack:
-      leftBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
-      rightBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
-      twoHandBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
-    vfx:
-      actionVfx: {fileID: 0}
-      tracerVfx: {fileID: 0}
-      hitVfx: {fileID: 0}
-      missVfx: {fileID: 0}
-  - action: 3
-    hold:
-      leftBase: {fileID: 7400000, guid: 8e7df5dc0311bdd4cb3ecb6fe5152c22, type: 2}
-      rightBase: {fileID: 7400000, guid: 82e727c506879be4ea599107b8996efb, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 826657aab5a41ce48b44e7f5d800d9b6, type: 2}
-    aim:
-      leftBase: {fileID: 7400000, guid: 828d0c49db7e3c3448578a90e9044931, type: 2}
-      rightBase: {fileID: 7400000, guid: 95f08762767a33a41883efa7520cf988, type: 2}
-      twoHandBase: {fileID: 7400000, guid: ce5609fe35f4ae345ba679c2fc085610, type: 2}
-    attack:
-      leftBase: {fileID: 7400000, guid: 90a4e615ba1bd0f43a342a19a941fb82, type: 2}
-      rightBase: {fileID: 7400000, guid: 046c3f85271ba6d4c8bd452fa812e55a, type: 2}
-      twoHandBase: {fileID: 7400000, guid: ab43ee4509cc6dd44b3c9be6a84bd01f, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
         type: 3}
@@ -53,19 +35,61 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 5
+  - leaf: 3
     hold:
-      leftBase: {fileID: 7400000, guid: cf90729163833534d977ad8d9854fdd8, type: 2}
-      rightBase: {fileID: 7400000, guid: ed96c2acc34f3524c8a5a615cfa6cba6, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 050ff9eb21cb14546b545422cd4e0143, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     aim:
-      leftBase: {fileID: 7400000, guid: 744550a8735d7de478451381965d2e66, type: 2}
-      rightBase: {fileID: 7400000, guid: 3d8a505db3ffb354aa996c878108376d, type: 2}
-      twoHandBase: {fileID: 7400000, guid: f72e26f8ecefc934a95d461774b548a5, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     attack:
-      leftBase: {fileID: 7400000, guid: 38ff56fb56bc43840ab8e7329995c6af, type: 2}
-      rightBase: {fileID: 7400000, guid: 16c39c6c264fe4d4692748110b714f13, type: 2}
-      twoHandBase: {fileID: 7400000, guid: df519b92d1c4e0a468e11ec4e4556c5e, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
+  - leaf: 8
+    hold:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aim:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attack:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
+  - leaf: 5
+    hold:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aim:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attack:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     vfx:
       actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
         type: 3}
@@ -75,19 +99,19 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 6
+  - leaf: 6
     hold:
-      leftBase: {fileID: 7400000, guid: 708bf6d0a899b1046b12f3818fe21f4c, type: 2}
-      rightBase: {fileID: 7400000, guid: 1a7a8af18432686408dd82016689d53a, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 47441de6637b04d439ed10ccc8585fd5, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     aim:
-      leftBase: {fileID: 7400000, guid: ed46afe6d63d2304b80ae0ade5ff470b, type: 2}
-      rightBase: {fileID: 7400000, guid: e2189451f1d8c9245ad66e17fe3e3a04, type: 2}
-      twoHandBase: {fileID: 7400000, guid: e6efd9d795b28c342a6abd1d94b3f4d3, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     attack:
-      leftBase: {fileID: 7400000, guid: c485e899fd027df48b25de7e59c3df85, type: 2}
-      rightBase: {fileID: 7400000, guid: baf3036547f166140884e074a5cf7f7f, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 9740b6ce2f0b63d4ba00870533810754, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     vfx:
       actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
         type: 3}
@@ -97,19 +121,19 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 7
+  - leaf: 7
     hold:
-      leftBase: {fileID: 7400000, guid: b1913dd1b2923bb4baf43d508ef52da1, type: 2}
-      rightBase: {fileID: 7400000, guid: 4ca2406e749466b46899160f6ad336c3, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 7d2aba70ef590d648b30b2610989e386, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     aim:
-      leftBase: {fileID: 7400000, guid: f8786834e7645114aa39d1e93c918b0e, type: 2}
-      rightBase: {fileID: 7400000, guid: 2a91349e12e141d45aa1150bde4a0f60, type: 2}
-      twoHandBase: {fileID: 7400000, guid: cd489fd27ffb152408333fda5cbdb0c7, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     attack:
-      leftBase: {fileID: 7400000, guid: 8cf0d0a8029c5cc439c878fd41f0f169, type: 2}
-      rightBase: {fileID: 7400000, guid: 404a0b6e4653468448b42cd71863ef12, type: 2}
-      twoHandBase: {fileID: 7400000, guid: d7ce18733adf1e241ba13440cbfd842d, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     vfx:
       actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
         type: 3}
@@ -119,19 +143,19 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 4
+  - leaf: 4
     hold:
-      leftBase: {fileID: 7400000, guid: 6614c992968a66b44829d956ef83f4ad, type: 2}
-      rightBase: {fileID: 7400000, guid: 759fbca7ffbd00648ac5aba2128ade2c, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 1bedfc2b962e7f9469bf36b5575a6ab4, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     aim:
-      leftBase: {fileID: 7400000, guid: 08e14c26574209a4e864e78f127ddd65, type: 2}
-      rightBase: {fileID: 7400000, guid: 83a414d70bd5f3c47be39e38a7424585, type: 2}
-      twoHandBase: {fileID: 7400000, guid: ea34a025255ab67479f24ed9a6b4d3b1, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     attack:
-      leftBase: {fileID: 7400000, guid: 61d5753220f90774b9a2fe8e2158a05c, type: 2}
-      rightBase: {fileID: 7400000, guid: ae9dcf7076878ca4da8575bd8e285dc2, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 037b3e7a608758146936d6825ee07ae0, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
         type: 3}
@@ -143,9 +167,9 @@ MonoBehaviour:
   _impacts:
   - kind: 0
     clips:
-      leftBase: {fileID: 7400000, guid: 6b9953af89d511d469df28281a17e072, type: 2}
-      rightBase: {fileID: 7400000, guid: 7922c6a21494ca844b28d4beedd90bde, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 1c4bb88c2d4f82b4daf00cefc6eaf386, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     thin: {fileID: 7400000, guid: fc1ec7230d256504da1e7e02bb59c953, type: 2}
     vfx:
       actionVfx: {fileID: 0}
@@ -154,9 +178,9 @@ MonoBehaviour:
       missVfx: {fileID: 0}
   - kind: 1
     clips:
-      leftBase: {fileID: 7400000, guid: 88fef9795c2c1af43ac0b7e8e97e0e30, type: 2}
-      rightBase: {fileID: 7400000, guid: ab0077ba2c3ef3d4ca1581f7beb2fede, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 74be33602df9ee24daf15e59dde2a2cf, type: 2}
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     thin: {fileID: 7400000, guid: c647b8797ec89504cba57bb18620df3f, type: 2}
     vfx:
       actionVfx: {fileID: 0}

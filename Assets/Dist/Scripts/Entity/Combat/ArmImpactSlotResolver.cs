@@ -14,7 +14,7 @@ public static class ArmImpactSlotResolver
         AnimatorOverrideController resolved,
         ArmAnimSlotCatalog catalog,
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         ArmImpactKind kind,
         WieldHand hand)
     {
@@ -39,7 +39,7 @@ public static class ArmImpactSlotResolver
 
     static ArmAnimSlotCatalog.HandClips EntryImpact(
         WeaponPresentation presentation,
-        WeaponAction action,
+        CombatLeaf action,
         ArmImpactKind kind)
     {
         if (presentation == null ||

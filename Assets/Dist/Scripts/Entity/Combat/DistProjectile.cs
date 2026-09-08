@@ -131,7 +131,7 @@ public sealed class DistProjectile : MonoBehaviour
 
         RememberHit(host);
         var hitContext = new ActionHandlerContext(
-            _context.Action,
+            _context.Leaf,
             _context.Hand,
             _context.Attack,
             host,

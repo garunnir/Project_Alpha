@@ -11,8 +11,8 @@ public sealed class RaiseGuardHandler : IActionHandler
         if (attacker == null)
             return;
 
-        bool raise = attacker.CanPerform(WeaponAction.Raise)
-            && attacker.SelectedAction == WeaponAction.Raise
+        bool raise = attacker.CanPerform(CombatLeaf.Raise)
+            && attacker.SelectedLeaf == CombatLeaf.Raise
             && attacker.IsAiming;
         attacker.ApplyRaiseFromHandler(raise);
     }

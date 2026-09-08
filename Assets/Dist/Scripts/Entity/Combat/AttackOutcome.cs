@@ -8,7 +8,7 @@ using UnityEngine;
 
 public readonly struct AttackOutcome
 {
-    public readonly WeaponAction Action;
+    public readonly CombatLeaf Action;
     public readonly WieldHand Hand;
     public readonly WeaponResolveMode ResolveMode;
     public readonly AttackPerformResult Result;
@@ -66,7 +66,7 @@ public readonly struct AttackOutcome
         string.Equals(AppliedTissueId, BodyPartEffectIds.Cut, StringComparison.Ordinal);
 
     public AttackOutcome(
-        WeaponAction action,
+        CombatLeaf action,
         WieldHand hand,
         WeaponResolveMode resolveMode,
         AttackPerformResult result,

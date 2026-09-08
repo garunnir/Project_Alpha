@@ -117,6 +117,7 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 | Map / TileMap / bake / visibility | `docs/map/SYSTEM.md` (+ `TILEMAP*.md`) | `.cursor/rules/map-system.mdc` |
 | Inventory UI | `docs/inventory/INVENTORY_UI.md` | `.cursor/rules/inventory-ui.mdc` |
 | Equipment / weapon visual folders | `docs/equipment/GEAR.md` · `WEAPON_VISUAL.md` | (Wear·Wield · anim/VFX 맵) |
+| Combat pipeline (액션·무기·도구) | `docs/equipment/COMBAT_PIPELINE.md` | (Layer1–3 · Leaf · Catalog Resolve) |
 | UI MVC / font | `docs/ui/UI_Scripts.md` | `.cursor/rules/ui-prefab-layout.mdc` · `ui-font.mdc` |
 | UI hover placement | `docs/ui/HOVER.md` | (ContextMenu asm · keep-in-bounds) |
 | Locomotion | `docs/locomotion/LOCOMOTION.md` | `.cursor/rules/locomotion.mdc` |

@@ -5,9 +5,9 @@
 public sealed class SetHandActionContextAction : IContextMenuAction
 {
     readonly WieldSlotContextRequest _request;
-    readonly WeaponAction? _action;
+    readonly CombatLeaf? _action;
 
-    public SetHandActionContextAction(WieldSlotContextRequest request, WeaponAction? action)
+    public SetHandActionContextAction(WieldSlotContextRequest request, CombatLeaf? action)
     {
         _request = request;
         _action = action;
@@ -24,11 +24,11 @@ public sealed class SetHandActionContextAction : IContextMenuAction
         if (stack?.Item == null)
             return "missing";
 
-        WeaponPresentation presentation = WeaponActionRows.Resolve(
+        WeaponPresentation presentation = CombatLeafRows.Resolve(
             _request.Gear.PresentationCatalog,
             stack);
-        WeaponActionMask mask = WeaponActionRows.Available(presentation);
-        return (mask & WeaponActionUtil.ToMask(_action.Value)) == 0
+        CombatLeafMask mask = CombatLeafRows.Available(presentation);
+        return (mask & CombatLeafUtil.ToMask(_action.Value)) == 0
             ? CharacterGearLabels.BlockedInvalid
             : null;
     }
