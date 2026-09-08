@@ -22,9 +22,26 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 
     const string FallbacksAssetPath = WeaponCombatFallbacks.DefaultAssetPath;
 
+    /// <summary>Quality 템플릿 Presentation 파일명 접두 (메뉴 Quality/ 그룹).</summary>
+    public const string QualityPresentationNamePrefix = "Weapon_Quality_";
+
     [Serializable]
     public sealed class Binding
     {
+        /// <summary>Odin 리스트 줄 라벨 (id · Leaf 요약).</summary>
+        public string InspectorLabel
+        {
+            get
+            {
+                string leaves = FormatLeafSummary(presentation);
+                if (string.IsNullOrEmpty(id))
+                    return string.IsNullOrEmpty(leaves) ? "(empty)" : leaves;
+                if (string.IsNullOrEmpty(leaves))
+                    return id;
+                return id + " · " + leaves;
+            }
+        }
+
         [Tooltip("아이템 id, gun.skill, weapon_category, 또는 quality id (DIG/AXE…).")]
         [LabelText("Id")]
         public string id;
@@ -33,6 +50,27 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
         [Tooltip("이 id가 쓸 동작 목록. 여러 줄이 같은 Presentation 파일을 가리킬 수 있습니다.")]
         [LabelText("Presentation")]
         public WeaponPresentation presentation;
+
+        [ShowInInspector, ReadOnly, HideLabel]
+        [PropertyOrder(10)]
+        string LeafSummary => FormatLeafSummary(presentation);
+
+        static string FormatLeafSummary(WeaponPresentation presentation)
+        {
+            if (presentation?.Entries == null || presentation.Entries.Length == 0)
+                return "—";
+
+            var parts = new List<string>(4);
+            for (int i = 0; i < presentation.Entries.Length; i++)
+            {
+                WeaponPresentation.Entry e = presentation.Entries[i];
+                if (e == null)
+                    continue;
+                parts.Add(CombatLeafUtil.DropdownPath(e.leaf));
+            }
+
+            return parts.Count > 0 ? string.Join(", ", parts) : "—";
+        }
     }
 
     [InfoBox(
@@ -48,17 +86,17 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [LabelText("맨손 Presentation")]
     [SerializeField] WeaponPresentation _unarmed;
 
-    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "InspectorLabel")]
     [Tooltip("특정 아이템 id에만 쓰는 동작 목록입니다. 찾을 때 이걸 먼저 봅니다.")]
     [LabelText("By Item Id")]
     [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
 
-    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "InspectorLabel")]
     [Tooltip("ItemData.gun.skill에 맞춰 쓰는 동작 목록입니다. 아이템 전용이 없을 때 사용합니다.")]
     [LabelText("By Skill Id")]
     [SerializeField] Binding[] _bySkillId = Array.Empty<Binding>();
 
-    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "InspectorLabel")]
     [Tooltip("아이템의 weapon_category에 맞춰 쓰는 동작 목록입니다. 아이템·숙련이 없을 때 사용합니다.")]
     [LabelText("By Category Id")]
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
@@ -68,7 +106,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
         "베이스에 없는 Leaf만 추가(덮어쓰기 없음). level은 무시.\n" +
         "템플릿은 Excavate/Chop 등 보강 행만. 조합별 최종 SO bake 금지(런타임 캐시).",
         InfoMessageType.None)]
-    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "InspectorLabel")]
     [Tooltip(
         "qualities[].id (DIG/AXE…). 베이스 Presentation에 없는 Leaf만 합산. " +
         "템플릿은 Excavate/Chop 등 보강 행만 두는 것이 안전합니다.")]

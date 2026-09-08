@@ -104,15 +104,42 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         AddAssetLeaf(tree, "World/Mood", MoodSettings.DefaultAssetPath, EditorIcons.StarPointer);
         StyleSubtree(world, WorldTint);
 
-        OdinMenuItem combat = AddRoot(
-            tree, "Combat", EditorIcons.Crosshair, CombatTint,
-            "Presentation Catalog → Presentations → Attacks.\nFallbacks는 공용 Pipeline/VFX.");
-        AddTypedAssets(tree, "Combat/Catalog", CombatCatalogFolder, typeof(WeaponPresentationCatalog), false, EditorIcons.SettingsCog);
-        AddLeaf(tree, "Combat/+ Create Presentation", new WeaponPresentationCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
-        AddTypedAssets(tree, "Combat/Presentations", CombatPresentationsFolder, typeof(WeaponPresentation), false, EditorIcons.Play);
-        AddLeaf(tree, "Combat/+ Create Attack", new WeaponAttackCreateAction(), EditorIcons.Plus, new Color(0.45f, 1f, 0.55f));
-        AddTypedAssets(tree, "Combat/Attacks", CombatAttacksFolder, typeof(WeaponAttack), false, EditorIcons.PacmanGhost);
-        AddTypedAssets(tree, "Combat/Fallbacks", CombatFallbacksFolder, typeof(ScriptableObject), false, EditorIcons.Folder);
+        OdinMenuItem combat = AddWithIcon(
+            tree, "Combat", new DataDefinitionsCombatHub(), EditorIcons.Crosshair);
+        AddTypedAssets(
+            tree,
+            DataDefinitionsCombatHub.MenuPathCatalog,
+            CombatCatalogFolder,
+            typeof(WeaponPresentationCatalog),
+            false,
+            EditorIcons.SettingsCog);
+        AddLeaf(
+            tree,
+            "Combat/+ Create Presentation",
+            new WeaponPresentationCreateAction(),
+            EditorIcons.Plus,
+            new Color(0.45f, 1f, 0.55f));
+        AddCombatPresentations(tree);
+        AddLeaf(
+            tree,
+            "Combat/+ Create Attack",
+            new WeaponAttackCreateAction(),
+            EditorIcons.Plus,
+            new Color(0.45f, 1f, 0.55f));
+        AddTypedAssets(
+            tree,
+            DataDefinitionsCombatHub.MenuPathAttacks,
+            CombatAttacksFolder,
+            typeof(WeaponAttack),
+            false,
+            EditorIcons.PacmanGhost);
+        AddTypedAssets(
+            tree,
+            DataDefinitionsCombatHub.MenuPathFallbacks,
+            CombatFallbacksFolder,
+            typeof(ScriptableObject),
+            false,
+            EditorIcons.Folder);
         StyleSubtree(combat, CombatTint);
 
         OdinMenuItem locomotion = AddRoot(
@@ -203,6 +230,74 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
                 menuPath,
                 new DataDefinitionsRootHelp(menuPath, $"Missing asset:\n{assetPath}", new Color(1f, 0.35f, 0.35f)),
                 EditorIcons.X);
+    }
+
+    static void AddCombatPresentations(OdinMenuTree tree)
+    {
+        Texture baselineIcon = EditorIcons.Play.Active;
+        Texture qualityIcon = EditorIcons.Tag.Active;
+        string[] guids = AssetDatabase.FindAssets(
+            "t:WeaponPresentation",
+            new[] { CombatPresentationsFolder });
+        System.Array.Sort(guids, System.StringComparer.Ordinal);
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            var presentation = AssetDatabase.LoadAssetAtPath<WeaponPresentation>(path);
+            if (presentation == null)
+                continue;
+
+            bool quality = presentation.name.StartsWith(
+                WeaponPresentationCatalog.QualityPresentationNamePrefix,
+                System.StringComparison.Ordinal);
+            string menuPath = quality
+                ? DataDefinitionsCombatHub.MenuPathQuality + "/" + presentation.name
+                : DataDefinitionsCombatHub.MenuPathBaselines + "/" + presentation.name;
+            OdinMenuItem item = AddWithIcon(
+                tree,
+                menuPath,
+                presentation,
+                quality ? EditorIcons.Tag : EditorIcons.Play);
+            if (item != null)
+                item.Icon = quality ? qualityIcon : baselineIcon;
+        }
+
+        OdinMenuItem baselines = FindMenuItemByPath(
+            tree, DataDefinitionsCombatHub.MenuPathBaselines);
+        if (baselines != null)
+            baselines.Icon = baselineIcon;
+        OdinMenuItem qualityFolder = FindMenuItemByPath(
+            tree, DataDefinitionsCombatHub.MenuPathQuality);
+        if (qualityFolder != null)
+            qualityFolder.Icon = qualityIcon;
+    }
+
+    /// <summary>Combat Hub 점프 등 — 메뉴 경로로 선택.</summary>
+    public static void TrySelectMenuPath(string menuPath)
+    {
+        DataDefinitionsWindow window = GetWindow<DataDefinitionsWindow>();
+        if (window == null || string.IsNullOrEmpty(menuPath))
+            return;
+
+        if (window.MenuTree == null)
+            window.ForceMenuTreeRebuild();
+
+        OdinMenuItem item = FindMenuItemByPath(window.MenuTree, menuPath);
+        if (item == null)
+        {
+            window.ForceMenuTreeRebuild();
+            item = FindMenuItemByPath(window.MenuTree, menuPath);
+        }
+
+        if (item == null)
+        {
+            Debug.LogWarning("[DataDefinitions] Menu path not found: " + menuPath);
+            return;
+        }
+
+        window.MenuTree.Selection.Clear();
+        item.Select(true);
+        window.Repaint();
     }
 
     static void AddTypedAssets(
@@ -360,6 +455,8 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             return itemBrowser.Source == CatalogSource.Custom ? "Items · Custom" : "Items · BN Reference";
         if (selected is CatalogRecipeBrowser recipeBrowser)
             return recipeBrowser.Source == CatalogSource.Custom ? "Recipes · Custom" : "Recipes · BN Reference";
+        if (selected is DataDefinitionsCombatHub)
+            return "Pipeline hub";
         if (selected is DataDefinitionsRootHelp)
             return "하위 leaf를 선택하세요";
         if (selected is CatalogLocaleHub)
@@ -409,7 +506,8 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             || selected is WeaponAttack || selected is ArmAnimSlotCatalog
             || selected is WeaponCombatFallbacks || selected is WeaponImpactVfxDefaults
             || selected is CombatHitStopSettings
-            || selected is WeaponPresentationCreateAction || selected is WeaponAttackCreateAction)
+            || selected is WeaponPresentationCreateAction || selected is WeaponAttackCreateAction
+            || selected is DataDefinitionsCombatHub)
             return "Combat";
         if (selected is MovementStyle)
             return "Locomotion";

@@ -110,3 +110,5 @@ Perform/      ②  PlayerCombatController
 Combat/       ③  CharacterAttacker · Handlers · Catalog
 Character/Cell/   Dig·Chop Pipeline
 ```
+
+Data Definitions: **Combat** 루트 허브 → ① Catalog → ② Baselines/Quality → ③ Attacks → ④ Fallbacks. Catalog·허브에 Resolve 미리보기.

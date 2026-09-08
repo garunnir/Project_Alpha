@@ -28,7 +28,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 |------|------|----------|
 | `Catalog/` | 진입 허브만 (`WeaponPresentationCatalog`) | Fallbacks·Attack·클립 |
 | `Fallbacks/` | Leaf 기본 동사 Catalog · HitDefaults · HitStop · Fallbacks 묶음 | 컨트롤러에 동작 이름 |
-| `Presentations/` | 무기별 `WeaponPresentation` | Catalog·Pipeline |
+| `Presentations/` | 무기별 `WeaponPresentation` · `Quality/` = ByQualityId 얇은 템플릿 | Catalog·Pipeline |
 | `Attacks/` | `WeaponAttack` 레시피 | Presentation·VFX 표 |
 
 ## Visual / Scripts

@@ -98,7 +98,8 @@ public sealed class WeaponPresentationCreateAction
     [Title("Create Weapon Presentation", "Combat / Presentations", TitleAlignments.Split)]
     [GUIColor(0.55f, 1f, 0.65f)]
     [InfoBox(
-        "에셋은 " + GameDataWeaponPresentationEditor.PresentationsFolder + "/ 에 생성됩니다.\n저장은 Unity Ctrl+S.",
+        "에셋은 " + GameDataWeaponPresentationEditor.PresentationsFolder + "/ 에 생성됩니다.\n" +
+        "이름 접두 Weapon_Quality_ → 트리 ② Presentations/Quality. 그 외 → Baselines.\n저장은 Unity Ctrl+S.",
         SdfIconType.PlayFill,
         nameof(AlwaysShow))]
     [ShowInInspector, HideLabel, DisplayAsString(EnableRichText = true)]
