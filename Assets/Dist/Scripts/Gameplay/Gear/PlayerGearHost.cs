@@ -221,7 +221,8 @@ public sealed class PlayerGearHost : MonoBehaviour
             BodyContainer,
             FloorContainer,
             RefreshPrimaryWield,
-            ResolveCharacterBody);
+            ResolveCharacterBody,
+            ApplyStackSelectedLeaf);
         _service.SetActionHost(_actionHost);
         _service.SetPresentationCatalog(_attacker != null ? _attacker.Catalog : null);
         _service.LiftStrainChanged += ApplyLiftStrainMovement;
@@ -335,4 +336,7 @@ public sealed class PlayerGearHost : MonoBehaviour
         _attacker.SetActiveWieldHand(
             CharacterAttacker.AnimHandFrom(_service.Wield, primary.Slot));
     }
+
+    bool ApplyStackSelectedLeaf(ItemStack stack, CombatLeaf? action) =>
+        _attacker != null && _attacker.TryApplyStackSelectedLeaf(stack, action);
 }

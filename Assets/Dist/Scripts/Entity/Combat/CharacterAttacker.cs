@@ -303,7 +303,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (ReferenceEquals(_wieldedStack, stack) &&
             ReferenceEquals(_wieldedInstance, instance) &&
             string.Equals(_itemId, itemId, StringComparison.Ordinal))
+        {
+            ApplySelectedFromInstance();
             return;
+        }
 
         _wieldedStack = stack;
         _wieldedInstance = instance;
@@ -360,15 +363,42 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (next == _selectedLeaf)
             return;
 
+        if (_wieldedStack != null)
+        {
+            TryApplyStackSelectedLeaf(_wieldedStack, next);
+            return;
+        }
+
         _selectedLeaf = next;
         WriteSelectedToInstance(next);
         SelectedLeafChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Gear UI·Q 공용 — instance leaf 기록. active wield 스택이면 runtime leaf 동기.
+    /// </summary>
+    public bool TryApplyStackSelectedLeaf(ItemStack stack, CombatLeaf? action)
+    {
+        if (stack?.Instance == null)
+            return false;
+
+        stack.Instance.SelectedLeaf = action;
+
+        if (!ReferenceEquals(_wieldedStack, stack))
+            return true;
+
+        ApplySelectedFromInstance();
+        return true;
     }
 
     public bool TrySelectLeaf(CombatLeaf action)
     {
         if (!CanPerform(action))
             return false;
+
+        if (_wieldedStack != null)
+            return TryApplyStackSelectedLeaf(_wieldedStack, action);
+
         WriteSelectedToInstance(action);
         if (_selectedLeaf == action)
             return true;

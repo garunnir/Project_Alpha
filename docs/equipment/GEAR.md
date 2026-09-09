@@ -37,7 +37,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
 | `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + `HelmetVision` + Kind **포워드** (`WorldWeatherHost`). BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
 | `CharacterSpawnGearApplier` | 스폰 직후 Definition 로드아웃 즉시 Wear/Wield + 총 탄 채움 (`WeaponAmmoService` 타이머 아님) |
-| `ItemInstance.SelectedLeaf` | 선택 동사 SSOT |
+| `ItemInstance.SelectedLeaf` | 선택 동사 SSOT. 런타임 동기 = `CharacterAttacker.TryApplyStackSelectedLeaf` (Gear UI·Q 공용) |
 | `CombatLeafRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |

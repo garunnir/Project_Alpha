@@ -19,6 +19,7 @@ public sealed class CharacterGearService
     Func<int> _strengthProvider;
     Func<ICharacterSkills> _skillsProvider;
     Action _onPrimaryDirty;
+    Func<ItemStack, CombatLeaf?, bool> _applyStackSelectedLeaf;
     Func<InventoryContainer> _bodyProvider;
     Func<InventoryContainer> _floorProvider;
     Func<ICharacterBody> _characterBodyProvider;
@@ -45,13 +46,15 @@ public sealed class CharacterGearService
         Func<InventoryContainer> bodyProvider,
         Func<InventoryContainer> floorProvider,
         Action onPrimaryDirty,
-        Func<ICharacterBody> characterBodyProvider = null)
+        Func<ICharacterBody> characterBodyProvider = null,
+        Func<ItemStack, CombatLeaf?, bool> applyStackSelectedLeaf = null)
     {
         _strengthProvider = strengthProvider;
         _skillsProvider = skillsProvider;
         _bodyProvider = bodyProvider;
         _floorProvider = floorProvider;
         _onPrimaryDirty = onPrimaryDirty;
+        _applyStackSelectedLeaf = applyStackSelectedLeaf;
         _characterBodyProvider = characterBodyProvider;
 
         _wear.Changed += OnDomainChanged;
@@ -412,7 +415,12 @@ public sealed class CharacterGearService
     {
         if (stack?.Instance == null)
             return false;
-        stack.Instance.SelectedLeaf = action;
+
+        if (_applyStackSelectedLeaf != null)
+            _applyStackSelectedLeaf(stack, action);
+        else
+            stack.Instance.SelectedLeaf = action;
+
         NotifyPrimaryDirty();
         return true;
     }
