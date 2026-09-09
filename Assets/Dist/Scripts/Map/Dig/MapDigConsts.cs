@@ -23,8 +23,7 @@ namespace IsoTilemap
         public const float MaxRayDistance = 200f;
 
         /// <summary>
-        /// 액터 walkable 셀 → 목표 walkable 셀 유클리드 반경(셀 단위, 3축).
-        /// √(dx²+dy²+dz²) ≤ 이 값. 게이트·clamp SSOT: <see cref="IsWithinActionRange"/>.
+        /// Dig 사거리 설계 상수(셀 단위). 월드 반경 = <see cref="ActionRangeWorld"/>.
         /// </summary>
         public const int DigActionRangeCells = 2;
 
@@ -37,16 +36,25 @@ namespace IsoTilemap
         /// <summary>레거시 alias — <see cref="DefaultStratumBlockPrefabId"/>.</summary>
         public const string DefaultStratumFloorPrefabId = DefaultStratumBlockPrefabId;
 
+        /// <summary>액터 발끝→목표 walkable 셀 중심 월드 유클리드 반경.</summary>
+        public static float ActionRangeWorld(float cellSize) =>
+            DigActionRangeCells * Mathf.Max(1e-4f, cellSize);
+
+        /// <summary>목표 walkable 셀 중심 월드 좌표.</summary>
+        public static Vector3 TargetWorld(Vector3Int targetWalkableCell, float cellSize) =>
+            TileHelper.ConvertGridToWorldPos(targetWalkableCell, cellSize);
+
         /// <summary>
-        /// Dig 사거리 게이트. 셀 중심 간 유클리드 ≤ <see cref="DigActionRangeCells"/>.
+        /// Dig 사거리 게이트 SSOT. actorWorld = live transform 발끝, target = walkable 셀 중심.
         /// </summary>
-        public static bool IsWithinActionRange(Vector3Int actorCell, Vector3Int targetCell)
+        public static bool IsWithinActionRangeWorld(
+            Vector3 actorWorld,
+            Vector3Int targetWalkableCell,
+            float cellSize)
         {
-            float dx = actorCell.x - targetCell.x;
-            float dy = actorCell.y - targetCell.y;
-            float dz = actorCell.z - targetCell.z;
-            float r = DigActionRangeCells;
-            return dx * dx + dy * dy + dz * dz <= r * r;
+            float r = ActionRangeWorld(cellSize);
+            Vector3 targetWorld = TargetWorld(targetWalkableCell, cellSize);
+            return (targetWorld - actorWorld).sqrMagnitude <= r * r;
         }
 
         static readonly (string PrefabId, string ItemId)[] DropTable =

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-    public delegate bool TryResolveDigActorCellDelegate(out Vector3Int cell);
+    public delegate bool TryResolveDigActorWorldDelegate(out Vector3 actorWorld);
 
     public struct MapDigRuntimeHooks
     {
@@ -17,7 +17,8 @@ namespace IsoTilemap
         public Func<bool> PlayerHasDigTool;
         public Func<string> DigBlockedLabel;
         public Action<string, int, Vector3> GrantItem;
-        public TryResolveDigActorCellDelegate TryResolveActorCell;
+        /// <summary>사거리 게이트용 live transform 발끝. <see cref="GridPos"/>와 분리.</summary>
+        public TryResolveDigActorWorldDelegate TryResolveActorWorld;
 
         public static MapDigRuntimeHooks Default => new MapDigRuntimeHooks
         {
@@ -26,9 +27,9 @@ namespace IsoTilemap
             PlayerHasDigTool = () => false,
             DigBlockedLabel = () => "채굴할 수 없음",
             GrantItem = (_, _, _) => { },
-            TryResolveActorCell = (out Vector3Int cell) =>
+            TryResolveActorWorld = (out Vector3 actorWorld) =>
             {
-                cell = default;
+                actorWorld = default;
                 return false;
             },
         };

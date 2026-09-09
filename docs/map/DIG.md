@@ -48,9 +48,9 @@ TileFlags.IsDiggableTarget(definition)
 |------|------|
 | `MapDigColumnHost` | `TileMapManager` 동일 GO. column depth·`stratumSeed`·`TryBreakFloor` (face 제거 + 지층 생성) |
 | `MapDigService` | `CanBreak` / `TryBreak` / `TryBreakAt` — 도구·무드·사거리·플래그 게이트 |
-| `MapDigRuntimeHooks` | Dist.Map ↔ DistScript 브리지 (`MapGameplayBootstrap.BindMapDigService`) |
+| `MapDigRuntimeHooks` | Dist.Map ↔ DistScript 브리지. 사거리: `TryResolveActorWorld`(발끝 transform). `GridPos`/`TryResolveActorCell`(농사·낚시)와 분리 |
 | `MeleeBlockTargetHandler` | `melee_block_target` — Excavate cue → `CombatMath.ResolveExcavateDamage` → `ApplyDamage` |
-| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → FloorFace + 유클리드 3D clamp (`DigActionRangeCells`); hold·preview 공용 |
+| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → FloorFace + **발끝 transform→목표 셀 중심** 월드 유클리드 clamp (`DigActionRangeCells` × cellSize); hold·preview 공용 |
 | `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). 타겟·맵 remaining HP·`TryBreak` (하이라이트는 Preview) |
 | `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — RMB + LMB hold → Dig + `TryPerform(Excavate)` |
 | `MeleeBlockAimPreview` | `ICombatTargetingPreview` — RMB + `CanBreak` → `SetDigHighlight` |
@@ -77,7 +77,7 @@ TileFlags.IsDiggableTarget(definition)
 | Excavate 피해 | `CombatMath.ResolveExcavateDamage` | 채널별 `DamageForTag` + DIG potency(첫 채널) → `MitigateStructureDamage` |
 | `DefaultDigDurability` | 5 | breakDurability 미지정 폴백 |
 | `BaseBreakSeconds` | 2.5 | 벽시계 패리티 대략치 |
-| `DigActionRangeCells` | 2 | 액터→목표 walkable 셀 유클리드 `√(dx²+dy²+dz²)` ≤ 2 (`MapDigConsts.IsWithinActionRange`). 초과 조준은 액터→ideal 3축 스텝 clamp |
+| `DigActionRangeCells` | 2 | 설계 상수. 월드 반경 = `DigActionRangeCells × cellSize`. actor **발끝 transform** → 목표 walkable 셀 중심 3D 유클리드 (`MapDigConsts.IsWithinActionRangeWorld`). `GridPos`와 분리. 초과 조준은 액터→ideal 3축 스텝 clamp |
 | `MaxRayDistance` | 200 | 타겟 레이 최대 거리 |
 | `DefaultStratumBlockPrefabId` | `Terrain/StoneBlock` | `StratumProfile` 비었을 때 폴백 |
 | `DefaultStratumFloorPrefabId` | `Terrain/StoneBlock` | 레거시 alias |
@@ -126,7 +126,7 @@ sequenceDiagram
 **바인딩**
 
 - **입력:** `PlayerPossessedInputHost` → `PlayerCombatController` (Layer2 drivers). dig 전용 MB **없음**.
-- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`, 유클리드 3D ≤ `DigActionRangeCells`) → Preview (`MeleeBlockAimPreview` → face highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
+- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`, 발끝 transform→목표 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) → Preview (`MeleeBlockAimPreview` → face highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
 - **행동:** `CharacterAttacker.PerformDig` + `CharacterActionHost.DigPipeline`. `CancelAll` / LMB release → pipeline Clear; RMB 유지 시 Preview가 하이라이트 유지.
 - **손 게이트:** 일반 combat **ActiveWieldHand** 스택 — Dig 전용 손 스캔 아님. `HasDigQuality`(DIG level ≥1)면 Dig Leaf 가능.
 - **애니:** `AttackResolved` → 기존 Attack overlay 큐 (`CombatLeaf.Excavate` Leaf / Catalog). Farm Work Layer·presentation-only 큐 **아님**. AnimatorController에 Dig 상태 이름 **미추가**.
@@ -145,7 +145,7 @@ sequenceDiagram
 | 도구 | DIG 품질 (`HasDigQuality`) | 동일 + ActiveWield Dig Leaf |
 | 타이밍 | Farm Work 게이지 (`TillWorkDurationSeconds`) | Dig cue × session proxy (`DefaultDigDurability` / DIG level) |
 | 애니 | Farm **Work Layer** (`FarmWorkClipCatalog`) | Dig Leaf → **Attack overlay** (Melee Family) |
-| 사거리 | Farm 파이프라인 (`MapPlantConsts` / arrive) | `DigActionRangeCells` 유클리드 3D 반경 2 (+ combat clamp) |
+| 사거리 | Farm 파이프라인 (`MapPlantConsts` / arrive) | 발끝 transform→walkable 셀 중심 월드 유클리드 `DigActionRangeCells × cellSize` (+ combat clamp) |
 | 연관 문서 | [`docs/farming/FARMING.md`](../farming/FARMING.md) | 이 문서 · [`GEAR.md`](../equipment/GEAR.md) Dig Leaf |
 
 **요약:** till은 같은 walkable 셀 바닥을 `Tilled`로 **덮어쓰기**만 한다. dig-break는 셀 **아래 face를 깎고** 수직으로 한 단 deeper 노출·생성한다. `PLOWABLE`-only 바닥은 경작만, `MINEABLE`-only는 dig-break만.

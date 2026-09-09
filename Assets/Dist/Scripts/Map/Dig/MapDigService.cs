@@ -88,13 +88,15 @@ namespace IsoTilemap
 
         static bool IsWithinDigRange(Vector3Int targetCell)
         {
-            if (_hooks.TryResolveActorCell == null ||
-                !_hooks.TryResolveActorCell(out Vector3Int actorCell))
+            if (_hooks.TryResolveActorWorld == null ||
+                !_hooks.TryResolveActorWorld(out Vector3 actorWorld))
             {
                 return false;
             }
 
-            return MapDigConsts.IsWithinActionRange(actorCell, targetCell);
+            MapDigColumnHost host = MapDigColumnHost.Runtime;
+            float cellSize = host != null ? host.CellSize : 1f;
+            return MapDigConsts.IsWithinActionRangeWorld(actorWorld, targetCell, cellSize);
         }
 
         static void GrantBreakDrop(string prefabId, Vector3 world)

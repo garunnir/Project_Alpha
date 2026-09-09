@@ -40,7 +40,7 @@ flowchart TB
 | 단 | 역할 | Excavate |
 |----|------|----------|
 | **Sight** | 시선·월드점 (Y 평면화) | `PlayerAimController` + `IAimSightProvider` |
-| **Resolve** | typed 타겟 + 사거리 clamp | `DigTileTargetResolver.TryResolveFromCombatAim` (유클리드 3D ≤ `DigActionRangeCells`) |
+| **Resolve** | typed 타겟 + 사거리 clamp | `DigTileTargetResolver.TryResolveFromCombatAim` (발끝 transform→목표 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) |
 | **Preview** | 피드백 consumer | `MeleeBlockAimPreview` → `TilePresentationSystem.SetDigHighlight` |
 
 `ICombatTargetingPreview`는 `ICombatPerformDriver`와 대칭 — `PlayerCombatController`가 perform Tick **이후** preview Tick. 원거리 Preview는 `UIAimPointer` + `TryPreviewRangedSpread` (후속 `RangedAimPreview` 이주 가능). Farm/건설 셀 세션은 입력·확정이 달라 합치지 않음.

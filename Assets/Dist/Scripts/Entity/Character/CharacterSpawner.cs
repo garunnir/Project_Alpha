@@ -112,7 +112,15 @@ public sealed class CharacterSpawner : MonoBehaviour
         else
             Debug.LogError("[CharacterSpawner] PlayerManager missing for Possessed spawn.", this);
 
-        PlayerProgressSaveBridge.TryRestorePossessed(possessedBody);
+        if (PlayerProgressSaveBridge.TryRestorePossessed(possessedBody))
+            SyncPossessedMapPresentation();
+    }
+
+    static void SyncPossessedMapPresentation()
+    {
+        PlayerPossessedInputHost input =
+            Object.FindFirstObjectByType<PlayerPossessedInputHost>();
+        input?.SyncMapPresentationDrivers();
     }
 
     void OnDrawGizmos()

@@ -13,14 +13,13 @@ namespace IsoTilemap
 
         /// <summary>
         /// 전투 Excavate SSOT. AimWorldPoint → face.
-        /// 유클리드 3D 반경(<see cref="MapDigConsts.DigActionRangeCells"/>) 밖이면
-        /// 액터→ideal 그리드 스텝으로 clamp (Y 포함).
+        /// actorFeetWorld(발끝 transform) → 목표 walkable 셀 중심 월드 유클리드
+        /// (<see cref="MapDigConsts.ActionRangeWorld"/>) 밖이면 액터→ideal 그리드 스텝 clamp.
         /// </summary>
         public static bool TryResolveFromCombatAim(
             Vector3 aimWorldPoint,
             Vector3 interactionDirFlat,
-            Vector3Int actorWalkableCell,
-            float actorFeetWorldY,
+            Vector3 actorFeetWorld,
             TileMapCacheHub hub,
             float cellSize,
             TilePrefabDB prefabDb,
@@ -30,26 +29,31 @@ namespace IsoTilemap
             if (hub == null)
                 return false;
 
+            float actorFeetY = actorFeetWorld.y;
+            Vector3Int actorWalkableCell = TileHelper.ConvertWorldToGrid(actorFeetWorld, cellSize);
+
             if (!TryResolveFromWorldPoint(
                     aimWorldPoint,
                     hub,
                     cellSize,
-                    actorFeetWorldY,
+                    actorFeetY,
                     prefabDb,
                     out DigTileTarget ideal))
             {
                 return false;
             }
 
-            if (MapDigConsts.IsWithinActionRange(actorWalkableCell, ideal.WalkableCell))
+            if (MapDigConsts.IsWithinActionRangeWorld(actorFeetWorld, ideal.WalkableCell, cellSize))
             {
                 target = ideal;
                 return true;
             }
 
             Vector3Int clamped = ClampWalkableTowardIdeal(
+                actorFeetWorld,
                 actorWalkableCell,
-                ideal.WalkableCell);
+                ideal.WalkableCell,
+                cellSize);
 
             // interactionDirFlat: clamp가 액터에 머물 때 XZ 폴백 (희귀).
             if (clamped == actorWalkableCell &&
@@ -60,17 +64,16 @@ namespace IsoTilemap
                 if (flat.sqrMagnitude > 1e-6f)
                 {
                     flat.Normalize();
-                    int span = MapDigConsts.DigActionRangeCells;
-                    int dx = Mathf.RoundToInt(flat.x * span);
-                    int dz = Mathf.RoundToInt(flat.z * span);
-                    if (dx != 0 || dz != 0)
+                    float span = MapDigConsts.ActionRangeWorld(cellSize);
+                    Vector3 offsetWorld = actorFeetWorld + flat * span;
+                    Vector3Int offsetCell = TileHelper.ConvertWorldToGrid(offsetWorld, cellSize);
+                    if (offsetCell != actorWalkableCell)
                     {
                         clamped = ClampWalkableTowardIdeal(
+                            actorFeetWorld,
                             actorWalkableCell,
-                            new Vector3Int(
-                                actorWalkableCell.x + dx,
-                                actorWalkableCell.y,
-                                actorWalkableCell.z + dz));
+                            offsetCell,
+                            cellSize);
                     }
                 }
             }
@@ -159,15 +162,19 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 액터→ideal 3축 Sign 스텝. 유클리드 반경 안인 마지막 셀.
+        /// 액터 발끝→ideal walkable. 월드 유클리드 반경 안인 마지막 셀(3축 Sign 스텝).
         /// </summary>
-        static Vector3Int ClampWalkableTowardIdeal(Vector3Int actor, Vector3Int ideal)
+        static Vector3Int ClampWalkableTowardIdeal(
+            Vector3 actorFeetWorld,
+            Vector3Int actorWalkableCell,
+            Vector3Int ideal,
+            float cellSize)
         {
-            if (MapDigConsts.IsWithinActionRange(actor, ideal))
+            if (MapDigConsts.IsWithinActionRangeWorld(actorFeetWorld, ideal, cellSize))
                 return ideal;
 
-            Vector3Int lastInRange = actor;
-            Vector3Int cur = actor;
+            Vector3Int lastInRange = actorWalkableCell;
+            Vector3Int cur = actorWalkableCell;
             int maxSteps = MapDigConsts.DigActionRangeCells * 4 + 8;
             for (int step = 0; step < maxSteps; step++)
             {
@@ -182,7 +189,7 @@ namespace IsoTilemap
                     cur.y + MathSign(rdy),
                     cur.z + MathSign(rdz));
 
-                if (!MapDigConsts.IsWithinActionRange(actor, cur))
+                if (!MapDigConsts.IsWithinActionRangeWorld(actorFeetWorld, cur, cellSize))
                     break;
 
                 lastInRange = cur;

@@ -49,6 +49,22 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
             TryGetComponent(out _hearingPing);
         if (_inventoryRuntime == null)
             TryGetComponent(out _inventoryRuntime);
+        if (_floorVisibility == null)
+            TryGetComponent(out _floorVisibility);
+        if (_sightLineBlend == null)
+            TryGetComponent(out _sightLineBlend);
+    }
+
+    /// <summary>
+    /// possess 직후 맵 Start(플레이어 null) gap 보정 — floor visibility·proximity blend 즉시 1회 sync.
+    /// </summary>
+    public void SyncMapPresentationDrivers()
+    {
+        if (_bodyState == null)
+            return;
+
+        _floorVisibility?.ApplyNow();
+        _sightLineBlend?.ApplyNow();
     }
 
     public void Bind(GameObject body)
@@ -94,6 +110,9 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
             session.BecomePlayer(_movement, _inventoryRuntime);
         else if (body != null)
             Debug.LogError("[PlayerPossessedInputHost] CharacterSessionHub is required on the possessed body.", this);
+
+        if (body != null)
+            SyncMapPresentationDrivers();
     }
 
     public void SetControlEnabled(bool enabled)

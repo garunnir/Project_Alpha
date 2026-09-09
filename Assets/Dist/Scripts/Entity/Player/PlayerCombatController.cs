@@ -166,15 +166,12 @@ public sealed class PlayerCombatController : MonoBehaviour
 
         float cellSize = ResolveCellSize();
         TilePrefabDB prefabDb = ResolvePrefabDb();
-        float feetY = CharacterFeetPose.GetFeetWorld(
-            _characterState != null ? _characterState.transform : transform).y;
-        Vector3Int actorCell = _characterState.ResolveCurrentGridCell();
+        Vector3 actorFeetWorld = CharacterFeetPose.GetFeetWorld(_characterState.transform);
 
         return DigTileTargetResolver.TryResolveFromCombatAim(
             _characterState.AimWorldPoint,
             _characterState.InteractionDir,
-            actorCell,
-            feetY,
+            actorFeetWorld,
             hub,
             cellSize,
             prefabDb,

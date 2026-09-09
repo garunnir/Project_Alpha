@@ -55,8 +55,19 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             PlayerHasDigTool = PlayerHasDigTool,
             DigBlockedLabel = () => HarvestContextLabels.TillBlocked,
             GrantItem = GrantDigItem,
-            TryResolveActorCell = MapPlantService.TryResolveActorCell,
+            TryResolveActorWorld = TryResolveDigActorWorld,
         });
+    }
+
+    static bool TryResolveDigActorWorld(out Vector3 actorWorld)
+    {
+        actorWorld = default;
+        PlayerGearHost gear = PlayerGearHost.Active;
+        if (gear == null || !CharacterBodyResolve.TryGetInBody(gear, out CharacterState state))
+            return false;
+
+        actorWorld = CharacterFeetPose.GetFeetWorld(state.transform);
+        return true;
     }
 
     static bool PlayerHasDigTool()
