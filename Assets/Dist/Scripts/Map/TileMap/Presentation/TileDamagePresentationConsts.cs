@@ -14,11 +14,8 @@ namespace IsoTilemap
         /// <summary>손상 표시 최대 단계 (1..Max). 0 = 풀 HP·오버레이 없음.</summary>
         public const int MaxCrackStage = 3;
 
-        /// <summary>face 위 크랙 쿼드 Y 오프셋 (월드, z-fight 방지).</summary>
-        public const float CrackYOffset = 0.02f;
-
-        /// <summary>셀 대비 크랙 쿼드 수평 스케일.</summary>
-        public const float CrackPlaneScale = 0.92f;
+        /// <summary>크랙 큐브가 host bounds보다 살짝 커지는 양(월드).</summary>
+        public const float CrackBoundsInflate = 0.04f;
 
         /// <summary>프로시저럴 크랙 텍스처 한 변(px).</summary>
         public const int CrackTextureSize = 64;

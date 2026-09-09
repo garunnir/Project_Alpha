@@ -268,18 +268,18 @@ namespace IsoTilemap
                 return;
 
             _currentDamageStage = stage;
-            float cellSize = MapDigColumnHost.Runtime != null
-                ? MapDigColumnHost.Runtime.CellSize
-                : SafeCellSize;
-
             if (stage <= 0)
             {
-                _crackOverlay?.Apply(0, cellSize);
+                _crackOverlay?.Apply(0, null);
                 return;
             }
 
+            Renderer boundsSource = _shadeController != null
+                ? _shadeController.CachedRenderer
+                : GetComponentInChildren<Renderer>();
+
             _crackOverlay ??= new TileViewCrackOverlay(transform);
-            _crackOverlay.Apply(stage, cellSize);
+            _crackOverlay.Apply(stage, boundsSource);
         }
 
         public void ConfigureStructuralHidePresentationMode(StructuralHidePresentationMode mode) =>

@@ -11,27 +11,32 @@ public abstract class ShaderController : MonoBehaviour
 
     protected virtual void Awake()
     {
-        InitializeRendererAndMaterial(useSharedMaterial: false);
+        RebindMaterial(useSharedMaterial: false);
         CachePropertyIDs();
     }
 
     private void OnValidate()
     {
-        InitializeRendererAndMaterial(useSharedMaterial: true);
+        RebindMaterial(useSharedMaterial: true);
         CachePropertyIDs();
     }
 
-    private void InitializeRendererAndMaterial(bool useSharedMaterial)
+    /// <summary>
+    /// 렌더러 머티리얼이 교체된 뒤 Emphasis 등이 같은 인스턴스를 보도록 재바인딩.
+    /// Play: <c>renderer.material</c> 인스턴스. Edit: shared.
+    /// </summary>
+    public void RebindMaterial(bool useSharedMaterial = false)
     {
         if (_renderer == null)
-        {
             _renderer = GetComponent<Renderer>();
+
+        if (_renderer == null)
+        {
+            Mat = null;
+            return;
         }
 
-        if (_renderer != null)
-        {
-            Mat = useSharedMaterial ? _renderer.sharedMaterial : _renderer.material;
-        }
+        Mat = useSharedMaterial ? _renderer.sharedMaterial : _renderer.material;
     }
 
     // 각 셰이더별 컨트롤러가 ID를 선언하고 구현

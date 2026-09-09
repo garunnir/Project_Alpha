@@ -1,5 +1,5 @@
 // ============================================================
-// DigTileTargetResolver — AimWorldPoint / combat clamp → HorizontalFace 굴착 타겟
+// DigTileTargetResolver — AimWorldPoint → 셀 중심·바깥면 기준 Dig 타겟
 // ============================================================
 
 using UnityEngine;
@@ -12,9 +12,8 @@ namespace IsoTilemap
         static readonly RaycastHit[] PhysicsHits = new RaycastHit[PhysicsHitBufferSize];
 
         /// <summary>
-        /// 전투 Excavate SSOT. AimWorldPoint → face.
-        /// actorFeetWorld(발끝 transform) → 목표 walkable 셀 중심 월드 유클리드
-        /// (<see cref="MapDigConsts.ActionRangeWorld"/>) 밖이면 액터→ideal 그리드 스텝 clamp.
+        /// 전투 Excavate SSOT. AimWorldPoint → diggable (face / stratum 블록).
+        /// 픽은 셀·큐브 바깥면 중심 근접; 사거리 밖이면 액터→ideal 그리드 스텝 clamp.
         /// </summary>
         public static bool TryResolveFromCombatAim(
             Vector3 aimWorldPoint,
@@ -29,14 +28,13 @@ namespace IsoTilemap
             if (hub == null)
                 return false;
 
-            float actorFeetY = actorFeetWorld.y;
             Vector3Int actorWalkableCell = TileHelper.ConvertWorldToGrid(actorFeetWorld, cellSize);
 
             if (!TryResolveFromWorldPoint(
                     aimWorldPoint,
                     hub,
                     cellSize,
-                    actorFeetY,
+                    actorFeetWorld,
                     prefabDb,
                     out DigTileTarget ideal))
             {
@@ -55,7 +53,6 @@ namespace IsoTilemap
                 ideal.WalkableCell,
                 cellSize);
 
-            // interactionDirFlat: clamp가 액터에 머물 때 XZ 폴백 (희귀).
             if (clamped == actorWalkableCell &&
                 interactionDirFlat.sqrMagnitude > 1e-6f)
             {
@@ -82,7 +79,7 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 조준 월드점(AimWorldPoint) → FloorFace → DigTileTarget.
+        /// 조준 월드점 → 주변 diggable 중 셀/바깥면 중심이 가장 가까운 타겟.
         /// 사거리 clamp 없음. 카메라 ScreenPointToRay 아님.
         /// </summary>
         public static bool TryResolveFromWorldPoint(
@@ -91,28 +88,60 @@ namespace IsoTilemap
             float cellSize,
             float actorFeetWorldY,
             TilePrefabDB prefabDb,
+            out DigTileTarget target) =>
+            TryResolveFromWorldPoint(
+                worldPoint,
+                hub,
+                cellSize,
+                new Vector3(worldPoint.x, actorFeetWorldY, worldPoint.z),
+                prefabDb,
+                out target);
+
+        /// <summary>
+        /// 조준 월드점 + lookOrigin(발/몸, 바깥면 facing용) → DigTileTarget.
+        /// </summary>
+        public static bool TryResolveFromWorldPoint(
+            Vector3 worldPoint,
+            TileMapCacheHub hub,
+            float cellSize,
+            Vector3 lookOriginWorld,
+            TilePrefabDB prefabDb,
             out DigTileTarget target)
         {
             target = default;
             if (hub == null)
                 return false;
 
-            if (!FloorFacePicker.TryPickFromHub(
-                    hub,
-                    worldPoint,
-                    cellSize,
-                    actorFeetWorldY,
-                    cellEpsilonWorld: 0f,
-                    out FloorFaceKey faceKey) &&
-                !FloorFacePicker.TryPickNearest(worldPoint, cellSize, out faceKey))
+            cellSize = Mathf.Max(1e-4f, cellSize);
+            Vector3Int seed = TileHelper.ConvertWorldToGrid(worldPoint, cellSize);
+            int radius = MapDigConsts.DigPickSearchRadiusCells;
+
+            float bestScore = float.MaxValue;
+            DigTileTarget best = default;
+            bool found = false;
+
+            for (int dy = -radius; dy <= radius; dy++)
+            for (int dz = -radius; dz <= radius; dz++)
+            for (int dx = -radius; dx <= radius; dx++)
             {
-                return false;
+                Vector3Int walkable = new Vector3Int(seed.x + dx, seed.y + dy, seed.z + dz);
+                if (!TryBuildTargetFromWalkable(hub, walkable, prefabDb, out DigTileTarget candidate))
+                    continue;
+
+                float score = ScoreCandidate(worldPoint, lookOriginWorld, candidate, cellSize);
+                if (score >= bestScore)
+                    continue;
+
+                bestScore = score;
+                best = candidate;
+                found = true;
             }
 
-            if (TryBuildTarget(hub, faceKey, prefabDb, out target))
-                return true;
+            if (!found)
+                return false;
 
-            return TryBuildTargetFromWalkable(hub, faceKey.CellAbove, prefabDb, out target);
+            target = best;
+            return true;
         }
 
         /// <summary>레거시/유틸: 카메라 스크린 레이 → 샘플 월드점 → <see cref="TryResolveFromWorldPoint"/>.</summary>
@@ -156,14 +185,67 @@ namespace IsoTilemap
                 sampleWorld,
                 hub,
                 cellSize,
-                actorFeetWorldY,
+                new Vector3(sampleWorld.x, actorFeetWorldY, sampleWorld.z),
                 prefabDb,
                 out target);
         }
 
-        /// <summary>
-        /// 액터 발끝→ideal walkable. 월드 유클리드 반경 안인 마지막 셀(3축 Sign 스텝).
-        /// </summary>
+        static float ScoreCandidate(
+            Vector3 aimWorld,
+            Vector3 lookOriginWorld,
+            in DigTileTarget candidate,
+            float cellSize)
+        {
+            if (candidate.BreakKind == DigBreakKind.HorizontalFace)
+            {
+                FloorFaceKey.GetWorldPose(
+                    FloorFaceKey.ForWalkableCell(candidate.WalkableCell),
+                    cellSize,
+                    out Vector3 facePose,
+                    out _);
+                return (aimWorld - facePose).sqrMagnitude;
+            }
+
+            Vector3Int anchor = MapDigTerrainUtil.SupportBlockAnchor(candidate.WalkableCell);
+            Vector3Int size = candidate.TargetTile.identity.sizeUnit;
+            if (size.x < 1) size.x = 1;
+            if (size.y < 1) size.y = 1;
+            if (size.z < 1) size.z = 1;
+
+            TileHelper.GetOccupiedCellWireBox(anchor, cellSize, size, out Vector3 center, out Vector3 extents);
+            Vector3 half = extents * 0.5f;
+
+            float best = float.MaxValue;
+            for (int i = 0; i < TileCubeFaceIdUtil.Count; i++)
+            {
+                var face = (TileCubeFaceId)i;
+                Vector3 normal = TileCubeFaceIdUtil.WorldNormal(face);
+                Vector3 faceCenter = center + new Vector3(
+                    normal.x * half.x,
+                    normal.y * half.y,
+                    normal.z * half.z);
+
+                float distSq = (aimWorld - faceCenter).sqrMagnitude;
+
+                // 조준점이 면 바깥쪽이면 가점(안쪽·뒷면 페널티)
+                if (Vector3.Dot(aimWorld - center, normal) < 0f)
+                    distSq += cellSize * cellSize;
+
+                // 플레이어를 향한 바깥면 선호
+                Vector3 toLook = lookOriginWorld - center;
+                if (toLook.sqrMagnitude > 1e-8f)
+                {
+                    float facing = Vector3.Dot(toLook.normalized, normal);
+                    distSq -= facing * cellSize * cellSize * MapDigConsts.DigOuterFaceFacingWeight;
+                }
+
+                if (distSq < best)
+                    best = distSq;
+            }
+
+            return best;
+        }
+
         static Vector3Int ClampWalkableTowardIdeal(
             Vector3 actorFeetWorld,
             Vector3Int actorWalkableCell,

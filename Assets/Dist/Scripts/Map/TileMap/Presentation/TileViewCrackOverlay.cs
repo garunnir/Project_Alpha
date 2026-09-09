@@ -1,5 +1,5 @@
 // ============================================================
-// TileViewCrackOverlay — TileView 자식 크랙 쿼드 (단계형)
+// TileViewCrackOverlay — Dig 타겟 bounds 큐브 크랙 (1 mesh · 동일 UV×6)
 // ============================================================
 
 using UnityEngine;
@@ -8,14 +8,13 @@ using UnityEngine.Rendering;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 프리팹 배선 없이 런타임 팩토리로 크랙 오버레이를 붙인다.
-    /// 텍스처는 stage별 프로시저럴(공통 캐시).
+    /// destroy_stage식: stage 텍스처 1장을 큐브 6면에. GO/Renderer는 1개.
     /// </summary>
     public sealed class TileViewCrackOverlay
     {
         const string RootName = "CrackOverlay";
 
-        static Mesh _sharedQuad;
+        static Mesh _sharedCube;
         static Texture2D[] _stageTextures;
         static Material[] _stageMaterials;
 
@@ -28,7 +27,9 @@ namespace IsoTilemap
         public TileViewCrackOverlay(Transform host) =>
             _host = host;
 
-        public void Apply(int stage, float cellSize)
+        public Transform Root => _root != null ? _root.transform : null;
+
+        public void Apply(int stage, Renderer boundsSource)
         {
             stage = Mathf.Clamp(stage, 0, TileDamagePresentationConsts.MaxCrackStage);
             if (stage <= 0)
@@ -38,9 +39,11 @@ namespace IsoTilemap
                 return;
             }
 
-            EnsureRoot(cellSize);
+            EnsureRoot();
             if (_root == null || _renderer == null)
                 return;
+
+            FitToBounds(boundsSource);
 
             if (_appliedStage != stage)
             {
@@ -52,8 +55,6 @@ namespace IsoTilemap
 
             SetVisible(true);
         }
-
-        public Transform Root => _root != null ? _root.transform : null;
 
         public void Dispose()
         {
@@ -72,11 +73,10 @@ namespace IsoTilemap
                 _root.SetActive(visible);
         }
 
-        void EnsureRoot(float cellSize)
+        void EnsureRoot()
         {
             if (_root != null)
                 return;
-
             if (_host == null)
                 return;
 
@@ -84,13 +84,8 @@ namespace IsoTilemap
             _root.transform.SetParent(_host, false);
             _root.layer = _host.gameObject.layer;
 
-            float scale = Mathf.Max(1e-4f, cellSize) * TileDamagePresentationConsts.CrackPlaneScale;
-            _root.transform.localPosition = new Vector3(0f, TileDamagePresentationConsts.CrackYOffset, 0f);
-            _root.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _root.transform.localScale = new Vector3(scale, scale, 1f);
-
             _filter = _root.AddComponent<MeshFilter>();
-            _filter.sharedMesh = EnsureSharedQuad();
+            _filter.sharedMesh = EnsureSharedCube();
 
             _renderer = _root.AddComponent<MeshRenderer>();
             _renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -100,31 +95,55 @@ namespace IsoTilemap
             _renderer.allowOcclusionWhenDynamic = false;
         }
 
-        static Mesh EnsureSharedQuad()
+        void FitToBounds(Renderer boundsSource)
         {
-            if (_sharedQuad != null)
-                return _sharedQuad;
+            if (_root == null || _host == null)
+                return;
 
-            var mesh = new Mesh { name = "TileCrackUnitQuad" };
-            mesh.vertices = new[]
+            float inflate = TileDamagePresentationConsts.CrackBoundsInflate;
+            Vector3 localCenter;
+            Vector3 localSize;
+
+            if (boundsSource != null)
             {
-                new Vector3(-0.5f, -0.5f, 0f),
-                new Vector3(0.5f, -0.5f, 0f),
-                new Vector3(-0.5f, 0.5f, 0f),
-                new Vector3(0.5f, 0.5f, 0f),
-            };
-            mesh.uv = new[]
+                Bounds wb = boundsSource.bounds;
+                Vector3 min = _host.InverseTransformPoint(wb.min);
+                Vector3 max = _host.InverseTransformPoint(wb.max);
+                localCenter = (min + max) * 0.5f;
+                localSize = new Vector3(
+                    Mathf.Abs(max.x - min.x),
+                    Mathf.Abs(max.y - min.y),
+                    Mathf.Abs(max.z - min.z));
+            }
+            else
             {
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(0f, 1f),
-                new Vector2(1f, 1f),
-            };
-            mesh.triangles = new[] { 0, 2, 1, 2, 3, 1 };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            _sharedQuad = mesh;
-            return _sharedQuad;
+                float cell = MapDigColumnHost.Runtime != null
+                    ? MapDigColumnHost.Runtime.CellSize
+                    : 1f;
+                localCenter = new Vector3(0f, cell * 0.5f, 0f);
+                localSize = Vector3.one * cell;
+            }
+
+            localSize += Vector3.one * inflate;
+            localSize.x = Mathf.Max(1e-3f, localSize.x);
+            localSize.y = Mathf.Max(1e-3f, localSize.y);
+            localSize.z = Mathf.Max(1e-3f, localSize.z);
+
+            Transform t = _root.transform;
+            t.localPosition = localCenter;
+            t.localRotation = Quaternion.identity;
+            t.localScale = localSize;
+        }
+
+        static Mesh EnsureSharedCube()
+        {
+            if (_sharedCube != null)
+                return _sharedCube;
+
+            var full = new Rect(0f, 0f, 1f, 1f);
+            _sharedCube = TileCubeMeshBuilder.BuildUniformUvCube(full);
+            _sharedCube.name = "TileCrackCube";
+            return _sharedCube;
         }
 
         static Material GetStageMaterial(int stage)
@@ -156,7 +175,6 @@ namespace IsoTilemap
                 int stage = i + 1;
                 Texture2D tex = BuildCrackTexture(stage);
                 _stageTextures[i] = tex;
-
                 if (shader == null)
                     continue;
 
@@ -170,6 +188,9 @@ namespace IsoTilemap
                     mat.SetTexture("_BaseMap", tex);
                 if (mat.HasProperty("_BaseColor"))
                     mat.SetColor("_BaseColor", Color.white);
+                if (mat.HasProperty("_Cull"))
+                    mat.SetFloat("_Cull", (float)CullMode.Off);
+                mat.SetInt("_Cull", (int)CullMode.Off);
                 _stageMaterials[i] = mat;
             }
         }
@@ -185,22 +206,21 @@ namespace IsoTilemap
             };
 
             Color clear = new Color(0f, 0f, 0f, 0f);
-            Color crack = new Color(0.08f, 0.08f, 0.08f, 0.85f);
+            Color crack = new Color(0.95f, 0.95f, 0.95f, 0.92f);
             Color[] pixels = new Color[size * size];
             for (int i = 0; i < pixels.Length; i++)
                 pixels[i] = clear;
 
-            // stage↑ → 가지 수·두께↑ (결정론적 의사 랜덤)
             int branchCount = 2 + stage;
             int seed = 17 + stage * 97;
             for (int b = 0; b < branchCount; b++)
             {
                 int x = size / 2;
                 int y = size / 2;
-                int steps = size / 2 + stage * 6;
+                int steps = size / 2 + stage * 8;
                 for (int s = 0; s < steps; s++)
                 {
-                    PlotDisk(pixels, size, x, y, stage >= 3 ? 1 : 0, crack);
+                    PlotDisk(pixels, size, x, y, stage >= 2 ? 1 : 0, crack);
                     seed = unchecked(seed * 1103515245 + 12345);
                     int dir = (seed >> 16) & 3;
                     if (dir == 0) x++;

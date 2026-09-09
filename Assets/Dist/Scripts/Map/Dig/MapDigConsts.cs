@@ -27,6 +27,12 @@ namespace IsoTilemap
         /// </summary>
         public const int DigActionRangeCells = 2;
 
+        /// <summary>Aim 주변 diggable 탐색 반경(셀). 사거리 clamp 전 ideal 픽용.</summary>
+        public const int DigPickSearchRadiusCells = DigActionRangeCells + 2;
+
+        /// <summary>바깥면 facing 가점 가중(셀² 단위에 곱함).</summary>
+        public const float DigOuterFaceFacingWeight = 0.25f;
+
         /// <summary>Dig RMB 조준 face Add 강조량 (0~1, 셰이더 _EmphasisAdd). <see cref="TilePresentationSystem.SetDigHighlight"/>.</summary>
         public const float AimVividEmphasisAmount = 0.35f;
 

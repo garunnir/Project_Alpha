@@ -10,7 +10,9 @@
 
 **타일 내구도**는 맵 SSOT(`MapDigColumnHost` remaining HP · `MapSaveJsonDto`)다. Dig·벽 HP·벌목은 동일 채널×재질 소비.
 
-**손상 비주얼:** remaining/max → 크랙 단계(0~`TileDamagePresentationConsts.MaxCrackStage`)로 파생. stage는 저장하지 않는다. HorizontalFace에 런타임 크랙 쿼드(`TileViewCrackOverlay`)를 붙이며, Dig 조준 Selected 하이라이트와 축이 분리된다. 청크 스폰 시 `SyncPresentationForTile` → `Resolve`가 HP를 다시 읽어 복원한다.
+**손상 비주얼:** remaining/max → 크랙 단계(0~`TileDamagePresentationConsts.MaxCrackStage`)로 파생. stage는 저장하지 않는다. Dig 타겟(`HorizontalFace` 또는 walkable stratum Occupied)에 **메쉬 1개 큐브 오버레이**(`TileViewCrackOverlay`, destroy_stage식 동일 UV×6)를 붙이며, Dig 조준 하이라이트와 축이 분리된다. 청크 스폰 시 `SyncPresentationForTile` → `Resolve`가 HP를 다시 읽어 복원한다.
+
+**지층 큐브 비주얼:** `Terrain/DirtBlock`·`Terrain/StoneBlock` = Occupied 큐브 + `TileCubeFaceAtlas`(**6슬롯 SSOT**, **에디터 bake** 아틀라스·머티리얼) + `TileCubeVisual`(메쉬 1·드로우 1). bake 머티리얼 템플릿은 Atlas의 `Source Material`. 런타임 텍스처 패킹/Blit 없음. West만 다르게 = West 슬롯만 교체 후 bake. Floor 슬랩과 병행.
 
 경작(till)과 **별개 동작**이다. 같은 `DIGGABLE` 바닥재라도 입력·파이프라인·지형 결과가 다르다 — § Till vs dig-break.
 
@@ -50,7 +52,7 @@ TileFlags.IsDiggableTarget(definition)
 | `MapDigService` | `CanBreak` / `TryBreak` / `TryBreakAt` — 도구·무드·사거리·플래그 게이트 |
 | `MapDigRuntimeHooks` | Dist.Map ↔ DistScript 브리지. 사거리: `TryResolveActorWorld`(발끝 transform). `GridPos`/`TryResolveActorCell`(농사·낚시)와 분리 |
 | `MeleeBlockTargetHandler` | `melee_block_target` — Excavate cue → `CombatMath.ResolveExcavateDamage` → `ApplyDamage` |
-| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → FloorFace + **발끝 transform→목표 셀 중심** 월드 유클리드 clamp (`DigActionRangeCells` × cellSize); hold·preview 공용 |
+| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → **셀·큐브 바깥면 중심** 근접 diggable (HorizontalFace / walkable stratum Occupied) + 발끝→walkable 셀 중심 월드 유클리드 clamp (`DigActionRangeCells` × cellSize); hold·preview 공용 |
 | `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). 타겟·맵 remaining HP·`TryBreak` (하이라이트는 Preview) |
 | `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — RMB + LMB hold → Dig + `TryPerform(Excavate)` |
 | `MeleeBlockAimPreview` | `ICombatTargetingPreview` — RMB + `CanBreak` → `SetDigHighlight` |
@@ -92,7 +94,8 @@ TileFlags.IsDiggableTarget(definition)
 | 피해량 | 채널 × TileDefinition 재질 per Excavate / 벽 / 벌목 cue |
 | Dig Leaf 없는 무기 | `CanPerform(Excavate)` false |
 | 크랙 stage | `TileDamagePresentationConsts.StageFromRemaining` — HP 파생, 비저장 |
-| 크랙 적용 | `MapDigColumnHost` damage/clear → `TileDamagePresentation.Refresh*` → `TileView.SetDamageStage` |
+| 크랙 적용 | `MapDigColumnHost` damage/clear → `TileDamagePresentation.Refresh*` → `TileView.SetDamageStage` (bounds 큐브 1 mesh) |
+| 지층 큐브 | `TileCubeFaceAtlas` 6슬롯(U/D/N/S/E/W) + `TileCubeVisual` · prefab `MapTiles/Terrain/*` |
 
 ```mermaid
 flowchart LR
@@ -126,7 +129,7 @@ sequenceDiagram
 **바인딩**
 
 - **입력:** `PlayerPossessedInputHost` → `PlayerCombatController` (Layer2 drivers). dig 전용 MB **없음**.
-- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`, 발끝 transform→목표 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) → Preview (`MeleeBlockAimPreview` → face highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
+- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`: 주변 diggable을 **셀/바깥면 중심**으로 픽, 발끝→walkable 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) → Preview (`MeleeBlockAimPreview` → face/블록 highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
 - **행동:** `CharacterAttacker.PerformDig` + `CharacterActionHost.DigPipeline`. `CancelAll` / LMB release → pipeline Clear; RMB 유지 시 Preview가 하이라이트 유지.
 - **손 게이트:** 일반 combat **ActiveWieldHand** 스택 — Dig 전용 손 스캔 아님. `HasDigQuality`(DIG level ≥1)면 Dig Leaf 가능.
 - **애니:** `AttackResolved` → 기존 Attack overlay 큐 (`CombatLeaf.Excavate` Leaf / Catalog). Farm Work Layer·presentation-only 큐 **아님**. AnimatorController에 Dig 상태 이름 **미추가**.
@@ -177,7 +180,8 @@ sequenceDiagram
 | RMB + LMB hold (Excavate) | Dig 연속, 하이라이트 유지, AimWorldPoint=face |
 | LMB up, RMB 유지 | 하이라이트 깜빡임 없음 |
 | DIG 없는 무기 | `CanPerform(Excavate)` false |
-| DIG + Excavate + RMB hold 피해 | face 위 크랙 단계 증가 (풀 HP면 없음) |
+| DIG + Excavate + RMB hold 피해 | Dig 타겟 **큐브/슬랩 외곽**에 크랙 stage 증가 (풀 HP면 없음) |
+| Terrain Dirt/Stone | 6면 슬롯 아틀라스(예: West만 다른 색), Occupied stratum dig 가능 |
 | 손상 타일 청크 재스폰 | 크랙 stage 복원 (HP 파생) |
 | Error 0 | Unity Console |
 
@@ -193,6 +197,7 @@ sequenceDiagram
 | DIG potency | `MapPlantService.ResolveDigQualityLevel` / `HasDigQuality` |
 | 타일 combat | `Map/TileMap/TileDefinition.cs`, `TileDefinitionCombat.cs` |
 | 크랙 presentation | `TileDamagePresentation*.cs`, `TileViewCrackOverlay.cs`, `TileView.SetDamageStage` |
+| 지층 큐브 visual | `TileMap/Cube/TileCubeFaceAtlas.cs`, `TileCubeMeshBuilder.cs`, `TileCubeVisual.cs` |
 | 피해 SSOT | `CombatMath.ResolveExcavateDamage`, `WearCombatDefense.MitigateStructureDamage` |
 | 플래그 | `TileMap/TileFlags.cs` |
 | 브리지 | `Gameplay/MapPresentation/MapGameplayBootstrap.cs` |

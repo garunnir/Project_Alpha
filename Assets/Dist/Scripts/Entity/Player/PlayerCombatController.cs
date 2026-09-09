@@ -168,6 +168,7 @@ public sealed class PlayerCombatController : MonoBehaviour
         TilePrefabDB prefabDb = ResolvePrefabDb();
         Vector3 actorFeetWorld = CharacterFeetPose.GetFeetWorld(_characterState.transform);
 
+        // lookOrigin = 발끝 — Dig 바깥면 facing 가점용 (Aim Y flatten과 분리).
         return DigTileTargetResolver.TryResolveFromCombatAim(
             _characterState.AimWorldPoint,
             _characterState.InteractionDir,

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
   thumbnail: {fileID: 21300000, guid: c08a95def94989249a06a5613232c01e, type: 3}
   prefabId: Terrain/DirtBlock
-  prefab: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff, type: 3}
+  prefab: {fileID: 3423778720788407358, guid: faa4d2aba3648e347a08cee53c5e2a5d, type: 3}
   category: Terrain
   size: {x: 1, y: 1, z: 1}
   placementSlot: 1
