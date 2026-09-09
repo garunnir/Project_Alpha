@@ -89,9 +89,9 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
         if (highlighted)
         {
             if (_activeDigTileId != Guid.Empty && _activeDigTileId != presentationTileId)
-                _applier.SetSelected(_activeDigTileId, false);
+                _applier.SetVividEmphasis(_activeDigTileId, 0f);
 
-            _applier.SetSelected(presentationTileId, true);
+            _applier.SetVividEmphasis(presentationTileId, MapDigConsts.AimVividEmphasisAmount);
             _activeDigTileId = presentationTileId;
             return;
         }
@@ -99,7 +99,7 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
         if (_activeDigTileId == presentationTileId)
             _activeDigTileId = Guid.Empty;
 
-        _applier.SetSelected(presentationTileId, false);
+        _applier.SetVividEmphasis(presentationTileId, 0f);
     }
 
     public void ClearDigHighlight()
@@ -110,7 +110,15 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
             return;
         }
 
-        _applier.SetSelected(_activeDigTileId, false);
+        _applier.SetVividEmphasis(_activeDigTileId, 0f);
         _activeDigTileId = Guid.Empty;
+    }
+
+    /// <summary>내구도·선택 외 presentation 재합성 (크랙 stage 등).</summary>
+    public void RefreshPresentation(Guid presentationTileId)
+    {
+        if (_applier == null || presentationTileId == Guid.Empty)
+            return;
+        _applier.ApplyResolved(presentationTileId);
     }
 }

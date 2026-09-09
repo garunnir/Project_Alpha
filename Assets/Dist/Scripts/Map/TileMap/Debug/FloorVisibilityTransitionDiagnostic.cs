@@ -261,7 +261,8 @@ namespace IsoTilemap.Diagnostics
                     sightLineTrace: false,
                     characterOcclusion: 0f,
                     ghosted: false,
-                    selected: false));
+                    selected: false,
+                    damageStage: 0));
                 bool activeAfter = go.activeSelf;
 
                 report.AppendLine($"{LogTag} H3 isolated: activeBefore={activeBefore} activeAfter={activeAfter}");

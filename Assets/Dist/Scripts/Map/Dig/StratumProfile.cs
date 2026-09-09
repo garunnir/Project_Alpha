@@ -17,18 +17,18 @@ namespace IsoTilemap
             public string prefabId;
         }
 
-        [Tooltip("깊이별 순환 선택. 비어 있으면 MapDigConsts.DefaultStratumFloorPrefabId.")]
+        [Tooltip("깊이별 순환 선택. 비어 있으면 MapDigConsts.DefaultStratumBlockPrefabId.")]
         public List<LayerEntry> layers = new List<LayerEntry>();
 
         public string PickPrefabId(int stratumSeed, int x, int z, int depth)
         {
             if (layers == null || layers.Count == 0)
-                return MapDigConsts.DefaultStratumFloorPrefabId;
+                return MapDigConsts.DefaultStratumBlockPrefabId;
 
             int index = StratumGenerator.MixSeed(stratumSeed, x, z, depth) % layers.Count;
             string prefabId = layers[index].prefabId;
             return string.IsNullOrEmpty(prefabId)
-                ? MapDigConsts.DefaultStratumFloorPrefabId
+                ? MapDigConsts.DefaultStratumBlockPrefabId
                 : prefabId;
         }
     }

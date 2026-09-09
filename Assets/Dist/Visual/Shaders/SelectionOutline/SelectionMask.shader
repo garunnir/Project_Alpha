@@ -67,6 +67,8 @@ Shader "Hidden/Project/SelectionMask"
                 float4 _UV11;
             CBUFFER_END
 
+            #include "../Include/SpriteUV4CornerWarp.hlsl"
+
             Varyings vert(Attributes input)
             {
                 Varyings o;
@@ -79,11 +81,7 @@ Shader "Hidden/Project/SelectionMask"
             half4 frag(Varyings input) : SV_Target
             {
                 // SpriteUV4Point ForwardLit과 동일 워프 (실루엣 정렬)
-                float2 baseUV = saturate(input.uv);
-                float2 uvBottom = lerp(_UV00.xy, _UV10.xy, baseUV.x);
-                float2 uvTop = lerp(_UV01.xy, _UV11.xy, baseUV.x);
-                float2 warpedUV = lerp(uvBottom, uvTop, baseUV.y);
-                warpedUV = warpedUV * _MainTex_ST.xy + _MainTex_ST.zw;
+                float2 warpedUV = SpriteUV4CornerWarp(input.uv);
 
                 half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, warpedUV).a * input.color.a;
                 clip(alpha - (half)_Cutoff);

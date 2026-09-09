@@ -224,6 +224,8 @@ public class TileMapManager : MonoBehaviour
 
     void Start()
     {
+        TilePrefabDB.RegisterRuntime(_prefabDB);
+
         _loader.Load();
         Model = _loader.Model;
 

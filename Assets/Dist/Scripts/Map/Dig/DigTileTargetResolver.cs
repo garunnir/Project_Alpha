@@ -106,7 +106,10 @@ namespace IsoTilemap
                 return false;
             }
 
-            return TryBuildTarget(hub, faceKey, prefabDb, out target);
+            if (TryBuildTarget(hub, faceKey, prefabDb, out target))
+                return true;
+
+            return TryBuildTargetFromWalkable(hub, faceKey.CellAbove, prefabDb, out target);
         }
 
         /// <summary>레거시/유틸: 카메라 스크린 레이 → 샘플 월드점 → <see cref="TryResolveFromWorldPoint"/>.</summary>
@@ -197,12 +200,48 @@ namespace IsoTilemap
             TileMapCacheHub hub,
             Vector3Int walkableCell,
             TilePrefabDB prefabDb,
+            out DigTileTarget target)
+        {
+            if (TryBuildFaceTarget(hub, walkableCell, prefabDb, out target))
+                return true;
+
+            return TryBuildStratumBlockTarget(hub, walkableCell, prefabDb, out target);
+        }
+
+        static bool TryBuildFaceTarget(
+            TileMapCacheHub hub,
+            Vector3Int walkableCell,
+            TilePrefabDB prefabDb,
             out DigTileTarget target) =>
             TryBuildTarget(
                 hub,
                 FloorFaceKey.ForWalkableCell(walkableCell),
                 prefabDb,
                 out target);
+
+        static bool TryBuildStratumBlockTarget(
+            TileMapCacheHub hub,
+            Vector3Int walkableCell,
+            TilePrefabDB prefabDb,
+            out DigTileTarget target)
+        {
+            target = default;
+            if (!MapDigTerrainUtil.TryGetSupportBlockForWalkable(
+                    hub,
+                    walkableCell,
+                    out TileData blockTile,
+                    out TileDefinition definition))
+            {
+                return false;
+            }
+
+            target = new DigTileTarget(
+                walkableCell,
+                DigBreakKind.WalkableStratumBlock,
+                blockTile,
+                definition);
+            return true;
+        }
 
         static bool TryBuildTarget(
             TileMapCacheHub hub,
@@ -219,7 +258,11 @@ namespace IsoTilemap
             if (!TileFlags.IsDiggableTarget(definition))
                 return false;
 
-            target = new DigTileTarget(walkableCell, faceTile, definition);
+            target = new DigTileTarget(
+                walkableCell,
+                DigBreakKind.HorizontalFace,
+                faceTile,
+                definition);
             return true;
         }
 

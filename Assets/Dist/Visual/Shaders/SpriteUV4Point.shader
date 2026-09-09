@@ -8,7 +8,7 @@ Shader "Custom/SpriteUV4Point"
         _AmbientLight ("최소 밝기", Range(0, 1)) = 0.15
         _AdditionalLightEnabled ("추가 라이트 사용", Range(0, 1)) = 1
         _GhostAmount ("고스트 블렌드", Range(0, 1)) = 0
-        _EmphasisBlend ("선택 강조(밝기)", Range(0, 1)) = 0
+        _EmphasisAdd ("쨍한 강조(Add)", Range(0, 1)) = 0
         _SightLineBuildingHidden ("야외 시선 차단 building 바닥", Range(0, 1)) = 0
         _CharacterOcclusion ("캐릭터 가림 디졸브 (0없음 ~ 1완전)", Range(0, 1)) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -58,162 +58,9 @@ Shader "Custom/SpriteUV4Point"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS   : NORMAL;
-                float2 uv         : TEXCOORD0;
-                float4 color      : COLOR;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-                float4 color      : COLOR;
-                float3 positionWS : TEXCOORD1;
-                float3 normalWS   : TEXCOORD2;
-                float4 shadowCoord : TEXCOORD3;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-                UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _MainTex_ST;
-                float4 _Color;
-                float4 _RendererColor;
-                float  _DarknessFactor;
-                float  _AmbientLight;
-                float  _AdditionalLightEnabled;
-                float  _GhostAmount;
-                float  _EmphasisBlend;
-                float  _SightLineBuildingHidden;
-                float  _CharacterOcclusion;
-                float  _Cutoff;
-                float4 _UV00;
-                float4 _UV10;
-                float4 _UV01;
-                float4 _UV11;
-            CBUFFER_END
-
-            // 화면 픽셀 Bayer — 노이즈 텍스처 없이 occlusion 디졸브 미리보기.
-            float CharacterOcclusionBayer4x4(uint2 pix)
-            {
-                const float kBayer[16] =
-                {
-                    0.0 / 16.0,  8.0 / 16.0,  2.0 / 16.0, 10.0 / 16.0,
-                    12.0 / 16.0, 4.0 / 16.0, 14.0 / 16.0,  6.0 / 16.0,
-                    3.0 / 16.0, 11.0 / 16.0,  1.0 / 16.0,  9.0 / 16.0,
-                    15.0 / 16.0, 7.0 / 16.0, 13.0 / 16.0,  5.0 / 16.0
-                };
-                return kBayer[(pix.x & 3u) + (pix.y & 3u) * 4u];
-            }
-
-            Varyings vert(Attributes IN)
-            {
-                Varyings OUT;
-                UNITY_SETUP_INSTANCE_ID(IN);
-                UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
-
-                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
-                OUT.positionWS = positions.positionWS;
-                OUT.positionCS = positions.positionCS;
-                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
-                OUT.uv = IN.uv;
-                OUT.color = IN.color * _Color * _RendererColor;
-
-                // URP/Lit과 동일한 방식으로 main light shadow 좌표 생성
-                // (TransformWorldToShadowCoord보다 GetShadowCoord 쪽이 variant/캐스케이드 처리와 더 잘 맞는 편)
-                OUT.shadowCoord = GetShadowCoord(positions);
-                return OUT;
-            }
-
-            half4 frag(Varyings IN, uint isFrontFace : SV_IsFrontFace) : SV_Target
-            {
-                float2 baseUV = saturate(IN.uv);
-
-                float2 uvBottom = lerp(_UV00.xy, _UV10.xy, baseUV.x);
-                float2 uvTop = lerp(_UV01.xy, _UV11.xy, baseUV.x);
-                float2 warpedUV = lerp(uvBottom, uvTop, baseUV.y);
-                warpedUV = warpedUV * _MainTex_ST.xy + _MainTex_ST.zw;
-
-                half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, warpedUV);
-                half4 finalColor = texColor * IN.color;
-                half baseAlpha = finalColor.a;
-
-                #ifdef _ALPHATEST_ON
-                    clip(baseAlpha - _Cutoff);
-                #else
-                    clip(baseAlpha - 0.001h);
-                #endif
-
-                half lightStrength = 0.0h;
-                const half3 lumaWeights = half3(0.2126h, 0.7152h, 0.0722h);
-                half3 normalWS = normalize(IN.normalWS);
-                // 양면 렌더링일 때 백페이스 노멀을 반전시켜 NdotL 누수를 방지
-                normalWS *= (isFrontFace != 0u) ? 1.0h : -1.0h;
-
-                Light mainLight = GetMainLight(IN.shadowCoord);
-                half mainNdotL = saturate(dot(normalWS, mainLight.direction));
-                half mainLightIntensity = dot(mainLight.color, lumaWeights);
-                lightStrength += mainNdotL * mainLight.distanceAttenuation * mainLight.shadowAttenuation * mainLightIntensity;
-
-                #ifdef _ADDITIONAL_LIGHTS
-                    if (_AdditionalLightEnabled > 0.001f)
-                    {
-                    // 중요:
-                    // RealtimeLights.hlsl에는 GetAdditionalLight 오버로드가 2개 있다.
-                    // 1) GetAdditionalLight(i, positionWS)
-                    //    -> light.shadowAttenuation을 1.0으로 둔다(그림자 미적용).
-                    // 2) GetAdditionalLight(i, positionWS, shadowMask)
-                    //    -> AdditionalLightShadow(...)를 호출해 shadowAttenuation을 계산한다(그림자 적용).
-                    //
-                    // 즉, Spot/Point 추가 라이트 그림자를 받으려면 반드시 (2) 오버로드를 써야 한다.
-                    // 현재 셰이더는 Lit의 InputData 전체를 구성하지 않으므로, shadowMask는 기본값(완전 비가림 없음)을 넘긴다.
-                    half4 shadowMask = half4(1, 1, 1, 1);
-                    uint lightCount = GetAdditionalLightsCount();
-                    for (uint i = 0u; i < lightCount; i++)
-                    {
-                        // 이 오버로드를 써야 light.shadowAttenuation에 "추가 라이트 그림자"가 반영된다.
-                        Light light = GetAdditionalLight(i, IN.positionWS, shadowMask);
-                        half nDotL = 1.0h; //saturate(dot(normalWS, light.direction));
-                        half lightIntensity = dot(light.color, lumaWeights);
-                        lightStrength += nDotL * light.distanceAttenuation * light.shadowAttenuation * lightIntensity * _AdditionalLightEnabled;
-                    }
-                    }
-                #endif
-                lightStrength = saturate(lightStrength);
-
-                half brightness = lerp(_AmbientLight, 1.0h, lightStrength);
-                brightness = lerp(1.0h, brightness, _DarknessFactor);
-
-                finalColor.rgb *= brightness;
-
-                half ghostAmt = saturate((half)_GhostAmount);
-                finalColor.rgb *= lerp(1.0h, 0.74h, ghostAmt);
-
-                half sightHidden = saturate((half)_SightLineBuildingHidden);
-                finalColor.rgb = lerp(finalColor.rgb, half3(0.02h, 0.02h, 0.02h), sightHidden);
-
-                finalColor.a = baseAlpha;
-
-                half occlusion = saturate((half)_CharacterOcclusion);
-                if (occlusion > 0.0h)
-                {
-                    float dither = CharacterOcclusionBayer4x4(uint2(floor(IN.positionCS.xy)));
-                    clip(dither - occlusion);
-                }
-
-                half emphasis = saturate((half)_EmphasisBlend);
-                finalColor.rgb *= 1.0h + emphasis;
-
-                return finalColor;
-            }
+            #define SPRITE_TILE_LIT_FORWARD_PASS
+            #include "Include/SpriteTileLitCommon.hlsl"
+            #include "Include/SpriteUV4CornerWarp.hlsl"
             ENDHLSL
         }
 
@@ -236,91 +83,9 @@ Shader "Custom/SpriteUV4Point"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-
-            // Shadow caster normal bias 계산용. URP가 런타임에 이 값을 채워 넣습니다.
-            float3 _LightDirection;
-            float3 _LightPosition;
-
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS   : NORMAL;
-                float2 uv         : TEXCOORD0;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _MainTex_ST;
-                float4 _Color;
-                float4 _RendererColor;
-                float  _DarknessFactor;
-                float  _AmbientLight;
-                float  _AdditionalLightEnabled;
-                float  _GhostAmount;
-                float  _EmphasisBlend;
-                float  _CharacterOcclusion;
-                float  _Cutoff;
-                float4 _UV00;
-                float4 _UV10;
-                float4 _UV01;
-                float4 _UV11;
-            CBUFFER_END
-
-            float2 WarpUV(float2 inUV)
-            {
-                float2 baseUV = saturate(inUV);
-                float2 uvBottom = lerp(_UV00.xy, _UV10.xy, baseUV.x);
-                float2 uvTop = lerp(_UV01.xy, _UV11.xy, baseUV.x);
-                float2 warpedUV = lerp(uvBottom, uvTop, baseUV.y);
-                return warpedUV * _MainTex_ST.xy + _MainTex_ST.zw;
-            }
-
-            float4 GetShadowPositionHClip(Attributes input)
-            {
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-
-                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
-                #else
-                    float3 lightDirectionWS = _LightDirection;
-                #endif
-
-                float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
-                positionCS = ApplyShadowClamping(positionCS);
-                return positionCS;
-            }
-
-            Varyings vertShadow(Attributes IN)
-            {
-                Varyings OUT;
-                UNITY_SETUP_INSTANCE_ID(IN);
-                UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
-                OUT.positionCS = GetShadowPositionHClip(IN);
-                OUT.uv = IN.uv;
-                return OUT;
-            }
-
-            half4 fragShadow(Varyings IN) : SV_TARGET
-            {
-                UNITY_SETUP_INSTANCE_ID(IN);
-
-                #ifdef _ALPHATEST_ON
-                    half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, WarpUV(IN.uv)).a;
-                    clip(alpha - _Cutoff);
-                #endif
-
-                return 0;
-            }
+            #define SPRITE_TILE_LIT_SHADOW_PASS
+            #include "Include/SpriteTileLitCommon.hlsl"
+            #include "Include/SpriteUV4CornerWarp.hlsl"
             ENDHLSL
         }
     }

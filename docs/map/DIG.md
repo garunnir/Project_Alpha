@@ -6,9 +6,11 @@
 
 ## 개요
 
-**Dig = 무기 Leaf 결과** (`CombatLeaf.Excavate`). 플레이어가 DIG 품질 무기를 **ActiveWieldHand**에 들고 **Excavate Leaf 선택** 후 **RMB 조준 + LMB 홀드**하면, Dig perform cue마다 **피해 채널(bash/cut) × TileDefinition 재질 resist**로 타일 내구도 피해를 주고, remaining ≤0이면 `TryResolveFromCombatAim`이 고른 **HorizontalFace**(walkable 셀 바로 아래 바닥면, 유클리드 3D ≤ `DigActionRangeCells`)를 파괴한다. 상층 바닥 face를 제거하고, 아래 walkable에 바닥이 없으면 `stratumSeed` 기반 결정론적 지층 바닥을 생성한다.
+**Dig = 무기 Leaf 결과** (`CombatLeaf.Excavate`). … 상층 바닥 face를 제거하고, 아래 walkable에 지지가 없으면 `stratumSeed` 기반 결정론적 **walkable stratum 블록**(`OccupiedCell`, `providesLogicalFloor`, 앵커 = walkable + down — ThickWall과 동일)을 생성한다.
 
 **타일 내구도**는 맵 SSOT(`MapDigColumnHost` remaining HP · `MapSaveJsonDto`)다. Dig·벽 HP·벌목은 동일 채널×재질 소비.
+
+**손상 비주얼:** remaining/max → 크랙 단계(0~`TileDamagePresentationConsts.MaxCrackStage`)로 파생. stage는 저장하지 않는다. HorizontalFace에 런타임 크랙 쿼드(`TileViewCrackOverlay`)를 붙이며, Dig 조준 Selected 하이라이트와 축이 분리된다. 청크 스폰 시 `SyncPresentationForTile` → `Resolve`가 HP를 다시 읽어 복원한다.
 
 경작(till)과 **별개 동작**이다. 같은 `DIGGABLE` 바닥재라도 입력·파이프라인·지형 결과가 다르다 — § Till vs dig-break.
 
@@ -77,7 +79,8 @@ TileFlags.IsDiggableTarget(definition)
 | `BaseBreakSeconds` | 2.5 | 벽시계 패리티 대략치 |
 | `DigActionRangeCells` | 2 | 액터→목표 walkable 셀 유클리드 `√(dx²+dy²+dz²)` ≤ 2 (`MapDigConsts.IsWithinActionRange`). 초과 조준은 액터→ideal 3축 스텝 clamp |
 | `MaxRayDistance` | 200 | 타겟 레이 최대 거리 |
-| `DefaultStratumFloorPrefabId` | `Floor/Floor` | `StratumProfile` 비었을 때 폴백 |
+| `DefaultStratumBlockPrefabId` | `Terrain/StoneBlock` | `StratumProfile` 비었을 때 폴백 |
+| `DefaultStratumFloorPrefabId` | `Terrain/StoneBlock` | 레거시 alias |
 
 드롭: `TryGetDropItemId(prefabId)` — 예) `Floor/GrassFloor`→`dirt`, `Floor/Floor`→`rock`. 매핑 없으면 break는 성공해도 아이템 없음.
 
@@ -88,6 +91,15 @@ TileFlags.IsDiggableTarget(definition)
 | HP 저장 | `MapDigColumnHost` (walkable 셀 키) · `MapSaveJsonDto.tileDurabilities` |
 | 피해량 | 채널 × TileDefinition 재질 per Excavate / 벽 / 벌목 cue |
 | Dig Leaf 없는 무기 | `CanPerform(Excavate)` false |
+| 크랙 stage | `TileDamagePresentationConsts.StageFromRemaining` — HP 파생, 비저장 |
+| 크랙 적용 | `MapDigColumnHost` damage/clear → `TileDamagePresentation.Refresh*` → `TileView.SetDamageStage` |
+
+```mermaid
+flowchart LR
+  HP[MapDigColumnHost remaining] --> Stage[StageFromRemaining]
+  Stage --> Resolve[TilePresentationResolved.DamageStage]
+  Resolve --> View[TileViewCrackOverlay]
+```
 
 ## 플레이어 dig-break 흐름
 
@@ -128,7 +140,7 @@ sequenceDiagram
 | 진입 | 인벤/타일 컨텍스트 → `FarmCellTargetFlow` · `TillContextAction` | RMB 조준 + LMB 홀드 (`ExcavateHoldPerformDriver` → `CombatLeaf.Excavate`) |
 | 서비스 | `MapPlantService.TryTill` → `MapPlantHost.TryTill` | `MapDigService.TryBreak` → `MapDigColumnHost.TryBreakFloor` |
 | 바닥 조건 | `IsTillable`: `PLOWABLE` **또는** `DIGGABLE`, 미경작 | `IsDiggableTarget`: `MINEABLE` **또는** `DIGGABLE` |
-| 지형 결과 | 바닥 **재질 교체** → `Floor/Tilled` (`TryReplaceFloorMaterial`) | HorizontalFace **제거**; 필요 시 아래층 **지층 생성** |
+| 지형 결과 | 바닥 **재질 교체** → `Floor/Tilled` (`TryReplaceFloorMaterial`) | HorizontalFace **제거** 또는 walkable stratum **블록 제거**; 필요 시 아래층 **지층 블록 생성** (`TryPlaceStratumBlock`) |
 | face 타일 | 가구/점유 유지 | `RemoveAndFlush`로 face 타일 삭제 |
 | 도구 | DIG 품질 (`HasDigQuality`) | 동일 + ActiveWield Dig Leaf |
 | 타이밍 | Farm Work 게이지 (`TillWorkDurationSeconds`) | Dig cue × session proxy (`DefaultDigDurability` / DIG level) |
@@ -159,12 +171,14 @@ sequenceDiagram
 |------|------|
 | RMB 없이 LMB | Excavate/Strike/Trigger 불가 |
 | RMB + LMB click | Swing/Trigger `TryPerformSelected` |
-| DIG + Excavate + RMB (유클리드 ≤2 diggable) | face 블록 하이라이트 (다른 Y 포함) |
+| DIG + Excavate + RMB (유클리드 ≤2 diggable) | face 블록 **VividEmphasis** Add 강조 (`SetDigHighlight` → `SetVividEmphasis` → `_EmphasisAdd`, select 외곽선 아님) |
 | 반경 밖 조준 | 액터→ideal 3축 스텝 clamp 사거리 끝 face 하이라이트 |
 | DIG 도구 없음 / `CanBreak` false | 하이라이트 없음 |
 | RMB + LMB hold (Excavate) | Dig 연속, 하이라이트 유지, AimWorldPoint=face |
 | LMB up, RMB 유지 | 하이라이트 깜빡임 없음 |
 | DIG 없는 무기 | `CanPerform(Excavate)` false |
+| DIG + Excavate + RMB hold 피해 | face 위 크랙 단계 증가 (풀 HP면 없음) |
+| 손상 타일 청크 재스폰 | 크랙 stage 복원 (HP 파생) |
 | Error 0 | Unity Console |
 
 ## 관련 파일
@@ -178,6 +192,7 @@ sequenceDiagram
 | 플레이어·파이프라인 | `PlayerCombatController`, `MeleeStructureHoldPerformDriver` / Dig·Chop 파생, `CharacterStructureTargetPipeline`, `IAimSightProvider` |
 | DIG potency | `MapPlantService.ResolveDigQualityLevel` / `HasDigQuality` |
 | 타일 combat | `Map/TileMap/TileDefinition.cs`, `TileDefinitionCombat.cs` |
+| 크랙 presentation | `TileDamagePresentation*.cs`, `TileViewCrackOverlay.cs`, `TileView.SetDamageStage` |
 | 피해 SSOT | `CombatMath.ResolveExcavateDamage`, `WearCombatDefense.MitigateStructureDamage` |
 | 플래그 | `TileMap/TileFlags.cs` |
 | 브리지 | `Gameplay/MapPresentation/MapGameplayBootstrap.cs` |

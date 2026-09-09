@@ -6,7 +6,7 @@ namespace IsoTilemap
 {
     public static class StratumGenerator
     {
-        public static string PickFloorPrefabId(
+        public static string PickStratumPrefabId(
             int stratumSeed,
             int x,
             int z,
@@ -14,10 +14,19 @@ namespace IsoTilemap
             StratumProfile profile)
         {
             if (profile == null)
-                return MapDigConsts.DefaultStratumFloorPrefabId;
+                return MapDigConsts.DefaultStratumBlockPrefabId;
 
             return profile.PickPrefabId(stratumSeed, x, z, depth);
         }
+
+        /// <summary>레거시 이름 — <see cref="PickStratumPrefabId"/>.</summary>
+        public static string PickFloorPrefabId(
+            int stratumSeed,
+            int x,
+            int z,
+            int depth,
+            StratumProfile profile) =>
+            PickStratumPrefabId(stratumSeed, x, z, depth, profile);
 
         public static int MixSeed(int stratumSeed, int x, int z, int depth)
         {

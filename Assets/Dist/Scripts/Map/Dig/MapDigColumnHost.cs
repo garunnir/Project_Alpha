@@ -175,6 +175,18 @@ namespace IsoTilemap
             return maxHp;
         }
 
+        /// <summary>저장된 FloorFace remaining만. 없으면 false (풀 HP·미개시).</summary>
+        public bool TryGetFloorFaceRemaining(Vector3Int walkableCell, out int remaining) =>
+            _remainingHpByKey.TryGetValue(
+                new DurabilityKey(walkableCell, TileDurabilityKind.FloorFace),
+                out remaining);
+
+        /// <summary>저장된 Occupied remaining만. 없으면 false.</summary>
+        public bool TryGetOccupiedRemaining(Vector3Int cell, out int remaining) =>
+            _remainingHpByKey.TryGetValue(
+                new DurabilityKey(cell, TileDurabilityKind.Occupied),
+                out remaining);
+
         /// <summary>피해 적용. remaining ≤0이면 true (파괴 후보).</summary>
         public bool ApplyFloorFaceDamage(Vector3Int walkableCell, int damage, out int remaining)
         {
@@ -190,11 +202,13 @@ namespace IsoTilemap
             if (remaining > 0)
             {
                 _remainingHpByKey[key] = remaining;
+                TileDamagePresentation.RefreshFloorFace(walkableCell);
                 return false;
             }
 
             _remainingHpByKey.Remove(key);
             remaining = 0;
+            TileDamagePresentation.RefreshFloorFace(walkableCell);
             return true;
         }
 
@@ -212,21 +226,48 @@ namespace IsoTilemap
             if (remaining > 0)
             {
                 _remainingHpByKey[key] = remaining;
+                TileDamagePresentation.RefreshOccupied(cell);
                 return false;
             }
 
             _remainingHpByKey.Remove(key);
             remaining = 0;
+            TileDamagePresentation.RefreshOccupied(cell);
             return true;
         }
 
-        public void ClearFloorFaceHp(Vector3Int walkableCell) =>
+        public void ClearFloorFaceHp(Vector3Int walkableCell)
+        {
             _remainingHpByKey.Remove(new DurabilityKey(walkableCell, TileDurabilityKind.FloorFace));
+            TileDamagePresentation.RefreshFloorFace(walkableCell);
+        }
 
-        public void ClearOccupiedHp(Vector3Int cell) =>
+        public void ClearOccupiedHp(Vector3Int cell)
+        {
             _remainingHpByKey.Remove(new DurabilityKey(cell, TileDurabilityKind.Occupied));
+            TileDamagePresentation.RefreshOccupied(cell);
+        }
+        public bool TryBreakDigTarget(DigTileTarget target, out string brokenPrefabId)
+        {
+            brokenPrefabId = null;
+            if (_controller == null || _hub == null)
+                return false;
 
-        public bool TryBreakFloor(Vector3Int walkableCell, out string brokenPrefabId)
+            return target.BreakKind switch
+            {
+                DigBreakKind.HorizontalFace => TryBreakHorizontalFace(target.WalkableCell, out brokenPrefabId),
+                DigBreakKind.WalkableStratumBlock => TryBreakStratumBlock(
+                    target.WalkableCell,
+                    target.BlockAnchorCell,
+                    out brokenPrefabId),
+                _ => false,
+            };
+        }
+
+        public bool TryBreakFloor(Vector3Int walkableCell, out string brokenPrefabId) =>
+            TryBreakHorizontalFace(walkableCell, out brokenPrefabId);
+
+        bool TryBreakHorizontalFace(Vector3Int walkableCell, out string brokenPrefabId)
         {
             brokenPrefabId = null;
             if (_controller == null || _hub == null)
@@ -244,28 +285,62 @@ namespace IsoTilemap
             _controller.RemoveAndFlush(faceTile);
             ClearFloorFaceHp(walkableCell);
 
-            Vector3Int belowWalkable = walkableCell + Vector3Int.down;
-            if (!_hub.TryGetFloorFaceForWalkableCell(
-                    belowWalkable.x,
-                    belowWalkable.y,
-                    belowWalkable.z,
-                    out _))
-            {
-                int depth = IncrementColumnDepth(walkableCell.x, walkableCell.z);
-                string generatedPrefabId = StratumGenerator.PickFloorPrefabId(
-                    _stratumSeed,
-                    walkableCell.x,
-                    walkableCell.z,
-                    depth,
-                    _stratumProfile);
-
-                if (TryGetDefinition(generatedPrefabId, out TileDefinition floorDef))
-                    _controller.TryReplaceFloorMaterial(belowWalkable, floorDef);
-            }
-
+            TrySpawnStratumBelow(walkableCell);
             _onPitTopologyChanged?.Invoke();
             return true;
         }
+
+        bool TryBreakStratumBlock(
+            Vector3Int walkableCell,
+            Vector3Int blockAnchor,
+            out string brokenPrefabId)
+        {
+            brokenPrefabId = null;
+            if (_controller == null || _hub == null)
+                return false;
+
+            if (!MapDigTerrainUtil.TryGetSupportBlockAtAnchor(
+                    _hub,
+                    blockAnchor,
+                    out TileData blockTile,
+                    out TileDefinition definition))
+            {
+                return false;
+            }
+
+            if (!TileFlags.IsDiggableTarget(definition))
+                return false;
+
+            brokenPrefabId = blockTile.identity.PrefabId;
+            _controller.RemoveAndFlush(blockTile);
+            ClearOccupiedHp(blockAnchor);
+
+            TrySpawnStratumBelow(walkableCell);
+            _onPitTopologyChanged?.Invoke();
+            return true;
+        }
+
+        void TrySpawnStratumBelow(Vector3Int walkableCell)
+        {
+            Vector3Int belowWalkable = walkableCell + Vector3Int.down;
+            if (HasWalkableSupport(belowWalkable))
+                return;
+
+            int depth = IncrementColumnDepth(walkableCell.x, walkableCell.z);
+            string generatedPrefabId = StratumGenerator.PickStratumPrefabId(
+                _stratumSeed,
+                walkableCell.x,
+                walkableCell.z,
+                depth,
+                _stratumProfile);
+
+            if (TryGetDefinition(generatedPrefabId, out TileDefinition blockDef))
+                _controller.TryPlaceStratumBlock(belowWalkable, blockDef);
+        }
+
+        bool HasWalkableSupport(Vector3Int walkableCell) =>
+            _hub != null &&
+            _hub.CellHasFloor(walkableCell.x, walkableCell.y, walkableCell.z);
 
         /// <summary>원거리 Obstructed 등 — Occupied solid wall 타일 제거.</summary>
         public bool TryBreakOccupiedTile(Vector3Int cell, out string brokenPrefabId)

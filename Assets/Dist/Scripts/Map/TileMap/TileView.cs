@@ -33,11 +33,6 @@ namespace IsoTilemap
             HiddenByCharacter = 2,
         }
 
-        public enum TileSelectionApplyMode
-        {
-            RenderingLayer = 0,
-            EmphasisBlend = 1,
-        }
         [Header("Placement Slot")]
         public TilePlacementSlot placementSlot = TilePlacementSlot.None;
 
@@ -52,8 +47,6 @@ namespace IsoTilemap
         [SerializeField] private ShadeObjectController _shadeController;
         [Tooltip("Selected 오버레이용 URP RenderingLayer 비트의 단일 진실원 SO")]
         [SerializeField] private SelectionLayerConfig _selectionLayer;
-        [SerializeField] private TileSelectionApplyMode _selectionApplyMode = TileSelectionApplyMode.RenderingLayer;
-        [SerializeField, Range(0f, 0.5f)] private float _selectionEmphasisAmount = 0.2f;
         [Header("Blocked Trace")]
         [Tooltip("타일이 숨김 상태일 때 표시할 흔적 오브젝트(데칼/메시 등).")]
         [SerializeField] private GameObject _blockedTraceObject;
@@ -66,8 +59,11 @@ namespace IsoTilemap
         private bool _structuralVisibilityHidden;
         private StructuralHidePresentationMode _structuralHideMode = StructuralHidePresentationMode.DisableGameObject;
         private bool _currentSelected;
+        private float _vividEmphasisAmount;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
+        private int _currentDamageStage = -1;
+        private TileViewCrackOverlay _crackOverlay;
 
         private const float OcclusionEpsilon = 1e-4f;
         private const float ShadowOnlyOcclusionThreshold = 0.98f;
@@ -83,6 +79,7 @@ namespace IsoTilemap
             CacheControllers();
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
+            ForceApplyVividEmphasis(0f);
             SetBlockedTraceVisible(false);
         }
 
@@ -203,6 +200,7 @@ namespace IsoTilemap
             into.Clear();
             Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
             Transform blockedTraceRoot = _blockedTraceObject != null ? _blockedTraceObject.transform : null;
+            Transform crackRoot = _crackOverlay != null ? _crackOverlay.Root : null;
 
             for (int i = 0; i < renderers.Length; i++)
             {
@@ -212,6 +210,10 @@ namespace IsoTilemap
 
                 if (blockedTraceRoot != null &&
                     (renderer.transform == blockedTraceRoot || renderer.transform.IsChildOf(blockedTraceRoot)))
+                    continue;
+
+                if (crackRoot != null &&
+                    (renderer.transform == crackRoot || renderer.transform.IsChildOf(crackRoot)))
                     continue;
 
                 into.Add(renderer);
@@ -249,12 +251,35 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
-        public void ConfigureSelectionApplyMode(TileSelectionApplyMode mode, float emphasisAmount = 0.2f)
+        /// <summary>Add 강조 오버레이. Selected(외곽선)와 독립 축. 0 = off.</summary>
+        public void SetVividEmphasis(float amount) => ForceApplyVividEmphasis(amount);
+
+        public void SetDamageStage(int stage)
         {
-            _selectionApplyMode = mode;
-            _selectionEmphasisAmount = Mathf.Clamp(emphasisAmount, 0f, 0.5f);
-            if (_selectedInitialized)
-                ForceApplySelectedOverlay(_currentSelected);
+            stage = Mathf.Clamp(stage, 0, TileDamagePresentationConsts.MaxCrackStage);
+            bool supportsCracks = placementSlot == TilePlacementSlot.HorizontalFace ||
+                                  (placementSlot == TilePlacementSlot.OccupiedCell &&
+                                   TilePrefabDB.TryResolveDefinition(prefabId, out TileDefinition def) &&
+                                   MapDigTerrainUtil.IsWalkableStratumBlock(def));
+            if (!supportsCracks)
+                stage = 0;
+
+            if (_currentDamageStage == stage)
+                return;
+
+            _currentDamageStage = stage;
+            float cellSize = MapDigColumnHost.Runtime != null
+                ? MapDigColumnHost.Runtime.CellSize
+                : SafeCellSize;
+
+            if (stage <= 0)
+            {
+                _crackOverlay?.Apply(0, cellSize);
+                return;
+            }
+
+            _crackOverlay ??= new TileViewCrackOverlay(transform);
+            _crackOverlay.Apply(stage, cellSize);
         }
 
         public void ConfigureStructuralHidePresentationMode(StructuralHidePresentationMode mode) =>
@@ -267,10 +292,15 @@ namespace IsoTilemap
             SetSightLineBuildingHidden(resolved.SightLineTrace);
 
             if (resolved.StructuralHidden)
+            {
+                SetDamageStage(0);
                 return;
+            }
 
             SetGhosted(resolved.Ghosted);
             SetSelected(resolved.Selected);
+            SetVividEmphasis(resolved.VividEmphasis);
+            SetDamageStage(resolved.DamageStage);
             SetCharacterOcclusion(resolved.CharacterOcclusion);
             RefreshIsoDepthSortRegistration();
         }
@@ -430,25 +460,24 @@ namespace IsoTilemap
 
         private void ForceApplySelectedOverlay(bool next)
         {
-            if (_selectionApplyMode == TileSelectionApplyMode.EmphasisBlend)
+            Renderer renderer = _shadeController?.CachedRenderer;
+            if (renderer != null && _selectionLayer != null)
             {
-                _shadeController?.SetEmphasisBlend(next ? _selectionEmphasisAmount : 0f);
-            }
-            else
-            {
-                Renderer renderer = _shadeController?.CachedRenderer;
-                if (renderer != null && _selectionLayer != null)
-                {
-                    uint mask = renderer.renderingLayerMask;
-                    uint bit = _selectionLayer.RenderingLayerMask;
-                    if (next) mask |= bit;
-                    else mask &= ~bit;
-                    renderer.renderingLayerMask = mask;
-                }
+                uint mask = renderer.renderingLayerMask;
+                uint bit = _selectionLayer.RenderingLayerMask;
+                if (next) mask |= bit;
+                else mask &= ~bit;
+                renderer.renderingLayerMask = mask;
             }
 
             _currentSelected = next;
             _selectedInitialized = true;
+        }
+
+        private void ForceApplyVividEmphasis(float amount)
+        {
+            _vividEmphasisAmount = Mathf.Clamp01(amount);
+            _shadeController?.SetEmphasisAdd(_vividEmphasisAmount);
         }
 
         private void ApplyCharacterOcclusionDerived()
@@ -490,6 +519,7 @@ namespace IsoTilemap
                 gameObject.SetActive(true);
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
+            ForceApplyVividEmphasis(0f);
             SetBlockedTraceVisible(false);
         }
     }

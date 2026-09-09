@@ -172,6 +172,8 @@ namespace IsoTilemap
                 }
             }
 
+            RegisterWalkableStratumBlockColumns();
+
             foreach (var kv in _walkableFloorYsByColumn)
                 kv.Value.Sort();
         }
@@ -214,6 +216,60 @@ namespace IsoTilemap
             floorCellY = ys[best];
             return true;
         }
+
+        void RegisterWalkableStratumBlockColumns()
+        {
+            foreach (var kv in _tiles)
+            {
+                var list = kv.Value;
+                if (list == null || list.Count == 0)
+                    continue;
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    TileData tile = list[i];
+                    if (!MapDigTerrainUtil.IsWalkableSupportBlock(tile.identity))
+                        continue;
+
+                    if (!TilePrefabDB.TryResolveDefinition(tile.identity.PrefabId, out TileDefinition def) ||
+                        !MapDigTerrainUtil.IsWalkableStratumBlock(def))
+                    {
+                        continue;
+                    }
+
+                    Vector3Int anchor = tile.identity.GridPos;
+                    int sy = tile.identity.sizeUnit.y;
+                    if (sy < 1) sy = 1;
+                    int walkableY = MapDigTerrainUtil.WalkableCellYFromSupportAnchor(anchor.y, sy);
+                    RegisterWalkableFloorColumn(anchor.x, anchor.z, walkableY);
+                }
+            }
+        }
+
+        bool HasWalkableStratumSupportAtAnchor(Vector3Int anchorCell)
+        {
+            if (!TryCollectTilesAtOccupiedCell(anchorCell, _stratumSupportScratch))
+                return false;
+
+            for (int i = 0; i < _stratumSupportScratch.Count; i++)
+            {
+                TileData tile = _stratumSupportScratch[i];
+                if (!MapDigTerrainUtil.IsWalkableSupportBlock(tile.identity))
+                    continue;
+
+                if (!TilePrefabDB.TryResolveDefinition(tile.identity.PrefabId, out TileDefinition def) ||
+                    !MapDigTerrainUtil.IsWalkableStratumBlock(def))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        readonly List<TileData> _stratumSupportScratch = new();
 
         void RegisterWalkableFloorColumn(int x, int z, int cellY)
         {
@@ -377,12 +433,15 @@ namespace IsoTilemap
 
         public bool CellHasFloor(int x, int cellY, int z)
         {
-            if (!TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
-                return false;
+            if (TryGetFloorFaceForWalkableCell(x, cellY, z, out var face) &&
+                TileCollisionFlagsUtil.Has(
+                    face.identity.collisionFlags,
+                    TileCollisionFlags.ProvidesLogicalFloor))
+            {
+                return true;
+            }
 
-            return TileCollisionFlagsUtil.Has(
-                face.identity.collisionFlags,
-                TileCollisionFlags.ProvidesLogicalFloor);
+            return HasWalkableStratumSupportAtAnchor(new Vector3Int(x, cellY - 1, z));
         }
 
         public IEnumerable<TileData> EnumerateEdgeTiles()

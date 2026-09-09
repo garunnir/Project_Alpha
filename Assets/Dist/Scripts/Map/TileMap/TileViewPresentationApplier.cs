@@ -231,7 +231,19 @@ namespace IsoTilemap
                 : PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries);
             bool ghosted = PresentationEntryQueries.ResolveGhosted(tileId, _entries);
             bool selected = _store.IsSelected(tileId);
-            return new TilePresentationResolved(structuralHidden, trace, occlusion, ghosted, selected);
+            float vividEmphasis = _store.GetVividEmphasis(tileId);
+            int damageStage = TileDamagePresentation.ResolveStage(
+                tileId,
+                _model,
+                MapDigColumnHost.Runtime);
+            return new TilePresentationResolved(
+                structuralHidden,
+                trace,
+                occlusion,
+                ghosted,
+                selected,
+                damageStage,
+                vividEmphasis);
         }
 
         public void ApplyResolved(Guid tileId)
@@ -379,6 +391,12 @@ namespace IsoTilemap
         public void SetSelected(Guid tileId, bool selected)
         {
             _store.SetSelected(tileId, selected);
+            ApplyResolved(tileId);
+        }
+
+        public void SetVividEmphasis(Guid tileId, float amount)
+        {
+            _store.SetVividEmphasis(tileId, amount);
             ApplyResolved(tileId);
         }
 

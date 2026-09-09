@@ -14,9 +14,50 @@ namespace IsoTilemap
 
         private Dictionary<string, GameObject> _cache;
 
+        static readonly List<TilePrefabDB> RuntimeDbs = new();
+        static TilePrefabDB[] _findFallbackCache;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStaticState()
+        {
+            RuntimeDbs.Clear();
+            _findFallbackCache = null;
+        }
+
         void OnEnable()
         {
             BuildCache();
+            RegisterRuntimeInstance(this);
+        }
+
+        void OnDisable()
+        {
+            RuntimeDbs.Remove(this);
+        }
+
+        /// <summary>씬/맵 부트스트랩에서 SO OnEnable 이전 호출 시 레지스트리 보강.</summary>
+        public static void RegisterRuntime(TilePrefabDB db) => RegisterRuntimeInstance(db);
+
+        static void RegisterRuntimeInstance(TilePrefabDB db)
+        {
+            if (db == null || RuntimeDbs.Contains(db))
+                return;
+
+            RuntimeDbs.Add(db);
+        }
+
+        static IReadOnlyList<TilePrefabDB> GetRuntimeDbs()
+        {
+            if (RuntimeDbs.Count > 0)
+                return RuntimeDbs;
+
+            if (_findFallbackCache == null)
+                _findFallbackCache = Resources.FindObjectsOfTypeAll<TilePrefabDB>();
+
+            for (int i = 0; i < _findFallbackCache.Length; i++)
+                RegisterRuntimeInstance(_findFallbackCache[i]);
+
+            return RuntimeDbs;
         }
 
         void BuildCache()
@@ -96,10 +137,10 @@ namespace IsoTilemap
             if (string.IsNullOrEmpty(id))
                 return false;
 
-            var dbs = Resources.FindObjectsOfTypeAll<TilePrefabDB>();
-            for (int i = 0; i < dbs.Length; i++)
+            IReadOnlyList<TilePrefabDB> dbs = GetRuntimeDbs();
+            for (int i = 0; i < dbs.Count; i++)
             {
-                var db = dbs[i];
+                TilePrefabDB db = dbs[i];
                 if (db == null)
                     continue;
 
@@ -130,8 +171,8 @@ namespace IsoTilemap
             if (asset == null)
                 return false;
 
-            var dbs = Resources.FindObjectsOfTypeAll<TilePrefabDB>();
-            for (int i = 0; i < dbs.Length; i++)
+            IReadOnlyList<TilePrefabDB> dbs = GetRuntimeDbs();
+            for (int i = 0; i < dbs.Count; i++)
             {
                 TilePrefabDB db = dbs[i];
                 if (db?.entries == null)

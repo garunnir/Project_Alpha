@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
+  m_Name: StoneBlock
+  m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
+  thumbnail: {fileID: 21300000, guid: 4ff063e56d05ecd43b9fa971ddbb0cb9, type: 3}
+  prefabId: Terrain/StoneBlock
+  prefab: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710, type: 3}
+  category: Terrain
+  size: {x: 1, y: 1, z: 1}
+  placementSlot: 1
+  flags:
+  - MINEABLE
+  materials:
+  - stone
+  breakDurability: 8
+  materialThickness: 1
+  occupied:
+    providesLogicalFloor: 1
+    blocksPassageAndOcclusion: 0
+    usePhysicsCollider: 0
+    splitPassageAndOcclusion: 0
+    blocksOccupiedCells: 0
+    occludesOccupiedCells: 0
+  edge:
+    blocksPassageAndOcclusion: 0
+    splitPassageAndOcclusion: 0
+    blocksEdge: 0
+    separatesRoom: 0
+    occludesEdge: 0

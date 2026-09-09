@@ -45,7 +45,7 @@ public sealed class MeleeBlockAimPreview : ICombatTargetingPreview
             return;
         }
 
-        System.Guid tileId = target.FaceTile.tileDefId;
+        System.Guid tileId = target.PresentationTileId;
         if (tileId == System.Guid.Empty)
         {
             ClearPreview();

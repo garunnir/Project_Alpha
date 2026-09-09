@@ -9,7 +9,7 @@ public class ShadeObjectController : ShaderController
     private int _ghostAmountId;
     private int _sightLineBuildingHiddenId;
     private int _characterOcclusionId;
-    private int _emphasisBlendId;
+    private int _emphasisAddId;
 
     protected override void CachePropertyIDs()
     {
@@ -17,7 +17,7 @@ public class ShadeObjectController : ShaderController
         _ghostAmountId = Shader.PropertyToID("_GhostAmount");
         _sightLineBuildingHiddenId = Shader.PropertyToID("_SightLineBuildingHidden");
         _characterOcclusionId = Shader.PropertyToID("_CharacterOcclusion");
-        _emphasisBlendId = Shader.PropertyToID("_EmphasisBlend");
+        _emphasisAddId = Shader.PropertyToID("_EmphasisAdd");
     }
 
     public void SetAdditionalLightEnabled(bool enabled) =>
@@ -66,11 +66,12 @@ public class ShadeObjectController : ShaderController
         Mat.SetFloat(_characterOcclusionId, Mathf.Clamp01(occlusion01));
     }
 
-    public void SetEmphasisBlend(float blend01)
+    /// <summary>RGB Add 강조 (0 없음 ~ 1 최대). 조준·액션 타겟 피드백.</summary>
+    public void SetEmphasisAdd(float amount01)
     {
         if (Mat == null)
             return;
 
-        Mat.SetFloat(_emphasisBlendId, Mathf.Clamp01(blend01));
+        Mat.SetFloat(_emphasisAddId, Mathf.Clamp01(amount01));
     }
 }

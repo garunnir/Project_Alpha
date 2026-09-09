@@ -28,8 +28,14 @@ namespace IsoTilemap
         /// </summary>
         public const int DigActionRangeCells = 2;
 
-        /// <summary>지층 생성 폴백 바닥 prefabId (<see cref="TilePrefabDB"/>).</summary>
-        public const string DefaultStratumFloorPrefabId = "Floor/Floor";
+        /// <summary>Dig RMB 조준 face Add 강조량 (0~1, 셰이더 _EmphasisAdd). <see cref="TilePresentationSystem.SetDigHighlight"/>.</summary>
+        public const float AimVividEmphasisAmount = 0.35f;
+
+        /// <summary>지층 생성 폴백 walkable stratum 블록 prefabId (<see cref="TilePrefabDB"/>).</summary>
+        public const string DefaultStratumBlockPrefabId = "Terrain/StoneBlock";
+
+        /// <summary>레거시 alias — <see cref="DefaultStratumBlockPrefabId"/>.</summary>
+        public const string DefaultStratumFloorPrefabId = DefaultStratumBlockPrefabId;
 
         /// <summary>
         /// Dig 사거리 게이트. 셀 중심 간 유클리드 ≤ <see cref="DigActionRangeCells"/>.
@@ -47,6 +53,8 @@ namespace IsoTilemap
         {
             ("Floor/GrassFloor", "dirt"),
             ("Floor/Floor", "rock"),
+            ("Terrain/DirtBlock", "dirt"),
+            ("Terrain/StoneBlock", "rock"),
         };
 
         static readonly Dictionary<string, string> DropByPrefabId = BuildDropTable();

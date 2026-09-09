@@ -55,6 +55,26 @@ public class TileMapController : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// 지층 walkable stratum 블록 — 앵커는 <see cref="MapDigTerrainUtil.SupportBlockAnchor"/>.
+    /// </summary>
+    public bool TryPlaceStratumBlock(Vector3Int walkableCell, TileDefinition blockDef)
+    {
+        if (_model == null || blockDef == null)
+            return false;
+        if (!MapDigTerrainUtil.IsWalkableStratumBlock(blockDef))
+            return false;
+
+        Vector3Int anchor = MapDigTerrainUtil.SupportBlockAnchor(walkableCell);
+        if (!TilePlaceUtil.TryBuildTileData(blockDef, anchor, out TileData tileData))
+            return false;
+        if (TileIdentityUtil.GetPlacementSlot(tileData.identity) != TilePlacementSlot.OccupiedCell)
+            return false;
+
+        AddAndFlush(tileData);
+        return true;
+    }
+
     private void ApplyTileMutation(TileData tileData)
     {
         _model.SetTile(tileData);

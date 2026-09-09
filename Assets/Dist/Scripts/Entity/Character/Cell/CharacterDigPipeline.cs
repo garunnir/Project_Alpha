@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterDigPipeline — Dig cue 맵 FloorFace HP + TryBreak
+// CharacterDigPipeline — Dig cue 맵 HP + TryBreak (face / stratum block)
 // ============================================================
 
 using IsoTilemap;
@@ -13,7 +13,8 @@ public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigT
         MapDigService.GetBlockedReason(target) != null;
 
     protected override bool IsSameTarget(in DigTileTarget current, in DigTileTarget next) =>
-        current.WalkableCell == next.WalkableCell;
+        current.WalkableCell == next.WalkableCell &&
+        current.BreakKind == next.BreakKind;
 
     protected override int ResolveMaxHp(in DigTileTarget target) =>
         TileDefinitionCombat.BreakDurability(target.Definition);
@@ -21,17 +22,25 @@ public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigT
     protected override int InitRemainingHp(in DigTileTarget target, int maxHp)
     {
         MapDigColumnHost host = MapDigColumnHost.Runtime;
-        return host != null
-            ? host.GetOrInitFloorFaceHp(target.WalkableCell, maxHp)
-            : maxHp;
+        if (host == null)
+            return maxHp;
+
+        return target.BreakKind == DigBreakKind.WalkableStratumBlock
+            ? host.GetOrInitOccupiedHp(target.BlockAnchorCell, maxHp)
+            : host.GetOrInitFloorFaceHp(target.WalkableCell, maxHp);
     }
 
     protected override bool TryApplyMapDamage(
         MapDigColumnHost host,
         in DigTileTarget target,
         int damage,
-        out int remaining) =>
-        host.ApplyFloorFaceDamage(target.WalkableCell, damage, out remaining);
+        out int remaining)
+    {
+        if (target.BreakKind == DigBreakKind.WalkableStratumBlock)
+            return host.ApplyOccupiedDamage(target.BlockAnchorCell, damage, out remaining);
+
+        return host.ApplyFloorFaceDamage(target.WalkableCell, damage, out remaining);
+    }
 
     protected override void BreakTarget(in DigTileTarget target) =>
         MapDigService.TryBreak(target);

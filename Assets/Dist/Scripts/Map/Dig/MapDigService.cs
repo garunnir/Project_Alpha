@@ -48,7 +48,7 @@ namespace IsoTilemap
             if (host == null)
                 return false;
 
-            if (!host.TryBreakFloor(target.WalkableCell, out string brokenPrefabId))
+            if (!host.TryBreakDigTarget(target, out string brokenPrefabId))
                 return false;
 
             GrantBreakDrop(brokenPrefabId, host.CellWorld(target.WalkableCell));
@@ -68,7 +68,11 @@ namespace IsoTilemap
             if (!_hubTryGetFace(host, walkableCell, out TileData faceTile))
                 return false;
 
-            return TryBreak(new DigTileTarget(walkableCell, faceTile, definition));
+            return TryBreak(new DigTileTarget(
+                walkableCell,
+                DigBreakKind.HorizontalFace,
+                faceTile,
+                definition));
         }
 
         static bool _hubTryGetFace(MapDigColumnHost host, Vector3Int walkableCell, out TileData faceTile)
