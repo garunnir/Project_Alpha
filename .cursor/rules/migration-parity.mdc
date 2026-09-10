@@ -12,7 +12,7 @@ alwaysApply: false
 
 ## Why
 새 조각만 “뜨면 완료”로 치면, 예전이 공짜로 주던 주변 계약(입력·좌표·레이어·DnD·호환)이 빈칸이 된다.  
-그 빈칸을 **증상마다 사용자 Play/재현으로 메우는 것**은 에이전트 실패 패턴이다 (2026-07 인벤 리스트 이주에서 확인).
+그 빈칸을 증상별 재현으로 메우는 것 — `bug-fix-gate.mdc` §MUST NOT (2026-07 인벤 리스트 이주).
 
 ## MUST
 1. **변경 전 동작을 계약으로 적는다** (복붙이 아니라 패리티 항목). 공통 SSOT: `.claude/checklists/migration-parity.md`
@@ -22,10 +22,9 @@ alwaysApply: false
 5. **기능 체크리스트** (최적화·기능 불변 교체): 작업 전 **기능 인벤토리**(소비자·이벤트·엣지) + 기본 경로로 켜기 전 **검증 게이트**(전항 통과). 형식·경량 예외: `.claude/checklists/migration-parity.md` §C.
 
 ## MUST NOT
-- “핵심만 되면 완료” 후 나머지를 **사용자 디버그 뺑뺑이**로 메우기
+- 패리티 빈칸·회귀를 `bug-fix-gate.mdc` §MUST NOT 방식으로 메우기
 - 동등 경로 없이 구기능을 끄고 Pending만 남긴 채 기본 경로로 켰다고 선언
-- 예상 가능한 공백을 증상 단위로 쪼개 매 회 재현만 요청하기
-- 계약을 적지 않은 채 “일단 켜고 보자”
+- 계약 없이 “일단 켜고 보자”
 
 ## OK
 | OK | Condition |
@@ -36,4 +35,4 @@ alwaysApply: false
 | 경량 스킵 | §C 경량 예외 충족 — 풀 체크리스트 생략, 도메인 스모크만 |
 
 ## See also
-`.claude/checklists/migration-parity.md` · `agent-completion-gate.mdc` · `collaboration-rules.mdc` · `00-rules-index.mdc`
+`bug-fix-gate.mdc` · `.claude/checklists/migration-parity.md` · `agent-completion-gate.mdc` · `collaboration-rules.mdc` · `00-rules-index.mdc`

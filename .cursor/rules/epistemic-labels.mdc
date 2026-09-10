@@ -33,3 +33,6 @@ alwaysApply: false
 
 ## Patch order
 1. 관측으로 **확실** 확보 → 2. **미확정** 기각/확정 → 3. **확실** 분기만 패치
+
+## See also
+`bug-fix-gate.mdc` · `clarify-before-guess.mdc`

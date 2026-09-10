@@ -11,7 +11,7 @@ alwaysApply: false
 경량 예외: ≤2파일·net ≤40줄·typo/handoff 좁은 패치 — `.claude/checklists/agent-completion-gate.md` §When.
 
 ## Why
-「핵심 패치만 하고 Done」→ 하이브리드·미배선·Play 회귀를 사용자 재현으로 메우는 실패 패턴 (리팩터·이주 공통).
+「핵심 패치만 Done」→ `bug-fix-gate.mdc` · `migration-parity.mdc` 실패 패턴.
 
 ## MUST
 1. **Plan/Handoff에 Done(완료 조건)·하지 말 것·검증** 블록이 있어야 Agent 구현 시작 (없으면 먼저 적거나 사용자 확인).
@@ -35,4 +35,4 @@ alwaysApply: false
 | 경량 스킵 | 체크리스트 §When 경량 예외 |
 
 ## See also
-`.claude/checklists/agent-completion-gate.md` · `agent-scope.mdc` · `migration-parity.mdc` · `post-task.md`
+`bug-fix-gate.mdc` · `.claude/checklists/agent-completion-gate.md` · `agent-scope.mdc` · `migration-parity.mdc` · `post-task.md`

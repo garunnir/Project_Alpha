@@ -64,11 +64,15 @@ public sealed class DataDefinitionsCombatHub
     [PropertyOrder(10)]
     public string PreviewItemId;
 
-    [ShowInInspector, MultiLineProperty(8), HideLabel, ReadOnly]
     [PropertyOrder(11)]
-    string PreviewReport => WeaponPresentationResolvePreview.BuildReport(PreviewItemId);
+    [Button(SdfIconType.Search, "미리보기")]
+    void RunResolvePreview() => _previewReport = WeaponPresentationResolvePreview.BuildReport(PreviewItemId);
 
+    [ShowInInspector, MultiLineProperty(8), HideLabel, ReadOnly]
     [PropertyOrder(12)]
+    string _previewReport;
+
+    [PropertyOrder(13)]
     [Button(SdfIconType.BoxArrowUpRight, "Catalog 에셋 선택")]
     void PingCatalog()
     {

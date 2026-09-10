@@ -10,7 +10,14 @@
 
 **타일 내구도**는 맵 SSOT(`MapDigColumnHost` remaining HP · `MapSaveJsonDto`)다. Dig·벽 HP·벌목은 동일 채널×재질 소비.
 
-**손상 비주얼:** remaining/max → 크랙 단계(0~`TileDamagePresentationConsts.MaxCrackStage`)로 파생. stage는 저장하지 않는다. Dig 타겟(`HorizontalFace` 또는 walkable stratum Occupied)에 **메쉬 1개 큐브 오버레이**(`TileViewCrackOverlay`, destroy_stage식 동일 UV×6)를 붙이며, Dig 조준 하이라이트와 축이 분리된다. 청크 스폰 시 `SyncPresentationForTile` → `Resolve`가 HP를 다시 읽어 복원한다.
+**손상 비주얼 · 표현 축(저장 유무):**
+
+| 축 | 저장 | 예 | 뷰 진입 |
+|----|------|----|---------|
+| **Persistent** | Host HP (`tileDurabilities`)에서 파생. stage 자체는 비저장 | 크랙 `DamageStage` | `ApplyPersistentPresentation` / `ApplyDamageStage` · 스폰 `SyncDamageStageFromHost` |
+| **Transient** | 비저장 | Dig VividEmphasis, Selected, 카메라/층 Structural·Ghost·Occlusion·SightLine | `ApplyTransientPresentation` / `ApplyResolved` · Dig는 `SetVividEmphasis`만 |
+
+계약: **Transient 경로가 Persistent를 덮지 않는다.** Dig 타겟에 `TileViewCrackOverlay`(destroy_stage식 큐브).
 
 **지층 큐브 비주얼:** `Terrain/DirtBlock`·`Terrain/StoneBlock` = Occupied 큐브 + `TileCubeFaceAtlas`(**6슬롯 SSOT**, **에디터 bake** 아틀라스·머티리얼) + `TileCubeVisual`(메쉬 1·드로우 1). bake 머티리얼 템플릿은 Atlas의 `Source Material`. 런타임 텍스처 패킹/Blit 없음. West만 다르게 = West 슬롯만 교체 후 bake. Floor 슬랩과 병행.
 
@@ -51,11 +58,13 @@ TileFlags.IsDiggableTarget(definition)
 | `MapDigColumnHost` | `TileMapManager` 동일 GO. column depth·`stratumSeed`·`TryBreakFloor` (face 제거 + 지층 생성) |
 | `MapDigService` | `CanBreak` / `TryBreak` / `TryBreakAt` — 도구·무드·사거리·플래그 게이트 |
 | `MapDigRuntimeHooks` | Dist.Map ↔ DistScript 브리지. 사거리: `TryResolveActorWorld`(발끝 transform). `GridPos`/`TryResolveActorCell`(농사·낚시)와 분리 |
-| `MeleeBlockTargetHandler` | `melee_block_target` — Excavate cue → `CombatMath.ResolveExcavateDamage` → `ApplyDamage` |
-| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → **셀·큐브 바깥면 중심** 근접 diggable (HorizontalFace / walkable stratum Occupied) + 발끝→walkable 셀 중심 월드 유클리드 clamp (`DigActionRangeCells` × cellSize); hold·preview 공용 |
-| `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). 타겟·맵 remaining HP·`TryBreak` (하이라이트는 Preview) |
-| `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — RMB + LMB hold → Dig + `TryPerform(Excavate)` |
-| `MeleeBlockAimPreview` | `ICombatTargetingPreview` — RMB + `CanBreak` → `SetDigHighlight` |
+| `MeleeBlockTargetHandler` | `melee_block_target` — impact cue는 **DigPipeline 잠금** 타겟만 `ApplyDamage` (`IsActive` 필수; live Aim 재 Resolve 없음) |
+| `DigTileTargetResolver` | `TryResolveFromCombatAim` — AimWorldPoint → **셀·큐브 바깥면 중심** 근접 diggable (HorizontalFace / walkable stratum Occupied) + 발끝→walkable 셀 중심 월드 유클리드 clamp (`DigActionRangeCells` × cellSize); **잠금 begin·비홀드 preview** 공용 |
+| `CharacterDigPipeline` | plain class (`CharacterActionHost` 소유). LMB 홀드 **잠금**·맵 remaining HP·`TryBreak` (하이라이트는 Preview) |
+| `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — LMB down/재획득 aim→잠금, hold 유지, release Clear; 파괴 후 같은 hold면 aim 재고정 |
+| `MeleeBlockAimPreview` | 잠금 타겟 우선 highlight, 없으면 aim + `CanBreak` → `SetDigHighlight` |
+| `DigTileTargetAimPose` | 잠금 Dig 타겟 → Sight 월드점 (face / 바깥면) |
+| `CombatAimSightHoldLock` | Excavate 잠금 중 SphereCast 대신 `SightDir`/`AimWorldPoint` 고정 |
 | `PlayerCombatController` | Layer2 host — `ICombatPerformDriver` + `ICombatTargetingPreview` 라우트·틱 |
 | `StratumProfile` (SO) | 깊이별 prefabId 레이어 목록 (`TileMapManager` Inspector) |
 | `StratumGenerator` | `MixSeed(stratumSeed, x, z, depth)` 결정론적 선택 |
@@ -73,11 +82,12 @@ TileFlags.IsDiggableTarget(definition)
 
 | 필드/상수 | 값/의미 | 비고 |
 |-----------|---------|------|
-| `TileDefinition.breakDurability` | 파괴 HP | 0 → `DefaultDigDurability`(5) |
+| `TileDefinition.breakDurability` | 파괴 HP | 0 → `DefaultDigDurability`(250). DirtBlock 250 · StoneBlock 400 |
 | `TileDefinition.materials` | BN `MaterialData` id | bash/cut resist — Wear와 동일 |
 | `TileDefinition.materialThickness` | 재질 두께 | `WearCombatDefense.ArmorRating` 스케일 |
-| Excavate 피해 | `CombatMath.ResolveExcavateDamage` | 채널별 `DamageForTag` + DIG potency(첫 채널) → `MitigateStructureDamage` |
-| `DefaultDigDurability` | 5 | breakDurability 미지정 폴백 |
+| Excavate 피해 | `CombatMath.ResolveExcavateDamage` | 채널별 `DamageForTag` + DIG potency → `MitigateStructureDamage` (피해 곡선 유지 않음; 내구로 cue 수 맞춤) |
+| `DefaultDigDurability` | 250 | breakDurability 미지정 폴백 · `DigBreakCuesAtDigLevel1`(5) × ~cue 50 |
+| `DigBreakCuesAtDigLevel1` | 5 | level-1 삽 dig-break cue 횟수 패리티 |
 | `BaseBreakSeconds` | 2.5 | 벽시계 패리티 대략치 |
 | `DigActionRangeCells` | 2 | 설계 상수. 월드 반경 = `DigActionRangeCells × cellSize`. actor **발끝 transform** → 목표 walkable 셀 중심 3D 유클리드 (`MapDigConsts.IsWithinActionRangeWorld`). `GridPos`와 분리. 초과 조준은 액터→ideal 3축 스텝 clamp |
 | `MaxRayDistance` | 200 | 타겟 레이 최대 거리 |
@@ -93,15 +103,15 @@ TileFlags.IsDiggableTarget(definition)
 | HP 저장 | `MapDigColumnHost` (walkable 셀 키) · `MapSaveJsonDto.tileDurabilities` |
 | 피해량 | 채널 × TileDefinition 재질 per Excavate / 벽 / 벌목 cue |
 | Dig Leaf 없는 무기 | `CanPerform(Excavate)` false |
-| 크랙 stage | `TileDamagePresentationConsts.StageFromRemaining` — HP 파생, 비저장 |
-| 크랙 적용 | `MapDigColumnHost` damage/clear → `TileDamagePresentation.Refresh*` → `TileView.SetDamageStage` (bounds 큐브 1 mesh) |
+| 크랙 stage | `StageFromRemaining` — 저장 HP 파생(stage 값 자체는 비저장) |
+| 크랙 적용 | Persistent: `ApplyHpToView` → `ApplyPersistentPresentation`. Transient(`ApplyResolved`/`SetVividEmphasis`)는 미개입. 스폰만 `SyncDamageStageFromHost` |
 | 지층 큐브 | `TileCubeFaceAtlas` 6슬롯(U/D/N/S/E/W) + `TileCubeVisual` · prefab `MapTiles/Terrain/*` |
 
 ```mermaid
 flowchart LR
   HP[MapDigColumnHost remaining] --> Stage[StageFromRemaining]
-  Stage --> Resolve[TilePresentationResolved.DamageStage]
-  Resolve --> View[TileViewCrackOverlay]
+  Stage --> View[TileView.ApplyPersistentPresentation]
+  View --> Crack[CrackOverlay]
 ```
 
 ## 플레이어 dig-break 흐름
@@ -115,22 +125,27 @@ sequenceDiagram
     participant S as MapDigService
     participant H as MapDigColumnHost
 
-    Input->>Input: RMB aim + LMB hold + AimWorldPoint
-    Input->>Pipeline: TryBeginTarget (맵 remaining HP)
+    Input->>Input: RMB aim + LMB hold
+    alt pipeline inactive
+        Input->>Pipeline: aim Resolve → TryBeginTarget (잠금)
+    else pipeline active
+        Input->>Input: 잠금 유지
+    end
     Input->>Attacker: TryPerform(Excavate) when !busy
     Attacker->>Attacker: Dig Leaf + HasDigQuality gate
     Attacker->>Handler: cue Execute
-    Handler->>Pipeline: ApplyDamage(채널×재질 피해)
-    Note over Pipeline: remaining ≤ 0
+    Handler->>Pipeline: ApplyDamage (잠금 타겟만)
+    Note over Pipeline: remaining ≤ 0 → Clear
     Pipeline->>S: TryBreak
     S->>H: TryBreakFloor
+    Note over Input: 같은 hold면 다음 Tick aim 재고정
 ```
 
 **바인딩**
 
 - **입력:** `PlayerPossessedInputHost` → `PlayerCombatController` (Layer2 drivers). dig 전용 MB **없음**.
-- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`, Y 평면화) → Resolve (`TryResolveFromCombatAim`: 주변 diggable을 **셀/바깥면 중심**으로 픽, 발끝→walkable 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) → Preview (`MeleeBlockAimPreview` → face/블록 highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
-- **행동:** `CharacterAttacker.PerformDig` + `CharacterActionHost.DigPipeline`. `CancelAll` / LMB release → pipeline Clear; RMB 유지 시 Preview가 하이라이트 유지.
+- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`; Flatten Y = `CombatAimSightPolicy` — Excavate/`MeleeBlock`은 Y 유지). **LMB Dig 잠금 중** = SphereCast 스킵 + `CombatAimSightHoldLock` → `SightDir`/`AimWorldPoint`을 잠금 블록 face·바깥면(`DigTileTargetAimPose`)에 고정. **카메라 자유**(Aim 캐스트와 분리). LMB 해제·잠금 없음 = 마우스 Sphere 팔로우. Resolve → Preview(잠금 우선 highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
+- **행동:** LMB **down/재획득** = aim → `DigPipeline` 잠금. **hold** = 잠금 유지 + `TryPerform(Excavate)` + SightDir 고정. **release** = Clear → Sight 마우스 복귀. **파괴 후 같은 hold** = aim으로 재고정. cue 피해는 잠금 타겟만 (`IsActive`). `CancelAll` / LMB release → Clear.
 - **손 게이트:** 일반 combat **ActiveWieldHand** 스택 — Dig 전용 손 스캔 아님. `HasDigQuality`(DIG level ≥1)면 Dig Leaf 가능.
 - **애니:** `AttackResolved` → 기존 Attack overlay 큐 (`CombatLeaf.Excavate` Leaf / Catalog). Farm Work Layer·presentation-only 큐 **아님**. AnimatorController에 Dig 상태 이름 **미추가**.
 - `TileMapManager.SetupMapDig()` — `MapDigColumnHost.BindMapContext` + DTO 로드.
@@ -177,8 +192,9 @@ sequenceDiagram
 | DIG + Excavate + RMB (유클리드 ≤2 diggable) | face 블록 **VividEmphasis** Add 강조 (`SetDigHighlight` → `SetVividEmphasis` → `_EmphasisAdd`, select 외곽선 아님) |
 | 반경 밖 조준 | 액터→ideal 3축 스텝 clamp 사거리 끝 face 하이라이트 |
 | DIG 도구 없음 / `CanBreak` false | 하이라이트 없음 |
-| RMB + LMB hold (Excavate) | Dig 연속, 하이라이트 유지, AimWorldPoint=face |
-| LMB up, RMB 유지 | 하이라이트 깜빡임 없음 |
+| RMB + LMB hold (Excavate) | LMB 순간 타겟 **잠금**, 하이라이트=잠금, cue는 잠금만 적중. **SightDir/SphereCast 고정**, 카메라만 자유 |
+| 잠금 타겟 파괴 후 hold 유지 | 같은 hold에서 aim으로 **재고정** 후 연속 Dig · SightDir도 새 블록 |
+| LMB up, RMB 유지 | 잠금 Clear · SightDir 마우스 팔로우 복귀 · 하이라이트 aim preview |
 | DIG 없는 무기 | `CanPerform(Excavate)` false |
 | DIG + Excavate + RMB hold 피해 | Dig 타겟 **큐브/슬랩 외곽**에 크랙 stage 증가 (풀 HP면 없음) |
 | Terrain Dirt/Stone | 6면 슬롯 아틀라스(예: West만 다른 색), Occupied stratum dig 가능 |

@@ -121,4 +121,14 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
             return;
         _applier.ApplyResolved(presentationTileId);
     }
+
+    /// <summary>
+    /// HP → stage → TileView 직행. Resolve/가시성 합성 없음.
+    /// </summary>
+    public void ApplyDamageStage(Guid presentationTileId, int remaining, int maxHp)
+    {
+        if (_applier == null || presentationTileId == Guid.Empty)
+            return;
+        _applier.ApplyDamageStage(presentationTileId, remaining, maxHp);
+    }
 }

@@ -12,7 +12,7 @@ alwaysApply: true
 - 읽기/검색/Shell은 프로젝트 루트 `Z:/Work/Project/Project_Pictureless` 안만
 - `Grep`/`Glob`에 `path` 또는 `target_directory` 명시
 - 검색 순서: 열린·지정 경로 → `Assets/Dist/Scripts` → 필요 시 프로젝트 루트
-- **요청보다 넓어질 것 같으면** 구현·Plan 전 사용자 확인 (질문 1개). 예:
+- **요청보다 넓어질 것 같으면** 구현·Plan 전 사용자 확인 (질문 1개). 범위 밖 구조 개선은 **`senior-advisory.mdc` Optional**로만 제시. 예:
   - 요청은 좁은데 Tier1 영향·구조 정리·리팩터·대량 프리팹/씬 배선이 필요해 보일 때
   - 공개 API·직렬화·DB 스키마·새 타입/파이프라인
   - 변경 ≥3 파일 또는 한 파일 net ≥80줄 **이고** 사용자가 그 규모를 명시하지 않았을 때
@@ -27,14 +27,15 @@ alwaysApply: true
 1. Plan/Handoff에 Done·하지 말 것·검증 (없으면 확인)
 2. 동작·입력·표시 변경 → Play 또는 동등 검증; Unity 콘솔 Error 0
 3. 보고: **Done · Incomplete · Partial** (Pending 명시)
-4. 전체: `agent-completion-gate.mdc` · `.claude/checklists/agent-completion-gate.md`
+4. **`## Optional — 선임 메모`** (`senior-advisory.mdc`)
+5. 전체: `agent-completion-gate.mdc` · `.claude/checklists/agent-completion-gate.md`
 
 ## Scope (MUST)
 
 - **범위 SSOT = 이번 턴 사용자 지시** (요청·handoff·승인된 Plan). diff 크기·아키텍처 쾌감으로 범위를 **줄이거나 늘리지 않는다**.
 - **「최소 수정」「작은 diff」를 목표·변명·Plan 수사로 쓰지 않는다** — 작게 고치라는 뜻도, 크게 잡으라는 뜻도 **아님**.
 - 좁은 요청 → 필요한 만큼만. 넓은 요청 → 요청대로. **맞춤**이 기본.
-- `migration-parity` 해당: `migration-parity.mdc` · 체크리스트 읽고 패리티·검증. 증상 땜빵 나열만 하지 않음.
+- 버그·회귀: `bug-fix-gate.mdc`. `migration-parity` 해당: `migration-parity.mdc` · 체크리스트.
 
 ## Token efficiency (MUST)
 
@@ -82,4 +83,4 @@ rg gravity Assets/Dist/Scripts
 ```
 
 ## See also
-모드·승인: `collaboration-rules.mdc` · 완료 게이트: `agent-completion-gate.mdc` · 위반 알림: `00-rules-index.mdc`
+모드·승인: `collaboration-rules.mdc` · 버그: `bug-fix-gate.mdc` · Advisory: `senior-advisory.mdc` · 완료 게이트: `agent-completion-gate.mdc` · 위반 알림: `00-rules-index.mdc`

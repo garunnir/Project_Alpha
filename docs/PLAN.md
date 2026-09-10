@@ -207,7 +207,7 @@ Aim/Attack 클립이 없으면 같은 손 Hold thin으로 내림. L↔R·TwoHand
 evaluate는 `TileMapModel`, emit은 applier entry. 동작은 맞춰졌으나 저장소가 둘.
 
 **지침**
-- 새 증상 패치 전에 [`map/TILEMAP_VISIBILITY.md`](map/TILEMAP_VISIBILITY.md) §7 표를 본다.
+- 새 증상 패치 전에 `.cursor/rules/bug-fix-gate.mdc` · [`map/TILEMAP_VISIBILITY.md`](map/TILEMAP_VISIBILITY.md) §7 표.
 - membership·scalar를 applier entry store 단일로. model에 BFS SSOT를 남긴 채 분기를 더하지 않는다.
 - 이미 제거된 `AppendTransitionOcclusionCandidates` 등을 되돌리지 않는다.
 

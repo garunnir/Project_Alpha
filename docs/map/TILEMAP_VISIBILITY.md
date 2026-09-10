@@ -51,18 +51,19 @@
 
 ## 구현 원칙
 
-**논리는 단순하게, 코드는 땜빵 없이 근본적으로.**
+**논리는 단순하게, 코드는 근본적으로** — 전역 땜빵 금지: `.cursor/rules/bug-fix-gate.mdc`.
 
 | 원칙 | 의미 |
 |------|------|
 | **판정 SSOT 1곳** | show/hide·space band·peek은 `PlayerFloorVisibilityPolicy` + `SpaceVisibilityUtil`만. 뷰·드라이버·모델에 같은 규칙을 다시 쓰지 않는다. |
 | **evaluate 기준점 SSOT** | 가시성·오클루전 **입력** 월드·셀은 `PlayerVisibilityWorldResolve` 한 곳. 조준 중에는 **조준점이 대상**일 뿐이며 경로·우선순위는 비조준과 동일하다. |
-| **표현 SSOT 1곳** | 화면 상태는 `TileViewPresentationApplier.Resolve` → `ApplyResolved` 한 경로. `TileView` 로컬 플래그는 캐시일 뿐 진실원이 아니다. |
+| **표현 SSOT 1곳** | **Transient(비저장)** 화면 상태는 `Resolve` → `ApplyResolved`/`ApplyTransientPresentation` 한 경로. `TileView` 로컬 플래그는 캐시일 뿐 진실원이 아니다. |
+| **Persistent 분리** | 저장 HP 파생 크랙은 Transient와 별축 — `ApplyPersistentPresentation` / Dig `ApplyDamageStage`. Transient가 Persistent를 덮지 않음. 상세 [`DIG.md`](DIG.md). |
 | **표현 진입점** | 게임플레이·UI 코드는 `TileViewPresentationApplier`를 직접 호출하지 않는다. 신규 월드 표현 요청은 `TilePresentationSystem`을 경유한다. |
 | **structural parity** | Floor·EdgeWall 등 `IsStructural`은 같은 indoor pipeline을 따른다. 단, Floor는 walkable cell, EdgeWall은 incident cell band로 읽는다. |
 | **채널 분리** | structural hide(완전 숨김)와 CharacterOcclusion(반투명)은 **다른 목적**. policy가 hide면 occlusion을 씌우지 않는다 — **입력 단계에서 차단**, apply 후 필터·전환 후보 patch로 막지 않는다. |
 | **전환은 reconcile** | indoor↔outdoor·blocking 변경은 “stale 타일 목록을 또 하나 더”가 아니라 **ctx diff universe 전체 reconcile** 한 번으로 끝낸다. |
-| **땜빵 금지** | 증상별 `if (전환) Clear…`, `AppendTransition…`, 위치 gate 우회, apply 시 filter만 추가하는 패턴은 **임시**다. 같은 버그가 두 번 나오면 **발생 경로를 제거**하는 쪽으로 리팩터한다. |
+| **땜빵 금지** | 전역 `bug-fix-gate.mdc`. **가시성**: 증상별 `if (전환) Clear…`, `AppendTransition…`, gate 우회, apply filter만 — 같은 버그 두 번이면 **발생 경로 제거**. |
 
 **허용되는 복잡도**: 3개 독립 시스템(층 가시성 · 근접 블렌드 · BFS wall occlusion)은 **도메인상** 분리다. 복잡도가 문제인 곳은 **틱·상태 저장소가 3벌**인 지점이다.
 

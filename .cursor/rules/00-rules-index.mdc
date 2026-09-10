@@ -16,7 +16,9 @@ alwaysApply: true
 |------|---------|
 | `agent-scope.mdc` | 경로·범위 SSOT·MCP·완료 요약·Dist UI path gate |
 | `collaboration-rules.mdc` | 모드 게이트·승인·Rule 1/3/4/5 |
-| `clarify-before-guess.mdc` | 의도·증상 불명확 시 추측 패치 전 질문 |
+| `clarify-before-guess.mdc` | 모호·갈림 — fail-closed·직설 재질문·추측 패치 금지 |
+| `bug-fix-gate.mdc` | 버그·회귀 — 진단·땜빵 금지·완료 (전역 SSOT) |
+| `senior-advisory.mdc` | 구조·파이프라인 — Optional 선임 메모, 승인 전 구현 금지 |
 | `no-hardcoding.mdc` | 매직 넘버/복붙 SSOT |
 
 **구현 완료 (Dist 편집 시):** 컴파일만 Done 금지 → `agent-completion-gate.mdc` · `.claude/checklists/agent-completion-gate.md`
@@ -46,7 +48,7 @@ alwaysApply: true
 | File | When |
 |------|------|
 | `migration-parity.mdc` | 경로 교체·하이브리드·기능 불변 최적화 |
-| `epistemic-labels.mdc` | 버그 진단·원인 분석·MCP/로그 해석 |
+| `epistemic-labels.mdc` | 버그 진단·원인·MCP/로그 (`bug-fix-gate.mdc`가 참조) |
 | `collaboration-convergence-notes.mdc` | 문서 수렴 라운드 (비규범) |
 
 ## Dist UI path gate

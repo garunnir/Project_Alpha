@@ -72,7 +72,7 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 
 | Layer | SSOT | 역할 |
 |-------|------|------|
-| 1 조준 해석 | `IAimSightProvider` | RMB → `CharacterState`. 소비자는 State만 |
+| 1 조준 해석 | `IAimSightProvider` + `CombatAimSightPolicy` | RMB 입력 → `CharacterState`. Flatten Y는 Leaf/Mode. 소비자는 State만 |
 | 2 시전 입력 | `ICombatPerformDriver` + `ICombatAttackInput` | Host = `PlayerCombatController` |
 | 3 cue 실행 | `CharacterAttacker` · `IActionHandler` | Leaf `logicId` |
 

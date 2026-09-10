@@ -14,11 +14,16 @@ namespace IsoTilemap
         public const float BaseBreakSeconds = 2.5f;
 
         /// <summary>
-        /// TileDefinition.breakDurability 미지정 폴백 (level 1 삽 ≈ 5 cue break 패리티).
-        /// cue당 피해 SSOT는 <see cref="CombatMath.ResolveExcavateDamage"/> /
-        /// <see cref="CombatMath.ResolveStructureDamage"/>.
+        /// Dig-break cue 횟수 패리티(level-1 삽 기준). 내구 ≈ cue피해 × 이 값.
         /// </summary>
-        public const int DefaultDigDurability = 5;
+        public const int DigBreakCuesAtDigLevel1 = 5;
+
+        /// <summary>
+        /// TileDefinition.breakDurability 미지정 폴백.
+        /// Excavate 피해는 <see cref="CombatMath.ResolveExcavateDamage"/>(채널×재질);
+        /// level-1 삽 ≈ <see cref="DigBreakCuesAtDigLevel1"/> cue에 맞춤(~cue 50 × 5).
+        /// </summary>
+        public const int DefaultDigDurability = 250;
 
         public const float MaxRayDistance = 200f;
 

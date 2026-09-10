@@ -376,6 +376,8 @@ public static class CombatMath
     /// <summary>
     /// Excavate cue 피해 — DIG potency 게이트 + <see cref="ResolveStructureDamage"/>.
     /// <paramref name="digPotencyLevel"/>는 <see cref="MapPlantService.ResolveDigQualityLevel"/> 결과.
+    /// 타일 내구(<see cref="MapDigConsts.DefaultDigDurability"/> / TileDefinition.breakDurability)와
+    /// cue 횟수 패리티를 맞춘다.
     /// </summary>
     public static int ResolveExcavateDamage(
         ItemData item,

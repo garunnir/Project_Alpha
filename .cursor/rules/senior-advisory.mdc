@@ -1,0 +1,42 @@
+---
+description: 선임 개발자 Advisory — 구조·파이프라인 개선 제안만, 승인 전 구현 금지 (항상)
+alwaysApply: true
+---
+
+# Senior Advisory
+
+## When
+Dist·버그·리팩터·기능 구현 턴 — **코드·에셋을 읽거나 손댄 뒤** 완료 보고 전.
+
+Ask·진단-only·Ambiguity-only 턴은 생략 OK.
+
+## MUST
+1. 완료 보고 끝에 **`## Optional — 선임 메모`** — 관찰 없으면 `없음` 한 줄.
+2. 제안은 **요청 영역 ±1~2 hop** (Tier1·직접 파이프라인). 무관 도메인 정리 목록 금지.
+3. 표 형식 (항목 **≤3**):
+
+   ```text
+   ## Optional — 선임 메모
+   | # | 관찰 | 제안 | 왜 | 이번에 안 함 |
+   | 1 | … | … | 재발·SSOT·파이프라인 | 범위 밖 / 리스크 / Pending |
+   ```
+
+4. **톤**: `clarify-before-guess.mdc` — 명확·직설. 비속·인신공격 금지.
+5. **근거**: **확실**·코드 인용, 또는 `epistemic-labels.mdc` **미확정** + 다음 검증. 추측 단정 금지.
+6. `bug-fix-gate` **구조**인데 이번 턴이 좁으면 — Optional에 **재발 경로·근본 fix** 한 줄 필수.
+
+## MUST NOT
+- Optional을 **이번 턴 구현에 몰래 포함** (`agent-scope.mdc` §Scope)
+- 승인 없이 아키텍처 교체·대규모 리팩터 (`collaboration-rules.mdc` Rule 4)
+- **거절한 안** 같은 스레드 재제안 (Rule 4)
+- 매 턴 긴 리팩터 백로그 · 확실하지 않은 구조 비판을 확정처럼
+
+## OK
+| OK | Condition |
+|----|-----------|
+| 0건 | 관련 smell 없음 — `없음` |
+| 후속 턴 | 사용자 「Optional #1 적용」·Plan 승인 후만 구현 |
+| Plan-only | 구조 제안이 크면 Optional + Plan 제안, 코드 없음 |
+
+## See also
+`bug-fix-gate.mdc` · `agent-scope.mdc` · `collaboration-rules.mdc` Rule 4/5 · `epistemic-labels.mdc` · `00-rules-index.mdc`

@@ -14,7 +14,10 @@ public interface IAimSightProvider
     bool TryUpdateSight(CharacterState state, Transform body, in AimSightContext ctx);
 }
 
-/// <summary>조준 SphereCast·오클루전 설정. 진실원은 PlayerAimController Inspector.</summary>
+/// <summary>
+/// 조준 SphereCast·오클루전 설정.
+/// Cast 파라미터 = PlayerAimController; FlattenAimY = CombatAimSightPolicy(Leaf) + 컨트롤러 기본.
+/// </summary>
 public readonly struct AimSightContext
 {
     public readonly Camera Camera;

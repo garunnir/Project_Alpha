@@ -158,7 +158,12 @@ namespace IsoTilemap
             maxHp = Mathf.Max(1, maxHp);
             var key = new DurabilityKey(walkableCell, TileDurabilityKind.FloorFace);
             if (_remainingHpByKey.TryGetValue(key, out int remaining))
-                return Mathf.Clamp(remaining, 0, maxHp);
+            {
+                int clamped = Mathf.Clamp(remaining, 0, maxHp);
+                if (clamped != remaining)
+                    _remainingHpByKey[key] = clamped;
+                return clamped;
+            }
 
             _remainingHpByKey[key] = maxHp;
             return maxHp;
@@ -169,7 +174,12 @@ namespace IsoTilemap
             maxHp = Mathf.Max(1, maxHp);
             var key = new DurabilityKey(cell, TileDurabilityKind.Occupied);
             if (_remainingHpByKey.TryGetValue(key, out int remaining))
-                return Mathf.Clamp(remaining, 0, maxHp);
+            {
+                int clamped = Mathf.Clamp(remaining, 0, maxHp);
+                if (clamped != remaining)
+                    _remainingHpByKey[key] = clamped;
+                return clamped;
+            }
 
             _remainingHpByKey[key] = maxHp;
             return maxHp;
@@ -202,13 +212,13 @@ namespace IsoTilemap
             if (remaining > 0)
             {
                 _remainingHpByKey[key] = remaining;
-                TileDamagePresentation.RefreshFloorFace(walkableCell);
+                TileDamagePresentation.ApplyFloorFaceHp(walkableCell, remaining);
                 return false;
             }
 
             _remainingHpByKey.Remove(key);
             remaining = 0;
-            TileDamagePresentation.RefreshFloorFace(walkableCell);
+            // Persistent 크랙은 mid-hit만. lethal은 곧 Remove — GO 생성 후 풀 숨김 방지.
             return true;
         }
 
@@ -226,26 +236,26 @@ namespace IsoTilemap
             if (remaining > 0)
             {
                 _remainingHpByKey[key] = remaining;
-                TileDamagePresentation.RefreshOccupied(cell);
+                TileDamagePresentation.ApplyOccupiedHp(cell, remaining);
                 return false;
             }
 
             _remainingHpByKey.Remove(key);
             remaining = 0;
-            TileDamagePresentation.RefreshOccupied(cell);
+            // Persistent 크랙은 mid-hit만. lethal은 곧 Remove — GO 생성 후 풀 숨김 방지.
             return true;
         }
 
         public void ClearFloorFaceHp(Vector3Int walkableCell)
         {
             _remainingHpByKey.Remove(new DurabilityKey(walkableCell, TileDurabilityKind.FloorFace));
-            TileDamagePresentation.RefreshFloorFace(walkableCell);
+            TileDamagePresentation.ApplyFloorFaceHp(walkableCell, remaining: int.MaxValue);
         }
 
         public void ClearOccupiedHp(Vector3Int cell)
         {
             _remainingHpByKey.Remove(new DurabilityKey(cell, TileDurabilityKind.Occupied));
-            TileDamagePresentation.RefreshOccupied(cell);
+            TileDamagePresentation.ApplyOccupiedHp(cell, remaining: int.MaxValue);
         }
         public bool TryBreakDigTarget(DigTileTarget target, out string brokenPrefabId)
         {

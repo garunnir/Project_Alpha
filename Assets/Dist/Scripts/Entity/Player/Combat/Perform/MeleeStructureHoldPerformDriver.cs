@@ -1,12 +1,13 @@
 // ============================================================
-// MeleeStructureHoldPerformDriver — AimHold + 구조물 타겟 (Layer2)
+// MeleeStructureHoldPerformDriver — AimHold + 구조물 타겟 잠금 (Layer2)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
 
 /// <summary>
-/// Dig/Chop 공용 hold 루프. 조작은 <see cref="AimHoldAttackInput"/>,
-/// Leaf·ResolveMode·타겟 begin은 파생.
+/// Dig/Chop 공용 hold 루프. 조작은 <see cref="AimHoldAttackInput"/>.
+/// LMB down/재획득: aim Resolve → 잠금. hold 중 잠금 유지. release: Clear.
+/// 파괴로 inactive면 같은 hold에서 aim으로 재고정(A).
 /// </summary>
 public abstract class MeleeStructureHoldPerformDriver : ICombatPerformDriver
 {
@@ -37,7 +38,7 @@ public abstract class MeleeStructureHoldPerformDriver : ICombatPerformDriver
             return;
         }
 
-        if (!TryBeginTargetFromAim(ctx))
+        if (!TryEnsureLockedTarget(in ctx))
         {
             Clear(ctx);
             return;
@@ -51,6 +52,16 @@ public abstract class MeleeStructureHoldPerformDriver : ICombatPerformDriver
 
     public void Clear(in CombatPerformContext ctx) =>
         ClearPipeline(ctx);
+
+    /// <summary>이미 잠금이면 유지. 없으면 aim으로 begin(파괴 후 재고정 포함).</summary>
+    protected bool TryEnsureLockedTarget(in CombatPerformContext ctx)
+    {
+        if (IsPipelineActive(in ctx))
+            return true;
+        return TryBeginTargetFromAim(in ctx);
+    }
+
+    protected abstract bool IsPipelineActive(in CombatPerformContext ctx);
 
     protected abstract bool TryBeginTargetFromAim(in CombatPerformContext ctx);
 

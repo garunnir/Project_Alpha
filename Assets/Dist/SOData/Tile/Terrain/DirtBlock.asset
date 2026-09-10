@@ -23,7 +23,7 @@ MonoBehaviour:
   - MINEABLE
   materials:
   - soil
-  breakDurability: 5
+  breakDurability: 250
   materialThickness: 0
   occupied:
     providesLogicalFloor: 1

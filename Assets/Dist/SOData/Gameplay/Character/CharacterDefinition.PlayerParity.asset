@@ -18,7 +18,7 @@ MonoBehaviour:
   _faction: {fileID: 11400000, guid: c6b7d8e9f0a14cd2e3f48697a0b1c2d3, type: 2}
   _alignment: {x: 0, y: 0}
   _attributes:
-    str: 20
+    str: 8
     con: 8
     dex: 8
     intel: 8

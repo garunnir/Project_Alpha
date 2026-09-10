@@ -12,13 +12,15 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private float _castOriginYOffset = 0.35f;
     [Tooltip("마우스 거리와 무관하게 조준·상호작용 SphereCast가 닿는 최대 거리.")]
     [SerializeField] private float _maxAimDistance = 15f;
-    [Tooltip("켜면 조준 월드점 Y를 플레이어 발높이 + Cast Origin Y Offset으로 고정(오클루전·몸 기준 거리와 맞춤).")]
+    [Tooltip("Leaf 미바인딩·비-MeleeBlock용 기본. MeleeBlock(Excavate) flatten은 CombatAimSightPolicy가 false로 고정.")]
     [SerializeField] private bool _flattenAimYToPlayerHeight = true;
     [Tooltip("막힘 검사 레이어(플레이어 본체 레이어는 제외하는 것을 권장)")]
     [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
     private CharacterState _characterState;
     private Transform _bodyTransform;
+    private CharacterAttacker _attacker;
+    private CharacterActionHost _actionHost;
     private MapTopologyLineCast _topologyLineCast;
     private IAimSightProvider _sightProvider = new PlayerMouseSphereAimProvider();
     private bool _isAiming;
@@ -36,13 +38,27 @@ public class PlayerAimController : MonoBehaviour
     public void SetSightProvider(IAimSightProvider provider) =>
         _sightProvider = provider ?? new PlayerMouseSphereAimProvider();
 
-    public bool TryResolveSightWorldPoint(out Vector3 aimWorldPoint) =>
-        PlayerSightTarget.TryResolveWorldPoint(
-            _bodyTransform != null ? _bodyTransform : transform,
+    public bool TryResolveSightWorldPoint(out Vector3 aimWorldPoint)
+    {
+        Transform body = _bodyTransform != null ? _bodyTransform : transform;
+        if (CombatAimSightHoldLock.TryApplyLockedSight(
+                _characterState,
+                body,
+                _castOriginYOffset,
+                _attacker,
+                _actionHost))
+        {
+            aimWorldPoint = _characterState.AimWorldPoint;
+            return true;
+        }
+
+        return PlayerSightTarget.TryResolveWorldPoint(
+            body,
             _refCam != null ? _refCam : Camera.main,
             _topologyLineCast,
             BuildSightSettings(),
             out aimWorldPoint);
+    }
 
     PlayerSightTarget.Settings BuildSightSettings() => BuildAimContext().ToSightSettings();
 
@@ -52,8 +68,19 @@ public class PlayerAimController : MonoBehaviour
         _castOriginYOffset,
         _sphereRadius,
         _maxAimDistance,
-        _flattenAimYToPlayerHeight,
+        ResolveFlattenAimY(),
         _aimObstructionMask);
+
+    /// <summary>입력 기본 + Leaf 정책. Attacker 없으면 Inspector 기본만.</summary>
+    bool ResolveFlattenAimY()
+    {
+        if (_attacker == null)
+            return _flattenAimYToPlayerHeight;
+
+        return CombatAimSightPolicy
+            .Resolve(_attacker.SelectedLeaf, _flattenAimYToPlayerHeight)
+            .FlattenAimYToPlayerHeight;
+    }
 
     void Awake()
     {
@@ -64,10 +91,19 @@ public class PlayerAimController : MonoBehaviour
             _sightProvider = new PlayerMouseSphereAimProvider();
     }
 
-    public void BindBody(CharacterState state, Transform bodyTransform)
+    public void BindBody(CharacterState state, Transform bodyTransform) =>
+        BindBody(state, bodyTransform, null, null);
+
+    public void BindBody(
+        CharacterState state,
+        Transform bodyTransform,
+        CharacterAttacker attacker,
+        CharacterActionHost actionHost = null)
     {
         _characterState = state;
         _bodyTransform = bodyTransform;
+        _attacker = attacker;
+        _actionHost = actionHost;
     }
 
     public void BindMapCollision(MapTopologyLineCast lineCast) => _topologyLineCast = lineCast;
@@ -133,6 +169,23 @@ public class PlayerAimController : MonoBehaviour
         }
 
         Transform body = _bodyTransform != null ? _bodyTransform : transform;
+
+        // Dig LMB 잠금: SphereCast 스킵, SightDir=블록. 카메라 자유.
+        if (CombatAimSightHoldLock.TryApplyLockedSight(
+                _characterState,
+                body,
+                _castOriginYOffset,
+                _attacker,
+                _actionHost))
+        {
+            if (ShouldDrawAimDebug)
+            {
+                Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
+                Debug.DrawLine(origin, _characterState.AimWorldPoint, Color.cyan, 0f, false);
+            }
+            return;
+        }
+
         if (!_sightProvider.TryUpdateSight(_characterState, body, BuildAimContext()))
             return;
 

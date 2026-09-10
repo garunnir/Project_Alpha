@@ -22,7 +22,7 @@ MonoBehaviour:
   - MINEABLE
   materials:
   - stone
-  breakDurability: 8
+  breakDurability: 400
   materialThickness: 1
   occupied:
     providesLogicalFloor: 1

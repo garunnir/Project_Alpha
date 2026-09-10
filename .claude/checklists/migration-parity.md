@@ -1,6 +1,6 @@
 # Migration Parity Checklist
 
-**목적:** 경로/스택을 갈아끼우거나 섞은 뒤, 예전 동작을 증상별로 사용자에게 재현시키며 메우지 않는다.
+**목적:** 경로/스택 교체·하이브리드 후 패리티 빈칸을 증상별 재현으로 메우지 않는다 (`bug-fix-gate.mdc` · 본 체크리스트).
 
 **관련 룰:** `.cursor/rules/migration-parity.mdc` (always) · 완료 선언: `.cursor/rules/agent-completion-gate.mdc` · `.claude/checklists/agent-completion-gate.md`
 
@@ -16,7 +16,7 @@
 - [ ] “새 조각만 되면 완료”가 아니라, 구경로가 주던 **주변 계약**을 빈칸으로 인정했다
 - [ ] 두 시스템 공존 시 경계 SSOT를 적었다 (입력 / 좌표·단위 / 그리기·레이어·수명)
 - [ ] 패리티 미완이면 구경로·Revert·flag off — **기본 경로로 켜지 않음** (명시 승인 없으면)
-- [ ] 예상 가능 공백을 사용자 재현 뺑뺑이로 메우지 않았다
+- [ ] 예상 공백·회귀를 `bug-fix-gate.mdc` §MUST NOT 방식으로 메우지 않았다
 - [ ] 사용자 재현 요청은 **계약 밖 신규 버그** 또는 **검증 후에도 남은 회귀**에만
 
 ## B. 기본 경로로 켜기 직전
@@ -47,4 +47,4 @@
 - [ ] 성능/회귀: C1 성공 기준 충족 또는 미충족 사유·Pending 명시
 - [ ] §A·§B 공통 항목 충족 (기본 경로·문서·Pending)
 
-**MUST NOT:** “내부만 바꿨다”로 체크리스트 없이 기본 경로로 켬 · 증상 나올 때마다 사용자 재현만 요청.
+**MUST NOT:** “내부만 바꿨다”로 체크리스트 없이 기본 경로로 켬 · `bug-fix-gate.mdc` §MUST NOT.

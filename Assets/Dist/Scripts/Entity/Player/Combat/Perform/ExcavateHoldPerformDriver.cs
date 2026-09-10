@@ -6,12 +6,15 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 
 /// <summary>
-/// ResolveMode.MeleeBlock. 타겟은 AimWorldPoint → DigTileTargetResolver.
+/// ResolveMode.MeleeBlock. LMB 잠금 = DigPipeline. inactive 시 aim Resolve로 begin.
 /// </summary>
 public sealed class ExcavateHoldPerformDriver : MeleeStructureHoldPerformDriver
 {
     protected override WeaponResolveMode Mode => WeaponResolveMode.MeleeBlock;
     protected override CombatLeaf PerformLeaf => CombatLeaf.Excavate;
+
+    protected override bool IsPipelineActive(in CombatPerformContext ctx) =>
+        ctx.ActionHost?.DigPipeline != null && ctx.ActionHost.DigPipeline.IsActive;
 
     protected override bool TryBeginTargetFromAim(in CombatPerformContext ctx)
     {

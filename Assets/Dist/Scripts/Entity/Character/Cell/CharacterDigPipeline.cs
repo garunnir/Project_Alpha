@@ -42,6 +42,12 @@ public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigT
         return host.ApplyFloorFaceDamage(target.WalkableCell, damage, out remaining);
     }
 
+    /// <summary>
+    /// remaining/max → stage → TileView 직행 (Resolve 합성·맵 리빌드 없음).
+    /// </summary>
+    protected override void OnMapHpChanged(in DigTileTarget target, int remaining, int maxHp) =>
+        TileDamagePresentation.ApplyHpToView(in target, remaining, maxHp);
+
     protected override void BreakTarget(in DigTileTarget target) =>
         MapDigService.TryBreak(target);
 }

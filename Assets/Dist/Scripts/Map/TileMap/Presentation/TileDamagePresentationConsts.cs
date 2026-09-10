@@ -15,7 +15,7 @@ namespace IsoTilemap
         public const int MaxCrackStage = 3;
 
         /// <summary>크랙 큐브가 host bounds보다 살짝 커지는 양(월드).</summary>
-        public const float CrackBoundsInflate = 0.04f;
+        public const float CrackBoundsInflate = 0.06f;
 
         /// <summary>프로시저럴 크랙 텍스처 한 변(px).</summary>
         public const int CrackTextureSize = 64;

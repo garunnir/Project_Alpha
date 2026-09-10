@@ -16,7 +16,7 @@ alwaysApply: true
 ## MUST NOT
 - 본문에 의미 있는 매직 숫자/문자열을 여러 곳에 복붙
 - UI chrome을 런타임 숫자로 덮어쓰기 → `ui-prefab-layout.mdc`
-- “임시” 매직을 그대로 머지
+- 「임시」 매직·분기 머지 — 버그 땜빵은 `bug-fix-gate.mdc`
 
 ## OK
 | OK | Condition |
@@ -28,4 +28,4 @@ alwaysApply: true
 | 테스트 fixture | 테스트 한정 |
 
 ## See also
-`ui-prefab-layout.mdc` · `ui-font.mdc`
+`bug-fix-gate.mdc` · `ui-prefab-layout.mdc` · `ui-font.mdc`

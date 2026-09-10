@@ -1,0 +1,40 @@
+---
+description: 버그·회귀 수정 SSOT — 진단·로컬/구조 분류·땜빵 금지·완료 조건 (항상)
+alwaysApply: true
+---
+
+# Bug Fix Gate
+
+## When
+버그·회귀·동작 불일치·재현 가능한 오류 수정. **도메인 무관.**  
+이주·하이브리드·기능 불변 리팩터는 `migration-parity.mdc` · 체크리스트 **추가.**
+
+## MUST (구현 전)
+0. 요청이 **두루뭉실**하면 `clarify-before-guess.mdc` — **진단·패치 전** Ambiguity로 끝내도 OK.
+1. **로컬 vs 구조** 분류 — 단일 값/널/오타 vs 중복 SSOT·이중 경로·소유권·임시 분기.
+2. 진단·패치 근거: `epistemic-labels.mdc` — **확실 → 미확정 → 확실 분기만 패치.**
+3. 해당 `docs/**` · glob 룰의 SSOT·경계를 읽은 뒤 수정.
+4. **구조**면 **발생 경로 제거** — 범위 커지면 Plan·승인 (`agent-scope.mdc`).
+
+## MUST NOT — 땜빵 (전역 SSOT)
+- 증상만 덮는 `if`/filter/우회·gate 스킵·apply 후 patch만
+- 증상마다 다른 패치 + 사용자 재현·디버그 뺑뺑이
+- 「일단 고쳐보고」 fail-open (`clarify-before-guess.mdc`)
+- **「최소 diff」= 증상 패치** — 올바른 최소 수정은 SSOT·경로 정리 포함
+- 「임시」 분기·매직 머지 (`no-hardcoding.mdc`)
+
+도메인별 금지 예·SSOT: 해당 문서 (예: `docs/map/TILEMAP_VISIBILITY.md` · `docs/inventory/INVENTORY_UI.md`).
+
+## Done (버그)
+- 재현 시나리오 1개 + **같은 재발 경로 없음** (한 줄)
+- Play 또는 Plan 동등 검증; 못 하면 `Incomplete` (`agent-completion-gate.mdc`)
+
+## OK
+| OK | Condition |
+|----|-----------|
+| 로컬 수정 | 구조 **아님**이 확실·재발 경로 없음 |
+| 진단-only | Ask·「진단만」·사용자 지시 — 패치 없음 |
+| Handoff | `agent-scope.mdc` Handoff + 분류·기각한 땜빵 후보 |
+
+## See also
+`clarify-before-guess.mdc` · `senior-advisory.mdc` · `agent-scope.mdc` · `collaboration-rules.mdc` Rule 4/5 · `epistemic-labels.mdc` · `00-rules-index.mdc`

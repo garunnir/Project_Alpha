@@ -1,31 +1,39 @@
 ---
-description: 의도·증상·구현 갈림이 불명확하면 추측 패치 전 질문 1개 (항상)
+description: 모호·갈림 시 fail-closed·직설 재질문 — 추측 패치 금지 (항상)
 alwaysApply: true
 ---
 
 # Clarify Before Guess
 
 ## When
-버그·UX·좌표·아키텍처 등 **사용자 의도가 한 가지로 안 좁혀질 때**.  
-증상만 있고 원하는 동작·완료 조건이 여러 갈래일 때.
+- 버그·UX·좌표·아키텍처 등 **의도가 한 가지로 안 좁혀질 때**
+- **두루뭉실한 지시** — 완료 조건·원하는 동작·하지 말 것 없이 「고쳐줘」「이상함」「빨리」만
+- 증상만 있고 목표·Done 정의가 **여러 갈래**
 
-## MUST
-1. **패치·Plan·대규모 탐색 전** 질문 **1개** (독립 전제 ≥2면 같은 턴 ≤3). `collaboration-rules.mdc` Rule 3.
-2. 질문은 **갈림을 가르는** 것 — 예: “커서 visual만?” / “적용 셀?” / “카메라 레이 vs 평면?”
-3. Play·씬·로그로 **확실**히 가릴 수 있으면 그 한 가지 확인을 질문에 넣기.
-4. 진단은 `epistemic-labels.mdc` — **추측만으로 원인 단정·패치 금지**.
+## MUST — fail-closed
+1. 위 When이면 **패치·Plan·대규모 탐색·파일 편집 전** 멈춤 — **Agent여도 동일** (`collaboration-rules.mdc` Rule 3).
+2. **질문 ≤1** (독립 전제 ≥2면 같은 턴 ≤3). **갈림을 가르는** 선택지.
+3. **톤**: 정중함보다 **명확함** — “지금 요청만으로 Done 정의가 없어 구현 못 함” 수준의 **직설** OK. 비속·인신공격 금지.
+4. 명확화 턴은 아래 블록 — Mermaid·구현 코드블록 생략:
+   ```text
+   ## Ambiguity
+   지금 말씀만으로는: (한 줄)
+   골라 주세요: A / B / (직접: …)
+   Done 없이 임의 선택 = 땜빵 (`bug-fix-gate.mdc`).
+   ```
+5. Play·로그로 **한 번에** 가릴 수 있으면 그 한 가지만 묻기.
+6. 버그·회귀: `bug-fix-gate.mdc` · `epistemic-labels.mdc`.
 
 ## MUST NOT
-- 두 갈래 이상인데 질문 없이 한쪽 구현 (`agent-scope.mdc`)
-- “일단 고쳐보고” fail-open 편집 (`collaboration-rules.mdc`)
-- 증상마다 다른 패치를 연속 시도하며 사용자 재현만 요청 (`migration-parity.mdc`)
+- 모호한데 질문 없이 한쪽 구현 · `ok`/`알겠어`만으로 Agent 진행
+- fail-open·땜빵·재현 뺑뺑이 (`bug-fix-gate.mdc` §MUST NOT)
 
 ## OK
 | OK | Condition |
 |----|-----------|
-| 바로 구현 | 사용자가 방향·완료 조건을 이미 명시했거나, 직전 턴에서 합의됨 |
-| 질문 없이 읽기만 | Ask 모드·단순 사실 조회 |
-| 짧은 가설 + 질문 | 패치 없이 “A/B 중 어느 쪽인가요?” 한 줄 |
+| 바로 구현 | 방향·Done·하지 말 것 명시, 또는 직전 턴 합의 |
+| Ask·진단-only | 읽기·분석만 |
+| Ambiguity로 턴 종료 | Agent여도 재질문만으로 끝내기 OK |
 
 ## See also
-`collaboration-rules.mdc` Rule 3 · `agent-scope.mdc` · `epistemic-labels.mdc` · `CLAUDE.md` (When unsure → ask)
+`bug-fix-gate.mdc` · `senior-advisory.mdc` · `collaboration-rules.mdc` Rule 3 · `agent-scope.mdc` · `epistemic-labels.mdc` · `CLAUDE.md` (When unsure → ask)

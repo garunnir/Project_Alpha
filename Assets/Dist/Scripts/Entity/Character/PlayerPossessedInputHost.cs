@@ -80,7 +80,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         CharacterFacingAnim facing = body != null ? body.GetBodyComponent<CharacterFacingAnim>() : null;
 
         _movement?.BindBody(motor, _bodyState, facing);
-        _aimController?.BindBody(_bodyState, _bodyTransform);
+        _aimController?.BindBody(_bodyState, _bodyTransform, attacker, actionHost);
         _combatController?.BindBody(attacker, _bodyState, actionHost, Camera.main);
         _stealthController?.BindBody(_bodyState, _movement);
 

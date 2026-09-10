@@ -4,11 +4,11 @@ using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 // ============================================================
-// TileView — 씬 타일 오브젝트의 identity·pose·프레젠테이션 뷰
+// TileView — 씬 타일 identity·pose · Transient/Persistent 프레젠테이션
 // ============================================================
+// Transient(비저장): 카메라/층·Ghost·Selected·Vivid — ApplyTransientPresentation
+// Persistent(저장 HP 파생): 크랙 — ApplyPersistentPresentation
 // 씬에 실제로 붙어있는 타일 오브젝트용 View.
-// Anchor + Size + PrefabId 기반 메타데이터를 유지하고,
-// 런타임 데이터 변경을 시각 상태(셰이더 컨트롤)까지 반영합니다.
 namespace IsoTilemap
 {
     public class TileView : MapPlacedView
@@ -251,17 +251,18 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
-        /// <summary>Add 강조 오버레이. Selected(외곽선)와 독립 축. 0 = off.</summary>
+        /// <summary>비저장 · Dig 조준 Add 강조. Selected(외곽선)와 독립. 0 = off.</summary>
         public void SetVividEmphasis(float amount) => ForceApplyVividEmphasis(amount);
+
+        /// <summary>
+        /// 저장 축 — Host HP 파생 크랙. 비저장 Resolve/Transient가 덮지 않음.
+        /// </summary>
+        public void ApplyPersistentPresentation(int damageStage) => SetDamageStage(damageStage);
 
         public void SetDamageStage(int stage)
         {
             stage = Mathf.Clamp(stage, 0, TileDamagePresentationConsts.MaxCrackStage);
-            bool supportsCracks = placementSlot == TilePlacementSlot.HorizontalFace ||
-                                  (placementSlot == TilePlacementSlot.OccupiedCell &&
-                                   TilePrefabDB.TryResolveDefinition(prefabId, out TileDefinition def) &&
-                                   MapDigTerrainUtil.IsWalkableStratumBlock(def));
-            if (!supportsCracks)
+            if (!TileDamagePresentation.SupportsCrackOverlay(placementSlot, prefabId))
                 stage = 0;
 
             if (_currentDamageStage == stage)
@@ -285,25 +286,27 @@ namespace IsoTilemap
         public void ConfigureStructuralHidePresentationMode(StructuralHidePresentationMode mode) =>
             _structuralHideMode = mode;
 
-        /// <summary>Applier SSOT — 합성된 표현을 한 경로로 적용합니다.</summary>
-        public void ApplyResolvedPresentation(in TilePresentationResolved resolved)
+        /// <summary>
+        /// 비저장 축 — 카메라/층 가시성·Ghost·Selected·Vivid. 저장 축(크랙) 미포함.
+        /// </summary>
+        public void ApplyTransientPresentation(in TilePresentationResolved resolved)
         {
             ApplyStructuralHidden(resolved.StructuralHidden);
             SetSightLineBuildingHidden(resolved.SightLineTrace);
 
             if (resolved.StructuralHidden)
-            {
-                SetDamageStage(0);
                 return;
-            }
 
             SetGhosted(resolved.Ghosted);
             SetSelected(resolved.Selected);
             SetVividEmphasis(resolved.VividEmphasis);
-            SetDamageStage(resolved.DamageStage);
             SetCharacterOcclusion(resolved.CharacterOcclusion);
             RefreshIsoDepthSortRegistration();
         }
+
+        /// <summary>레거시 이름 — <see cref="ApplyTransientPresentation"/>.</summary>
+        public void ApplyResolvedPresentation(in TilePresentationResolved resolved) =>
+            ApplyTransientPresentation(in resolved);
 
         /// <summary>야외 시선 차단 building MinCellY Floor 어둡게 표시.</summary>
         public void SetSightLineBuildingHidden(bool hidden)
@@ -507,7 +510,7 @@ namespace IsoTilemap
             _blockedTraceObject.SetActive(visible);
         }
 
-        /// <summary>풀 반납 전 시각·오클루전·선택 상태 초기화. Awake는 재호출되지 않음.</summary>
+        /// <summary>풀 반납 전 비저장·저장 뷰 캐시 초기화. 재스폰 시 Persistent는 Host sync.</summary>
         internal void ResetForPool()
         {
             CacheControllers();
@@ -520,6 +523,9 @@ namespace IsoTilemap
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             ForceApplyVividEmphasis(0f);
+            _crackOverlay?.Dispose();
+            _crackOverlay = null;
+            _currentDamageStage = -1;
             SetBlockedTraceVisible(false);
         }
     }

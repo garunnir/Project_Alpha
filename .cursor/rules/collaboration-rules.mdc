@@ -20,16 +20,16 @@ alwaysApply: true
 승인 예: `implement this` / `go ahead` / `적용해줘`.  
 비승인: `ok` / `sure` / `알겠어`. 인용·참조한 제안문 = 그 범위만 승인.
 
-의도 모호 → **질문 1개**, 코드 없음(Rule 3). fail-open 편집 금지.
+**모호·두루뭉실** (Done·원하는 동작·하지 말 것 없음) → `clarify-before-guess.mdc` **fail-closed**: Agent여도 **편집 금지**, Ambiguity로 재질문. fail-open 금지.
 
 ## Rules (Agent + approved)
 | # | Name | MUST |
 |---|------|------|
 | 1 | Prerequisites | 씬 의존·실행순서·Inspector·교차 부작용 있으면 근거/전제 명시. 없으면 “no prerequisites” 한 줄 |
-| 3 | Scope & Questions | 요청 범위만. 질문 ≤1; 독립 전제 ≥2면 같은 턴 ≤3. 명확화 턴은 Mermaid/코드블록 생략. Task 서브에이전트는 사용자에게 묻지 말고 `Ambiguity:` |
+| 3 | Scope & Questions | 요청 범위만. 모호하면 fail-closed·Ambiguity (`clarify-before-guess.mdc`). 질문 ≤1; 독립 전제 ≥2면 ≤3. 명확화 턴: Mermaid/코드블록 생략. Task 서브: 사용자에게 묻지 말고 `Ambiguity:` |
 | 4 | Existing Decisions | 현재 스레드 사용자 이유 없이 라이브러리/아키텍처 교체 금지. 거절안 재제안 금지 |
 | 5 | Impact | 코드 전 Tier1(직접 참조·구독·Inspector). 2+ hop은 `Potential Impact` |
-| 7 | Completion | Dist 구현 시 `agent-scope.mdc` §Completion 요약 · `agent-completion-gate.mdc` |
+| 7 | Completion | Dist 구현 시 `agent-scope.mdc` §Completion · `agent-completion-gate.mdc` · `senior-advisory.mdc` Optional |
 
 Rule **2**(Mermaid)·**6**(hot-path): `collaboration-unity.mdc`.
 
@@ -38,4 +38,4 @@ Rule **2**(Mermaid)·**6**(hot-path): `collaboration-unity.mdc`.
 - namespace/asmdef: hotfix 격리만 — 제안 후 승인
 
 ## See also
-스택: `unity-stack.mdc` · 프리팹 AddComponent: `collaboration-unity.mdc` · 위반 알림: `00-rules-index.mdc`
+`clarify-before-guess.mdc` · 스택: `unity-stack.mdc` · 프리팹 AddComponent: `collaboration-unity.mdc` · 위반 알림: `00-rules-index.mdc`

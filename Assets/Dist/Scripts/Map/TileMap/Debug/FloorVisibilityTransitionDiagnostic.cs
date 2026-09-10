@@ -256,13 +256,12 @@ namespace IsoTilemap.Diagnostics
                 SetPrivateField(view, "_structuralVisibilityHidden", false);
 
                 bool activeBefore = go.activeSelf;
-                view.ApplyResolvedPresentation(new TilePresentationResolved(
+                view.ApplyTransientPresentation(new TilePresentationResolved(
                     structuralHidden: false,
                     sightLineTrace: false,
                     characterOcclusion: 0f,
                     ghosted: false,
-                    selected: false,
-                    damageStage: 0));
+                    selected: false));
                 bool activeAfter = go.activeSelf;
 
                 report.AppendLine($"{LogTag} H3 isolated: activeBefore={activeBefore} activeAfter={activeAfter}");

@@ -164,11 +164,11 @@ namespace IsoTilemap
             _stageTextures = new Texture2D[count];
             _stageMaterials = new Material[count];
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/Unlit");
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
                 shader = Shader.Find("Unlit/Transparent");
+            if (shader == null)
+                shader = Shader.Find("Sprites/Default");
 
             for (int i = 0; i < count; i++)
             {
@@ -183,13 +183,27 @@ namespace IsoTilemap
                     name = $"TileCrackStage{stage}",
                     mainTexture = tex,
                     color = Color.white,
+                    renderQueue = (int)RenderQueue.Transparent,
                 };
                 if (mat.HasProperty("_BaseMap"))
                     mat.SetTexture("_BaseMap", tex);
                 if (mat.HasProperty("_BaseColor"))
                     mat.SetColor("_BaseColor", Color.white);
+                if (mat.HasProperty("_Surface"))
+                    mat.SetFloat("_Surface", 1f);
+                if (mat.HasProperty("_Blend"))
+                    mat.SetFloat("_Blend", 0f);
                 if (mat.HasProperty("_Cull"))
                     mat.SetFloat("_Cull", (float)CullMode.Off);
+                if (mat.HasProperty("_ZWrite"))
+                    mat.SetFloat("_ZWrite", 0f);
+                if (mat.HasProperty("_SrcBlend"))
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                if (mat.HasProperty("_DstBlend"))
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.SetOverrideTag("RenderType", "Transparent");
                 mat.SetInt("_Cull", (int)CullMode.Off);
                 _stageMaterials[i] = mat;
             }
@@ -206,7 +220,8 @@ namespace IsoTilemap
             };
 
             Color clear = new Color(0f, 0f, 0f, 0f);
-            Color crack = new Color(0.95f, 0.95f, 0.95f, 0.92f);
+            // 어두운 크랙 — 밝은 dirt 위에서도 대비
+            Color crack = new Color(0.08f, 0.07f, 0.06f, 0.92f);
             Color[] pixels = new Color[size * size];
             for (int i = 0; i < pixels.Length; i++)
                 pixels[i] = clear;

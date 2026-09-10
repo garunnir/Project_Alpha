@@ -46,7 +46,7 @@ Texture2D:
     offset: 0
     size: 0
     path: 
---- !u!21 &-4862483358961418666
+--- !u!21 &-4600626098905322808
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -212,5 +212,5 @@ MonoBehaviour:
   _cellPixels: 16
   _sourceMaterial: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
   _bakedAtlas: {fileID: -5434639353781203700}
-  _bakedMaterial: {fileID: -4862483358961418666}
-  _bakedFromSourceId: 70966
+  _bakedMaterial: {fileID: -4600626098905322808}
+  _bakedFromSourceId: 71008

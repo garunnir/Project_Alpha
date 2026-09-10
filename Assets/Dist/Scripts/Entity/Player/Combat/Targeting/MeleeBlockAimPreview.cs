@@ -6,8 +6,7 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 
 /// <summary>
-/// ResolveMode.MeleeBlock. AimWorldPoint → DigTileTarget (clamp) + CanBreak → face highlight.
-/// UIAimPointer 링 아님.
+/// ResolveMode.MeleeBlock. 홀드 잠금 타겟 우선, 없으면 aim Resolve + CanBreak → highlight.
 /// </summary>
 public sealed class MeleeBlockAimPreview : ICombatTargetingPreview
 {
@@ -39,7 +38,11 @@ public sealed class MeleeBlockAimPreview : ICombatTargetingPreview
             return;
         }
 
-        if (!ctx.Attacker.TryPreviewMeleeBlockTarget(ctx.Host, out DigTileTarget target))
+        DigTileTarget target;
+        CharacterDigPipeline dig = ctx.ActionHost != null ? ctx.ActionHost.DigPipeline : null;
+        if (dig != null && dig.TryGetActiveTarget(out DigTileTarget locked))
+            target = locked;
+        else if (!ctx.Attacker.TryPreviewMeleeBlockTarget(ctx.Host, out target))
         {
             ClearPreview();
             return;

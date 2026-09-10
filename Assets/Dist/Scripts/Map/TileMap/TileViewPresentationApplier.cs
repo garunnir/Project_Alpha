@@ -219,8 +219,8 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// SSOT 합성. 구조적 숨김 &gt; 시선 가림 &gt; Ghost &gt; Visible.
-        /// 차단 흔적은 별도 오버레이.
+        /// 비저장(Transient) 합성 — 카메라/층·Ghost·Selected·Vivid.
+        /// 저장 축(크랙)은 포함하지 않음.
         /// </summary>
         public TilePresentationResolved Resolve(Guid tileId)
         {
@@ -232,27 +232,48 @@ namespace IsoTilemap
             bool ghosted = PresentationEntryQueries.ResolveGhosted(tileId, _entries);
             bool selected = _store.IsSelected(tileId);
             float vividEmphasis = _store.GetVividEmphasis(tileId);
-            int damageStage = TileDamagePresentation.ResolveStage(
-                tileId,
-                _model,
-                MapDigColumnHost.Runtime);
             return new TilePresentationResolved(
                 structuralHidden,
                 trace,
                 occlusion,
                 ghosted,
                 selected,
-                damageStage,
                 vividEmphasis);
         }
 
+        /// <summary>비저장 축을 뷰에 적용. Persistent(크랙)는 건드리지 않음.</summary>
         public void ApplyResolved(Guid tileId)
         {
             if (!_registry.TryGetView(tileId, out TileView view))
                 return;
 
             view.ConfigureStructuralHidePresentationMode(_structuralHideMode);
-            view.ApplyResolvedPresentation(Resolve(tileId));
+            view.ApplyTransientPresentation(Resolve(tileId));
+        }
+
+        /// <summary>
+        /// 저장 축 — Dig/구조 remaining → 크랙. Transient Resolve와 독립.
+        /// </summary>
+        public void ApplyDamageStage(Guid tileId, int remaining, int maxHp)
+        {
+            if (!_registry.TryGetView(tileId, out TileView view))
+                return;
+
+            int stage = TileDamagePresentationConsts.StageFromRemaining(remaining, maxHp);
+            view.ApplyPersistentPresentation(stage);
+        }
+
+        /// <summary>청크 스폰·재로드 — 저장 HP → Persistent 크랙만 복원.</summary>
+        public void SyncDamageStageFromHost(Guid tileId)
+        {
+            if (!_registry.TryGetView(tileId, out TileView view))
+                return;
+
+            int stage = TileDamagePresentation.ResolveStage(
+                tileId,
+                _model,
+                MapDigColumnHost.Runtime);
+            view.ApplyPersistentPresentation(stage);
         }
 
         void ReapplyStructuralHiddenPresentation()
@@ -394,10 +415,18 @@ namespace IsoTilemap
             ApplyResolved(tileId);
         }
 
+        /// <summary>
+        /// 비저장 · Dig 조준 Add 강조만. Transient 전체 Resolve·Persistent 크랙 미포함.
+        /// </summary>
         public void SetVividEmphasis(Guid tileId, float amount)
         {
             _store.SetVividEmphasis(tileId, amount);
-            ApplyResolved(tileId);
+            if (!_registry.TryGetView(tileId, out TileView view))
+                return;
+            if (IsStructuralVisibilityHidden(tileId))
+                return;
+
+            view.SetVividEmphasis(amount);
         }
 
         /// <summary>디버그·오버레이: 타일에 관여 중인 entry만 (기본 Query).</summary>
@@ -421,11 +450,13 @@ namespace IsoTilemap
                     _appliedSightLineTrace.Remove(tileId);
 
                 ReconcileTilePresentation(tileId, shouldHide, forceClearOcclusion: false);
+                SyncDamageStageFromHost(tileId);
                 return;
             }
 
             SyncOcclusionDisplayCacheForTile(tileId);
             ApplyResolved(tileId);
+            SyncDamageStageFromHost(tileId);
         }
 
         static bool ShouldShowSightLineBuildingTrace(

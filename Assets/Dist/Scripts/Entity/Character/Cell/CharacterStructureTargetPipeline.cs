@@ -27,6 +27,19 @@ public abstract class CharacterStructureTargetPipeline<TTarget>
     public TileDefinition ActiveDefinition =>
         _active ? ResolveDefinition(in _target) : null;
 
+    /// <summary>LMB 홀드 잠금 타겟. inactive면 false.</summary>
+    public bool TryGetActiveTarget(out TTarget target)
+    {
+        if (!_active)
+        {
+            target = default;
+            return false;
+        }
+
+        target = _target;
+        return true;
+    }
+
     protected abstract TileDefinition ResolveDefinition(in TTarget target);
 
     protected abstract bool IsBlocked(in TTarget target);
@@ -53,6 +66,9 @@ public abstract class CharacterStructureTargetPipeline<TTarget>
     protected virtual void OnTargetBegun(in TTarget target) { }
 
     protected virtual void OnCleared() { }
+
+    /// <summary>맵 HP가 바뀐 뒤(아직 파괴 전). Dig 크랙 등 presentation 갱신용.</summary>
+    protected virtual void OnMapHpChanged(in TTarget target, int remaining, int maxHp) { }
 
     public bool TryBeginTarget(in TTarget target)
     {
@@ -100,11 +116,15 @@ public abstract class CharacterStructureTargetPipeline<TTarget>
         if (host != null)
         {
             broken = TryApplyMapDamage(host, in _target, damage, out _remainingHp);
+            if (!broken)
+                OnMapHpChanged(in _target, _remainingHp, _maxHp);
         }
         else
         {
             _remainingHp -= damage;
             broken = _remainingHp <= 0;
+            if (!broken)
+                OnMapHpChanged(in _target, _remainingHp, _maxHp);
         }
 
         if (!broken)
