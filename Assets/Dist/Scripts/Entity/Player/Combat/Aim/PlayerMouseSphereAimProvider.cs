@@ -1,17 +1,19 @@
 // ============================================================
-// PlayerMouseSphereAimProvider — 마우스 평면 + SphereCast 조준 (Layer1 default)
+// PlayerMouseSphereAimProvider — 마우스 평면 + SphereCast sample (Layer1 default)
 // ============================================================
 
 using UnityEngine;
 
 /// <summary>
-/// <see cref="PlayerSightTarget.TryResolveWorldPoint"/> → <see cref="CharacterState.SetAimDir"/>.
+/// <see cref="PlayerSightTarget.TryResolveWorldPoint"/> → <see cref="AimSightSample"/>.
+/// State 쓰기는 <see cref="CharacterSightHost.TryAcceptMouseAim"/>.
 /// </summary>
 public sealed class PlayerMouseSphereAimProvider : IAimSightProvider
 {
-    public bool TryUpdateSight(CharacterState state, Transform body, in AimSightContext ctx)
+    public bool TrySampleSight(Transform body, in AimSightContext ctx, out AimSightSample sample)
     {
-        if (state == null || body == null)
+        sample = default;
+        if (body == null)
             return false;
 
         if (!PlayerSightTarget.TryResolveWorldPoint(
@@ -30,7 +32,7 @@ public sealed class PlayerMouseSphereAimProvider : IAimSightProvider
         if (sightFlat.sqrMagnitude < 1e-4f)
             return false;
 
-        state.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
+        sample = new AimSightSample(sightFlat.normalized, aimPoint, sightFlat.magnitude);
         return true;
     }
 }

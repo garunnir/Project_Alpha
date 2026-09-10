@@ -1,17 +1,17 @@
 // ============================================================
-// IAimSightProvider — 조준 시선 해석 (Layer1). CharacterState만 소비자
+// IAimSightProvider — 조준 sample 해석 (Layer1 입력). CharacterState 직접 쓰기 없음
 // ============================================================
 
 using IsoTilemap;
 using UnityEngine;
 
 /// <summary>
-/// 입력 게이트 밖의 조준 월드점·시선 방향 해석. 기본 구현:
-/// <see cref="PlayerMouseSphereAimProvider"/>.
+/// 조준 월드점·시선 방향 sample. 기본 구현:
+/// <see cref="PlayerMouseSphereAimProvider"/>. 소비·구독은 <see cref="CharacterSightHost"/>.
 /// </summary>
 public interface IAimSightProvider
 {
-    bool TryUpdateSight(CharacterState state, Transform body, in AimSightContext ctx);
+    bool TrySampleSight(Transform body, in AimSightContext ctx, out AimSightSample sample);
 }
 
 /// <summary>

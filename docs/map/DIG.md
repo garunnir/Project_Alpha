@@ -64,7 +64,7 @@ TileFlags.IsDiggableTarget(definition)
 | `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — LMB down/재획득 aim→잠금, hold 유지, release Clear; 파괴 후 같은 hold면 aim 재고정 |
 | `MeleeBlockAimPreview` | 잠금 타겟 우선 highlight, 없으면 aim + `CanBreak` → `SetDigHighlight` |
 | `DigTileTargetAimPose` | 잠금 Dig 타겟 → Sight 월드점 (face / 바깥면) |
-| `CombatAimSightHoldLock` | Excavate 잠금 중 SphereCast 대신 `SightDir`/`AimWorldPoint` 고정 |
+| `CharacterSightHost` | 본체 Sight 구독 게이트 — Free=마우스 sample 수락, StructureLock=무시·블록 포즈. 플레이어 조회=`CharacterSessionHub.SessionSightHost` |
 | `PlayerCombatController` | Layer2 host — `ICombatPerformDriver` + `ICombatTargetingPreview` 라우트·틱 |
 | `StratumProfile` (SO) | 깊이별 prefabId 레이어 목록 (`TileMapManager` Inspector) |
 | `StratumGenerator` | `MixSeed(stratumSeed, x, z, depth)` 결정론적 선택 |
@@ -144,8 +144,8 @@ sequenceDiagram
 **바인딩**
 
 - **입력:** `PlayerPossessedInputHost` → `PlayerCombatController` (Layer2 drivers). dig 전용 MB **없음**.
-- **조준:** Layer1 Sight (`IAimSightProvider` → `AimWorldPoint`; Flatten Y = `CombatAimSightPolicy` — Excavate/`MeleeBlock`은 Y 유지). **LMB Dig 잠금 중** = SphereCast 스킵 + `CombatAimSightHoldLock` → `SightDir`/`AimWorldPoint`을 잠금 블록 face·바깥면(`DigTileTargetAimPose`)에 고정. **카메라 자유**(Aim 캐스트와 분리). LMB 해제·잠금 없음 = 마우스 Sphere 팔로우. Resolve → Preview(잠금 우선 highlight). Dig 타겟은 AimWorldPoint만 (카메라 ScreenPointToRay 아님).
-- **행동:** LMB **down/재획득** = aim → `DigPipeline` 잠금. **hold** = 잠금 유지 + `TryPerform(Excavate)` + SightDir 고정. **release** = Clear → Sight 마우스 복귀. **파괴 후 같은 hold** = aim으로 재고정. cue 피해는 잠금 타겟만 (`IsActive`). `CancelAll` / LMB release → Clear.
+- **조준:** Layer1 — 입력(`PlayerAimController`)은 `IAimSightProvider` **sample만 제안**. 본체 `CharacterSightHost`가 Free면 수락(`SightDir`), Dig LMB 잠금(`StructureLock`)이면 sample 무시·블록 포즈 유지(`DigTileTargetAimPose`). Flatten Y = `CombatAimSightPolicy`. **카메라 자유**. Resolve → Preview(잠금 우선 highlight).
+- **행동:** LMB **down/재획득** = aim → `DigPipeline` 잠금 → `SightHost.EnterStructureLock`. **hold** = 잠금 유지 + `TryPerform(Excavate)`. **release**/Clear = `ExitStructureLock` → 마우스 sample 구독 복귀. **파괴 후 같은 hold** = aim 재고정 + 다시 StructureLock. cue는 잠금 타겟만.
 - **손 게이트:** 일반 combat **ActiveWieldHand** 스택 — Dig 전용 손 스캔 아님. `HasDigQuality`(DIG level ≥1)면 Dig Leaf 가능.
 - **애니:** `AttackResolved` → 기존 Attack overlay 큐 (`CombatLeaf.Excavate` Leaf / Catalog). Farm Work Layer·presentation-only 큐 **아님**. AnimatorController에 Dig 상태 이름 **미추가**.
 - `TileMapManager.SetupMapDig()` — `MapDigColumnHost.BindMapContext` + DTO 로드.
@@ -192,9 +192,9 @@ sequenceDiagram
 | DIG + Excavate + RMB (유클리드 ≤2 diggable) | face 블록 **VividEmphasis** Add 강조 (`SetDigHighlight` → `SetVividEmphasis` → `_EmphasisAdd`, select 외곽선 아님) |
 | 반경 밖 조준 | 액터→ideal 3축 스텝 clamp 사거리 끝 face 하이라이트 |
 | DIG 도구 없음 / `CanBreak` false | 하이라이트 없음 |
-| RMB + LMB hold (Excavate) | LMB 순간 타겟 **잠금**, 하이라이트=잠금, cue는 잠금만 적중. **SightDir/SphereCast 고정**, 카메라만 자유 |
-| 잠금 타겟 파괴 후 hold 유지 | 같은 hold에서 aim으로 **재고정** 후 연속 Dig · SightDir도 새 블록 |
-| LMB up, RMB 유지 | 잠금 Clear · SightDir 마우스 팔로우 복귀 · 하이라이트 aim preview |
+| RMB + LMB hold (Excavate) | Dig 잠금 + `SightHost.StructureLock` — 마우스 sample 미구독, SightDir=블록, 카메라 자유 |
+| 잠금 타겟 파괴 후 hold 유지 | aim 재고정 → 다시 StructureLock |
+| LMB up, RMB 유지 | Clear → `ExitStructureLock` · 마우스 sample 구독 복귀 |
 | DIG 없는 무기 | `CanPerform(Excavate)` false |
 | DIG + Excavate + RMB hold 피해 | Dig 타겟 **큐브/슬랩 외곽**에 크랙 stage 증가 (풀 HP면 없음) |
 | Terrain Dirt/Stone | 6면 슬롯 아틀라스(예: West만 다른 색), Occupied stratum dig 가능 |

@@ -33,6 +33,7 @@ public static class CharacterBodyPrefabOrganizeMenu
         typeof(CharacterFootprintHost),
         typeof(CharacterSessionHub),
         typeof(CharacterActionHost),
+        typeof(CharacterSightHost),
         typeof(CharacterArriveHost),
         typeof(PlayerInventoryHost),
         typeof(PlayerGearHost),

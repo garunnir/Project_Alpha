@@ -22,6 +22,7 @@ public sealed class CharacterSessionHub : MonoBehaviour
     [SerializeField] PlayerInventoryHost _inventory;
     [SerializeField] NearbyContainerDetector _detector;
     [SerializeField] CharacterActionHost _action;
+    [SerializeField] CharacterSightHost _sight;
     [SerializeField] CharacterImbalanceHost _imbalance;
     [SerializeField] CharacterMoodHost _mood;
     [SerializeField] PlayerNeedsHost _needs;
@@ -54,6 +55,9 @@ public sealed class CharacterSessionHub : MonoBehaviour
 
     public static CharacterActionHost SessionActionHost => Player?._action;
 
+    /// <summary>possess 플레이어 Sight 구독 게이트. Dig StructureLock 등.</summary>
+    public static CharacterSightHost SessionSightHost => Player?._sight;
+
     public static PlayerInventoryHost SessionInventory => Player?._inventory;
 
     public static NearbyContainerDetector SessionDetector => Player?._detector;
@@ -61,6 +65,7 @@ public sealed class CharacterSessionHub : MonoBehaviour
     public CharacterBodyHost BodyHost => _bodyHost;
     public CharacterTraitsHost TraitsHost => _traitsHost;
     public CharacterActionHost Action => _action;
+    public CharacterSightHost Sight => _sight;
     public PlayerInventoryHost Inventory => _inventory;
     public NearbyContainerDetector Detector => _detector;
 
@@ -147,6 +152,12 @@ public sealed class CharacterSessionHub : MonoBehaviour
             TryGetComponent(out _detector);
         if (_action == null)
             TryGetComponent(out _action);
+        if (_sight == null)
+        {
+            TryGetComponent(out _sight);
+            if (_sight == null && _action != null)
+                _sight = _action.SightHost;
+        }
         if (_imbalance == null)
             TryGetComponent(out _imbalance);
         if (_mood == null)

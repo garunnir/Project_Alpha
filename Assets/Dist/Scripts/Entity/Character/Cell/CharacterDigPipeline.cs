@@ -6,6 +6,17 @@ using IsoTilemap;
 
 public sealed class CharacterDigPipeline : CharacterStructureTargetPipeline<DigTileTarget>
 {
+    CharacterSightHost _sightHost;
+
+    public void BindSightHost(CharacterSightHost sightHost) =>
+        _sightHost = sightHost;
+
+    protected override void OnTargetBegun(in DigTileTarget target) =>
+        _sightHost?.EnterStructureLock();
+
+    protected override void OnCleared() =>
+        _sightHost?.ExitStructureLock();
+
     protected override TileDefinition ResolveDefinition(in DigTileTarget target) =>
         target.Definition;
 

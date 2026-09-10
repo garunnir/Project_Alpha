@@ -39,7 +39,7 @@ flowchart TB
 
 | 단 | 역할 | Excavate |
 |----|------|----------|
-| **Sight** | 시선·월드점. **입력**(`PlayerAimController` RMB) + `IAimSightProvider`. **Flatten Y**는 `CombatAimSightPolicy`. Dig LMB 잠금 시 `CombatAimSightHoldLock`(캐스트 스킵·SightDir=블록, 카메라 자유) | AimWorldPoint Y 유지 · 홀드 중 SightDir 고정 |
+| **Sight** | 입력 sample(`IAimSightProvider`) + 본체 `CharacterSightHost` 구독. Flatten=`CombatAimSightPolicy`. Dig 잠금=`StructureLock` | Free→마우스 / StructureLock→블록 SightDir, 카메라 자유 |
 | **Resolve** | typed 타겟 + 사거리 clamp | `DigTileTargetResolver.TryResolveFromCombatAim` (발끝 transform→목표 셀 중심 월드 유클리드 ≤ `DigActionRangeCells × cellSize`) |
 | **Preview** | 피드백 consumer | `MeleeBlockAimPreview` → `TilePresentationSystem.SetDigHighlight` |
 
@@ -118,7 +118,8 @@ flowchart TB
 ## 코드 위치
 
 ```text
-Aim/          ① Sight (IAimSightProvider · CombatAimSightPolicy · CombatAimSightHoldLock)
+Aim/          ① Sight sample (IAimSightProvider · CombatAimSightPolicy)
+              ① 본체 CharacterSightHost (accept / StructureLock)
 Targeting/    ① Preview (ICombatTargetingPreview)
 Perform/      ②  PlayerCombatController
 Combat/       ③  CharacterAttacker · Handlers · Catalog

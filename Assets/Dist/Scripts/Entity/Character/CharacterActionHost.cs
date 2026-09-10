@@ -37,6 +37,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     CharacterCellConstructionPipeline _construction;
     CharacterDigPipeline _dig;
     CharacterChopPipeline _chop;
+    CharacterSightHost _sightHost;
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
@@ -48,6 +49,15 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     public bool IsDispatching => _dispatching;
     public float ActionTickScale => _tickScale;
     public bool IsBusy => _currentKind != CharacterActionKind.None || _queue.Count > 0;
+    public CharacterSightHost SightHost
+    {
+        get
+        {
+            EnsureSightHost();
+            return _sightHost;
+        }
+    }
+
     public CharacterDigPipeline DigPipeline
     {
         get
@@ -158,8 +168,26 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         EnsureChopPipeline();
     }
 
-    void EnsureDigPipeline() =>
-        _dig ??= new CharacterDigPipeline();
+    void EnsureDigPipeline()
+    {
+        EnsureSightHost();
+        if (_dig == null)
+            _dig = new CharacterDigPipeline();
+        _dig.BindSightHost(_sightHost);
+    }
+
+    void EnsureSightHost()
+    {
+        if (_sightHost != null)
+            return;
+
+        if (TryGetComponent(out _sightHost))
+            return;
+
+        Debug.LogError(
+            "[CharacterActionHost] CharacterSightHost missing on body. Add it on the prefab (NpcSample GameplayCore).",
+            this);
+    }
 
     void EnsureChopPipeline() =>
         _chop ??= new CharacterChopPipeline();

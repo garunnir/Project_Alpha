@@ -154,6 +154,7 @@ GameObject:
   - component: {fileID: 6853775483716162699}
   - component: {fileID: 728705136940904061}
   - component: {fileID: 2851959853903885148}
+  - component: {fileID: 911092431970705134}
   m_Layer: 6
   m_Name: GameplayCore
   m_TagString: Untagged
@@ -316,6 +317,7 @@ MonoBehaviour:
   _inventory: {fileID: 1732678770107359936}
   _detector: {fileID: 4440897459846723960}
   _action: {fileID: 5501392376041176670}
+  _sight: {fileID: 911092431970705134}
   _imbalance: {fileID: 6994947382203833975}
   _mood: {fileID: 2087899965993059679}
   _needs: {fileID: 5966763808652903118}
@@ -487,6 +489,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd7bc7ff54636ab4098240e1c9c4a4a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterArriveHost
+--- !u!114 &911092431970705134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795829373545432482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db4437a30b92eb247837849dff5429ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterSightHost
+  _castOriginYOffset: 0.35
 --- !u!1 &2816094712680714504
 GameObject:
   m_ObjectHideFlags: 0

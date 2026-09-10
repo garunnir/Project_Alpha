@@ -51,7 +51,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `CharacterDefinitionBinder` | 씬/프리팹 GO에 Apply (`DefaultExecutionOrder` -80) |
 | `CharacterAppearanceHost` | 성향·초상·체형·이름 오버라이드 **저장만** (소비처 후속) |
 | `CharacterFactory.Instantiate` | prefab + Apply. 맵 바인딩은 `MapGameplayBootstrap.BindSpawnedCharacter` |
-| `CharacterSessionHub` | 본체 인벤·기어·액션 입구. Possessed만 `BecomePlayer` |
+| `CharacterSessionHub` | 본체 인벤·기어·액션·**Sight** 입구. Possessed만 `BecomePlayer` (`SessionSightHost`) |
 | `CharacterSpawner` | 셀 SSOT 행 → Factory → `SetActive` → `CharacterSpawnGearApplier` → possess / `NpcManager.Register` |
 
 ## 스폰

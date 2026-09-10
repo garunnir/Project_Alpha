@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerAimController — RMB 조준 입력 + IAimSightProvider 호출 (해석식 없음)
+// PlayerAimController — RMB 조준 입력: sample 제안만 (본체 구독 판단 없음)
 // ============================================================
 using IsoTilemap;
 using UnityEngine;
@@ -20,7 +20,7 @@ public class PlayerAimController : MonoBehaviour
     private CharacterState _characterState;
     private Transform _bodyTransform;
     private CharacterAttacker _attacker;
-    private CharacterActionHost _actionHost;
+    private CharacterSightHost _sightHost;
     private MapTopologyLineCast _topologyLineCast;
     private IAimSightProvider _sightProvider = new PlayerMouseSphereAimProvider();
     private bool _isAiming;
@@ -41,15 +41,14 @@ public class PlayerAimController : MonoBehaviour
     public bool TryResolveSightWorldPoint(out Vector3 aimWorldPoint)
     {
         Transform body = _bodyTransform != null ? _bodyTransform : transform;
-        if (CombatAimSightHoldLock.TryApplyLockedSight(
-                _characterState,
-                body,
-                _castOriginYOffset,
-                _attacker,
-                _actionHost))
+
+        if (_sightHost != null &&
+            !_sightHost.AcceptsMouseAim &&
+            _characterState != null &&
+            _characterState.IsAiming)
         {
             aimWorldPoint = _characterState.AimWorldPoint;
-            return true;
+            return aimWorldPoint.sqrMagnitude > 1e-8f;
         }
 
         return PlayerSightTarget.TryResolveWorldPoint(
@@ -71,7 +70,6 @@ public class PlayerAimController : MonoBehaviour
         ResolveFlattenAimY(),
         _aimObstructionMask);
 
-    /// <summary>입력 기본 + Leaf 정책. Attacker 없으면 Inspector 기본만.</summary>
     bool ResolveFlattenAimY()
     {
         if (_attacker == null)
@@ -98,12 +96,13 @@ public class PlayerAimController : MonoBehaviour
         CharacterState state,
         Transform bodyTransform,
         CharacterAttacker attacker,
-        CharacterActionHost actionHost = null)
+        CharacterSightHost sightHost = null)
     {
         _characterState = state;
         _bodyTransform = bodyTransform;
         _attacker = attacker;
-        _actionHost = actionHost;
+        _sightHost = sightHost;
+        _sightHost?.SetCastOriginYOffset(_castOriginYOffset);
     }
 
     public void BindMapCollision(MapTopologyLineCast lineCast) => _topologyLineCast = lineCast;
@@ -170,13 +169,8 @@ public class PlayerAimController : MonoBehaviour
 
         Transform body = _bodyTransform != null ? _bodyTransform : transform;
 
-        // Dig LMB 잠금: SphereCast 스킵, SightDir=블록. 카메라 자유.
-        if (CombatAimSightHoldLock.TryApplyLockedSight(
-                _characterState,
-                body,
-                _castOriginYOffset,
-                _attacker,
-                _actionHost))
+        // 본체 StructureLock이면 sample 제안 안 함 (SightHost가 블록 포즈 유지).
+        if (_sightHost != null && !_sightHost.AcceptsMouseAim)
         {
             if (ShouldDrawAimDebug)
             {
@@ -186,8 +180,18 @@ public class PlayerAimController : MonoBehaviour
             return;
         }
 
-        if (!_sightProvider.TryUpdateSight(_characterState, body, BuildAimContext()))
+        if (!_sightProvider.TrySampleSight(body, BuildAimContext(), out AimSightSample sample))
             return;
+
+        if (_sightHost != null)
+        {
+            if (!_sightHost.TryAcceptMouseAim(sample.SightDirFlat, sample.AimWorldPoint, sample.Reach))
+                return;
+        }
+        else
+        {
+            _characterState.SetAimDir(sample.SightDirFlat, sample.AimWorldPoint, sample.Reach);
+        }
 
         if (ShouldDrawAimDebug)
         {
