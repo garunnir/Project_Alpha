@@ -16,7 +16,7 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
     float _imbalance;
     float _lastEmittedBucket = -1f;
 
-    public static CharacterImbalanceHost Active => CharacterSessionHub.ImbalanceHost;
+    public static CharacterImbalanceHost Active => PlayerPossessSession.ImbalanceHost;
 
     public void ClaimActive() { }
     public event Action Changed;

@@ -103,5 +103,4 @@ public sealed class CharacterBodyRefs : MonoBehaviour
     public CharacterFootprintHost FootprintHost => Get<CharacterFootprintHost>();
     public CharacterLocomotionAnim LocomotionAnim => Get<CharacterLocomotionAnim>();
     public CharacterVaultHost VaultHost => Get<CharacterVaultHost>();
-    public CharacterSessionHub SessionHub => Get<CharacterSessionHub>();
 }

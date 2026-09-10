@@ -379,6 +379,16 @@ public class TileMapManager : MonoBehaviour
         _liquidHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
+    void LateUpdate()
+    {
+        _mapCacheHub?.FlushDeferredTopologyBakes(_buildingGroupBuilder);
+    }
+
+    void OnDisable()
+    {
+        MapTopologyBakeDeferral.Clear();
+    }
+
     private void OnDestroy()
     {
         UnwireTilePresentationApplier();

@@ -79,15 +79,15 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         CharacterActionHost actionHost = body != null ? body.GetBodyComponent<CharacterActionHost>() : null;
         CharacterFacingAnim facing = body != null ? body.GetBodyComponent<CharacterFacingAnim>() : null;
 
-        // Dig/Sight Ensure 후 세션 파사드에 올린 뒤 Aim Bind (SessionSightHost SSOT).
+        // Dig/Sight Ensure 후 세션에 올린 뒤 Aim Bind (SessionSightHost SSOT).
         _ = actionHost?.SightHost;
-        if (body != null && body.TryGetBodyComponent(out CharacterSessionHub session))
-            session.BecomePlayer(_movement, _inventoryRuntime);
-        else if (body != null)
-            Debug.LogError("[PlayerPossessedInputHost] CharacterSessionHub is required on the possessed body.", this);
+        if (body != null)
+            PlayerPossessSession.Begin(body, _movement, _inventoryRuntime);
+        else
+            PlayerPossessSession.Clear();
 
         CharacterSightHost sightHost =
-            CharacterSessionHub.SessionSightHost
+            PlayerPossessSession.SessionSightHost
             ?? actionHost?.SightHost
             ?? (body != null ? body.GetBodyComponent<CharacterSightHost>() : null);
 

@@ -252,11 +252,11 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     static GameObject ResolvePlayerInteractor()
     {
-        CharacterSessionHub hub = CharacterSessionHub.Player;
-        if (hub == null)
+        PlayerPossessSession session = PlayerPossessSession.Current;
+        if (session?.Body == null)
             return null;
 
-        return CharacterBodyResolve.TryGetInBody(hub, out CharacterState state) ? state.gameObject : null;
+        return session.Body.TryGetBodyComponent(out CharacterState state) ? state.gameObject : null;
     }
 
     public bool RegisterToSession(InventorySession session) =>

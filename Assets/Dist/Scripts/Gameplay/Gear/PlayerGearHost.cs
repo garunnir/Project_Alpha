@@ -32,7 +32,7 @@ public sealed class PlayerGearHost : MonoBehaviour
     bool _hasLastWeatherKind;
     WeatherKind _lastWeatherKind;
 
-    public static PlayerGearHost Active => CharacterSessionHub.GearHost;
+    public static PlayerGearHost Active => PlayerPossessSession.GearHost;
 
     public void ClaimActive() { }
 

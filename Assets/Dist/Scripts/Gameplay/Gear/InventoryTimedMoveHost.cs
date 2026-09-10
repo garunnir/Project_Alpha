@@ -35,7 +35,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     ItemStack _current;
     int _currentUnitCount = 1;
 
-    public static InventoryTimedMoveHost Active => CharacterSessionHub.TimedMoveHost;
+    public static InventoryTimedMoveHost Active => PlayerPossessSession.TimedMoveHost;
 
     public void ClaimActive() { }
 

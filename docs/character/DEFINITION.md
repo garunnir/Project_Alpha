@@ -51,7 +51,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `CharacterDefinitionBinder` | 씬/프리팹 GO에 Apply (`DefaultExecutionOrder` -80) |
 | `CharacterAppearanceHost` | 성향·초상·체형·이름 오버라이드 **저장만** (소비처 후속) |
 | `CharacterFactory.Instantiate` | prefab + Apply. 맵 바인딩은 `MapGameplayBootstrap.BindSpawnedCharacter` |
-| `CharacterSessionHub` | 본체 인벤·기어·액션·**Sight** 입구. Possessed만 `BecomePlayer` (`SessionSightHost`) |
+| `PlayerPossessSession` | possess 플레이어 세션 SSOT (plain). `PlayerPossessedInputHost.Bind` → `Begin` (`SessionSightHost` 등 static 파사드). `InventorySession`과 별개 |
 | `CharacterSpawner` | 셀 SSOT 행 → Factory → `SetActive` → `CharacterSpawnGearApplier` → possess / `NpcManager.Register` |
 
 ## 스폰
@@ -63,7 +63,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | 본체 프리팹 | `NpcSample` 하나. `PlayerParity` / `NpcParity` 모두 이 프리팹 |
 | 위치 | `Vector3Int` 셀. 런타임 `IWorldGrid.CellToWorld`. 마커는 에디터 뷰 |
 | 부모 | `Map/Characters` (`CharacterWorldRoot`, 맵 루트 이름은 `SmallItemSpawner.WorldMapRootName`) |
-| possessed | `PlayerManager.Possess` → 입력 리그는 `PlayerPossessedInputHost`, 플레이어 세션은 본체 `CharacterSessionHub.BecomePlayer` (`GameplayData`·인벤 Runtime·Gear/Encumbrance/TimedMove `Active`) |
+| possessed | `PlayerManager.Possess` → 입력 리그는 `PlayerPossessedInputHost`, 플레이어 세션은 `PlayerPossessSession.Begin` (`GameplayData`·인벤 Runtime·Gear/Encumbrance/TimedMove `Active`) |
 | NPC | `NpcManager.Register`. 프리팹에 AI MB 없음 |
 | 맵 | 스폰 직후 증분 바인드 (Bootstrap Start Find만으로는 이후 스폰이 빠짐) |
 | 로드아웃 | Definition `wearItemIds` / `wieldLoadout` / `bodyItemSeeds`. `SetActive` 직후 즉시 Wear/Wield (타이머 없음). 총이면 호환 탄창·탄을 채움 (카탈로그에 없으면 빈 총 + 경고) |
@@ -73,7 +73,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 
 플레이어 전용 장치(카메라, 층 가시성, 시야 블렌드, `PlayerSight`, **캐릭터 시야 페이드** `CharacterSightFadeDriver`)는 시스템. 입력(`PlayerMovement` / Aim / Combat / Pointer)은 `PlayerPossessedInputHost`에 두고 본체 공용 API만 부른다. `PlayerController`를 `NpcSample`에 올리지 않는다. `PlayerSight`는 씬 시스템 리그: `PossessedTransformFollower`(위치) + `PlayerSightVisionBinder`(`CharacterVision` → Spot **시각 동기**/루트 **yaw**). 시야 **로직**(각·탐지·소실 부채꼴)은 본체 `CharacterVision` 공통 — NPC AI도 동일. 페이드 **표현**만 시스템 Driver/Host — [`SIGHT_FADE.md`](SIGHT_FADE.md).
 
-인벤·기어 호스트는 본체 프리팹에 두고 **인스턴스마다** 컨테이너를 갖는다. 몸 그래프 입구는 `CharacterSessionHub` (NpcSample). NPC는 `BecomePlayer`를 부르지 않고 `Active`를 건드리지 않는다. Possessed만 허브가 `PlayerInventoryRuntime` Bind + Gear/Encumbrance/TimedMove `ClaimActive` + `GameplayData` + 상태 UI rebind를 한 번에 한다. 인벤 이동 게이지는 그 몸의 `CharacterActionHost`를 본다. possessed 몸은 `player-body`, 나머지는 `character-body-*` (레지스트리 충돌 방지). 살아 있는 NPC 몸은 Nearby 루트에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진·고통 쇼크는 그 게이트를 연다 (`IsDefeated || IsPainShocked`).
+인벤·기어 호스트는 본체 프리팹에 두고 **인스턴스마다** 컨테이너를 갖는다. possess 세션(`PlayerPossessSession`)은 본체 프리팹 컴포넌트가 아니라 possess 시 생성된다. NPC는 `Begin`을 부르지 않고 Host `Active`를 건드리지 않는다. Possessed만 `Begin`이 `PlayerInventoryRuntime` Bind + Gear/Encumbrance/TimedMove `ClaimActive` + `GameplayData` + 상태 UI rebind를 한 번에 한다. 인벤 이동 게이지는 그 몸의 `CharacterActionHost`를 본다. possessed 몸은 `player-body`, 나머지는 `character-body-*` (레지스트리 충돌 방지). 살아 있는 NPC 몸은 Nearby 루트에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진·고통 쇼크는 그 게이트를 연다 (`IsDefeated || IsPainShocked`).
 
 ## 필드
 
@@ -126,7 +126,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 | `NpcManager` | 비possessed 유닛을 행 단위 FSM으로 원격 틱 (2대 이상). `CharacterSenseContactResolver`로 Vision/Hearing 단일 Chase |
 | `NpcSteer` | 조향 헬퍼 (MB 아님) |
 | `CharacterActionHost` | 행위자 1줄 행동 큐(종류별)·게이지·CancelAll. [`ACTION.md`](ACTION.md) |
-| `CharacterSessionHub` | 본체 세션 입구. possessed만 `BecomePlayer` |
+| `PlayerPossessSession` | possess 세션 SSOT (plain). possessed만 `Begin` |
 | `CharacterMoodHost` | 기분·사고·Wander 양도. [`../mood/MOOD.md`](../mood/MOOD.md) |
 
 `CharacterKind`로 PC/NPC를 나누지 않는다. 조종 여부는 `CharacterMotor.IsPossessed` (`PlayerManager.Possess`).
@@ -139,7 +139,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 | GO | 역할 | 대표 컴포넌트 |
 |----|------|----------------|
 | **루트** | 물리·정의·애니·resolve 캐시 | `Rigidbody`, `CapsuleCollider`, `CharacterBodyRoot`, `CharacterBodyRefs`, `CharacterState`, `CharacterMotor`, `CharacterDefinitionBinder`, `CharacterLocomotionAnim`, `CharacterVaultHost`, `CharacterFootDustVfx` |
-| **GameplayCore** | 몸 데이터·세션·전투·기분·기후 | `CharacterBodyHost`, `CharacterSessionHub`, `CharacterActionHost`, `CharacterArriveHost`, `CharacterAttacker`, `PlayerGearHost`, `PlayerInventoryHost`, … (`CharacterBodyPrefabOrganizeMenu.GameplayCoreTypes`) |
+| **GameplayCore** | 몸 데이터·전투·기분·기후 | `CharacterBodyHost`, `CharacterActionHost`, `CharacterArriveHost`, `CharacterAttacker`, `PlayerGearHost`, `PlayerInventoryHost`, … (`CharacterBodyPrefabOrganizeMenu.GameplayCoreTypes`) |
 | **Senses** | 시야·청각·Presence | `CharacterVision`, `CharacterHearing`, `CharacterPresenceHost`, `CharacterSenseGizmo` |
 | **Presentation** | 이모트·페이드·외형 | `CharacterSightFadeHost`, `CharacterAppearanceHost`, `CharacterEmoteHost` |
 

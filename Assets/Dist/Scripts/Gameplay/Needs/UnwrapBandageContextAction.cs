@@ -18,7 +18,7 @@ public sealed class UnwrapBandageContextAction : IContextMenuAction
 
     public string GetDisabledReason()
     {
-        ICharacterBody body = CharacterSessionHub.SessionBody;
+        ICharacterBody body = PlayerPossessSession.SessionBody;
         if (body == null || string.IsNullOrEmpty(_partId))
             return ItemContextMenuLabels.ConsumeBlocked;
         if (!BodyHealApply.HasBandagedUnder(body, _partId, EffectScratch))
@@ -28,6 +28,6 @@ public sealed class UnwrapBandageContextAction : IContextMenuAction
 
     public void Execute()
     {
-        BodyHealApply.TryUnwrap(CharacterSessionHub.SessionBody, _partId);
+        BodyHealApply.TryUnwrap(PlayerPossessSession.SessionBody, _partId);
     }
 }

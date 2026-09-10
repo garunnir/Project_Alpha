@@ -484,7 +484,44 @@ namespace IsoTilemap
             IReadOnlyCollection<Vector3Int> changedCells,
             BuildingGroupBuilder builder,
             bool isRemoval = false,
-            TileData removedTile = default)
+            TileData removedTile = default,
+            bool immediate = false)
+        {
+            if (!immediate && MapTopologyBakeDeferral.ShouldDefer)
+            {
+                MapTopologyBakeDeferral.Enqueue(changedCells, isRemoval, in removedTile);
+                return;
+            }
+
+            ApplyTopologyChangedImmediate(changedCells, builder, isRemoval, removedTile);
+        }
+
+        public void FlushDeferredTopologyBakes(BuildingGroupBuilder builder)
+        {
+            if (!MapTopologyBakeDeferral.TryTakePending(
+                    out HashSet<Vector3Int> changedCells,
+                    out List<TileData> removals))
+            {
+                return;
+            }
+
+            if (changedCells != null && changedCells.Count > 0)
+                Topology.SyncOccupancyFromChangedCells(changedCells);
+
+            if (builder != null)
+            {
+                builder.HandleCoalescedTopologyChange(changedCells, removals);
+                return;
+            }
+
+            InvalidateAll();
+        }
+
+        void ApplyTopologyChangedImmediate(
+            IReadOnlyCollection<Vector3Int> changedCells,
+            BuildingGroupBuilder builder,
+            bool isRemoval,
+            TileData removedTile)
         {
             if (changedCells != null && changedCells.Count > 0)
                 Topology.SyncOccupancyFromChangedCells(changedCells);
@@ -492,9 +529,16 @@ namespace IsoTilemap
             if (builder != null)
             {
                 if (isRemoval)
-                    builder.HandleRemoveTile(removedTile, ToMutableHashSet(changedCells));
+                {
+                    builder.HandleCoalescedTopologyChange(
+                        ToMutableHashSet(changedCells),
+                        new List<TileData> { removedTile });
+                }
                 else
+                {
                     builder.HandleSetOrApply(changedCells);
+                }
+
                 return;
             }
 

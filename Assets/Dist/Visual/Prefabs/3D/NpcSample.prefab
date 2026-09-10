@@ -141,7 +141,6 @@ GameObject:
   - component: {fileID: 5501392376041176670}
   - component: {fileID: 5395274302320517073}
   - component: {fileID: 8480373149682322836}
-  - component: {fileID: 7571571044630519899}
   - component: {fileID: 4440897459846723960}
   - component: {fileID: 6791599864659684446}
   - component: {fileID: 8630721792406036327}
@@ -296,31 +295,6 @@ MonoBehaviour:
   _inventoryHost: {fileID: 1732678770107359936}
   _movement: {fileID: 0}
   _skillsHost: {fileID: 8437009790115512890}
---- !u!114 &7571571044630519899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1795829373545432482}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7241f865f510ac418b7d20cf3d54839, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::CharacterSessionHub
-  _bodyHost: {fileID: 8822184184292685180}
-  _skillsHost: {fileID: 8437009790115512890}
-  _traitsHost: {fileID: 9023943957300074937}
-  _gear: {fileID: 5395274302320517073}
-  _encumbrance: {fileID: 8480373149682322836}
-  _timedMove: {fileID: 7811560009865075412}
-  _inventory: {fileID: 1732678770107359936}
-  _detector: {fileID: 4440897459846723960}
-  _action: {fileID: 5501392376041176670}
-  _sight: {fileID: 911092431970705134}
-  _imbalance: {fileID: 6994947382203833975}
-  _mood: {fileID: 2087899965993059679}
-  _needs: {fileID: 5966763808652903118}
 --- !u!114 &4440897459846723960
 MonoBehaviour:
   m_ObjectHideFlags: 0

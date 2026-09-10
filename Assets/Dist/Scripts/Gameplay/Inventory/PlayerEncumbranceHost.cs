@@ -20,7 +20,7 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
     ICharacterSkills _skills;
     bool _modifierRegistered;
 
-    public static PlayerEncumbranceHost Active => CharacterSessionHub.EncumbranceHost;
+    public static PlayerEncumbranceHost Active => PlayerPossessSession.EncumbranceHost;
 
     public static event Action ActiveChanged;
     public static event Action StageChanged;

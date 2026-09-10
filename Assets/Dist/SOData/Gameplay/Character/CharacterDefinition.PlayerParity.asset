@@ -44,17 +44,13 @@ MonoBehaviour:
   _wearItemIds:
   - clothing_plain
   _wieldLoadout:
-  - itemId: weapon_pistol
-    hand: 1
-  - itemId: weapon_knife
-    hand: 0
+  - itemId: shovel
+    hand: 2
   _bodyItemSeeds:
   - itemId: container_bag
     count: 1
   - itemId: consumable_egg
     count: 3
-  - itemId: shovel
-    count: 1
   - itemId: bandages
     count: 3
   - itemId: seed_oats
@@ -62,4 +58,8 @@ MonoBehaviour:
   - itemId: hoe
     count: 1
   - itemId: fertilizer_commercial
+    count: 1
+  - itemId: weapon_knife
+    count: 1
+  - itemId: weapon_pistol
     count: 1

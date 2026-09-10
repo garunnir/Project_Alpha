@@ -650,12 +650,17 @@ namespace IsoTilemap
         private void NotifyBuildingTopologyChanged(
             HashSet<Vector3Int> changedCells,
             bool isRemoval = false,
-            TileData removedTile = default)
+            TileData removedTile = default,
+            bool immediateTopologyBake = false)
         {
             if (_mapCacheHub != null)
             {
                 _mapCacheHub.NotifyTopologyChanged(
-                    changedCells, _buildingGroupBuilder, isRemoval, removedTile);
+                    changedCells,
+                    _buildingGroupBuilder,
+                    isRemoval,
+                    removedTile,
+                    immediateTopologyBake);
                 return;
             }
 
@@ -692,7 +697,7 @@ namespace IsoTilemap
                 return;
 
             _isDirty = true;
-            NotifyBuildingTopologyChanged(_changedCellsBuffer);
+            NotifyBuildingTopologyChanged(_changedCellsBuffer, immediateTopologyBake: true);
             OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
         }
 

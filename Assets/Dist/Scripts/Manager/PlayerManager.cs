@@ -37,6 +37,7 @@ public class PlayerManager : MonoBehaviour
 
     void Update()
     {
+        PlayerPossessSession.EnsureBodyActive();
         if (_possessedInput != null)
             PlayerSightVisionBinder.Sync(_possessedInput);
     }

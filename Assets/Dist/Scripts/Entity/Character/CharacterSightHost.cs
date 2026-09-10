@@ -23,8 +23,8 @@ public sealed class CharacterSightHost : MonoBehaviour
     CharacterState _state;
     CharacterActionHost _actionHost;
 
-    /// <summary>possess 플레이어 Sight. <see cref="CharacterSessionHub.SessionSightHost"/>.</summary>
-    public static CharacterSightHost Active => CharacterSessionHub.SessionSightHost;
+    /// <summary>possess 플레이어 Sight. <see cref="PlayerPossessSession.SessionSightHost"/>.</summary>
+    public static CharacterSightHost Active => PlayerPossessSession.SessionSightHost;
 
     public CharacterSightDriveMode Mode { get; private set; } = CharacterSightDriveMode.Free;
 

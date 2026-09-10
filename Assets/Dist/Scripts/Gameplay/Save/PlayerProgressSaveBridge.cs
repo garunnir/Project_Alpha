@@ -77,13 +77,11 @@ public static class PlayerProgressSaveBridge
     public static bool TryCapture(out PlayerProgressSaveDto dto)
     {
         dto = null;
-        CharacterSessionHub hub = CharacterSessionHub.Player;
-        if (hub == null)
+        PlayerPossessSession session = PlayerPossessSession.Current;
+        if (session?.Body == null)
             return false;
 
-        GameObject body = hub.gameObject;
-        if (body == null)
-            return false;
+        GameObject body = session.Body;
 
         Vector3 pos = body.transform.position;
         Vector3 facing = body.transform.forward;
@@ -102,7 +100,7 @@ public static class PlayerProgressSaveBridge
             facingZ = facing.z
         };
 
-        if (hub.BodyHost?.Body is CharacterBody characterBody)
+        if (session.BodyHost?.Body is CharacterBody characterBody)
             dto.body = characterBody.ToDto();
 
         if (body.TryGetBodyComponent(out CharacterClimateHost climate))
@@ -120,15 +118,15 @@ public static class PlayerProgressSaveBridge
         if (GameplayData.RecipeMemory is DefaultCharacterRecipeMemory recipeMemory)
             dto.recipeMemory = CharacterProgressSaveMapper.ToDto(recipeMemory);
 
-        if (hub.TraitsHost?.Traits is DefaultCharacterTraits traits)
+        if (session.TraitsHost?.Traits is DefaultCharacterTraits traits)
             dto.traits = CharacterProgressSaveMapper.ToDto(traits);
         else if (GameplayData.Traits is DefaultCharacterTraits globalTraits)
             dto.traits = CharacterProgressSaveMapper.ToDto(globalTraits);
 
-        if (hub.Inventory != null)
+        if (session.Inventory != null)
         {
             body.TryGetBodyComponent(out PlayerGearHost gearHost);
-            InventoryGearSaveDto inventory = InventoryProgressSaveMapper.Capture(hub.Inventory, gearHost?.Service);
+            InventoryGearSaveDto inventory = InventoryProgressSaveMapper.Capture(session.Inventory, gearHost?.Service);
             if (inventory != null)
                 dto.inventoryJson = JsonUtility.ToJson(inventory);
         }
@@ -143,12 +141,11 @@ public static class PlayerProgressSaveBridge
 
         SnapBodyTransform(body, snapshot);
 
-        CharacterSessionHub hub = body.GetBodyComponent<CharacterSessionHub>();
-        if (hub == null)
+        if (!body.TryGetBodyComponent(out CharacterBodyHost bodyHost))
             return;
 
-        if (snapshot.body != null && hub.BodyHost?.Body != null)
-            hub.BodyHost.ApplyBodyDto(snapshot.body);
+        if (snapshot.body != null && bodyHost.Body != null)
+            bodyHost.ApplyBodyDto(snapshot.body);
 
         if (snapshot.bodyTemp != null && body.TryGetBodyComponent(out CharacterClimateHost climate))
             climate.BodyTemperature.FromDto(FromBodyTempSave(snapshot.bodyTemp));
@@ -166,17 +163,17 @@ public static class PlayerProgressSaveBridge
         if (GameplayData.RecipeMemory is DefaultCharacterRecipeMemory recipeMemory)
             CharacterProgressSaveMapper.ApplyDto(recipeMemory, snapshot.recipeMemory);
 
-        DefaultCharacterTraits traits = ResolveTraits(hub);
+        DefaultCharacterTraits traits = ResolveTraits(body);
         if (traits != null)
             CharacterProgressSaveMapper.ApplyDto(traits, snapshot.traits);
 
         if (!string.IsNullOrEmpty(snapshot.inventoryJson)
-            && hub.Inventory != null
+            && body.TryGetBodyComponent(out PlayerInventoryHost inventoryHost)
             && body.TryGetBodyComponent(out PlayerGearHost gearHost))
         {
             InventoryGearSaveDto inventory = JsonUtility.FromJson<InventoryGearSaveDto>(snapshot.inventoryJson);
             gearHost.BindDomainIfNeeded();
-            InventoryProgressSaveMapper.TryApply(inventory, hub.Inventory, gearHost.Service);
+            InventoryProgressSaveMapper.TryApply(inventory, inventoryHost, gearHost.Service);
             gearHost.RefreshPrimaryWield();
         }
 
@@ -196,9 +193,11 @@ public static class PlayerProgressSaveBridge
         return null;
     }
 
-    static DefaultCharacterTraits ResolveTraits(CharacterSessionHub hub)
+    static DefaultCharacterTraits ResolveTraits(GameObject body)
     {
-        if (hub.TraitsHost?.Traits is DefaultCharacterTraits owned)
+        if (body != null
+            && body.TryGetBodyComponent(out CharacterTraitsHost traitsHost)
+            && traitsHost.Traits is DefaultCharacterTraits owned)
             return owned;
 
         if (GameplayData.Traits is DefaultCharacterTraits global)

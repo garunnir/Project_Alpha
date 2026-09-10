@@ -67,7 +67,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
             return;
 
         ICharacterBody body = target.Body;
-        bool playerIsTarget = body != null && ReferenceEquals(body, CharacterSessionHub.SessionBody);
+        bool playerIsTarget = body != null && ReferenceEquals(body, PlayerPossessSession.SessionBody);
         bool playerIsAttacker = IsPossessedBody(outcome.Attacker);
 
         if (playerIsTarget)
@@ -123,7 +123,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
     {
         if (host == null || host.Body == null)
             return false;
-        if (!ReferenceEquals(host.Body, CharacterSessionHub.SessionBody))
+        if (!ReferenceEquals(host.Body, PlayerPossessSession.SessionBody))
             return false;
         return CharacterBodyResolve.TryGetInBody(host, out CharacterMotor motor) && motor.IsPossessed;
     }

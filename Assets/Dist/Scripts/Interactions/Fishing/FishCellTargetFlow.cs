@@ -20,7 +20,7 @@ public static class FishCellTargetFlow
 
     static CharacterActionHost ResolveActionHost()
     {
-        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        CharacterActionHost session = PlayerPossessSession.SessionActionHost;
         if (session != null)
         {
             PlayerGearHost gear = PlayerGearHost.Active;

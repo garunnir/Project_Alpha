@@ -768,13 +768,13 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
     InventoryContainer ResolveLootAggregateContainer()
     {
-        NearbyContainerDetector detector = CharacterSessionHub.SessionDetector;
+        NearbyContainerDetector detector = PlayerPossessSession.SessionDetector;
         return detector?.LootAggregateContainer;
     }
 
     LootAggregateHost ResolveLootAggregateHost()
     {
-        NearbyContainerDetector detector = CharacterSessionHub.SessionDetector;
+        NearbyContainerDetector detector = PlayerPossessSession.SessionDetector;
         return detector?.ActiveLootAggregateHost;
     }
 
@@ -791,7 +791,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
     void SyncLootAggregateSources()
     {
-        CharacterSessionHub.SessionDetector?.SyncLootAggregateSources();
+        PlayerPossessSession.SessionDetector?.SyncLootAggregateSources();
     }
 
     void AppendNestedContainerTabs(InventoryContainer parent)

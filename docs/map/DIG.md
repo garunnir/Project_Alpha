@@ -64,7 +64,7 @@ TileFlags.IsDiggableTarget(definition)
 | `ExcavateHoldPerformDriver` | `MeleeStructureHoldPerformDriver` — LMB down/재획득 aim→잠금, hold 유지, release Clear; 파괴 후 같은 hold면 aim 재고정 |
 | `MeleeBlockAimPreview` | 잠금 타겟 우선 highlight, 없으면 aim + `CanBreak` → `SetDigHighlight` |
 | `DigTileTargetAimPose` | 잠금 Dig 타겟 → Sight 월드점 (face / 바깥면) |
-| `CharacterSightHost` | 본체 Sight 구독 게이트 — Free=마우스 sample 수락, StructureLock=무시·블록 포즈. 플레이어 조회=`CharacterSessionHub.SessionSightHost` |
+| `CharacterSightHost` | 본체 Sight 구독 게이트 — Free=마우스 sample 수락, StructureLock=무시·블록 포즈. 플레이어 조회=`PlayerPossessSession.SessionSightHost` |
 | `PlayerCombatController` | Layer2 host — `ICombatPerformDriver` + `ICombatTargetingPreview` 라우트·틱 |
 | `StratumProfile` (SO) | 깊이별 prefabId 레이어 목록 (`TileMapManager` Inspector) |
 | `StratumGenerator` | `MixSeed(stratumSeed, x, z, depth)` 결정론적 선택 |

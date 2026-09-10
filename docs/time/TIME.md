@@ -104,7 +104,7 @@ TimeScaleService.Instance.Pop("bullet_time");  // 해당 키 전부 제거
 
 **예약 작업 소스 추가:** `IReservedWorkSource` 구현 → `ReservedWorkHub.Register`. Gear/제작 타입을 `GameplayTimeScale`에 `if`로 넣지 않음.
 
-초기 소스: `PossessedActionReservedWorkSource` (`CharacterSessionHub.Player.Action.HasCancellableWork` — 큐가 빌 때까지. 전투만 남은 상태는 제외), `GearReservedWorkSource`, `InventoryReservedWorkSource`, `CraftingReservedWorkSource`.
+초기 소스: `PossessedActionReservedWorkSource` (`PlayerPossessSession.Current.ActionHost.HasCancellableWork` — 큐가 빌 때까지. 전투만 남은 상태는 제외), `GearReservedWorkSource`, `InventoryReservedWorkSource`, `CraftingReservedWorkSource`.
 
 HUD: `Hud_TimeScale` (우상단, Summary 왼쪽 기본 앵커). Setup: `Dist/MCP/Time/Setup TimeScale HUD In Open Scene`.
 

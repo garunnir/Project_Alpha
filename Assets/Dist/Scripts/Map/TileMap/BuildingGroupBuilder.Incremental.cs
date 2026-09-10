@@ -51,19 +51,94 @@ namespace IsoTilemap
 
         public void HandleRemoveTile(TileData removed, HashSet<Vector3Int> changedCells)
         {
-            int buildingId = removed.identity.buildingId;
-            int cellY = TileIdentityUtil.IsFloorTile(removed.identity)
-                ? FloorFaceKey.FromFloorTileIdentity(removed.identity).CellAbove.y
-                : removed.identity.GridPos.y;
+            var removals = new List<TileData> { removed };
+            HandleCoalescedTopologyChange(changedCells, removals);
+        }
 
-            if (TileIdentityUtil.IsFloorTile(removed.identity) &&
-                (buildingId == TileIdentity.BuildingIdOutdoor ||
-                 buildingId == TileIdentity.BuildingIdUnassigned))
+        /// <summary>
+        /// 지연·병합된 topology 변경 1회 bake. dig remove+stratum add를 한 패스로 처리합니다.
+        /// </summary>
+        public void HandleCoalescedTopologyChange(
+            HashSet<Vector3Int> changedCells,
+            IReadOnlyList<TileData> removals)
+        {
+            if (changedCells == null || changedCells.Count == 0)
+                return;
+
+            bool outdoorRecompute = IsMinCellYFloorChange(changedCells);
+            var roomKeys = new HashSet<RoomKey>();
+
+            if (removals != null)
+            {
+                for (int i = 0; i < removals.Count; i++)
+                {
+                    TileData removed = removals[i];
+                    int buildingId = removed.identity.buildingId;
+
+                    if (TileIdentityUtil.IsFloorTile(removed.identity) &&
+                        (buildingId == TileIdentity.BuildingIdOutdoor ||
+                         buildingId == TileIdentity.BuildingIdUnassigned))
+                    {
+                        outdoorRecompute = true;
+                        continue;
+                    }
+
+                    if (BuildingIdBakeRules.CanPropagateBuildingIdFrom(buildingId))
+                    {
+                        foreach (RoomKey key in CollectAffectedRoomKeys(removed, changedCells))
+                            roomKeys.Add(key);
+                    }
+                }
+            }
+
+            if (!outdoorRecompute &&
+                MapTopologyBakeConsts.CanUseDigIncrementalBake(changedCells.Count, removals))
+            {
+                ApplyDigIncrementalBake(changedCells, roomKeys);
+                return;
+            }
+
+            if (outdoorRecompute)
+            {
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
-            else if (BuildingIdBakeRules.CanPropagateBuildingIdFrom(buildingId))
-                RebuildRooms(CollectAffectedRoomKeys(removed, changedCells));
-            else if (IsMinCellYFloorChange(changedCells))
-                RecomputeOutdoorFromMinAndRebuildLost(changedCells);
+                TagWallsFromFloorAdjacencyNearCells(changedCells);
+                _model.ReindexTilesByIdFromRuntime();
+                RebuildRegistryIndices();
+                BakeAllSpaces();
+                _model.MarkTilesDirty();
+                return;
+            }
+
+            if (roomKeys.Count > 0)
+            {
+                RebuildRooms(roomKeys, null);
+                TagWallsFromFloorAdjacencyNearCells(changedCells);
+                _model.MarkTilesDirty();
+                return;
+            }
+
+            HandleSetOrApply(changedCells);
+        }
+
+        void ApplyDigIncrementalBake(HashSet<Vector3Int> changedCells, HashSet<RoomKey> roomKeys)
+        {
+            var keys = roomKeys ?? new HashSet<RoomKey>();
+            var extraSeeds = new HashSet<(int x, int z, int y)>();
+
+            foreach (Vector3Int cell in changedCells)
+            {
+                CollectRoomKeysNearCell(cell, keys);
+                extraSeeds.Add((cell.x, cell.z, cell.y));
+                foreach (Vector3Int d in CardinalDirs)
+                {
+                    Vector3Int n = cell + d;
+                    extraSeeds.Add((n.x, n.z, n.y));
+                }
+            }
+
+            RebuildRooms(keys, extraSeeds);
+            TagWallsFromFloorAdjacencyNearCells(changedCells);
+            _model.MarkTilesDirty();
         }
         void RecomputeOutdoorFromMinAndRebuildLost(IReadOnlyCollection<Vector3Int> changedCells)
         {

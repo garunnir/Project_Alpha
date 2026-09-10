@@ -25,8 +25,8 @@ public sealed class PossessedActionReservedWorkSource : MonoBehaviour, IReserved
     void Update()
     {
         // Rule 6: hub/호스트 포인터 비교 + bool만. 할당 없음.
-        CharacterSessionHub session = CharacterSessionHub.Player;
-        CharacterActionHost host = session != null ? session.Action : null;
+        PlayerPossessSession session = PlayerPossessSession.Current;
+        CharacterActionHost host = session?.ActionHost;
         if (host != _host)
             BindHost(host);
 

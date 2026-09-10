@@ -163,7 +163,7 @@ public static class ConsumeService
         if (fun != 0 || healthy != 0)
             host.ApplyMetabolites(fun, healthy, 0);
 
-        ICharacterBody body = CharacterSessionHub.SessionBody;
+        ICharacterBody body = PlayerPossessSession.SessionBody;
         if (body != null)
             body.SetToxin01(body.Toxin01 + BodyIllness.RotToxinAdd);
     }
@@ -187,7 +187,7 @@ public static class ConsumeService
 
     static void ApplyMed(PlayerNeedsHost host, ItemData item, string partId)
     {
-        ICharacterBody body = CharacterSessionHub.SessionBody;
+        ICharacterBody body = PlayerPossessSession.SessionBody;
         if (TryApplyAntibiotic(body, item))
             return;
 
@@ -307,7 +307,7 @@ public static class ConsumeService
         if (!IsHealAction(item))
             return true;
 
-        ICharacterBody body = CharacterSessionHub.SessionBody;
+        ICharacterBody body = PlayerPossessSession.SessionBody;
         UseActionData action = item.use_action;
         if (string.IsNullOrEmpty(partId))
             return BodyHealApply.CanApply(body, action);

@@ -39,10 +39,10 @@ public sealed class DiveTankContextContributor : IContextMenuContributor
                 return swim.Breath;
         }
 
-        CharacterSessionHub session = CharacterSessionHub.Player;
-        if (session != null)
+        PlayerPossessSession session = PlayerPossessSession.Current;
+        if (session?.Body != null)
         {
-            CharacterSwimHost swim = session.GetBodyComponent<CharacterSwimHost>();
+            CharacterSwimHost swim = session.Body.GetBodyComponent<CharacterSwimHost>();
             if (swim?.Breath != null)
                 return swim.Breath;
         }

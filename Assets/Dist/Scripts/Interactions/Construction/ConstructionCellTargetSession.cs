@@ -123,7 +123,7 @@ public sealed class ConstructionCellTargetSession : IFarmCellTargetSession, ICel
 
     static CharacterActionHost ResolvePossessedActionHost()
     {
-        CharacterActionHost session = CharacterSessionHub.SessionActionHost;
+        CharacterActionHost session = PlayerPossessSession.SessionActionHost;
         if (session != null)
             return session;
 

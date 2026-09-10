@@ -43,7 +43,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     float _mood;
 
-    public static CharacterMoodHost Active => CharacterSessionHub.MoodHost;
+    public static CharacterMoodHost Active => PlayerPossessSession.MoodHost;
 
     public static event Action AnyControlYielded;
 
