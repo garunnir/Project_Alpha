@@ -1,5 +1,7 @@
 // ============================================================
-// [BakeIdPlaygroundLayout] — Bake ID 검증용 MasterPlayground (밀폐 건물 포함)
+// [BakeIdPlaygroundLayout] — Sim 씬 Import용 시드 배치 (코드 fixture)
+// ============================================================
+// Bake ID 회귀 SSOT는 BakeIdPlayground 씬 Host 직렬화. 이 파일은 빈 씬 시드용.
 // ============================================================
 
 using System.Collections.Generic;
@@ -8,8 +10,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 스펙 Region을 한 맵에 담은 합성 배치. 테스트·샘플 씬 공통 SSOT.
-    /// 실내 spaceId 검증용으로 벽·지붕이 있는 밀폐 건물을 포함한다.
+    /// Host <c>Import From Seed Layout</c>용 기본 배치·probe 좌표.
     /// </summary>
     public static class BakeIdPlaygroundLayout
     {
@@ -40,8 +41,8 @@ namespace IsoTilemap
             public static readonly Vector3Int Bridge_B2b = new Vector3Int(8, 1, 20);
 
             // ColumnStack — isolated pad (space column +Y probe), z=25
-            public static readonly Vector3Int Column_Lower = new Vector3Int(0, 1, 25);
-            public static readonly Vector3Int Column_Upper = new Vector3Int(0, 2, 25);
+            public static readonly Vector3Int Column_HFloor_Lower = new Vector3Int(0, 1, 25);
+            public static readonly Vector3Int Column_HFloor_Upper = new Vector3Int(0, 2, 25);
 
             // GShape ㄱ + balcony — east of house, z=10..12
             public static readonly Vector3Int GShape_A = new Vector3Int(4, 1, 10);
@@ -110,8 +111,8 @@ namespace IsoTilemap
                 tiles.Add(BakeIdSyntheticTiles.Floor(Bridge_B2b));
 
                 // ColumnStack
-                tiles.Add(BakeIdSyntheticTiles.Floor(Column_Lower));
-                tiles.Add(BakeIdSyntheticTiles.Floor(Column_Upper));
+                tiles.Add(BakeIdSyntheticTiles.Floor(Column_HFloor_Lower));
+                tiles.Add(BakeIdSyntheticTiles.Floor(Column_HFloor_Upper));
 
                 // G-shape + balcony (no enclosure — outdoor)
                 tiles.Add(BakeIdSyntheticTiles.Floor(GShape_A));

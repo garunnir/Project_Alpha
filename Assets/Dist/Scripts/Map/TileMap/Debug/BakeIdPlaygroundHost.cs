@@ -1,5 +1,5 @@
 // ============================================================
-// [BakeIdPlaygroundHost] — MasterPlayground 실타일 스폰·편집·Bake ID 라벨
+// [BakeIdPlaygroundHost] — 씬 직렬화 Sim 배치·probe·rule + 실타일 미리보기
 // ============================================================
 
 using System.Collections.Generic;
@@ -7,74 +7,72 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace IsoTilemap
 {
     /// <summary>
-    /// 샘플 씬에서 Bake ID(building/room/space)를 Scene·Game 뷰로 확인한다.
-    /// <see cref="TilePrefabDB"/> + <see cref="TileObjFactory"/>로 실제 맵 타일 프리팹을 스폰한다.
+    /// BakeId 시뮬레이션 씬 SSOT. 타일·probe·rule은 SerializeField로 씬에 저장된다.
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class BakeIdPlaygroundHost : MonoBehaviour
     {
+        public const string ScenePath = "Assets/Dist/Scenes/BakeIdPlayground.unity";
+
         const string VisualRootName = "BakeIdVisualRoot";
 #if UNITY_EDITOR
         const string DefaultPrefabDbPath = "Assets/Dist/SOData/Tile/Tile Prefab DB.asset";
+        const float EditCellGizmoSize = 0.1f;
+        const float EditCellGizmoSizeActive = 0.12f;
 #endif
 
+        const string Tab = "BakeId";
+
+        [PropertyOrder(-100)]
+        [ShowInInspector, ReadOnly, DisplayAsString]
+        [LabelText("Status")]
+        string Status => _hub == null
+            ? $"empty — tiles={simTiles.Count} probes={simProbes.Count} rules={simRules.Count}"
+            : $"live model={_model.TilesSnapshot.Count}  simTiles={simTiles.Count}  probes={simProbes.Count}";
+
+        // ── Setup ─────────────────────────────────────────────
+
+        [TabGroup(Tab, "Setup")]
+        [Required]
         [SerializeField] TilePrefabDB prefabDb;
+
+        [TabGroup(Tab, "Setup")]
+        [MinValue(1e-4f)]
         [SerializeField] float cellSize = 1f;
+
+        [TabGroup(Tab, "Setup")]
+        [LabelText("Show ID Labels")]
         [SerializeField] bool showIdLabels = true;
+
+        [TabGroup(Tab, "Setup")]
+        [LabelText("Rebuild On Enable")]
         [SerializeField] bool rebuildOnEnable = true;
 
-        [Title("Edit cells")]
-        [SerializeField] Vector3Int editCellA = new(1, 1, 10);
-        [SerializeField] Vector3Int editCellB = new(2, 1, 10);
-
-        [ShowInInspector, ReadOnly]
-        string Status => _hub == null
-            ? "empty — Rebuild MasterPlayground"
-            : $"tiles={_model.TilesSnapshot.Count} db={(prefabDb != null ? prefabDb.name : "MISSING")}";
-
-        TileMapModel _model;
-        TileMapCacheHub _hub;
-        BuildingGroupBuilder _builder;
-        TileObjFactory _factory;
-        Transform _visualRoot;
-
-        void OnEnable()
-        {
-            EnsurePrefabDb();
-            if (rebuildOnEnable && _hub == null)
-                RebuildMasterPlayground();
-        }
-
-        void OnDisable()
-        {
-            ClearVisuals();
-            TearDownRuntime();
-        }
-
-        void OnValidate()
-        {
-            EnsurePrefabDb();
-        }
-
-        [Button("Rebuild MasterPlayground"), PropertyOrder(-10)]
-        public void RebuildMasterPlayground()
+        [TabGroup(Tab, "Setup")]
+        [PropertySpace(8)]
+        [InfoBox("변경 후 씬 저장 필수. VisualRoot는 SSOT가 아님 — simTiles가 진실원.")]
+        [ButtonGroup(Tab + "/Setup/Pipeline")]
+        [Button("Rebuild From Sim Tiles", ButtonSizes.Medium)]
+        public void RebuildFromSimTiles()
         {
             TearDownRuntime();
             if (!EnsurePrefabDb())
             {
-                Debug.LogError("[BakeIdPlayground] TilePrefabDB missing — assign Prefab Db or ensure " +
-#if UNITY_EDITOR
-                    DefaultPrefabDbPath
-#else
-                    "Tile Prefab DB"
-#endif
-                );
+                Debug.LogError("[BakeIdPlayground] TilePrefabDB missing");
+                return;
+            }
+
+            if (simTiles == null || simTiles.Count == 0)
+            {
+                Debug.LogWarning(
+                    "[BakeIdPlayground] simTiles empty — Inspector: Import From Seed Layout, then save scene");
                 return;
             }
 
@@ -88,7 +86,7 @@ namespace IsoTilemap
             EnsureVisualRoot();
             _factory = new TileObjFactory(_visualRoot, prefabDb);
 
-            IReadOnlyList<TileData> tiles = BakeIdPlaygroundLayout.MasterPlayground.Tiles;
+            List<TileData> tiles = BakeIdSimTileUtil.ToTileDataList(simTiles);
             for (int i = 0; i < tiles.Count; i++)
                 _model.SetTile(tiles[i]);
 
@@ -96,7 +94,21 @@ namespace IsoTilemap
             RefreshVisuals();
         }
 
-        [Button("Full Rebake (AssignAll)")]
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Pipeline")]
+        [Button("Import Seed Layout", ButtonSizes.Medium)]
+        [GUIColor(1f, 0.85f, 0.4f)]
+        public void ImportFromUnitLayout()
+        {
+            BakeIdSimDefaults.FillFromUnitMasterPlayground(simTiles, simProbes, simRules);
+            simSteps.Clear();
+            MarkSimDirty();
+            RebuildFromSimTiles();
+        }
+
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Verify")]
+        [Button("Full Rebake", ButtonSizes.Medium)]
         public void FullRebake()
         {
             EnsureRuntime();
@@ -104,49 +116,306 @@ namespace IsoTilemap
             RefreshVisuals();
         }
 
-        [Button("Add Floor @ A")]
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Verify")]
+        [Button("Run Sim Rules", ButtonSizes.Medium)]
+        [GUIColor(0.55f, 0.95f, 0.65f)]
+        public void RunSimRulesPreview()
+        {
+            BakeIdSimRunner.Result result = BakeIdSimRunner.Run(simTiles, simProbes, simRules, simSteps);
+            if (result.Ok)
+            {
+                Debug.Log($"[BakeIdPlayground] Rules OK ({simRules.Count} rules, {simTiles.Count} tiles)");
+                return;
+            }
+
+            for (int i = 0; i < result.Failures.Count; i++)
+                Debug.LogError($"[BakeIdPlayground] Rule fail: {result.Failures[i]}");
+        }
+
+        // ── Edit ──────────────────────────────────────────────
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Cells", ShowLabel = false)]
+        [HorizontalGroup(Tab + "/Edit/Cells/AB")]
+        [LabelText("A"), LabelWidth(14)]
+        [SerializeField] Vector3Int editCellA = new(0, 1, 10);
+
+        [TabGroup(Tab, "Edit")]
+        [HorizontalGroup(Tab + "/Edit/Cells/AB")]
+        [LabelText("B"), LabelWidth(14)]
+        [SerializeField] Vector3Int editCellB = new(1, 1, 10);
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Scene Move")]
+        [LabelText("Enable (QWEASD)")]
+        [SerializeField] bool sceneMoveEditCell;
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Scene Move")]
+        [EnumToggleButtons]
+        [LabelText("Target")]
+        [EnableIf(nameof(sceneMoveEditCell))]
+        [SerializeField] EditCellTarget moveTarget = EditCellTarget.A;
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Scene Move")]
+        [ShowInInspector, ReadOnly, DisplayAsString]
+        [HideLabel]
+        string MoveHint => sceneMoveEditCell
+            ? $"ON → {moveTarget}  |  W/S±Z  A/D±X  Q/E±Y  |  Tab A↔B"
+            : "OFF — Scene 뷰에서 키 이동 안 함";
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/Tiles")]
+        [Button("Floor @ A")]
         public void AddFloorAtA()
         {
             EnsureRuntime();
-            _model.SetTile(BakeIdSyntheticTiles.Floor(editCellA));
+            var entry = BakeIdSimTileEntry.Floor(editCellA);
+            simTiles.Add(entry);
+            _model.SetTile(entry.ToTileData());
+            MarkSimDirty();
             RefreshVisuals();
         }
 
-        [Button("Add ThinWall A↔B")]
-        public void AddThinWallAB()
-        {
-            EnsureRuntime();
-            _model.SetTile(BakeIdSyntheticTiles.ThinWall(editCellA, editCellB));
-            RefreshVisuals();
-        }
-
-        [Button("Add Cube @ A")]
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/Tiles")]
+        [Button("Cube @ A")]
         public void AddCubeAtA()
         {
             EnsureRuntime();
-            _model.SetTile(BakeIdSyntheticTiles.Cube(editCellA));
+            var entry = BakeIdSimTileEntry.Cube(editCellA);
+            simTiles.Add(entry);
+            _model.SetTile(entry.ToTileData());
+            MarkSimDirty();
             RefreshVisuals();
         }
 
-        [Button("Remove tile @ A (floor preferred)")]
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/Tiles")]
+        [Button("ThinWall A↔B")]
+        public void AddThinWallAB()
+        {
+            EnsureRuntime();
+            var entry = BakeIdSimTileEntry.ThinWall(editCellA, editCellB);
+            simTiles.Add(entry);
+            _model.SetTile(entry.ToTileData());
+            MarkSimDirty();
+            RefreshVisuals();
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/Tiles")]
+        [Button("Remove @ A")]
+        [GUIColor(1f, 0.45f, 0.45f)]
         public void RemoveAtA()
         {
             EnsureRuntime();
-            if (!TryFindRemovableAtA(out TileData tile))
+            if (!TryFindRemovableAtA(out TileData tile, out int simIndex))
             {
                 Debug.LogWarning($"[BakeIdPlayground] No tile at editCellA={editCellA}");
                 return;
             }
 
             _model.RemoveTile(tile);
+            if (simIndex >= 0 && simIndex < simTiles.Count)
+                simTiles.RemoveAt(simIndex);
+            else
+                RemoveMatchingSimEntry(tile);
+
+            MarkSimDirty();
             RefreshVisuals();
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/WithProbe")]
+        [Button("Floor @ A + Probe")]
+        public void AddFloorAtAWithProbe()
+        {
+            AddFloorAtA();
+            TryAddProbeAt(editCellA, preferredName: null);
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Place")]
+        [ButtonGroup(Tab + "/Edit/Place/WithProbe")]
+        [Button("Cube @ A + Probe")]
+        public void AddCubeAtAWithProbe()
+        {
+            AddCubeAtA();
+            TryAddProbeAt(editCellA, preferredName: null);
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Probe")]
+        [LabelText("Name (optional)")]
+        [Tooltip("비우면 P_{x}_{y}_{z}")]
+        [SerializeField] string probeNameToAdd;
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Probe")]
+        [Button("Add Probe @ A", ButtonSizes.Medium)]
+        public void AddProbeAtA()
+        {
+            TryAddProbeAt(editCellA, preferredName: null);
+        }
+
+        // ── Sim SSOT ──────────────────────────────────────────
+
+        [TabGroup(Tab, "Sim")]
+        [InfoBox("씬 SerializeField = SSOT. Import Seed는 시드 덮어쓰기.")]
+        [ListDrawerSettings(
+            ShowPaging = true,
+            NumberOfItemsPerPage = 20,
+            DraggableItems = true,
+            ShowIndexLabels = true,
+            ListElementLabelName = "kind")]
+        [LabelText("Tiles")]
+        [SerializeField] List<BakeIdSimTileEntry> simTiles = new();
+
+        [TabGroup(Tab, "Sim")]
+        [ListDrawerSettings(
+            ShowPaging = true,
+            NumberOfItemsPerPage = 20,
+            DraggableItems = true,
+            ShowIndexLabels = true,
+            ListElementLabelName = "name")]
+        [LabelText("Probes")]
+        [SerializeField] List<BakeIdSimProbe> simProbes = new();
+
+        [TabGroup(Tab, "Sim")]
+        [ListDrawerSettings(
+            ShowPaging = true,
+            NumberOfItemsPerPage = 20,
+            DraggableItems = true,
+            ShowIndexLabels = true,
+            ListElementLabelName = "kind")]
+        [LabelText("Rules")]
+        [SerializeField] List<BakeIdSimRule> simRules = new();
+
+        [TabGroup(Tab, "Sim")]
+        [ListDrawerSettings(
+            ShowPaging = true,
+            NumberOfItemsPerPage = 12,
+            DraggableItems = true,
+            ShowIndexLabels = true,
+            ListElementLabelName = "kind")]
+        [LabelText("Steps (incremental)")]
+        [SerializeField] List<BakeIdSimStep> simSteps = new();
+
+        public enum EditCellTarget
+        {
+            A = 0,
+            B = 1,
+        }
+
+        public IReadOnlyList<BakeIdSimTileEntry> SimTiles => simTiles;
+        public IReadOnlyList<BakeIdSimProbe> SimProbes => simProbes;
+        public IReadOnlyList<BakeIdSimRule> SimRules => simRules;
+        public IReadOnlyList<BakeIdSimStep> SimSteps => simSteps;
+
+        TileMapModel _model;
+        TileMapCacheHub _hub;
+        BuildingGroupBuilder _builder;
+        TileObjFactory _factory;
+        Transform _visualRoot;
+
+#if UNITY_EDITOR
+        bool _sceneGuiSubscribed;
+#endif
+
+        void OnEnable()
+        {
+            EnsurePrefabDb();
+            if (rebuildOnEnable && _hub == null)
+                RebuildFromSimTiles();
+#if UNITY_EDITOR
+            SyncSceneMoveSubscription();
+#endif
+        }
+
+        void OnDisable()
+        {
+#if UNITY_EDITOR
+            UnsubscribeSceneMove();
+#endif
+            ClearVisuals();
+            TearDownRuntime();
+        }
+
+        void OnValidate()
+        {
+            EnsurePrefabDb();
+#if UNITY_EDITOR
+            SyncSceneMoveSubscription();
+#endif
+        }
+
+        bool TryAddProbeAt(Vector3Int cell, string preferredName)
+        {
+            if (simProbes == null)
+                simProbes = new List<BakeIdSimProbe>();
+
+            for (int i = 0; i < simProbes.Count; i++)
+            {
+                if (simProbes[i].cell != cell)
+                    continue;
+                Debug.LogWarning(
+                    $"[BakeIdPlayground] Probe already at {cell} ('{simProbes[i].name}') — skip");
+                return false;
+            }
+
+            string name = !string.IsNullOrWhiteSpace(preferredName)
+                ? preferredName.Trim()
+                : (!string.IsNullOrWhiteSpace(probeNameToAdd)
+                    ? probeNameToAdd.Trim()
+                    : $"P_{cell.x}_{cell.y}_{cell.z}");
+
+            name = EnsureUniqueProbeName(name);
+            simProbes.Add(new BakeIdSimProbe(name, cell));
+            probeNameToAdd = string.Empty;
+            MarkSimDirty();
+            Debug.Log($"[BakeIdPlayground] Probe added '{name}' @ {cell}");
+            return true;
+        }
+
+        string EnsureUniqueProbeName(string name)
+        {
+            if (!ProbeNameExists(name))
+                return name;
+
+            for (int i = 2; i < 1000; i++)
+            {
+                string candidate = $"{name}_{i}";
+                if (!ProbeNameExists(candidate))
+                    return candidate;
+            }
+
+            return $"{name}_{System.Guid.NewGuid():N}";
+        }
+
+        bool ProbeNameExists(string name)
+        {
+            for (int i = 0; i < simProbes.Count; i++)
+            {
+                if (simProbes[i].name == name)
+                    return true;
+            }
+
+            return false;
         }
 
         void EnsureRuntime()
         {
             if (_hub != null && _builder != null && _model != null && _factory != null)
                 return;
-            RebuildMasterPlayground();
+            RebuildFromSimTiles();
         }
 
         void TearDownRuntime()
@@ -175,6 +444,15 @@ namespace IsoTilemap
             }
 #endif
             return false;
+        }
+
+        void MarkSimDirty()
+        {
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+            if (!Application.isPlaying)
+                EditorSceneManager.MarkSceneDirty(gameObject.scene);
+#endif
         }
 
         void EnsureVisualRoot()
@@ -218,7 +496,6 @@ namespace IsoTilemap
             _factory = new TileObjFactory(_visualRoot, prefabDb);
 
             float cs = Mathf.Max(1e-4f, cellSize);
-            int spawned = 0;
             int missed = 0;
             foreach (TileData tile in _model.TilesSnapshot)
             {
@@ -228,14 +505,11 @@ namespace IsoTilemap
                     missed++;
                     Debug.LogWarning(
                         $"[BakeIdPlayground] Prefab missing for '{tile.identity.PrefabId}' at {tile.identity.GridPos}");
-                    continue;
                 }
-
-                spawned++;
             }
 
             if (missed > 0)
-                Debug.LogError($"[BakeIdPlayground] {missed} tiles failed to spawn (check PrefabDB). spawned={spawned}");
+                Debug.LogError($"[BakeIdPlayground] {missed} tiles failed to spawn");
 
             if (showIdLabels)
                 SpawnFloorIdLabels(cs);
@@ -277,9 +551,10 @@ namespace IsoTilemap
             }
         }
 
-        bool TryFindRemovableAtA(out TileData tile)
+        bool TryFindRemovableAtA(out TileData tile, out int simIndex)
         {
             tile = default;
+            simIndex = -1;
             TileData floorMatch = default;
             bool hasFloor = false;
             TileData anyMatch = default;
@@ -305,51 +580,161 @@ namespace IsoTilemap
             if (hasFloor)
             {
                 tile = floorMatch;
+                simIndex = FindSimIndex(tile);
                 return true;
             }
 
             if (hasAny)
             {
                 tile = anyMatch;
+                simIndex = FindSimIndex(tile);
                 return true;
             }
 
             foreach (TileData candidate in _model.TilesSnapshot)
             {
-                if (BakeIdSyntheticTiles.IsThinWallBetween(candidate, editCellA, editCellB))
-                {
-                    tile = candidate;
-                    return true;
-                }
+                if (!BakeIdSyntheticTiles.IsThinWallBetween(candidate, editCellA, editCellB))
+                    continue;
+                tile = candidate;
+                simIndex = FindSimIndex(tile);
+                return true;
             }
 
             return false;
         }
 
-#if UNITY_EDITOR
-        void OnDrawGizmos()
+        int FindSimIndex(in TileData tile)
         {
-            if (!showIdLabels || _hub == null)
-                return;
+            if (!BakeIdSimTileEntry.TryFromTileData(tile, out BakeIdSimTileEntry want))
+                return -1;
 
-            float cs = Mathf.Max(1e-4f, cellSize);
-            DrawRegionHint("HouseL", BakeIdPlaygroundLayout.MasterPlayground.OpenPair_A, cs);
-            DrawRegionHint("HouseR", BakeIdPlaygroundLayout.MasterPlayground.ThinWall_Right, cs);
-            DrawRegionHint("OpenShed", BakeIdPlaygroundLayout.MasterPlayground.OpenShed_A, cs);
-            DrawRegionHint("CubeSplit", BakeIdPlaygroundLayout.MasterPlayground.CubeWall_Left, cs);
-            DrawRegionHint("Bridge", BakeIdPlaygroundLayout.MasterPlayground.Bridge_B1, cs);
-            DrawRegionHint("Column", BakeIdPlaygroundLayout.MasterPlayground.Column_Upper, cs);
-            DrawRegionHint("GShape", BakeIdPlaygroundLayout.MasterPlayground.GShape_A, cs);
-            DrawRegionHint("Balcony", BakeIdPlaygroundLayout.MasterPlayground.Balcony_Floor, cs);
-            DrawRegionHint("Plaza", BakeIdPlaygroundLayout.MasterPlayground.Plaza_Floor, cs);
-            DrawRegionHint("Dig", BakeIdPlaygroundLayout.MasterPlayground.Dig_Floor, cs);
+            for (int i = 0; i < simTiles.Count; i++)
+            {
+                BakeIdSimTileEntry e = simTiles[i];
+                if (e.kind != want.kind)
+                    continue;
+                if (e.cell != want.cell)
+                    continue;
+                if (e.kind == BakeIdSimTileKind.ThinWall && e.cellB != want.cellB)
+                    continue;
+                return i;
+            }
+
+            return -1;
         }
 
-        static void DrawRegionHint(string name, Vector3Int walkableCell, float cs)
+        void RemoveMatchingSimEntry(in TileData tile)
         {
-            Vector3 world = TileHelper.ConvertGridToWorldPos(walkableCell, cs);
-            world.y += 1.1f * cs;
-            Handles.Label(world, name, EditorStyles.boldLabel);
+            int idx = FindSimIndex(tile);
+            if (idx >= 0)
+                simTiles.RemoveAt(idx);
+        }
+
+#if UNITY_EDITOR
+        void SyncSceneMoveSubscription()
+        {
+            if (sceneMoveEditCell)
+                SubscribeSceneMove();
+            else
+                UnsubscribeSceneMove();
+        }
+
+        void SubscribeSceneMove()
+        {
+            if (_sceneGuiSubscribed)
+                return;
+            SceneView.duringSceneGui += OnSceneGuiMoveEditCell;
+            _sceneGuiSubscribed = true;
+        }
+
+        void UnsubscribeSceneMove()
+        {
+            if (!_sceneGuiSubscribed)
+                return;
+            SceneView.duringSceneGui -= OnSceneGuiMoveEditCell;
+            _sceneGuiSubscribed = false;
+        }
+
+        void OnSceneGuiMoveEditCell(SceneView view)
+        {
+            if (!sceneMoveEditCell || this == null)
+                return;
+
+            Event e = Event.current;
+            if (e == null || e.type != EventType.KeyDown || e.control || e.alt || e.command)
+                return;
+
+            Vector3Int delta = Vector3Int.zero;
+            switch (e.keyCode)
+            {
+                case KeyCode.W: delta = new Vector3Int(0, 0, 1); break;
+                case KeyCode.S: delta = new Vector3Int(0, 0, -1); break;
+                case KeyCode.A: delta = new Vector3Int(-1, 0, 0); break;
+                case KeyCode.D: delta = new Vector3Int(1, 0, 0); break;
+                case KeyCode.Q: delta = new Vector3Int(0, -1, 0); break;
+                case KeyCode.E: delta = new Vector3Int(0, 1, 0); break;
+                case KeyCode.Tab:
+                    moveTarget = moveTarget == EditCellTarget.A
+                        ? EditCellTarget.B
+                        : EditCellTarget.A;
+                    e.Use();
+                    EditorUtility.SetDirty(this);
+                    SceneView.RepaintAll();
+                    return;
+                default:
+                    return;
+            }
+
+            if (moveTarget == EditCellTarget.A)
+                editCellA += delta;
+            else
+                editCellB += delta;
+
+            e.Use();
+            EditorUtility.SetDirty(this);
+            SceneView.RepaintAll();
+        }
+
+        void OnDrawGizmos()
+        {
+            float cs = Mathf.Max(1e-4f, cellSize);
+            DrawEditCellGizmo(editCellA, "A", new Color(0.2f, 0.85f, 1f, 1f),
+                moveTarget == EditCellTarget.A && sceneMoveEditCell, cs);
+            DrawEditCellGizmo(editCellB, "B", new Color(1f, 0.85f, 0.2f, 1f),
+                moveTarget == EditCellTarget.B && sceneMoveEditCell, cs);
+
+            if (simProbes == null)
+                return;
+
+            for (int i = 0; i < simProbes.Count; i++)
+            {
+                BakeIdSimProbe p = simProbes[i];
+                if (string.IsNullOrEmpty(p.name))
+                    continue;
+                Vector3 world = TileHelper.ConvertGridToWorldPos(p.cell, cs);
+                world.y += 1.05f * cs;
+                Handles.Label(world, p.name, EditorStyles.boldLabel);
+            }
+        }
+
+        void DrawEditCellGizmo(Vector3Int cell, string label, Color color, bool active, float cs)
+        {
+            Vector3 world = TileHelper.ConvertGridToWorldPos(cell, cs);
+            float size = cs * (active ? EditCellGizmoSizeActive : EditCellGizmoSize);
+            Gizmos.color = color;
+            if (active)
+                Gizmos.DrawCube(world, Vector3.one * size);
+            else
+                Gizmos.DrawWireCube(world, Vector3.one * size);
+
+            var style = new GUIStyle(EditorStyles.boldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = active ? 14 : 11,
+            };
+            style.normal.textColor = color;
+            string suffix = active ? " ★" : string.Empty;
+            Handles.Label(world + Vector3.up * (0.65f * cs), $"{label} {cell}{suffix}", style);
         }
 #endif
 
