@@ -34,8 +34,8 @@ namespace IsoTilemap
         [ShowInInspector, ReadOnly, DisplayAsString]
         [LabelText("Status")]
         string Status => _hub == null
-            ? $"empty — tiles={simTiles.Count} probes={simProbes.Count} rules={simRules.Count}"
-            : $"live model={_model.TilesSnapshot.Count}  simTiles={simTiles.Count}  probes={simProbes.Count}";
+            ? $"empty — tiles={simTiles.Count} probes={simProbes.Count} rules={simRules.Count} steps={simSteps.Count}"
+            : $"live model={_model.TilesSnapshot.Count}  simTiles={simTiles.Count}  probes={simProbes.Count}  steps={simSteps.Count}";
 
         // ── Setup ─────────────────────────────────────────────
 
@@ -84,13 +84,26 @@ namespace IsoTilemap
             _model.SetBuildingGroupBuilder(_builder);
 
             EnsureVisualRoot();
-            _factory = new TileObjFactory(_visualRoot, prefabDb);
+            float cs = Mathf.Max(1e-4f, cellSize);
+            var hierarchy = BuildingViewHierarchy.EnsureUnder(_visualRoot, cs);
+            hierarchy.BindRegistry(registry);
+            _factory = new TileObjFactory(_visualRoot, prefabDb, null, hierarchy);
 
-            List<TileData> tiles = BakeIdSimTileUtil.ToTileDataList(simTiles);
+            List<TileData> tiles = BakeIdSimTileUtil.ToTileDataList(simTiles, out int skipped, "[BakeIdPlayground]");
+            if (tiles.Count == 0)
+            {
+                Debug.LogError(
+                    skipped > 0
+                        ? "[BakeIdPlayground] All simTiles invalid — fix Sim list or Import Seed Layout"
+                        : "[BakeIdPlayground] No valid tiles to load");
+                return;
+            }
+
             for (int i = 0; i < tiles.Count; i++)
                 _model.SetTile(tiles[i]);
 
-            _builder.AssignAll();
+            registry.ReplaceOutdoorFloorCells(BakeIdPlaygroundLayout.MasterPlayground.OutdoorFloorCells);
+            _builder.RebakeAllBuildingPartitions();
             RefreshVisuals();
         }
 
@@ -107,17 +120,17 @@ namespace IsoTilemap
         }
 
         [TabGroup(Tab, "Setup")]
-        [ButtonGroup(Tab + "/Setup/Verify")]
+        [ButtonGroup(Tab + "/Setup/Verify/Bake")]
         [Button("Full Rebake", ButtonSizes.Medium)]
         public void FullRebake()
         {
             EnsureRuntime();
-            _builder.AssignAll();
+            _builder.RebakeAllBuildingPartitions();
             RefreshVisuals();
         }
 
         [TabGroup(Tab, "Setup")]
-        [ButtonGroup(Tab + "/Setup/Verify")]
+        [ButtonGroup(Tab + "/Setup/Verify/Bake")]
         [Button("Run Sim Rules", ButtonSizes.Medium)]
         [GUIColor(0.55f, 0.95f, 0.65f)]
         public void RunSimRulesPreview()
@@ -131,6 +144,42 @@ namespace IsoTilemap
 
             for (int i = 0; i < result.Failures.Count; i++)
                 Debug.LogError($"[BakeIdPlayground] Rule fail: {result.Failures[i]}");
+        }
+
+        [TabGroup(Tab, "Setup")]
+        [PropertySpace(4)]
+        [ButtonGroup(Tab + "/Setup/Verify/Steps")]
+        [Button("Preview Sim Steps", ButtonSizes.Medium)]
+        [GUIColor(0.65f, 0.85f, 1f)]
+        public void PreviewSimSteps()
+        {
+            RebuildFromSimTiles();
+            if (_model == null)
+                return;
+
+            if (simSteps == null || simSteps.Count == 0)
+            {
+                Debug.Log("[BakeIdPlayground] Preview: no simSteps — showing initial layout only");
+                return;
+            }
+
+            if (!BakeIdSimRunner.TryApplySteps(_model, simProbes, simSteps, out string error))
+            {
+                Debug.LogError($"[BakeIdPlayground] Preview step failed: {error}");
+                return;
+            }
+
+            RefreshVisuals();
+            Debug.Log($"[BakeIdPlayground] Preview OK — applied {simSteps.Count} step(s)");
+        }
+
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Verify/Steps")]
+        [Button("Preview + Run Rules", ButtonSizes.Medium)]
+        public void PreviewSimStepsAndRunRules()
+        {
+            PreviewSimSteps();
+            RunSimRulesPreview();
         }
 
         // ── Edit ──────────────────────────────────────────────
@@ -202,8 +251,14 @@ namespace IsoTilemap
         {
             EnsureRuntime();
             var entry = BakeIdSimTileEntry.ThinWall(editCellA, editCellB);
+            if (!entry.TryToTileData(out TileData tile, out string error))
+            {
+                Debug.LogWarning($"[BakeIdPlayground] ThinWall rejected: {error}");
+                return;
+            }
+
             simTiles.Add(entry);
-            _model.SetTile(entry.ToTileData());
+            _model.SetTile(tile);
             MarkSimDirty();
             RefreshVisuals();
         }
@@ -264,6 +319,62 @@ namespace IsoTilemap
         public void AddProbeAtA()
         {
             TryAddProbeAt(editCellA, preferredName: null);
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [InfoBox(
+            "simTiles=초기 레이아웃 SSOT. Record Step은 simSteps에 append — Run Sim Rules / Preview / 씬 테스트가 steps 후 상태를 검증.")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row1")]
+        [Button("AddFloor", ButtonSizes.Small)]
+        public void RecordAddFloorStepAtA() =>
+            RecordStep(BakeIdSimStepKind.AddFloorAtProbe, editCellA);
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row1")]
+        [Button("RemoveFloor", ButtonSizes.Small)]
+        public void RecordRemoveFloorStepAtA() =>
+            RecordStep(BakeIdSimStepKind.RemoveFloorAtProbe, editCellA);
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row1")]
+        [Button("AddCube", ButtonSizes.Small)]
+        public void RecordAddCubeStepAtA() =>
+            RecordStep(BakeIdSimStepKind.AddCubeAtProbe, editCellA);
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row1")]
+        [Button("RemoveCube", ButtonSizes.Small)]
+        public void RecordRemoveCubeStepAtA() =>
+            RecordStep(BakeIdSimStepKind.RemoveCubeAtProbe, editCellA);
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row2")]
+        [Button("RemoveThinWall A↔B", ButtonSizes.Small)]
+        public void RecordRemoveThinWallStepAtAB()
+        {
+            string probeA = ResolveOrCreateProbeNameAt(editCellA);
+            string probeB = ResolveOrCreateProbeNameAt(editCellB);
+            AppendSimStep(BakeIdSimStep.RemoveThinWall(probeA, probeB));
+        }
+
+        [TabGroup(Tab, "Edit")]
+        [BoxGroup(Tab + "/Edit/Record Step")]
+        [ButtonGroup(Tab + "/Edit/Record Step/Row2")]
+        [Button("Clear Steps", ButtonSizes.Small)]
+        [GUIColor(1f, 0.55f, 0.55f)]
+        public void ClearSimSteps()
+        {
+            if (simSteps == null || simSteps.Count == 0)
+                return;
+
+            simSteps.Clear();
+            MarkSimDirty();
+            Debug.Log("[BakeIdPlayground] simSteps cleared");
         }
 
         // ── Sim SSOT ──────────────────────────────────────────
@@ -385,6 +496,48 @@ namespace IsoTilemap
             return true;
         }
 
+        void RecordStep(BakeIdSimStepKind kind, Vector3Int cell)
+        {
+            string probe = ResolveOrCreateProbeNameAt(cell);
+            BakeIdSimStep step = kind switch
+            {
+                BakeIdSimStepKind.AddFloorAtProbe => BakeIdSimStep.AddFloor(probe),
+                BakeIdSimStepKind.RemoveFloorAtProbe => BakeIdSimStep.RemoveFloor(probe),
+                BakeIdSimStepKind.AddCubeAtProbe => BakeIdSimStep.AddCube(probe),
+                BakeIdSimStepKind.RemoveCubeAtProbe => BakeIdSimStep.RemoveCube(probe),
+                _ => throw new System.InvalidOperationException($"RecordStep unsupported kind {kind}"),
+            };
+            AppendSimStep(step);
+        }
+
+        string ResolveOrCreateProbeNameAt(Vector3Int cell)
+        {
+            if (simProbes != null)
+            {
+                for (int i = 0; i < simProbes.Count; i++)
+                {
+                    BakeIdSimProbe p = simProbes[i];
+                    if (p.cell != cell || string.IsNullOrEmpty(p.name))
+                        continue;
+                    return p.name;
+                }
+            }
+
+            TryAddProbeAt(cell, preferredName: null);
+            return simProbes[simProbes.Count - 1].name;
+        }
+
+        void AppendSimStep(BakeIdSimStep step)
+        {
+            if (simSteps == null)
+                simSteps = new List<BakeIdSimStep>();
+
+            simSteps.Add(step);
+            MarkSimDirty();
+            Debug.Log(
+                $"[BakeIdPlayground] Step[{simSteps.Count - 1}] {step.kind} probeA='{step.probeA}' probeB='{step.probeB}'");
+        }
+
         string EnsureUniqueProbeName(string name)
         {
             if (!ProbeNameExists(name))
@@ -493,9 +646,11 @@ namespace IsoTilemap
             if (_model == null || !EnsurePrefabDb())
                 return;
 
-            _factory = new TileObjFactory(_visualRoot, prefabDb);
-
             float cs = Mathf.Max(1e-4f, cellSize);
+            var hierarchy = BuildingViewHierarchy.EnsureUnder(_visualRoot, cs);
+            hierarchy.BindRegistry(_hub != null ? _hub.Buildings.Registry : null);
+            _factory = new TileObjFactory(_visualRoot, prefabDb, null, hierarchy);
+
             int missed = 0;
             foreach (TileData tile in _model.TilesSnapshot)
             {
@@ -512,10 +667,10 @@ namespace IsoTilemap
                 Debug.LogError($"[BakeIdPlayground] {missed} tiles failed to spawn");
 
             if (showIdLabels)
-                SpawnFloorIdLabels(cs);
+                SpawnFloorIdLabels(cs, hierarchy);
         }
 
-        void SpawnFloorIdLabels(float cs)
+        void SpawnFloorIdLabels(float cs, BuildingViewHierarchy hierarchy)
         {
             if (_hub == null)
                 return;
@@ -529,23 +684,38 @@ namespace IsoTilemap
                 int buildingId = face.identity.buildingId;
                 int roomId = face.identity.roomId;
                 int spaceId = 0;
+                bool isOutdoor = false;
                 if (_hub.Spaces.TryGetSpaceAtFloorCell(cell, out int sid))
+                {
                     spaceId = sid;
+                    isOutdoor = _hub.Spaces.IsOutdoorSpace(sid);
+                }
+                else if (buildingId == TileIdentity.BuildingIdOutdoor)
+                {
+                    isOutdoor = true;
+                }
+                else
+                {
+                    isOutdoor = _hub.IsOutdoorEvaluation(cellY, x, z);
+                }
 
                 Vector3 world = TileWorldPointUtil.GetRepresentativeWorldPoint(face.identity, cs);
                 world.y += 0.55f * cs;
 
                 var labelGo = new GameObject($"id_{cell}");
-                labelGo.transform.SetParent(_visualRoot, false);
+                Transform labelParent = hierarchy != null
+                    ? hierarchy.ResolveParent(buildingId)
+                    : _visualRoot;
+                labelGo.transform.SetParent(labelParent, worldPositionStays: true);
                 labelGo.transform.position = world;
 
                 var tm = labelGo.AddComponent<TextMesh>();
-                tm.text = $"B:{buildingId} R:{roomId} S:{spaceId}";
+                tm.text = $"B:{buildingId} R:{roomId} S:{spaceId} O:{(isOutdoor ? 1 : 0)}";
                 tm.fontSize = 32;
                 tm.characterSize = 0.05f * cs;
                 tm.anchor = TextAnchor.MiddleCenter;
                 tm.alignment = TextAlignment.Center;
-                tm.color = buildingId == TileIdentity.BuildingIdOutdoor
+                tm.color = isOutdoor
                     ? new Color(0.4f, 0.85f, 1f)
                     : Color.white;
             }

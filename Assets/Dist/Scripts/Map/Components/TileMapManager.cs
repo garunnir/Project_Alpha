@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using IsoTilemap;
 using UnityEngine;
@@ -237,7 +238,7 @@ public class TileMapManager : MonoBehaviour
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
 
-        var factory = CreateTileFactory(tileContainer, UseChunkStreaming);
+        var factory = CreateTileFactory(tileContainer, UseChunkStreaming, CreateViewHierarchy(tileContainer));
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, UseChunkStreaming);
         WireTilePresentationApplier();
 
@@ -481,7 +482,18 @@ public class TileMapManager : MonoBehaviour
         _mapCollisionServices = MapCollisionServices.Create(_mapCacheHub, _gridCellSize);
     }
 
-    private TileObjFactory CreateTileFactory(Transform tileContainer, bool chunkStreaming)
+    BuildingViewHierarchy CreateViewHierarchy(Transform tileContainer)
+    {
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        var hierarchy = BuildingViewHierarchy.EnsureUnder(tileContainer, cellSize);
+        hierarchy.BindRegistry(_mapCacheHub != null ? _mapCacheHub.Buildings.Registry : null);
+        return hierarchy;
+    }
+
+    private TileObjFactory CreateTileFactory(
+        Transform tileContainer,
+        bool chunkStreaming,
+        BuildingViewHierarchy hierarchy)
     {
         TileViewPoolRegistry pool = null;
         if (chunkStreaming && _enableTilePooling && _loader.LastLoadedDto != null)
@@ -507,7 +519,7 @@ public class TileMapManager : MonoBehaviour
                 pool.RegisterCap(kv.Key, kv.Value);
         }
 
-        return new TileObjFactory(tileContainer, _prefabDB, pool);
+        return new TileObjFactory(tileContainer, _prefabDB, pool, hierarchy);
     }
 
     void SetupMapRuntimeCache(TileMapModel tileModel)
@@ -533,6 +545,7 @@ public class TileMapManager : MonoBehaviour
             _buildingGroupBuilder = new BuildingGroupBuilder(tileModel, _mapCacheHub);
             _mapCacheHub.BindRoomBakeBuilder(_buildingGroupBuilder);
             tileModel.SetBuildingGroupBuilder(_buildingGroupBuilder);
+            // AssignAll = 하드 파티션 보존. Full remesh는 RebakeAllBuildingPartitions만.
             _buildingGroupBuilder.AssignAll();
         }
 
@@ -657,7 +670,10 @@ public class TileMapManager : MonoBehaviour
         Transform tileContainer = tileContainerGo.transform;
         tileContainer.SetParent(_tileContainer, false);
 
-        var factory = CreateTileFactory(tileContainer, chunkStreaming: false);
+        var factory = CreateTileFactory(
+            tileContainer,
+            chunkStreaming: false,
+            CreateViewHierarchy(tileContainer));
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, chunkStreaming: false);
         WireTilePresentationApplier();
         _controller.Init(Model, viewBuilder);

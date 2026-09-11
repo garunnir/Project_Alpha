@@ -442,17 +442,19 @@ namespace IsoTilemap
             return baked.Visited;
         }
 
-        /// <summary>야외/실내 분기 판정 단일 API. buildingId==0만으로 야외를 추론하지 않습니다.</summary>
+        /// <summary>
+        /// 야외/실내 분기 판정 단일 API.
+        /// plaza → true; empty/no-floor(TryGetFloorBuildingRoom 실패) → true (선택 A);
+        /// Space 있으면 isOutdoor; 없으면 true.
+        /// buildingId==0만으로 야외를 추론하지 않습니다.
+        /// </summary>
         public bool IsOutdoorEvaluation(int cellY, int x, int z)
         {
             if (Buildings.IsPlazaFloor(cellY, x, z))
                 return true;
 
-            if (!TryGetFloorBuildingRoom(cellY, x, z, out int buildingId, out _))
-                return false;
-
-            if (buildingId <= 0)
-                return false;
+            if (!TryGetFloorBuildingRoom(cellY, x, z, out _, out _))
+                return true;
 
             if (Spaces.TryGetSpaceAtFloorCell(cellY, x, z, out int spaceId) &&
                 Spaces.TryGetSpace(spaceId, out var space))

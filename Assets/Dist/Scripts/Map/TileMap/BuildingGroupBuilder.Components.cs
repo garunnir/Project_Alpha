@@ -18,6 +18,7 @@ namespace IsoTilemap
         readonly HashSet<(int x, int z)> _initFootprintProcessedScratch = new();
         readonly List<(int setId, int seedX, int seedZ, int footprintSize)> _initFootprintMetaScratch = new();
         readonly HashSet<(int x, int cellY, int z)> _zeroFootprintProcessedScratch = new();
+        readonly List<int> _thinWallSetIdScratch = new();
 
         int _lastComponentBakeRoundCount;
         int _lastComponentUnionCount;
@@ -37,6 +38,7 @@ namespace IsoTilemap
             _initFootprintProcessedScratch.Clear();
             _initFootprintMetaScratch.Clear();
             _zeroFootprintProcessedScratch.Clear();
+            _thinWallSetIdScratch.Clear();
             _lastComponentBakeRoundCount = 0;
             _lastComponentUnionCount = 0;
             _lastComponentNewFloorTags = 0;
@@ -93,6 +95,11 @@ namespace IsoTilemap
                     if (outdoor.Contains((fx, fz)))
                         continue;
 
+                    // 이미 하드 파티션(양수 id)인 바닥은 새 component에 넣지 않음.
+                    if (BuildingIdBakeRules.IsHardPartitionBuildingId(
+                            GetFloorBuildingId(fx, _minCellY, fz)))
+                        continue;
+
                     _initFootprintProcessedScratch.Add((fx, fz));
                     TagOccupiedCellWithComponentSet(WalkableFloorOccupiedCell(fx, _minCellY, fz), setId);
                 }
@@ -106,6 +113,7 @@ namespace IsoTilemap
                 _unionSetCandidateScratch.Clear();
                 CollectFloorHorizontalUnionCandidates();
                 CollectZeroFootprintUnionCandidates();
+                CollectThinWallUnionCandidates();
 
                 int unionCount = UnionAllCandidates();
                 _roundStructuralUnionScratch = 0;
@@ -159,6 +167,11 @@ namespace IsoTilemap
                         continue;
 
                     if (rootA == rootB)
+                        continue;
+
+                    int bidA = GetFloorBuildingId(x, cellY, z);
+                    int bidB = GetFloorBuildingId(nx, cellY, nz);
+                    if (BuildingIdBakeRules.BlocksComponentUnion(bidA, bidB))
                         continue;
 
                     if (!CanUnionFloorHorizontalOccupiedCells(cellA, cellB))
@@ -233,6 +246,80 @@ namespace IsoTilemap
                         _unionSetCandidateScratch.Add((footprintSetId, adjacentSetId));
                     }
                 }
+            }
+        }
+
+        void CollectThinWallUnionCandidates()
+        {
+            _wallFaceScratch.Clear();
+            _model.FaceBinder.CopyWallFacesTo(_wallFaceScratch);
+
+            for (int i = 0; i < _wallFaceScratch.Count; i++)
+            {
+                TileData wallA = _wallFaceScratch[i];
+                if (!TileIdentityUtil.IsVerticalFace(wallA.identity))
+                    continue;
+
+                WallEdgeKey keyA = WallEdgeKey.FromWallTileIdentity(wallA.identity);
+                for (int j = i + 1; j < _wallFaceScratch.Count; j++)
+                {
+                    TileData wallB = _wallFaceScratch[j];
+                    if (!TileIdentityUtil.IsVerticalFace(wallB.identity))
+                        continue;
+
+                    WallEdgeKey keyB = WallEdgeKey.FromWallTileIdentity(wallB.identity);
+                    if (!ThinWallBuildingConnect.AreConnected(keyA, keyB))
+                        continue;
+
+                    TryAddUnionCandidatesForConnectedWalls(wallA, wallB);
+                }
+            }
+        }
+
+        void TryAddUnionCandidatesForConnectedWalls(in TileData wallA, in TileData wallB)
+        {
+            _thinWallSetIdScratch.Clear();
+            AppendTaggedSetIdsFromWallTile(wallA);
+            AppendTaggedSetIdsFromWallTile(wallB);
+            if (_thinWallSetIdScratch.Count < 2)
+                return;
+
+            for (int i = 0; i < _thinWallSetIdScratch.Count; i++)
+            {
+                int setA = _thinWallSetIdScratch[i];
+                int rootA = _componentUnion.Find(setA);
+                for (int j = i + 1; j < _thinWallSetIdScratch.Count; j++)
+                {
+                    int setB = _thinWallSetIdScratch[j];
+                    if (_componentUnion.Find(setB) == rootA)
+                        continue;
+
+                    _unionSetCandidateScratch.Add((setA, setB));
+                }
+            }
+        }
+
+        void AppendTaggedSetIdsFromWallTile(in TileData wall)
+        {
+            _occupiedCellAffectedScratch.Clear();
+            TileIdentityUtil.CollectAffectedCells(wall.identity, _occupiedCellAffectedScratch);
+            foreach (Vector3Int cell in _occupiedCellAffectedScratch)
+            {
+                if (!TryGetOccupiedComponentSetId(cell, out int setId))
+                    continue;
+
+                bool already = false;
+                for (int i = 0; i < _thinWallSetIdScratch.Count; i++)
+                {
+                    if (_thinWallSetIdScratch[i] == setId)
+                    {
+                        already = true;
+                        break;
+                    }
+                }
+
+                if (!already)
+                    _thinWallSetIdScratch.Add(setId);
             }
         }
 
@@ -508,10 +595,6 @@ namespace IsoTilemap
 
         bool ShouldBlockComponentFloodCell(Vector3Int cell, int componentRoot)
         {
-            if (TryGetOccupiedComponentRoot(cell, out int existingRoot) &&
-                ComponentBakeRules.IsConflictingComponentRoot(existingRoot, componentRoot))
-                return true;
-
             if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
                 return false;
 
@@ -545,17 +628,25 @@ namespace IsoTilemap
                 return;
             }
 
-            if (existingRoot != componentRoot)
-            {
-                if (!ComponentBakeRules.ShouldOverwriteComponentForPropagation(existingRoot, componentRoot))
-                {
-                    LogFirstStructuralUnionIfDebug(cell, existingRoot, componentRoot);
-                    LogFloodReachPathIfDebug(cell, componentRoot, existingRoot);
-                    return;
-                }
+            if (existingRoot == componentRoot)
+                return;
 
-                TagOccupiedCellWithComponentRoot(cell, componentRoot);
-            }
+            if (!ComponentBakeRules.ShouldUnionOnStructuralContact(existingRoot, componentRoot))
+                return;
+
+            if (!TryGetOccupiedComponentSetId(cell, out int existingSet) ||
+                !TryGetAnySetIdForRoot(componentRoot, out int incomingSet))
+                return;
+
+            int rootBeforeA = _componentUnion.Find(existingSet);
+            int rootBeforeB = _componentUnion.Find(incomingSet);
+            if (rootBeforeA == rootBeforeB)
+                return;
+
+            _componentUnion.Union(existingSet, incomingSet);
+            _roundStructuralUnionScratch++;
+            LogFirstStructuralUnionIfDebug(cell, existingRoot, componentRoot);
+            LogFloodReachPathIfDebug(cell, componentRoot, existingRoot);
         }
 
         void AssignOrphanComponents()
@@ -591,13 +682,42 @@ namespace IsoTilemap
         void AssignBuildingIdsFromComponents()
         {
             LogComponentBakePhaseIfDebug("assignEnter");
+            _registry.SyncNextBuildingIdFromTiles(_model.TilesSnapshot);
+
             var rootToBuildingId = new Dictionary<int, int>();
+            var rootHardId = new Dictionary<int, int>();
 
             foreach (var kv in _occupiedComponent)
             {
                 int root = _componentUnion.Find(kv.Value);
-                if (!rootToBuildingId.ContainsKey(root))
-                    rootToBuildingId[root] = _registry.AllocateBuildingId();
+                if (!rootHardId.ContainsKey(root))
+                    rootHardId[root] = 0;
+
+                if (!_topology.TryCollectTilesAtOccupiedCell(kv.Key, _occupiedCellCollectScratch))
+                    continue;
+
+                for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
+                {
+                    int bid = _occupiedCellCollectScratch[i].identity.buildingId;
+                    if (!BuildingIdBakeRules.IsHardPartitionBuildingId(bid))
+                        continue;
+
+                    if (rootHardId[root] == 0)
+                        rootHardId[root] = bid;
+                    else if (rootHardId[root] != bid)
+                    {
+                        Debug.LogError(
+                            $"[ComponentBake] component root {root} mixes hard partitions " +
+                            $"{rootHardId[root]} and {bid} — preserving first.");
+                    }
+                }
+            }
+
+            foreach (var kv in rootHardId)
+            {
+                rootToBuildingId[kv.Key] = kv.Value > 0
+                    ? kv.Value
+                    : _registry.AllocateBuildingId();
             }
 
             foreach (var kv in _occupiedComponent)
@@ -640,7 +760,7 @@ namespace IsoTilemap
                     return;
 
                 int existing = tile.identity.buildingId;
-                if (existing == TileIdentity.BuildingIdOutdoor)
+                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(existing))
                     return;
 
                 if (existing == TileIdentity.BuildingIdUnassigned)

@@ -53,11 +53,13 @@ namespace IsoTilemap
             model.SetBuildingGroupBuilder(builder);
             result.Hub = hub;
 
-            List<TileData> initial = BakeIdSimTileUtil.ToTileDataList(tiles);
+            List<TileData> initial = BakeIdSimTileUtil.ToTileDataList(tiles, out _, "[BakeIdSimRunner]");
             for (int i = 0; i < initial.Count; i++)
                 model.SetTile(initial[i]);
 
-            builder.AssignAll();
+            registry.ReplaceOutdoorFloorCells(BakeIdPlaygroundLayout.MasterPlayground.OutdoorFloorCells);
+            // 시드 타일은 buildingId=0 — 연결 remesh. AssignAll은 양수 하드 파티션 보존용.
+            builder.RebakeAllBuildingPartitions();
 
             if (steps != null)
             {
@@ -82,6 +84,29 @@ namespace IsoTilemap
                 EvaluateRule(hub, probeMap, rules[i], result.Failures);
 
             return result;
+        }
+
+        /// <summary>Host Preview — 초기 rebake된 model에 steps만 순서 적용.</summary>
+        public static bool TryApplySteps(
+            TileMapModel model,
+            IReadOnlyList<BakeIdSimProbe> probes,
+            IReadOnlyList<BakeIdSimStep> steps,
+            out string firstError)
+        {
+            firstError = null;
+            if (steps == null || steps.Count == 0)
+                return true;
+
+            for (int i = 0; i < steps.Count; i++)
+            {
+                if (!TryApplyStep(model, probes, steps[i], out string stepError))
+                {
+                    firstError = stepError;
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         static Dictionary<string, Vector3Int> BuildProbeMap(
@@ -165,6 +190,22 @@ namespace IsoTilemap
                     return true;
                 }
 
+                case BakeIdSimStepKind.AddCubeAtProbe:
+                    model.SetTile(BakeIdSyntheticTiles.Cube(a));
+                    return true;
+
+                case BakeIdSimStepKind.RemoveCubeAtProbe:
+                {
+                    if (!TryFindCubeAt(model, a, out TileData cube))
+                    {
+                        error = $"Step RemoveCubeAtProbe: no cube at {a}";
+                        return false;
+                    }
+
+                    model.RemoveTile(cube);
+                    return true;
+                }
+
                 default:
                     error = $"Unknown step kind {step.kind}";
                     return false;
@@ -197,6 +238,22 @@ namespace IsoTilemap
             foreach (TileData candidate in model.TilesSnapshot)
             {
                 if (!TileIdentityUtil.IsHorizontalFace(candidate.identity))
+                    continue;
+                if (candidate.identity.GridPos != cell)
+                    continue;
+                tile = candidate;
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool TryFindCubeAt(TileMapModel model, Vector3Int cell, out TileData tile)
+        {
+            tile = default;
+            foreach (TileData candidate in model.TilesSnapshot)
+            {
+                if (!TileIdentityUtil.IsOccupiedCell(candidate.identity))
                     continue;
                 if (candidate.identity.GridPos != cell)
                     continue;
@@ -301,16 +358,24 @@ namespace IsoTilemap
                         return;
                     }
 
-                    if (!TryRead(hub, cell, out FloorIds ids))
+                    // Floor 있으면 bake Space/plaza; 없으면 IsOutdoorEvaluation 선택 A (empty→true).
+                    bool gotOutdoor;
+                    string detail;
+                    if (TryRead(hub, cell, out FloorIds ids))
                     {
-                        failures.Add($"IsOutdoor: missing floor at {cell}");
-                        return;
+                        gotOutdoor = ids.IsOutdoor;
+                        detail = ids.ToString();
+                    }
+                    else
+                    {
+                        gotOutdoor = hub.IsOutdoorEvaluation(cell.y, cell.x, cell.z);
+                        detail = "empty/no-floor IsOutdoorEvaluation";
                     }
 
-                    if (ids.IsOutdoor != rule.outdoorExpected)
+                    if (gotOutdoor != rule.outdoorExpected)
                     {
                         failures.Add(
-                            $"IsOutdoor '{rule.probeA}'@{cell} got={ids.IsOutdoor} expected={rule.outdoorExpected} ({ids})");
+                            $"IsOutdoor '{rule.probeA}'@{cell} got={gotOutdoor} expected={rule.outdoorExpected} ({detail})");
                     }
 
                     return;

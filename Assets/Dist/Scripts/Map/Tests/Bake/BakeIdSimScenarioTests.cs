@@ -1,7 +1,8 @@
 // ============================================================
-// BakeIdSimScenarioTests — BakeId.Sim (BakeIdPlayground 씬 Host SSOT)
+// BakeIdSimScenarioTests — BakeId.Sim (seed defaults + 씬 Host SSOT)
 // ============================================================
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using IsoTilemap;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -11,11 +12,31 @@ using UnityEngine.SceneManagement;
 namespace IsoTilemap.Tests
 {
     /// <summary>
-    /// 씬에 저장된 simTiles/probes/rules로 bake ID 규칙을 검증한다.
-    /// 배치·규칙 변경은 BakeIdPlaygroundHost 편집 후 씬 저장.
+    /// Seed defaults는 코드 SSOT. 씬 Host 규칙은 Import From Seed Layout 후 저장본.
     /// </summary>
     public sealed class BakeIdSimScenarioTests
     {
+        [Test]
+        [Category("BakeId.Sim")]
+        public void SeedDefaults_SimRules_Pass()
+        {
+            var tiles = new List<BakeIdSimTileEntry>();
+            var probes = new List<BakeIdSimProbe>();
+            var rules = new List<BakeIdSimRule>();
+            BakeIdSimDefaults.FillFromUnitMasterPlayground(tiles, probes, rules);
+
+            Assert.Greater(tiles.Count, 0, "seed tiles empty");
+            Assert.Greater(rules.Count, 0, "seed rules empty");
+
+            BakeIdSimRunner.Result result = BakeIdSimRunner.Run(tiles, probes, rules, null);
+            if (!result.Ok)
+            {
+                Assert.Fail(
+                    "BakeId.Sim seed rules failed:\n- " +
+                    string.Join("\n- ", result.Failures));
+            }
+        }
+
         [Test]
         [Category("BakeId.Sim")]
         public void SceneHost_SimRules_Pass()
@@ -45,7 +66,7 @@ namespace IsoTilemap.Tests
                 if (!result.Ok)
                 {
                     Assert.Fail(
-                        "BakeId.Sim rules failed:\n- " +
+                        "BakeId.Sim scene Host rules failed (re-Import Seed Layout if stale):\n- " +
                         string.Join("\n- ", result.Failures));
                 }
             }

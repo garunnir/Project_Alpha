@@ -17,27 +17,15 @@ namespace IsoTilemap
 
             foreach (var (x, floorCellY, z) in _topology.Index.EnumerateWalkableFloorCells())
             {
-                if (sliceFilter != null)
-                {
-                    bool inFilter = false;
-                    foreach (var (_, sliceY) in sliceFilter)
-                    {
-                        if (sliceY == floorCellY)
-                        {
-                            inFilter = true;
-                            break;
-                        }
-                    }
-
-                    if (!inFilter)
-                        continue;
-                }
-
                 if (IsPlazaOrOutdoorFloor(x, z, floorCellY))
                     continue;
 
                 int buildingId = GetFloorBuildingId(x, floorCellY, z);
                 if (!BuildingIdBakeRules.CanPropagateBuildingIdFrom(buildingId))
+                    continue;
+
+                if (sliceFilter != null &&
+                    !SliceFilterAllows(sliceFilter, buildingId, floorCellY))
                     continue;
 
                 AddStructuralFloodSeedsForWalkableFloor(buildingId, x, floorCellY, z);
@@ -48,7 +36,24 @@ namespace IsoTilemap
         }
         void TagWallsFromFloorAdjacencyOnSlice(int cellY)
         {
-            TagAllWallsFromFloorAdjacency(new HashSet<(int buildingId, int cellY)> { (-1, cellY) });
+            // BuildingIdOutdoor = Y-wide wildcard (해당 cellY의 모든 양수 building).
+            TagAllWallsFromFloorAdjacency(
+                new HashSet<(int buildingId, int cellY)>
+                {
+                    (TileIdentity.BuildingIdOutdoor, cellY)
+                });
+        }
+
+        static bool SliceFilterAllows(
+            HashSet<(int buildingId, int cellY)> sliceFilter,
+            int buildingId,
+            int cellY)
+        {
+            if (sliceFilter.Contains((buildingId, cellY)))
+                return true;
+
+            // Y-wide: outdoor sentinel — TagWallsFromFloorAdjacencyOnSlice 전용.
+            return sliceFilter.Contains((TileIdentity.BuildingIdOutdoor, cellY));
         }
         void TagWallsFromFloorAdjacencyNearCells(IReadOnlyCollection<Vector3Int> changedCells)
         {

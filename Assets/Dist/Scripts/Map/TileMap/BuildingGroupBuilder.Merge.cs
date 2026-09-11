@@ -3,6 +3,7 @@
 // ============================================================
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace IsoTilemap
 {
@@ -69,7 +70,10 @@ namespace IsoTilemap
 
             return merged;
         }
-        void AbsorbBuildingId(int absorbedId, int canonicalId)
+        void AbsorbBuildingId(int absorbedId, int canonicalId) =>
+            AbsorbBuildingId(absorbedId, canonicalId, notifyCells: null);
+
+        void AbsorbBuildingId(int absorbedId, int canonicalId, HashSet<Vector3Int> notifyCells)
         {
             if (!BuildingIdBakeRules.CanPropagateBuildingIdFrom(absorbedId) || !BuildingIdBakeRules.CanPropagateBuildingIdFrom(canonicalId) ||
                 absorbedId == canonicalId)
@@ -82,6 +86,12 @@ namespace IsoTilemap
 
                 if (tile.identity.buildingId != absorbedId)
                     return;
+
+                if (notifyCells != null)
+                {
+                    notifyCells.Add(tile.identity.GridPos);
+                    notifyCells.Add(OccupiedCellCoord.PrimaryCellFromIdentity(tile.identity));
+                }
 
                 _model.PatchTileIdentity(tile.tileDefId, canonicalId, tile.identity.roomId);
             });

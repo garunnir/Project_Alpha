@@ -38,6 +38,8 @@ namespace IsoTilemap
         RemoveFloorAtProbe = 1,
         AddFloorAtProbe = 2,
         RemoveThinWallBetweenProbes = 3,
+        AddCubeAtProbe = 4,
+        RemoveCubeAtProbe = 5,
     }
 
     [Serializable]
@@ -68,14 +70,47 @@ namespace IsoTilemap
         public static BakeIdSimTileEntry Cube(int x, int y, int z) =>
             Cube(new Vector3Int(x, y, z));
 
-        public TileData ToTileData() =>
-            kind switch
+        /// <summary>ThinWall A↔B가 same Y 카드널 이웃인지.</summary>
+        public static bool IsThinWallEdgeValid(Vector3Int cellA, Vector3Int cellB) =>
+            WallEdgeKey.TryBetween(cellA, cellB, out _);
+
+        public bool TryToTileData(out TileData tile, out string error)
+        {
+            tile = default;
+            error = null;
+            switch (kind)
             {
-                BakeIdSimTileKind.Floor => BakeIdSyntheticTiles.Floor(cell),
-                BakeIdSimTileKind.ThinWall => BakeIdSyntheticTiles.ThinWall(cell, cellB),
-                BakeIdSimTileKind.Cube => BakeIdSyntheticTiles.Cube(cell),
-                _ => throw new InvalidOperationException($"Unknown BakeIdSimTileKind {kind}"),
-            };
+                case BakeIdSimTileKind.Floor:
+                    tile = BakeIdSyntheticTiles.Floor(cell);
+                    return true;
+
+                case BakeIdSimTileKind.ThinWall:
+                    if (!IsThinWallEdgeValid(cell, cellB))
+                    {
+                        error =
+                            $"ThinWall requires cardinal neighbors at same Y (Δx or Δz = 1, same y): {cell} ↔ {cellB}";
+                        return false;
+                    }
+
+                    tile = BakeIdSyntheticTiles.ThinWall(cell, cellB);
+                    return true;
+
+                case BakeIdSimTileKind.Cube:
+                    tile = BakeIdSyntheticTiles.Cube(cell);
+                    return true;
+
+                default:
+                    error = $"Unknown BakeIdSimTileKind {kind}";
+                    return false;
+            }
+        }
+
+        public TileData ToTileData()
+        {
+            if (!TryToTileData(out TileData tile, out string error))
+                throw new InvalidOperationException(error);
+            return tile;
+        }
 
         public static bool TryFromTileData(in TileData tile, out BakeIdSimTileEntry entry)
         {
@@ -168,21 +203,76 @@ namespace IsoTilemap
         public string probeA;
 
         [HorizontalGroup("Row"), LabelWidth(20)]
-        [ShowIf(nameof(kind), BakeIdSimStepKind.RemoveThinWallBetweenProbes)]
+        [ShowIf("@kind == BakeIdSimStepKind.RemoveThinWallBetweenProbes")]
         public string probeB;
+
+        public static BakeIdSimStep AddFloor(string probeA) =>
+            new() { kind = BakeIdSimStepKind.AddFloorAtProbe, probeA = probeA };
+
+        public static BakeIdSimStep RemoveFloor(string probeA) =>
+            new() { kind = BakeIdSimStepKind.RemoveFloorAtProbe, probeA = probeA };
+
+        public static BakeIdSimStep AddCube(string probeA) =>
+            new() { kind = BakeIdSimStepKind.AddCubeAtProbe, probeA = probeA };
+
+        public static BakeIdSimStep RemoveCube(string probeA) =>
+            new() { kind = BakeIdSimStepKind.RemoveCubeAtProbe, probeA = probeA };
+
+        public static BakeIdSimStep RemoveThinWall(string probeA, string probeB) =>
+            new()
+            {
+                kind = BakeIdSimStepKind.RemoveThinWallBetweenProbes,
+                probeA = probeA,
+                probeB = probeB,
+            };
     }
 
     public static class BakeIdSimTileUtil
     {
-        public static List<TileData> ToTileDataList(IReadOnlyList<BakeIdSimTileEntry> entries)
+        public const string DefaultLogPrefix = "[BakeIdSim]";
+
+        public static List<TileData> ToTileDataList(
+            IReadOnlyList<BakeIdSimTileEntry> entries,
+            out int skippedCount,
+            string logPrefix = DefaultLogPrefix)
         {
-            var list = new List<TileData>(entries?.Count ?? 0);
+            TryToTileDataList(entries, out List<TileData> tiles, out skippedCount, logPrefix);
+            return tiles;
+        }
+
+        /// <summary>invalid 항목은 skip + LogWarning. tiles는 유효한 것만.</summary>
+        public static bool TryToTileDataList(
+            IReadOnlyList<BakeIdSimTileEntry> entries,
+            out List<TileData> tiles,
+            out int skippedCount,
+            string logPrefix = DefaultLogPrefix)
+        {
+            tiles = new List<TileData>(entries?.Count ?? 0);
+            skippedCount = 0;
             if (entries == null)
-                return list;
+                return true;
 
             for (int i = 0; i < entries.Count; i++)
-                list.Add(entries[i].ToTileData());
-            return list;
+            {
+                BakeIdSimTileEntry entry = entries[i];
+                if (entry.TryToTileData(out TileData tile, out string error))
+                {
+                    tiles.Add(tile);
+                    continue;
+                }
+
+                skippedCount++;
+                Debug.LogWarning(
+                    $"{logPrefix} simTiles[{i}] skipped kind={entry.kind} cell={entry.cell} cellB={entry.cellB}: {error}");
+            }
+
+            if (skippedCount > 0)
+            {
+                Debug.LogWarning(
+                    $"{logPrefix} skipped {skippedCount}/{entries.Count} invalid simTiles — fix Sim list or re-Import Seed Layout");
+            }
+
+            return skippedCount == 0;
         }
 
         public static List<BakeIdSimTileEntry> FromTileDataList(IReadOnlyList<TileData> tiles)

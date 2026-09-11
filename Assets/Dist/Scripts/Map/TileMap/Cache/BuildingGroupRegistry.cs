@@ -3,6 +3,7 @@
 // ============================================================
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace IsoTilemap
 {
@@ -14,16 +15,42 @@ namespace IsoTilemap
         readonly Dictionary<int, HashSet<Guid>> _minCellYFloorTilesByBuildingId = new();
         readonly Dictionary<int, BuildingExtent> _extentsByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
-        readonly HashSet<(int x, int z)> _plazaFloorXZ = new();
-        int _plazaCellY = int.MinValue;
+        /// <summary>야외 레이어 walkable floor 칸 (Y 제한 없음). minCellY plaza BFS 아님.</summary>
+        readonly HashSet<Vector3Int> _outdoorFloorCells = new();
 
         public int NextBuildingId { get; private set; } = 1;
 
         public IReadOnlyDictionary<int, HashSet<Guid>> TilesByBuildingId => _tilesByBuildingId;
 
-        public int PlazaCellY => _plazaCellY;
+        /// <summary>레거시 이름 — outdoor 레이어에 칸이 있으면 그 중 임의 Y(없으면 MinValue).</summary>
+        public int PlazaCellY
+        {
+            get
+            {
+                int y = int.MaxValue;
+                foreach (Vector3Int c in _outdoorFloorCells)
+                {
+                    if (c.y < y)
+                        y = c.y;
+                }
 
-        public IReadOnlyCollection<(int x, int z)> PlazaFloorXZ => _plazaFloorXZ;
+                return y == int.MaxValue ? int.MinValue : y;
+            }
+        }
+
+        public IReadOnlyCollection<Vector3Int> OutdoorFloorCells => _outdoorFloorCells;
+
+        /// <summary>레거시: outdoor 레이어 (x,z) 투영. 같은 XZ에 outdoor 칸이 있으면 포함.</summary>
+        public IReadOnlyCollection<(int x, int z)> PlazaFloorXZ
+        {
+            get
+            {
+                var set = new HashSet<(int x, int z)>();
+                foreach (Vector3Int c in _outdoorFloorCells)
+                    set.Add((c.x, c.z));
+                return set;
+            }
+        }
 
         public void Clear()
         {
@@ -31,28 +58,75 @@ namespace IsoTilemap
             _minCellYFloorTilesByBuildingId.Clear();
             _extentsByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
-            _plazaFloorXZ.Clear();
-            _plazaCellY = int.MinValue;
+            // outdoor 레이어는 AssignAll Clear 동안 유지 — Replace/ClearOutdoor로만 교체
             NextBuildingId = 1;
         }
 
-        public void SetPlazaOutdoor(int plazaCellY, HashSet<(int x, int z)> plazaFloor)
-        {
-            _plazaCellY = plazaCellY;
-            _plazaFloorXZ.Clear();
-            if (plazaFloor == null)
-                return;
+        public void ClearOutdoorFloorCells() => _outdoorFloorCells.Clear();
 
-            foreach (var cell in plazaFloor)
-                _plazaFloorXZ.Add(cell);
+        public void ReplaceOutdoorFloorCells(IEnumerable<Vector3Int> cells)
+        {
+            _outdoorFloorCells.Clear();
+            if (cells == null)
+                return;
+            foreach (Vector3Int c in cells)
+                _outdoorFloorCells.Add(c);
         }
 
-        public bool IsPlazaFloor(int cellY, int x, int z) =>
-            cellY == _plazaCellY && _plazaFloorXZ.Contains((x, z));
+        public void AddOutdoorFloorCell(Vector3Int cell) => _outdoorFloorCells.Add(cell);
 
-        public bool IsPlazaXZ(int x, int z) => _plazaFloorXZ.Contains((x, z));
+        public bool IsOutdoorFloorCell(Vector3Int cell) => _outdoorFloorCells.Contains(cell);
+
+        public bool IsOutdoorFloorCell(int cellY, int x, int z) =>
+            _outdoorFloorCells.Contains(new Vector3Int(x, cellY, z));
+
+        /// <summary>야외 레이어 칸이면 true (구 plaza API).</summary>
+        public bool IsPlazaFloor(int cellY, int x, int z) =>
+            IsOutdoorFloorCell(cellY, x, z);
+
+        public bool IsPlazaXZ(int x, int z)
+        {
+            foreach (Vector3Int c in _outdoorFloorCells)
+            {
+                if (c.x == x && c.z == z)
+                    return true;
+            }
+
+            return false;
+        }
+
+        [System.Obsolete("Use ReplaceOutdoorFloorCells — minCellY plaza BFS removed.")]
+        public void SetPlazaOutdoor(int plazaCellY, HashSet<(int x, int z)> plazaFloor)
+        {
+            _ = plazaCellY;
+            _outdoorFloorCells.Clear();
+            if (plazaFloor == null)
+                return;
+            foreach (var (x, z) in plazaFloor)
+                _outdoorFloorCells.Add(new Vector3Int(x, 0, z));
+        }
 
         public int AllocateBuildingId() => NextBuildingId++;
+
+        /// <summary>
+        /// 저장된 양수 buildingId와 Allocate 충돌 방지.
+        /// AssignAll이 Reset 없이 돌 때 Clear로 Next=1이 된 뒤 호출.
+        /// </summary>
+        public void SyncNextBuildingIdFromTiles(IEnumerable<TileData> tiles)
+        {
+            if (tiles == null)
+                return;
+
+            int maxBuildingId = 0;
+            foreach (TileData tile in tiles)
+            {
+                if (tile.identity.buildingId > maxBuildingId)
+                    maxBuildingId = tile.identity.buildingId;
+            }
+
+            if (maxBuildingId >= NextBuildingId)
+                NextBuildingId = maxBuildingId + 1;
+        }
 
         public void RegisterTile(Guid tileId, int buildingId)
         {
@@ -137,12 +211,16 @@ namespace IsoTilemap
                 return;
 
             var extentBuilders = new Dictionary<int, BuildingExtent.Builder>();
+            int maxBuildingId = 0;
 
             foreach (var tile in tiles)
             {
                 int buildingId = tile.identity.buildingId;
                 if (buildingId <= 0)
                     continue;
+
+                if (buildingId > maxBuildingId)
+                    maxBuildingId = buildingId;
 
                 RegisterTile(tile.tileDefId, buildingId);
 
@@ -164,6 +242,9 @@ namespace IsoTilemap
                 foreach (Guid tileId in kv.Value.MinFloorTileIds)
                     RegisterMinCellYFloorTile(kv.Key, tileId);
             }
+
+            if (maxBuildingId >= NextBuildingId)
+                NextBuildingId = maxBuildingId + 1;
         }
 
         public bool TryGetBuildingExtent(int buildingId, out BuildingExtent extent)

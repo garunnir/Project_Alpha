@@ -40,14 +40,29 @@ namespace IsoTilemap
             probes.Add(new BakeIdSimProbe("Balcony_Floor", BakeIdPlaygroundLayout.MasterPlayground.Balcony_Floor));
             probes.Add(new BakeIdSimProbe("Plaza_Floor", BakeIdPlaygroundLayout.MasterPlayground.Plaza_Floor));
             probes.Add(new BakeIdSimProbe("Dig_Floor", BakeIdPlaygroundLayout.MasterPlayground.Dig_Floor));
+            probes.Add(new BakeIdSimProbe(
+                "EmptyOutdoorProbe", BakeIdPlaygroundLayout.MasterPlayground.EmptyOutdoorProbe));
 
+            // Same room open pair
             rules.Add(BakeIdSimRule.SameIds("OpenPair_A", "OpenPair_B"));
+
+            // Structural + ThinWall connect → same building; SeparatesRoom → different room
+            rules.Add(BakeIdSimRule.SameBuilding("ThinWall_Left", "ThinWall_Right"));
             rules.Add(BakeIdSimRule.Differ(
-                "ThinWall_Left", "ThinWall_Right", BakeIdSimIdField.BuildingId));
-            rules.Add(BakeIdSimRule.Differ(
-                "ThinWall_Left", "ThinWall_Right", BakeIdSimIdField.SpaceId));
+                "ThinWall_Left", "ThinWall_Right", BakeIdSimIdField.RoomId));
+
+            // Enclosed house indoor vs open shed / empty choice A
             rules.Add(BakeIdSimRule.IsOutdoor("IndoorProbe", false));
             rules.Add(BakeIdSimRule.IsOutdoor("OutdoorShedProbe", true));
+            rules.Add(BakeIdSimRule.IsOutdoor("EmptyOutdoorProbe", true));
+
+            // Cube structural bridge → same building; bridge gap → different buildings
+            rules.Add(BakeIdSimRule.SameBuilding("CubeWall_Left", "CubeWall_Right"));
+            rules.Add(BakeIdSimRule.Differ(
+                "Bridge_B1", "Bridge_B2", BakeIdSimIdField.BuildingId));
+
+            // AABB volume Space: stacked floors share SpaceId within building AABB
+            rules.Add(BakeIdSimRule.SameIds("Column_HFloor_Lower", "Column_HFloor_Upper"));
         }
     }
 }

@@ -41,6 +41,7 @@ namespace IsoTilemap
     {
         MapModelDTO ToPrepared(MapSaveJsonDto dto);
         MapSaveJsonDto FromPrepared(MapModelDTO prepared);
+        MapSaveJsonDto FromHierarchyViews(System.Collections.Generic.IEnumerable<TileView> views);
     }
     //맵 도메인 모델 빌더 담당
     public interface IMapModelBuilder

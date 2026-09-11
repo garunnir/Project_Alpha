@@ -128,7 +128,10 @@ namespace IsoTilemap
             foreach (var tileData in tiles)
             {
                 if (TryGetTile(tileData.tileDefId, out TileView tileView))
+                {
                     tileView.UpdateTile(tileData, CellSize);
+                    _tileFactory.SyncTileParent(tileView, tileData);
+                }
                 else
                 {
                     var newView = _tileFactory.SpawnTile(tileData, CellSize);

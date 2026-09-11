@@ -1,4 +1,5 @@
 using IsoTilemap;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -67,7 +68,21 @@ public class MapFileSaver : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    /// <summary>씬 TileView 스냅샷으로 모델을 갱신한 뒤 <see cref="TileMapDtoMapper"/>와 동일 규칙으로 JSON 저장합니다.</summary>
+    /// <summary>
+    /// 맞닿은 건물을 bake로 합치고 TileView를 Building_{id}에 재부모합니다.
+    /// 저장은 하지 않습니다 — 합친 뒤 Save Map To JSON.
+    /// </summary>
+    [ContextMenu("Bake Building Partitions From Scene")]
+    public void BakeBuildingPartitionsFromScene()
+    {
+        var tileViews = Object.FindObjectsByType<TileView>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
+        BuildingScenePartitionBake.BakeAndReparentViews(tileViews, cellSize);
+    }
+
+    /// <summary>씬 TileView 스냅샷으로 JSON 저장합니다 (remesh 없음 — 먼저 Bake Building Partitions).</summary>
     [ContextMenu("Save Map To JSON")]
     public void SaveFromSceneInEditor()
     {
@@ -90,7 +105,10 @@ public class MapFileSaver : MonoBehaviour
 
         var snapshot = TileViewSceneGather.BuildTileDataSnapshot(tileViews);
         var dtoModel = new MapModelDTO(snapshot);
-        MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
+        MapSaveJsonDto jsonDto = mapper.FromHierarchyViews(tileViews);
+        // fish-trap 등 tiles[] 계승용 — hierarchy 저장에 trap이 없으면 FromPrepared tiles 병합 생략
+        if (jsonDto.tiles == null)
+            jsonDto.tiles = new List<TileSaveData>();
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
 
         // liquidCells bake의 입력이므로 CarryOver보다 먼저 채워야 한다.
@@ -110,7 +128,10 @@ public class MapFileSaver : MonoBehaviour
 
         File.WriteAllText(fullPath, JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
-            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidAuthoringFaces: {jsonDto.liquidAuthoringFaces?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
+            $"TileMap saved to: {fullPath} (schema: {jsonDto.schemaVersion}, tiles: {jsonDto.tiles.Count}, " +
+            $"outdoorFloorFaces: {jsonDto.outdoorFloorFaces?.Count ?? 0}, outdoorWallEdges: {jsonDto.outdoorWallEdges?.Count ?? 0}, outdoorTiles: {jsonDto.outdoorTiles?.Count ?? 0}, buildings: {jsonDto.buildings?.Count ?? 0}, " +
+            $"wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, " +
+            $"liquidAuthoringFaces: {jsonDto.liquidAuthoringFaces?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
     }
 #endif
 }

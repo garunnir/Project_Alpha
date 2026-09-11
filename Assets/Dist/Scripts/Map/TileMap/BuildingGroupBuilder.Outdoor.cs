@@ -1,67 +1,44 @@
 // ============================================================
-// BuildingGroupBuilder.Outdoor — outdoor/plaza BFS 및 cellY 범위
+// BuildingGroupBuilder.Outdoor — outdoor 레이어 스탬프·cellY 범위
 // ============================================================
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace IsoTilemap
 {
     public sealed partial class BuildingGroupBuilder
     {
-        public void RecomputeOutdoorFromMin()
+        /// <summary>
+        /// 등록된 outdoor 레이어 칸에 <see cref="TileIdentity.BuildingIdOutdoor"/>를 스탬프합니다.
+        /// minCellY plaza BFS는 사용하지 않습니다.
+        /// </summary>
+        public void StampOutdoorLayerFromRegistry()
         {
-            var oldOutdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
-            var newOutdoor = ComputeOutdoorXZ();
-            _registry.SetPlazaOutdoor(_minCellY, newOutdoor);
-
-            foreach (var (x, z) in newOutdoor)
-                SetFloorBuildingRoom(x, _minCellY, z, TileIdentity.BuildingIdOutdoor, 0);
-
-            foreach (var (x, z) in oldOutdoor)
+            foreach (Vector3Int cell in _registry.OutdoorFloorCells)
             {
-                if (newOutdoor.Contains((x, z)))
+                if (!_topology.Index.CellHasFloor(cell.x, cell.y, cell.z))
                     continue;
-
-                if (_topology.Index.CellHasFloor(x, _minCellY, z))
-                    SetFloorBuildingRoom(x, _minCellY, z, TileIdentity.BuildingIdUnassigned, 0);
+                SetFloorBuildingRoom(cell.x, cell.y, cell.z, TileIdentity.BuildingIdOutdoor, 0);
             }
         }
-        HashSet<(int x, int z)> ComputeOutdoorXZ()
+
+        /// <summary>
+        /// 모델에서 이미 -1인 floor를 outdoor 인덱스에 합칩니다 (기존 레이어 유지).
+        /// </summary>
+        public void SyncOutdoorLayerFromOutdoorIdTiles()
         {
-            if (!TryFindOutdoorSeed(out int seedX, out int seedZ))
-                return new HashSet<(int x, int z)>();
-
-            var outdoor = FloorRoomFloodFill.Run(
-                _topology.Index, _minCellY, seedX, seedZ, collectEmptyNeighbors: false).Visited;
-
-            return outdoor;
-        }
-        bool TryFindOutdoorSeed(out int seedX, out int seedZ)
-        {
-            seedX = int.MaxValue;
-            seedZ = int.MaxValue;
-            bool found = false;
-
-            foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
+            foreach (TileData tile in _model.TilesSnapshot)
             {
-                if (cellY != _minCellY)
+                if (!TileIdentityUtil.IsFloorTile(tile.identity))
                     continue;
-
-                if (x < seedX || (x == seedX && z < seedZ))
-                {
-                    seedX = x;
-                    seedZ = z;
-                    found = true;
-                }
+                if (tile.identity.buildingId != TileIdentity.BuildingIdOutdoor)
+                    continue;
+                _registry.AddOutdoorFloorCell(tile.identity.GridPos);
             }
 
-            if (!found)
-            {
-                seedX = 0;
-                seedZ = 0;
-            }
-
-            return found;
+            StampOutdoorLayerFromRegistry();
         }
+
         void ComputeCellYRange()
         {
             _minCellY = int.MaxValue;
@@ -86,11 +63,20 @@ namespace IsoTilemap
                 _maxCellY = 0;
             }
         }
+
         void ResetStructuralIds()
         {
             _model.ForEachRuntimeTileMutating(tile =>
             {
                 if (!TileIdentityUtil.IsStructural(tile.identity))
+                    return;
+
+                // Outdoor(-1) 불변 — bake·merge가 덮지 않음.
+                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(tile.identity.buildingId))
+                    return;
+
+                if (TileIdentityUtil.IsFloorTile(tile.identity) &&
+                    _registry.IsOutdoorFloorCell(tile.identity.GridPos))
                     return;
 
                 _model.PatchTileIdentity(tile.tileDefId, TileIdentity.BuildingIdUnassigned, 0);

@@ -251,6 +251,7 @@ namespace IsoTilemap
             }
 
             view.UpdateTile(tileData, CellSize);
+            _tileFactory.SyncTileParent(view, tileData);
             _presentationApplier?.SyncPresentationForTile(id);
         }
 
@@ -279,6 +280,7 @@ namespace IsoTilemap
                 if (_tileViews.TryGetValue(tileData.tileDefId, out TileView tileView))
                 {
                     tileView.UpdateTile(tileData, CellSize);
+                    _tileFactory.SyncTileParent(tileView, tileData);
                 }
                 else if (IsTileInLoadedChunk(tileData))
                 {

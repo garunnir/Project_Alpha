@@ -89,14 +89,45 @@ namespace IsoTilemap
         void RebuildRegistryIndices() =>
             _registry.RebuildIndicesFromTiles(_model.TilesSnapshot);
 
+        /// <summary>
+        /// 맵 bake. <b>양수 buildingId·outdoor(-1)는 하드 파티션 — Reset하지 않음.</b>
+        /// 미할당(0)만 component로 새 id. 전체 재묶기는 <see cref="RebakeAllBuildingPartitions"/>.
+        /// </summary>
         public void AssignAll()
         {
             _hub.InvalidateAll();
             _registry.Clear();
             _topology.RebuildOccupancy();
             ComputeCellYRange();
+            SyncOutdoorLayerFromOutdoorIdTiles();
+            // 알고리즘: 저장된 양수 id를 지우지 않음. 지우면 경계를 없애고 재합침 = 버그.
+            StampOutdoorLayerFromRegistry();
+            BakeBuildingComponentsForMap();
+            AssignBuildingIdsFromComponents();
+            BakeAllRooms();
+            _topology.RebuildOccupancy();
+            VerifyOccupancyIndexAfterBake();
+            _model.ReindexTilesByIdFromRuntime();
+            RebuildRegistryIndices();
+            BakeAllSpaces();
+            _model.MarkTilesDirty();
+            LogCenterMacroLeakTrace();
+            LogBakeSummaryIfDebug();
+        }
+
+        /// <summary>
+        /// 명시적 Full Rebake — 양수 id를 지우고 연결로 재할당.
+        /// 로드/Initialize에서는 호출하지 않음.
+        /// </summary>
+        public void RebakeAllBuildingPartitions()
+        {
+            _hub.InvalidateAll();
+            _registry.Clear();
+            _topology.RebuildOccupancy();
+            ComputeCellYRange();
+            SyncOutdoorLayerFromOutdoorIdTiles();
             ResetStructuralIds();
-            RecomputeOutdoorFromMin();
+            StampOutdoorLayerFromRegistry();
             BakeBuildingComponentsForMap();
             AssignBuildingIdsFromComponents();
             BakeAllRooms();
@@ -134,8 +165,6 @@ namespace IsoTilemap
                     return;
             }
 
-            _hub.InvalidateRooms(affectedKeys);
-
             var slices = new HashSet<(int buildingId, int cellY)>();
             if (affectedKeys != null)
             {
@@ -144,7 +173,6 @@ namespace IsoTilemap
                     if (!BuildingIdBakeRules.CanPropagateBuildingIdFrom(key.BuildingId))
                         continue;
 
-                    ClearRoomIdsOnSlice(key.BuildingId, key.CellY);
                     slices.Add((key.BuildingId, key.CellY));
                 }
             }
@@ -160,6 +188,15 @@ namespace IsoTilemap
                     slices.Add((buildingId, y));
                 }
             }
+
+            // outdoor-only / 양수 slice 없음 — room·shell·space 전량 bake 금지.
+            if (slices.Count == 0)
+                return;
+
+            _hub.InvalidateRooms(affectedKeys);
+
+            foreach (var (buildingId, cellY) in slices)
+                ClearRoomIdsOnSlice(buildingId, cellY);
 
             foreach (var (buildingId, cellY) in slices)
             {

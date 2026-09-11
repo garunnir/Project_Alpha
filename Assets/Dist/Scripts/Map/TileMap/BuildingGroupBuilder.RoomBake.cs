@@ -11,6 +11,9 @@ namespace IsoTilemap
     {
         void BakeAllRooms()
         {
+            // buildingId는 유지한 채 room만 재계산 (하드 파티션 AssignAll·로드 경로).
+            ClearAllStructuralRoomIds();
+
             var slices = new HashSet<(int buildingId, int cellY)>();
 
             foreach (var tile in _model.TilesSnapshot)
@@ -30,6 +33,23 @@ namespace IsoTilemap
 
             TagPerimeterForSlices(slices);
             IndexEdgeWallsForSlices(slices);
+        }
+
+        void ClearAllStructuralRoomIds()
+        {
+            _model.ForEachRuntimeTileMutating(tile =>
+            {
+                if (!TileIdentityUtil.IsStructural(tile.identity))
+                    return;
+
+                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(tile.identity.buildingId))
+                    return;
+
+                if (tile.identity.roomId == 0)
+                    return;
+
+                _model.PatchTileIdentity(tile.tileDefId, tile.identity.buildingId, 0);
+            });
         }
         void IndexEdgeWallsForSlices(HashSet<(int buildingId, int cellY)> slices)
         {

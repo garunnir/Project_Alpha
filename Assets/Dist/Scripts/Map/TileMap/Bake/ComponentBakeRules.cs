@@ -10,12 +10,21 @@ namespace IsoTilemap
         public static bool IsConflictingComponentRoot(int floorComponentRoot, int propagatingRoot) =>
             CanPropagateComponentFrom(floorComponentRoot) && floorComponentRoot != propagatingRoot;
 
-        /// <summary>incident 타일 <see cref="TileIdentity.buildingId"/>가 outdoor(-1)이면 flood traverse·tag·seed 제외.</summary>
-        public static bool ShouldBlockComponentFloodFromIncidentTile(in TileIdentity id) =>
-            id.buildingId == TileIdentity.BuildingIdOutdoor;
+        /// <summary>
+        /// structural 6-dir/footprint 접촉 시 다른 root는 무시하지 않고 Union 대상.
+        /// </summary>
+        public static bool ShouldUnionOnStructuralContact(int existingRoot, int incomingRoot) =>
+            CanPropagateComponentFrom(existingRoot) &&
+            CanPropagateComponentFrom(incomingRoot) &&
+            existingRoot != incomingRoot;
 
-        public static bool ShouldOverwriteComponentForPropagation(int existingRoot, int propagatingRoot) =>
-            !IsConflictingComponentRoot(existingRoot, propagatingRoot);
+        /// <summary>
+        /// outdoor(-1)·하드 파티션(양수) incident는 component flood traverse·tag·seed 제외.
+        /// (AssignAll은 Reset 없이 파티션 보존 — Full Rebake만 양수를 지운 뒤 재묶음.)
+        /// </summary>
+        public static bool ShouldBlockComponentFloodFromIncidentTile(in TileIdentity id) =>
+            BuildingIdBakeRules.IsImmutableOutdoorBuildingId(id.buildingId) ||
+            BuildingIdBakeRules.IsHardPartitionBuildingId(id.buildingId);
     }
 }
 

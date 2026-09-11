@@ -78,6 +78,26 @@ namespace IsoTilemap
 
         internal void MarkTilesDirty() => _isDirty = true;
 
+        /// <summary>
+        /// 변경된 점유/면 셀만 뷰 refresh (SyncTileParent·UpdateTile).
+        /// 전맵 batch 금지 — dig 하이라이트·presentation을 깨뜨림.
+        /// </summary>
+        internal void NotifyCellsChanged(IReadOnlyCollection<Vector3Int> cells)
+        {
+            if (cells == null || cells.Count == 0)
+                return;
+
+            var set = new HashSet<Vector3Int>();
+            foreach (Vector3Int cell in cells)
+                set.Add(cell);
+
+            if (set.Count == 0)
+                return;
+
+            MarkTilesDirty();
+            OnRuntimeBatchChanged?.Invoke(set);
+        }
+
         public void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer)
         {
             buffer.Clear();

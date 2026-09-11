@@ -40,8 +40,12 @@ namespace IsoTilemap
             AccumulateTiles(dto.tiles, cells);
             AccumulateWallEdges(dto.wallEdges, cells);
             AccumulateFloorFaces(dto.floorFaces, cells, dto.schemaVersion, forFloorTiles: true);
+            AccumulateFloorFaces(dto.outdoorFloorFaces, cells, dto.schemaVersion, forFloorTiles: true);
+            AccumulateWallEdges(dto.outdoorWallEdges, cells);
+            AccumulateTiles(dto.outdoorTiles, cells);
             AccumulateFloorFaces(dto.liquidAuthoringFaces, cells, dto.schemaVersion, forFloorTiles: false);
             AccumulateLiquidCells(dto.liquidCells, cells);
+            AccumulateBuildings(dto.buildings, cells, dto.schemaVersion);
 
             if (cells.Count == 0)
                 return false;
@@ -174,6 +178,100 @@ namespace IsoTilemap
                     continue;
 
                 cells.Add(new Vector3Int(cell.x, cell.y, cell.z));
+            }
+        }
+
+        /// <summary>
+        /// V5 <see cref="MapSaveJsonDto.buildings"/> — 피벗+로컬 → 월드 셀로 union.
+        /// </summary>
+        static void AccumulateBuildings(
+            List<BuildingSaveData> buildings,
+            HashSet<Vector3Int> cells,
+            int schemaVersion)
+        {
+            if (buildings == null)
+                return;
+
+            for (int i = 0; i < buildings.Count; i++)
+            {
+                BuildingSaveData building = buildings[i];
+                if (building == null)
+                    continue;
+
+                var pivot = new Vector3Int(building.pivotX, building.pivotY, building.pivotZ);
+                AccumulateTilesOffset(building.tiles, cells, pivot);
+                AccumulateWallEdgesOffset(building.wallEdges, cells, pivot);
+                AccumulateFloorFacesOffset(
+                    building.floorFaces, cells, schemaVersion, forFloorTiles: true, pivot);
+            }
+        }
+
+        static void AccumulateTilesOffset(
+            List<TileSaveData> tiles,
+            HashSet<Vector3Int> cells,
+            Vector3Int pivot)
+        {
+            if (tiles == null)
+                return;
+
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                TileSaveData t = tiles[i];
+                if (t == null)
+                    continue;
+
+                int sx = Mathf.Max(1, t.sizeX);
+                int sy = Mathf.Max(1, t.sizeY);
+                int sz = Mathf.Max(1, t.sizeZ);
+                var basePos = new Vector3Int(t.x, t.y, t.z) + pivot;
+                TileIdentityUtil.AppendOccupiedCellBox(basePos, new Vector3Int(sx, sy, sz), cells);
+            }
+        }
+
+        static void AccumulateWallEdgesOffset(
+            List<WallEdgeSaveData> edges,
+            HashSet<Vector3Int> cells,
+            Vector3Int pivot)
+        {
+            if (edges == null)
+                return;
+
+            for (int i = 0; i < edges.Count; i++)
+            {
+                WallEdgeSaveData edge = edges[i];
+                if (edge == null || string.IsNullOrEmpty(edge.prefabId))
+                    continue;
+
+                int sizeY = ResolveSizeY(edge.prefabId);
+                var key = new WallEdgeKey(
+                    new Vector3Int(edge.x, edge.y, edge.z) + pivot,
+                    (WallFace)edge.face);
+                TileIdentityUtil.AppendWallIncidentCells(key, sizeY, cells);
+            }
+        }
+
+        static void AccumulateFloorFacesOffset(
+            List<FloorFaceSaveData> faces,
+            HashSet<Vector3Int> cells,
+            int schemaVersion,
+            bool forFloorTiles,
+            Vector3Int pivot)
+        {
+            if (faces == null)
+                return;
+
+            for (int i = 0; i < faces.Count; i++)
+            {
+                FloorFaceSaveData face = faces[i];
+                if (face == null || string.IsNullOrEmpty(face.prefabId))
+                    continue;
+
+                int sizeY = ResolveSizeY(face.prefabId);
+                FloorFaceKey key = forFloorTiles
+                    ? face.ToFloorFaceKeyForFloorTileSave(schemaVersion)
+                    : face.ToFloorFaceKeyForLiquidAuthoring();
+                var worldKey = new FloorFaceKey(key.Anchor + pivot, key.Face);
+                TileIdentityUtil.AppendFloorIncidentCells(worldKey, sizeY, cells);
             }
         }
 

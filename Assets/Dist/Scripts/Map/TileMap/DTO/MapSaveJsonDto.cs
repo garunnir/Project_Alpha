@@ -6,7 +6,10 @@ namespace IsoTilemap
     [Serializable]
     public class MapSaveJsonDto
     {
-        /// <summary>1 = placementSlot v1. 2 = floorFaces walkable coords. 0·누락 = 레거시 tiles[].tileType.</summary>
+        /// <summary>
+        /// 1 = placementSlot v1. 2 = floorFaces walkable coords.
+        /// 5 = outdoorFloorFaces + buildings[]. 0·누락 = 레거시 tiles[].tileType.
+        /// </summary>
         public int schemaVersion;
 
         /// <summary>그리드 1칸 월드 길이. 0 이하·누락(구 JSON)이면 로더 fallback 사용.</summary>
@@ -22,9 +25,42 @@ namespace IsoTilemap
         public int mapBoundsMaxZ;
         public int mapBoundsMinY;
 
+        /// <summary>
+        /// schema &lt; V5: OccupiedCell·레거시. schema ≥ V5: 주로 fish-trap only 행
+        /// (구조 Occupied는 <see cref="buildings"/>).
+        /// </summary>
         public List<TileSaveData> tiles = new List<TileSaveData>();
+
+        /// <summary>schema &lt; V5 flat 벽. schema ≥ V5 신규 저장은 비우고 <see cref="buildings"/> 사용.</summary>
         public List<WallEdgeSaveData> wallEdges = new List<WallEdgeSaveData>();
+
+        /// <summary>
+        /// schema &lt; V5 flat 바닥(월드). schema ≥ V5 신규 저장은 비움 —
+        /// 야외는 <see cref="outdoorFloorFaces"/>, 구조는 <see cref="buildings"/>.
+        /// </summary>
         public List<FloorFaceSaveData> floorFaces = new List<FloorFaceSaveData>();
+
+        /// <summary>
+        /// schema ≥ <see cref="MapSaveSchema.OutdoorStructureLayersV5"/> 야외 바닥 (월드 walkable 좌표).
+        /// 뷰 <c>Outdoor/</c> 아래 타일 + <c>buildingId==-1</c>.
+        /// </summary>
+        public List<FloorFaceSaveData> outdoorFloorFaces = new List<FloorFaceSaveData>();
+
+        /// <summary>
+        /// 야외 벽 (월드 앵커). <c>Outdoor/</c> 아래 VerticalFace. 구 JSON 누락 = empty.
+        /// </summary>
+        public List<WallEdgeSaveData> outdoorWallEdges = new List<WallEdgeSaveData>();
+
+        /// <summary>
+        /// 야외 OccupiedCell 등 (월드). <c>Outdoor/</c> 아래 비-floor·비-wall. 구 JSON 누락 = empty.
+        /// fish-trap only는 루트 <see cref="tiles"/> 유지.
+        /// </summary>
+        public List<TileSaveData> outdoorTiles = new List<TileSaveData>();
+
+        /// <summary>
+        /// schema ≥ <see cref="MapSaveSchema.OutdoorStructureLayersV5"/> 건물별 로컬 구조물.
+        /// </summary>
+        public List<BuildingSaveData> buildings = new List<BuildingSaveData>();
 
         /// <summary>맵 혈흔 스탬프 (월드 좌표). tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
         public List<BloodStampSaveData> bloodStamps = new List<BloodStampSaveData>();

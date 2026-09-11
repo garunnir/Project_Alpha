@@ -1,4 +1,4 @@
-﻿# TileMap — 가려짐·가시성 조건
+# TileMap — 가려짐·가시성 조건
 
 ## 좌표 규약
 
@@ -109,7 +109,7 @@ blocking set은 **proximity evaluate 이후** 채움 (outdoor · feature on).
 
 peek cells: player floor **room BFS**로 hole 찾고, player space 아래 connected room cells 수집.
 
-**buildingId 출처 (bake SSOT)**: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) — **floor SSOT**, structural shell은 **occupied-cell flood** ([TILEMAP.md](TILEMAP.md) §점유셀). indoor hide는 tile `buildingId` vs player `buildingId`; **shell-disconnected**(id 0)은 step ③ **show** (의도).
+**buildingId 출처 (bake SSOT)**: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) — **structural + ThinWall 연결** (ADOPTED). indoor hide는 tile `buildingId` vs player `buildingId`; **shell-disconnected**(id 0)은 step ③ **show** (의도).
 
 ---
 
@@ -333,14 +333,16 @@ flowchart TD
 
 | 순서 | 규칙 |
 |------|------|
-| 1 | plaza (`IsPlazaFloor`) → **야외** |
-| 2 | building floor 없음 / `buildingId <= 0` → **실내** (`false`) |
+| 1 | outdoor 레이어 (`IsPlazaFloor` / outdoor 인덱스, `buildingId==-1`) → **야외** (`true`) |
+| 2 | **floor 없음 (empty / no-floor)** → **야외** (`true`) — **선택 A** |
 | 3 | 점유 floor에 `SpaceId` → `SpaceBakeResult.isOutdoor` |
 | 4 | building floor인데 Space 없음 → **야외** (`true`) — bake 누락·개방 area indoor pipeline 고착 방지 |
 
-`isOutdoor` 산출: [건물 bake §7](TILEMAP_BUILDING_BAKE.md) — `SpaceLeakEvaluator` topology (`buildingId`·footprint·extent). **`collisionFlags` leak 금지** — [대전제](TILEMAP_BUILDING_BAKE.md).
+**선택 A (empty→outdoor):** 점유 floor가 없는 셀은 fallback을 야외로 둔다. **층 가시성·근접 블렌드·blocking·apply 우선순위 등 이 문서의 가시성 파이프라인은 바꾸지 않는다** — 바뀌는 것은 `IsOutdoorEvaluation` / `IsPlayerOutdoor` **입력 분기뿐**이다. (낙하·공중·미생성 바닥에서도 야외 파이프라인이 켜질 수 있음 — 의도.)
 
-**room / `roomId`와 혼동하지 않는다.** room은 §5.1 slice floor 묶음(peek용). 실내/야외와 structural 층 단위는 Space.
+`isOutdoor` 산출: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) — AABB-clipped volume Space + topology leak. **`collisionFlags` leak 금지** — [대전제](TILEMAP_BUILDING_BAKE.md).
+
+**room / `roomId`와 혼동하지 않는다.** room은 building×slice floor 묶음(peek용). 실내/야외와 structural 층 단위는 Space · outdoor 레이어.
 
 **§5.1.1 (비대칭):** 논리로 닫힌 루프면 bake 그래프상 밀폐로 볼 수 있으나, **비트가 비었다고 비밀폐로 단정하지 않음.** `isOutdoor=false`도 밀폐 증명이 아님.
 

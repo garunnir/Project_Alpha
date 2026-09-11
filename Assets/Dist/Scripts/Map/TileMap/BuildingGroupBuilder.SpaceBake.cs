@@ -1,5 +1,5 @@
 // ============================================================
-// BuildingGroupBuilder.SpaceBake — Space flood·isOutdoor bake
+// BuildingGroupBuilder.SpaceBake — AABB volume Space flood·isOutdoor bake
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,27 +20,29 @@ namespace IsoTilemap
 
             foreach (var roomKey in _roomKeyScratch)
             {
+                if (!BuildingIdBakeRules.CanPropagateBuildingIdFrom(roomKey.BuildingId))
+                    continue;
+
                 if (!_hub.Rooms.TryGet(roomKey, FloorRoomBfsProfile.Occlusion, out var occlusion) ||
                     occlusion.Visited == null)
+                    continue;
+
+                if (!_registry.TryGetBuildingExtent(roomKey.BuildingId, out var extent) || !extent.HasBounds)
                     continue;
 
                 foreach (var (x, z) in occlusion.Visited)
                 {
                     var cell = new Vector3Int(x, roomKey.CellY, z);
+                    if (_registry.IsPlazaFloor(cell.y, cell.x, cell.z))
+                        continue;
+
                     if (registry.TryGetSpaceAtFloorCell(cell, out _))
                         continue;
 
-                    if (roomKey.BuildingId == 3)
-                    {
-                        Debug.Log(
-                            $"[SpaceBake] floodSeed buildingId=3 roomY={roomKey.CellY} roomId={roomKey.RoomId} " +
-                            $"startCell={cell}");
-                    }
-
                     SpaceFloodResult flood = SpaceFloodFill3D.Run(
-                        index, registry, cell, roomKey.BuildingId);
+                        index, registry, extent, _registry, cell, roomKey.BuildingId);
 
-                    if (flood.VisitedFloor.Count == 0)
+                    if (flood.VisitedCells.Count == 0)
                         continue;
 
                     if (flood.BoundarySpaceIds.Count > 0)
@@ -52,12 +54,12 @@ namespace IsoTilemap
                                 canonical = boundaryId;
                         }
 
-                        registry.Absorb(canonical, flood.VisitedFloor);
+                        registry.Absorb(canonical, flood.VisitedCells, index);
                     }
                     else
                     {
                         int spaceId = registry.AllocateSpaceId();
-                        registry.AssignNew(spaceId, roomKey.BuildingId, roomKey, flood.VisitedFloor);
+                        registry.AssignNew(spaceId, roomKey.BuildingId, roomKey, flood.VisitedCells, index);
                     }
                 }
             }
@@ -81,6 +83,7 @@ namespace IsoTilemap
                 registry.SetOutdoor(spaceId, outdoor);
             }
         }
+
         static int CompareRoomKeys(RoomKey a, RoomKey b)
         {
             int c = a.BuildingId.CompareTo(b.BuildingId);

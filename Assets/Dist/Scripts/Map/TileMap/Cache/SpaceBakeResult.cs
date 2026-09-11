@@ -21,12 +21,16 @@ namespace IsoTilemap
             IsOutdoor = isOutdoor;
         }
 
-        public void IncludeFloorCell(UnityEngine.Vector3Int floorCell)
+        /// <summary>volume 셀(floor·empty) Y band 갱신.</summary>
+        public void IncludeCell(UnityEngine.Vector3Int cell)
         {
-            if (floorCell.y < MinFloorY)
-                MinFloorY = floorCell.y;
-            if (floorCell.y > MaxFloorY)
-                MaxFloorY = floorCell.y;
+            if (cell.y < MinFloorY)
+                MinFloorY = cell.y;
+            if (cell.y > MaxFloorY)
+                MaxFloorY = cell.y;
         }
+
+        /// <summary>하위 호환 — <see cref="IncludeCell"/>.</summary>
+        public void IncludeFloorCell(UnityEngine.Vector3Int floorCell) => IncludeCell(floorCell);
     }
 }
