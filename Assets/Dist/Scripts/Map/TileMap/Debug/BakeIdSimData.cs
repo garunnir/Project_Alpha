@@ -70,6 +70,15 @@ namespace IsoTilemap
         public static BakeIdSimTileEntry Cube(int x, int y, int z) =>
             Cube(new Vector3Int(x, y, z));
 
+        public static bool EntriesEqual(in BakeIdSimTileEntry a, in BakeIdSimTileEntry b)
+        {
+            if (a.kind != b.kind)
+                return false;
+            if (a.cell != b.cell)
+                return false;
+            return a.kind != BakeIdSimTileKind.ThinWall || a.cellB == b.cellB;
+        }
+
         /// <summary>ThinWall A↔B가 same Y 카드널 이웃인지.</summary>
         public static bool IsThinWallEdgeValid(Vector3Int cellA, Vector3Int cellB) =>
             WallEdgeKey.TryBetween(cellA, cellB, out _);
@@ -288,6 +297,109 @@ namespace IsoTilemap
             }
 
             return list;
+        }
+
+        /// <summary>BakeIdAuthoring 아래 TileView → simTiles 엔트리. unsupported·invalid thin wall skip.</summary>
+        public static List<BakeIdSimTileEntry> FromAuthoringViews(
+            IReadOnlyList<TileView> views,
+            float cellSize,
+            out int skippedCount,
+            string logPrefix = DefaultLogPrefix)
+        {
+            skippedCount = 0;
+            var entries = new List<BakeIdSimTileEntry>(views?.Count ?? 0);
+            if (views == null || views.Count == 0)
+                return entries;
+
+            float cs = Mathf.Max(1e-4f, cellSize);
+            for (int i = 0; i < views.Count; i++)
+            {
+                TileView view = views[i];
+                if (view == null)
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                view.gizmoCellSize = cs;
+            }
+
+            List<TileData> snapshot = TileViewSceneGather.BuildTileDataSnapshot(views);
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                TileData tile = snapshot[i];
+                if (!BakeIdSimTileEntry.TryFromTileData(tile, out BakeIdSimTileEntry entry))
+                {
+                    skippedCount++;
+                    Debug.LogWarning(
+                        $"{logPrefix} authoring view skipped — unsupported prefabId='{tile.identity.PrefabId}' @ {tile.identity.GridPos}");
+                    continue;
+                }
+
+                if (!entry.TryToTileData(out _, out string error))
+                {
+                    skippedCount++;
+                    Debug.LogWarning(
+                        $"{logPrefix} authoring entry skipped kind={entry.kind} cell={entry.cell} cellB={entry.cellB}: {error}");
+                    continue;
+                }
+
+                if (ContainsEntry(entries, entry))
+                {
+                    skippedCount++;
+                    Debug.LogWarning(
+                        $"{logPrefix} duplicate authoring entry skipped kind={entry.kind} cell={entry.cell} cellB={entry.cellB}");
+                    continue;
+                }
+
+                entries.Add(entry);
+            }
+
+            return entries;
+        }
+
+        /// <summary>단일 Authoring TileView → sim 엔트리. unsupported·invalid면 false.</summary>
+        public static bool TryFromAuthoringView(
+            TileView view,
+            float cellSize,
+            out BakeIdSimTileEntry entry,
+            out string error,
+            string logPrefix = DefaultLogPrefix)
+        {
+            entry = default;
+            error = null;
+            if (view == null)
+            {
+                error = "view is null";
+                return false;
+            }
+
+            List<BakeIdSimTileEntry> gathered = FromAuthoringViews(
+                new[] { view },
+                cellSize,
+                out int skipped,
+                logPrefix);
+            if (gathered.Count == 0)
+            {
+                error = skipped > 0
+                    ? "unsupported or invalid tile"
+                    : "no entry gathered";
+                return false;
+            }
+
+            entry = gathered[0];
+            return true;
+        }
+
+        static bool ContainsEntry(IReadOnlyList<BakeIdSimTileEntry> entries, in BakeIdSimTileEntry candidate)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (BakeIdSimTileEntry.EntriesEqual(entries[i], candidate))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

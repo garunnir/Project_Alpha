@@ -46,7 +46,36 @@ Texture2D:
     offset: 0
     size: 0
     path: 
---- !u!21 &-1411891370979884244
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e85db9cff5eeb54da062522873b378c, type: 3}
+  m_Name: DirtFaceAtlas
+  m_EditorClassIdentifier: Dist.Map::IsoTilemap.TileCubeFaceAtlas
+  _upTexture: {fileID: 0}
+  _downTexture: {fileID: 0}
+  _northTexture: {fileID: 0}
+  _southTexture: {fileID: 0}
+  _eastTexture: {fileID: 0}
+  _westTexture: {fileID: 0}
+  _upColor: {r: 0.010457456, g: 0.4433962, b: 0.013136032, a: 1}
+  _downColor: {r: 0.32, g: 0.22, b: 0.12, a: 1}
+  _northColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
+  _southColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
+  _eastColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
+  _westColor: {r: 0.72, g: 0.28, b: 0.12, a: 1}
+  _cellPixels: 16
+  _sourceMaterial: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
+  _bakedAtlas: {fileID: -5434639353781203700}
+  _bakedMaterial: {fileID: 1533496475930742115}
+  _bakedFromSourceId: 70918
+--- !u!21 &1533496475930742115
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -185,32 +214,3 @@ Material:
     - _UV11: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e85db9cff5eeb54da062522873b378c, type: 3}
-  m_Name: DirtFaceAtlas
-  m_EditorClassIdentifier: Dist.Map::IsoTilemap.TileCubeFaceAtlas
-  _upTexture: {fileID: 0}
-  _downTexture: {fileID: 0}
-  _northTexture: {fileID: 0}
-  _southTexture: {fileID: 0}
-  _eastTexture: {fileID: 0}
-  _westTexture: {fileID: 0}
-  _upColor: {r: 0.010457456, g: 0.4433962, b: 0.013136032, a: 1}
-  _downColor: {r: 0.32, g: 0.22, b: 0.12, a: 1}
-  _northColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
-  _southColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
-  _eastColor: {r: 0.52, g: 0.35, b: 0.18, a: 1}
-  _westColor: {r: 0.72, g: 0.28, b: 0.12, a: 1}
-  _cellPixels: 16
-  _sourceMaterial: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
-  _bakedAtlas: {fileID: -5434639353781203700}
-  _bakedMaterial: {fileID: -1411891370979884244}
-  _bakedFromSourceId: 70910

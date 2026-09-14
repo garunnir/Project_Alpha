@@ -22,6 +22,7 @@ namespace IsoTilemap
         public const string ScenePath = "Assets/Dist/Scenes/BakeIdPlayground.unity";
 
         const string VisualRootName = "BakeIdVisualRoot";
+        const string AuthoringRootName = "BakeIdAuthoring";
 #if UNITY_EDITOR
         const string DefaultPrefabDbPath = "Assets/Dist/SOData/Tile/Tile Prefab DB.asset";
         const float EditCellGizmoSize = 0.1f;
@@ -57,11 +58,17 @@ namespace IsoTilemap
 
         [TabGroup(Tab, "Setup")]
         [PropertySpace(8)]
-        [InfoBox("변경 후 씬 저장 필수. VisualRoot는 SSOT가 아님 — simTiles가 진실원.")]
+        [InfoBox("Live Sync ON: Authoring=편집 SSOT → simTiles 자동 미러. Rebuild From Sim Tiles 버튼만 Inspector simTiles 직접 반영.")]
         [ButtonGroup(Tab + "/Setup/Pipeline")]
         [Button("Rebuild From Sim Tiles", ButtonSizes.Medium)]
-        public void RebuildFromSimTiles()
+        public void RebuildFromSimTiles() => RebuildFromSimTilesInternal(preferAuthoringSync: false);
+
+        void RebuildFromSimTilesInternal(bool preferAuthoringSync)
         {
+#if UNITY_EDITOR
+            if (preferAuthoringSync && authoringLiveSync && !Application.isPlaying)
+                TrySyncSimTilesFromAuthoringScene();
+#endif
             TearDownRuntime();
             if (!EnsurePrefabDb())
             {
@@ -116,7 +123,130 @@ namespace IsoTilemap
             BakeIdSimDefaults.FillFromUnitMasterPlayground(simTiles, simProbes, simRules);
             simSteps.Clear();
             MarkSimDirty();
-            RebuildFromSimTiles();
+            RebuildFromSimTilesInternal(preferAuthoringSync: false);
+#if UNITY_EDITOR
+            if (authoringLiveSync)
+                PopulateAuthoringFromSimTilesInternal(logSummary: true);
+#endif
+        }
+
+        [TabGroup(Tab, "Setup")]
+        [BoxGroup(Tab + "/Setup/Scene Authoring")]
+        [LabelText("Live Sync (Add/Delete on edit)")]
+        [SerializeField] bool authoringLiveSync = true;
+
+        [TabGroup(Tab, "Setup")]
+        [BoxGroup(Tab + "/Setup/Scene Authoring")]
+        [InfoBox(
+            "BakeIdAuthoring 아래(또는 씬에 드롭한) Floor/SlimWall/ThickWall TileView 배치·복사·이동·삭제 → Edit Add/Remove와 동일 반영. " +
+            "복사 직후 같은 칸이면 이동 후 Add.")]
+        [ButtonGroup(Tab + "/Setup/Scene Authoring/Row1")]
+        [Button("Sim → Authoring", ButtonSizes.Medium)]
+        public void PopulateAuthoringFromSimTiles() =>
+            PopulateAuthoringFromSimTilesInternal(logSummary: true);
+
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Scene Authoring/Row1")]
+        [Button("Replace Sim From Authoring", ButtonSizes.Medium)]
+        [GUIColor(1f, 0.85f, 0.55f)]
+        [Tooltip("Live Sync drift 복구용 — Authoring 전체로 simTiles를 덮어씁니다.")]
+        public void ReplaceSimFromAuthoringScene()
+        {
+            if (!EnsurePrefabDb())
+            {
+                Debug.LogError("[BakeIdPlayground] TilePrefabDB missing");
+                return;
+            }
+
+            EnsureAuthoringRoot();
+            TileView[] views = CollectAuthoringTileViews();
+            List<BakeIdSimTileEntry> gathered = BakeIdSimTileUtil.FromAuthoringViews(
+                views,
+                cellSize,
+                out int skipped,
+                "[BakeIdPlayground]");
+
+            if (gathered.Count == 0)
+            {
+                Debug.LogWarning(
+                    "[BakeIdPlayground] Sync: no valid tiles under BakeIdAuthoring — place TileView prefabs first");
+                return;
+            }
+
+            if (simTiles == null)
+                simTiles = new List<BakeIdSimTileEntry>();
+            else
+                simTiles.Clear();
+
+            using (SuspendAuthoringLiveSync())
+            {
+                simTiles.AddRange(gathered);
+                MarkSimDirty();
+                RebuildAuthoringSnapshotFromScene();
+            }
+
+            RebuildFromSimTilesInternal(preferAuthoringSync: false);
+            Debug.Log(
+                $"[BakeIdPlayground] Replace Sim From Authoring OK — simTiles={simTiles.Count} (skipped {skipped})");
+        }
+
+#if UNITY_EDITOR
+        [TabGroup(Tab, "Setup")]
+        [ButtonGroup(Tab + "/Setup/Scene Authoring/Row1")]
+        [Button("Select Authoring Root", ButtonSizes.Medium)]
+        public void SelectAuthoringRootInHierarchy()
+        {
+            EnsureAuthoringRoot();
+            Selection.activeGameObject = _authoringRoot.gameObject;
+        }
+#endif
+
+        void PopulateAuthoringFromSimTilesInternal(bool logSummary)
+        {
+            if (!EnsurePrefabDb())
+            {
+                Debug.LogError("[BakeIdPlayground] TilePrefabDB missing");
+                return;
+            }
+
+            if (simTiles == null || simTiles.Count == 0)
+            {
+                Debug.LogWarning("[BakeIdPlayground] simTiles empty — Import Seed Layout first");
+                return;
+            }
+
+            List<TileData> tiles = BakeIdSimTileUtil.ToTileDataList(simTiles, out int skipped, "[BakeIdPlayground]");
+            if (tiles.Count == 0)
+            {
+                Debug.LogError("[BakeIdPlayground] No valid simTiles to populate authoring");
+                return;
+            }
+
+            using (SuspendAuthoringLiveSync())
+            {
+                EnsureAuthoringRoot();
+                ClearAuthoringTileViews();
+
+                float cs = Mathf.Max(1e-4f, cellSize);
+                int spawned = 0;
+                int missed = 0;
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    if (TrySpawnAuthoringView(tiles[i], cs))
+                        spawned++;
+                    else
+                        missed++;
+                }
+
+                RebuildAuthoringSnapshotFromScene();
+                MarkSimDirty();
+                if (logSummary)
+                {
+                    Debug.Log(
+                        $"[BakeIdPlayground] Sim → Authoring: spawned {spawned} views under {AuthoringRootName} " +
+                        $"(simTiles skipped {skipped}, spawn missed {missed})");
+                }
+            }
         }
 
         [TabGroup(Tab, "Setup")]
@@ -153,7 +283,7 @@ namespace IsoTilemap
         [GUIColor(0.65f, 0.85f, 1f)]
         public void PreviewSimSteps()
         {
-            RebuildFromSimTiles();
+            RebuildFromSimTilesInternal(preferAuthoringSync: authoringLiveSync);
             if (_model == null)
                 return;
 
@@ -436,25 +566,43 @@ namespace IsoTilemap
         BuildingGroupBuilder _builder;
         TileObjFactory _factory;
         Transform _visualRoot;
+        Transform _authoringRoot;
 
 #if UNITY_EDITOR
         bool _sceneGuiSubscribed;
+        bool _authoringSyncSubscribed;
+        bool _authoringSyncPending;
+        double _authoringSyncDueTime;
+        int _authoringSyncSuspendDepth;
+        const double AuthoringSyncDebounceSec = 0.05;
+        readonly Dictionary<int, BakeIdSimTileEntry> _authoringSnapshot = new();
+        bool _authoringEverUsed;
 #endif
 
         void OnEnable()
         {
             EnsurePrefabDb();
-            if (rebuildOnEnable && _hub == null)
-                RebuildFromSimTiles();
+            EnsureAuthoringRoot();
 #if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                RebuildAuthoringSnapshotFromScene();
+                SyncAuthoringLiveSubscription();
+            }
+
             SyncSceneMoveSubscription();
 #endif
+            if (rebuildOnEnable && _hub == null)
+                RebuildFromSimTilesInternal(preferAuthoringSync: authoringLiveSync);
         }
 
         void OnDisable()
         {
 #if UNITY_EDITOR
+            UnsubscribeAuthoringLive();
             UnsubscribeSceneMove();
+            if (!Application.isPlaying)
+                return;
 #endif
             ClearVisuals();
             TearDownRuntime();
@@ -464,6 +612,7 @@ namespace IsoTilemap
         {
             EnsurePrefabDb();
 #if UNITY_EDITOR
+            SyncAuthoringLiveSubscription();
             SyncSceneMoveSubscription();
 #endif
         }
@@ -568,7 +717,7 @@ namespace IsoTilemap
         {
             if (_hub != null && _builder != null && _model != null && _factory != null)
                 return;
-            RebuildFromSimTiles();
+            RebuildFromSimTilesInternal(preferAuthoringSync: authoringLiveSync);
         }
 
         void TearDownRuntime()
@@ -602,11 +751,56 @@ namespace IsoTilemap
         void MarkSimDirty()
         {
 #if UNITY_EDITOR
+            Undo.RecordObject(this, "BakeId Sim");
             EditorUtility.SetDirty(this);
             if (!Application.isPlaying)
                 EditorSceneManager.MarkSceneDirty(gameObject.scene);
 #endif
         }
+
+#if UNITY_EDITOR
+        bool TrySyncSimTilesFromAuthoringScene()
+        {
+            if (!authoringLiveSync || Application.isPlaying)
+                return false;
+
+            EnsureAuthoringRoot();
+            TileView[] views = CollectAuthoringTileViews();
+            if (views.Length == 0)
+            {
+                if (!_authoringEverUsed)
+                    return false;
+
+                using (SuspendAuthoringLiveSync())
+                {
+                    simTiles?.Clear();
+                    _authoringSnapshot.Clear();
+                }
+
+                MarkSimDirty();
+                return true;
+            }
+
+            List<BakeIdSimTileEntry> gathered = BakeIdSimTileUtil.FromAuthoringViews(
+                views,
+                cellSize,
+                out _,
+                "[BakeIdPlayground]");
+            using (SuspendAuthoringLiveSync())
+            {
+                if (simTiles == null)
+                    simTiles = new List<BakeIdSimTileEntry>();
+                else
+                    simTiles.Clear();
+                simTiles.AddRange(gathered);
+                RebuildAuthoringSnapshotFromScene();
+            }
+
+            _authoringEverUsed = true;
+            MarkSimDirty();
+            return true;
+        }
+#endif
 
         void EnsureVisualRoot()
         {
@@ -623,6 +817,88 @@ namespace IsoTilemap
             var go = new GameObject(VisualRootName);
             go.transform.SetParent(transform, false);
             _visualRoot = go.transform;
+        }
+
+        void EnsureAuthoringRoot()
+        {
+            if (_authoringRoot != null)
+                return;
+
+            Transform existing = transform.Find(AuthoringRootName);
+            if (existing != null)
+            {
+                _authoringRoot = existing;
+                return;
+            }
+
+            var go = new GameObject(AuthoringRootName);
+            go.transform.SetParent(transform, false);
+            _authoringRoot = go.transform;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                EditorUtility.SetDirty(gameObject);
+#endif
+        }
+
+        TileView[] CollectAuthoringTileViews()
+        {
+            EnsureAuthoringRoot();
+            TileView[] all = _authoringRoot.GetComponentsInChildren<TileView>(includeInactive: true);
+            if (all == null || all.Length == 0)
+                return System.Array.Empty<TileView>();
+
+            var filtered = new List<TileView>(all.Length);
+            for (int i = 0; i < all.Length; i++)
+            {
+                TileView view = all[i];
+                if (view == null)
+                    continue;
+                if (view.transform == _authoringRoot)
+                    continue;
+                filtered.Add(view);
+            }
+
+            return filtered.ToArray();
+        }
+
+        void ClearAuthoringTileViews()
+        {
+            EnsureAuthoringRoot();
+            TileView[] views = CollectAuthoringTileViews();
+            for (int i = views.Length - 1; i >= 0; i--)
+                DestroyImmediateSafe(views[i].gameObject);
+        }
+
+        bool TrySpawnAuthoringView(in TileData tile, float cs)
+        {
+            string prefabId = tile.identity.PrefabId;
+            GameObject prefab = prefabDb.GetPrefab(prefabId);
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    $"[BakeIdPlayground] Authoring spawn missing prefab '{prefabId}' @ {tile.identity.GridPos}");
+                return false;
+            }
+
+            GameObject go = TilePrefabSpawnUtil.Instantiate(
+                prefab,
+                _authoringRoot,
+                Vector3.zero,
+                Quaternion.identity);
+            if (go == null)
+                return false;
+
+            if (!go.TryGetComponent(out TileView view))
+            {
+                DestroyImmediateSafe(go);
+                Debug.LogWarning($"[BakeIdPlayground] Authoring prefab has no TileView: '{prefabId}'");
+                return false;
+            }
+
+            view.UpdateTile(tile, cs);
+            _authoringEverUsed = true;
+            BakeIdAuthoringViewLink.Ensure(view, this, cs);
+            return true;
         }
 
         void ClearVisuals()
@@ -800,6 +1076,456 @@ namespace IsoTilemap
                 simTiles.RemoveAt(idx);
         }
 
+        bool SimContainsEntry(in BakeIdSimTileEntry entry)
+        {
+            if (simTiles == null)
+                return false;
+
+            for (int i = 0; i < simTiles.Count; i++)
+            {
+                if (BakeIdSimTileEntry.EntriesEqual(simTiles[i], entry))
+                    return true;
+            }
+
+            return false;
+        }
+
+        int FindSimIndex(in BakeIdSimTileEntry entry)
+        {
+            if (simTiles == null)
+                return -1;
+
+            for (int i = 0; i < simTiles.Count; i++)
+            {
+                if (BakeIdSimTileEntry.EntriesEqual(simTiles[i], entry))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        bool TryFindModelTile(in BakeIdSimTileEntry entry, out TileData tile)
+        {
+            tile = default;
+            EnsureRuntime();
+            if (_model == null)
+                return false;
+
+            foreach (TileData candidate in _model.TilesSnapshot)
+            {
+                if (!BakeIdSimTileEntry.TryFromTileData(candidate, out BakeIdSimTileEntry got))
+                    continue;
+                if (!BakeIdSimTileEntry.EntriesEqual(got, entry))
+                    continue;
+                tile = candidate;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool ApplyAuthoringAdd(in BakeIdSimTileEntry entry, bool commit = true)
+        {
+            if (!entry.TryToTileData(out TileData tile, out string error))
+            {
+                Debug.LogWarning($"[BakeIdPlayground] Authoring add rejected: {error}");
+                return false;
+            }
+
+            if (SimContainsEntry(entry))
+            {
+                Debug.LogWarning(
+                    $"[BakeIdPlayground] Authoring add skipped — duplicate {entry.kind} @ {entry.cell}");
+                return false;
+            }
+
+            EnsureRuntime();
+            if (simTiles == null)
+                simTiles = new List<BakeIdSimTileEntry>();
+            simTiles.Add(entry);
+            _model.SetTile(tile);
+            MarkSimDirty();
+            if (commit)
+                CommitAuthoringModelChange();
+            Debug.Log($"[BakeIdPlayground] Authoring + {entry.kind} @ {FormatEntryCell(entry)}");
+            return true;
+        }
+
+        bool ApplyAuthoringRemove(in BakeIdSimTileEntry entry, bool commit = true)
+        {
+            int simIndex = FindSimIndex(entry);
+            if (simIndex < 0 && _model == null)
+                return false;
+
+            EnsureRuntime();
+            if (TryFindModelTile(entry, out TileData modelTile))
+                _model.RemoveTile(modelTile);
+
+            if (simIndex >= 0)
+                simTiles.RemoveAt(simIndex);
+
+            MarkSimDirty();
+            if (commit)
+                CommitAuthoringModelChange();
+            Debug.Log($"[BakeIdPlayground] Authoring - {entry.kind} @ {FormatEntryCell(entry)}");
+            return true;
+        }
+
+        void CommitAuthoringModelChange()
+        {
+            EnsureRuntime();
+            if (_builder != null)
+                _builder.RebakeAllBuildingPartitions();
+            RefreshVisuals();
+        }
+
+        public void NotifyAuthoringViewDestroyed(TileView view)
+        {
+#if UNITY_EDITOR
+            if (!authoringLiveSync || view == null || Application.isPlaying || _authoringSyncSuspendDepth > 0)
+                return;
+
+            int id = view.GetInstanceID();
+            if (!_authoringSnapshot.TryGetValue(id, out BakeIdSimTileEntry entry) &&
+                !TryResolveAuthoringEntry(view, out entry, out _))
+            {
+                return;
+            }
+
+            using (SuspendAuthoringLiveSync())
+            {
+                _authoringSnapshot.Remove(id);
+                if (CountLiveAuthoringViewsAt(entry, exceptViewId: id) == 0)
+                    ApplyAuthoringRemove(entry, commit: false);
+            }
+
+            CommitAuthoringModelChange();
+            Debug.Log($"[BakeIdPlayground] Authoring destroyed - {entry.kind} @ {FormatEntryCell(entry)}");
+#endif
+        }
+
+        internal void NotifyAuthoringLinkChanged(TileView view, bool immediate)
+        {
+#if UNITY_EDITOR
+            if (!authoringLiveSync || view == null || Application.isPlaying || _authoringSyncSuspendDepth > 0)
+                return;
+            if (view.gameObject.scene != gameObject.scene)
+                return;
+
+            if (!IsUnderAuthoringRoot(view.transform))
+                TryAdoptTileView(view);
+
+            ScheduleAuthoringLiveSync(immediate);
+#endif
+        }
+
+        bool TryResolveAuthoringEntry(TileView view, out BakeIdSimTileEntry entry, out string error)
+        {
+            entry = default;
+            error = null;
+            if (view == null)
+            {
+                error = "view is null";
+                return false;
+            }
+
+            if (view.TryGetComponent(out BakeIdAuthoringViewLink link))
+                return link.TryResolveSimEntry(out entry, out error);
+
+            link = BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
+            return link != null && link.TryResolveSimEntry(out entry, out error);
+        }
+
+        static string FormatEntryCell(in BakeIdSimTileEntry entry) =>
+            entry.kind == BakeIdSimTileKind.ThinWall
+                ? $"{entry.cell}↔{entry.cellB}"
+                : entry.cell.ToString();
+
+#if UNITY_EDITOR
+        readonly struct AuthoringLiveSyncSuspendScope : System.IDisposable
+        {
+            readonly BakeIdPlaygroundHost _host;
+
+            public AuthoringLiveSyncSuspendScope(BakeIdPlaygroundHost host)
+            {
+                _host = host;
+                if (_host != null)
+                    _host._authoringSyncSuspendDepth++;
+            }
+
+            public void Dispose()
+            {
+                if (_host == null || _host._authoringSyncSuspendDepth <= 0)
+                    return;
+                _host._authoringSyncSuspendDepth--;
+            }
+        }
+
+        AuthoringLiveSyncSuspendScope SuspendAuthoringLiveSync() => new(this);
+
+        void SyncAuthoringLiveSubscription()
+        {
+            if (!authoringLiveSync || Application.isPlaying)
+            {
+                UnsubscribeAuthoringLive();
+                return;
+            }
+
+            if (_authoringSyncSubscribed)
+                return;
+
+            EditorApplication.hierarchyChanged += OnAuthoringHierarchyChanged;
+            EditorApplication.update += OnAuthoringEditorUpdate;
+            _authoringSyncSubscribed = true;
+        }
+
+        void UnsubscribeAuthoringLive()
+        {
+            if (!_authoringSyncSubscribed)
+                return;
+
+            EditorApplication.hierarchyChanged -= OnAuthoringHierarchyChanged;
+            EditorApplication.update -= OnAuthoringEditorUpdate;
+            _authoringSyncSubscribed = false;
+            _authoringSyncPending = false;
+        }
+
+        void OnAuthoringHierarchyChanged()
+        {
+            if (!authoringLiveSync || _authoringSyncSuspendDepth > 0 || Application.isPlaying)
+                return;
+
+            TryAdoptOrphanAuthoringViews();
+            ScheduleAuthoringLiveSync();
+        }
+
+        void ScheduleAuthoringLiveSync(bool immediate = false)
+        {
+            _authoringSyncPending = true;
+            _authoringSyncDueTime = immediate
+                ? EditorApplication.timeSinceStartup
+                : EditorApplication.timeSinceStartup + AuthoringSyncDebounceSec;
+        }
+
+        void OnAuthoringEditorUpdate()
+        {
+            if (!authoringLiveSync || _authoringSyncSuspendDepth > 0 || Application.isPlaying)
+                return;
+
+            if (_authoringSyncPending)
+            {
+                if (EditorApplication.timeSinceStartup < _authoringSyncDueTime)
+                    return;
+                _authoringSyncPending = false;
+                FlushAuthoringLiveSync();
+                return;
+            }
+
+            if (HasAuthoringPoseDrift())
+                ScheduleAuthoringLiveSync();
+        }
+
+        bool IsUnderAuthoringRoot(Transform t)
+        {
+            EnsureAuthoringRoot();
+            return t != null && _authoringRoot != null && t.IsChildOf(_authoringRoot);
+        }
+
+        bool IsUnderVisualRoot(Transform t)
+        {
+            if (t == null)
+                return false;
+            Transform existing = transform.Find(VisualRootName);
+            return existing != null && t.IsChildOf(existing);
+        }
+
+        void TryAdoptOrphanAuthoringViews()
+        {
+            EnsureAuthoringRoot();
+            TileView[] all = UnityEngine.Object.FindObjectsByType<TileView>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < all.Length; i++)
+            {
+                TileView view = all[i];
+                if (view == null)
+                    continue;
+                if (view.gameObject.scene != gameObject.scene)
+                    continue;
+                if (IsUnderAuthoringRoot(view.transform))
+                    continue;
+                if (IsUnderVisualRoot(view.transform))
+                    continue;
+                TryAdoptTileView(view);
+            }
+        }
+
+        void TryAdoptTileView(TileView view)
+        {
+            if (view == null)
+                return;
+
+            EnsureAuthoringRoot();
+            _authoringEverUsed = true;
+            Undo.RecordObject(view.transform, "Adopt BakeId Authoring");
+            view.transform.SetParent(_authoringRoot, worldPositionStays: true);
+            BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
+            EditorUtility.SetDirty(view);
+            EditorUtility.SetDirty(view.transform);
+        }
+
+        bool HasAuthoringPoseDrift()
+        {
+            if (_authoringSnapshot.Count == 0)
+                return false;
+
+            EnsureAuthoringRoot();
+            TileView[] views = CollectAuthoringTileViews();
+            for (int i = 0; i < views.Length; i++)
+            {
+                TileView view = views[i];
+                if (view == null)
+                    continue;
+
+                int id = view.GetInstanceID();
+                if (!_authoringSnapshot.TryGetValue(id, out BakeIdSimTileEntry prev))
+                    continue;
+
+                if (!TryResolveAuthoringEntry(view, out BakeIdSimTileEntry now, out _))
+                    continue;
+
+                if (!BakeIdSimTileEntry.EntriesEqual(prev, now))
+                    return true;
+            }
+
+            return false;
+        }
+
+        void RebuildAuthoringSnapshotFromScene()
+        {
+            _authoringSnapshot.Clear();
+            if (_authoringRoot == null)
+                return;
+
+            TileView[] views = CollectAuthoringTileViews();
+            for (int i = 0; i < views.Length; i++)
+            {
+                TileView view = views[i];
+                if (view == null)
+                    continue;
+                if (!TryResolveAuthoringEntry(view, out BakeIdSimTileEntry entry, out _))
+                    continue;
+                BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
+                _authoringSnapshot[view.GetInstanceID()] = entry;
+            }
+        }
+
+        void FlushAuthoringLiveSync()
+        {
+            if (!authoringLiveSync || _authoringSyncSuspendDepth > 0 || Application.isPlaying)
+                return;
+
+            EnsureAuthoringRoot();
+            if (!EnsurePrefabDb())
+                return;
+
+            using (SuspendAuthoringLiveSync())
+            {
+                TileView[] views = CollectAuthoringTileViews();
+                var currentIds = new HashSet<int>();
+                var staleIds = new List<int>();
+
+                for (int i = 0; i < views.Length; i++)
+                {
+                    TileView view = views[i];
+                    if (view == null)
+                        continue;
+
+                    int id = view.GetInstanceID();
+                    if (!TryResolveAuthoringEntry(view, out BakeIdSimTileEntry entry, out string error))
+                    {
+                        if (_authoringSnapshot.ContainsKey(id))
+                            staleIds.Add(id);
+                        else if (!string.IsNullOrEmpty(error))
+                        {
+                            Debug.LogWarning(
+                                $"[BakeIdPlayground] Authoring view ignored on '{view.name}': {error}",
+                                view);
+                        }
+
+                        continue;
+                    }
+
+                    currentIds.Add(id);
+                    if (!_authoringSnapshot.TryGetValue(id, out BakeIdSimTileEntry prev))
+                    {
+                        if (ApplyAuthoringAdd(entry))
+                            _authoringSnapshot[id] = entry;
+                        continue;
+                    }
+
+                    if (BakeIdSimTileEntry.EntriesEqual(prev, entry))
+                        continue;
+
+                    ApplyAuthoringMove(id, prev, entry);
+                }
+
+                foreach (KeyValuePair<int, BakeIdSimTileEntry> kv in _authoringSnapshot)
+                {
+                    if (currentIds.Contains(kv.Key))
+                        continue;
+                    staleIds.Add(kv.Key);
+                }
+
+                for (int i = 0; i < staleIds.Count; i++)
+                {
+                    int id = staleIds[i];
+                    if (!_authoringSnapshot.TryGetValue(id, out BakeIdSimTileEntry removed))
+                        continue;
+                    ApplyAuthoringRemove(removed);
+                    _authoringSnapshot.Remove(id);
+                }
+            }
+        }
+
+        bool ApplyAuthoringMove(int viewInstanceId, in BakeIdSimTileEntry prev, in BakeIdSimTileEntry next)
+        {
+            if (CountLiveAuthoringViewsAt(prev, exceptViewId: viewInstanceId) == 0)
+                ApplyAuthoringRemove(prev, commit: false);
+
+            bool added = ApplyAuthoringAdd(next, commit: false);
+            _authoringSnapshot[viewInstanceId] = next;
+            CommitAuthoringModelChange();
+
+            if (!BakeIdSimTileEntry.EntriesEqual(prev, next))
+            {
+                Debug.Log(
+                    $"[BakeIdPlayground] Authoring move {prev.kind} {FormatEntryCell(prev)} → {FormatEntryCell(next)}");
+            }
+
+            return added;
+        }
+
+        int CountLiveAuthoringViewsAt(in BakeIdSimTileEntry entry, int exceptViewId)
+        {
+            EnsureAuthoringRoot();
+            TileView[] views = CollectAuthoringTileViews();
+            int count = 0;
+            for (int i = 0; i < views.Length; i++)
+            {
+                TileView view = views[i];
+                if (view == null || view.GetInstanceID() == exceptViewId)
+                    continue;
+                if (!TryResolveAuthoringEntry(view, out BakeIdSimTileEntry got, out _))
+                    continue;
+                if (BakeIdSimTileEntry.EntriesEqual(got, entry))
+                    count++;
+            }
+
+            return count;
+        }
+#endif
+
 #if UNITY_EDITOR
         void SyncSceneMoveSubscription()
         {
@@ -908,14 +1634,14 @@ namespace IsoTilemap
         }
 #endif
 
-        static void DestroyImmediateSafe(Object obj)
+        static void DestroyImmediateSafe(UnityEngine.Object obj)
         {
             if (obj == null)
                 return;
             if (Application.isPlaying)
-                Object.Destroy(obj);
+                UnityEngine.Object.Destroy(obj);
             else
-                Object.DestroyImmediate(obj);
+                UnityEngine.Object.DestroyImmediate(obj);
         }
     }
 }

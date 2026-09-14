@@ -37,7 +37,19 @@ namespace IsoTilemap
         {
             ApplyEditorPose();
             OnEditorPoseSnapped();
+            EditorPoseSnapped?.Invoke(this);
         }
+
+        /// <summary>prefabId·pose를 채운 뒤 그리드 스냅. Authoring live sync용.</summary>
+        public void EnsureEditorPlacementReady()
+        {
+            if (string.IsNullOrEmpty(prefabId))
+                TryResolvePrefabIdFromSource();
+            SnapEditorPoseToGrid();
+        }
+
+        /// <summary>MapPlacedView 그리드 스냅 직후 (씬 편집).</summary>
+        public static event System.Action<MapPlacedView> EditorPoseSnapped;
 
         protected virtual void OnEditorPoseSnapped() { }
 #endif
