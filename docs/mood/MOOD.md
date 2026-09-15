@@ -19,7 +19,7 @@
 | Type | Role |
 |------|------|
 | `MoodSettings` | 기준 기분·클램프·붕괴 문턱/확률·Wander·사고 표 SSOT |
-| `CharacterMoodHost` | possessed 사고 합산 + 분 틱 + Wander 양도. `Active` |
+| `CharacterMoodHost` | possessed 사고 합산 + 분 틱 + Wander 양도. `Active`. plain module (`CharacterBodyRefs`). Settings는 `MoodSettings` SO (`DefaultAssetPath`), 본체 Host Inspector 아님 |
 | `MoodThought` | 런타임 한 줄 (`ThoughtId`, kind, offset, remainingMinutes) |
 | `MoodSituationalCollector` | 고통·허기·갈증·체온·출혈·과적 재평가 |
 | `MoodBreakRuntime` | Wander `NpcSteer`. 본체 AI MB 없음 |

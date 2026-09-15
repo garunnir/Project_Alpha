@@ -70,7 +70,7 @@ public sealed class CharacterArriveHost : MonoBehaviour
                 suppressInput,
                 tryIsArrived);
 
-        return _actionHost.TryRunOrEnqueue(
+        return _actionHost.TryEnqueue(
             CharacterActionKind.Cell,
             () => TryBegin(
                 destination,

@@ -162,6 +162,8 @@ ActorSO에서 아직 Dist에 없는 것: HP 풀, Passive 슬롯, Dialogue int id
 - 게이트는 `PlayerInventoryHost.IsAvailableToPlayer`. 살아 있는 몸을 Nearby에 넣지 않는다.
 - 루팅은 몸 컨테이너를 Nearby 탭으로 쓰는 계약 ([`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md)). 새 루팅 창을 만들지 않는다.
 - Defeat과 고통 쇼크 모두 게이트를 연다. 쇼크는 Dead가 아니다.
+- 월드 RMB: `TileObjectPointerController` → `CharacterBodyContextMenuBuilder` (`OpenBodyLoot`, 착용 `StripWear`). 게이트=`CharacterBodyLootContextGate`.
+- 넉다운 시 들기 드롭: `CharacterActionHost.InterruptAll(Knockdown)` → `CharacterGearService.DropAllWieldedToWorld` (`SmallItemSpawner`, 에피소드당 1회 latch).
 
 **도메인:** [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) · [`character/DEFINITION.md`](character/DEFINITION.md)
 

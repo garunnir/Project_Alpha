@@ -110,10 +110,10 @@ public sealed class UIAimPointer : MonoBehaviour
 
         if (_bound &&
             _attacker != null &&
-            CharacterBodyResolve.IsSameBodyRoot(_attacker, host))
+            CharacterBodyResolve.IsSameBodyRoot(_attacker.BodyRefs, host.BodyRefs))
             return;
 
-        CharacterBodyRefs refs = host.GetBodyRefs();
+        CharacterBodyRefs refs = host.BodyRefs;
         if (refs == null)
             return;
 

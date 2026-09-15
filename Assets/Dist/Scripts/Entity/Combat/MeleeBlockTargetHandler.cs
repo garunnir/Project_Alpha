@@ -18,7 +18,7 @@ public sealed class MeleeBlockTargetHandler : IActionHandler
             return;
 
         CharacterActionHost actionHost =
-            CharacterBodyResolve.GetInBody<CharacterActionHost>(attacker);
+            CharacterBodyResolve.GetInBody<CharacterActionHost>(attacker.BodyRefs);
         CharacterDigPipeline pipeline = actionHost != null ? actionHost.DigPipeline : null;
         if (pipeline == null || !pipeline.IsActive)
             return;

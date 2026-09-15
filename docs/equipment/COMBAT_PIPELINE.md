@@ -123,6 +123,8 @@ Aim/          ① Sight sample (IAimSightProvider · CombatAimSightPolicy)
 Targeting/    ① Preview (ICombatTargetingPreview)
 Perform/      ②  PlayerCombatController
 Combat/       ③  CharacterAttacker · Handlers · Catalog
+              ③  Attacker/Pain/Imbalance/HitReact/BodyEffectTicker = CharacterBodyRefs plain module (GetModule)
+              ③  CharacterActionHost remains MB; CombatActionSource reaches Attacker via module
 Map/Dig/      Resolve (DigTileTargetResolver · DigTileTargetAimPose) · Dig·Chop Pipeline
 ```
 

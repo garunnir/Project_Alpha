@@ -115,13 +115,14 @@ public sealed class FarmCellTargetSession : IFarmCellTargetSession, ICellTargetS
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            CharacterActionHost fromGear = gear.GetBodyComponent<CharacterActionHost>();
+            CharacterActionHost fromGear = gear.BodyRefs != null ? gear.BodyRefs.ActionHost : null;
             if (fromGear != null)
                 return fromGear;
         }
 
-        return PlayerInventoryRuntime.Active?.Host != null
-            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+        PlayerInventoryHost inventory = PlayerInventoryRuntime.Active?.Host;
+        return inventory != null && inventory.BodyRefs != null
+            ? inventory.BodyRefs.ActionHost
             : null;
     }
 
@@ -130,7 +131,9 @@ public sealed class FarmCellTargetSession : IFarmCellTargetSession, ICellTargetS
         if (gear == null)
             return;
 
-        CharacterBodyRoot bodyRoot = gear.GetComponentInParent<CharacterBodyRoot>();
+        CharacterBodyRoot bodyRoot = gear.BodyRefs != null
+            ? gear.BodyRefs.GetComponent<CharacterBodyRoot>()
+            : null;
         if (bodyRoot != null)
             CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
     }

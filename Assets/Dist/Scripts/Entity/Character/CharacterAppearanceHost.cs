@@ -1,23 +1,22 @@
 // ============================================================
-// CharacterAppearanceHost — Definition에서 복사한 외형·체형 런타임 저장
+// CharacterAppearanceHost — Definition에서 복사한 외형·체형 런타임 저장 (plain module)
 // ============================================================
 
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterAppearanceHost : MonoBehaviour
+public sealed class CharacterAppearanceHost
 {
-    [SerializeField] string _id;
-    [SerializeField] string _displayNameOverride;
-    [SerializeField] Sprite _portraitSprite;
-    [SerializeField] Vector2 _alignment;
-    [SerializeField] float _bodyMassKg;
-    [SerializeField] float _bustCm;
-    [SerializeField] float _waistCm;
-    [SerializeField] float _hipCm;
-    [SerializeField] List<CharacterPartMassEntry> _partMasses = new();
+    string _id;
+    string _displayNameOverride;
+    Sprite _portraitSprite;
+    Vector2 _alignment;
+    float _bodyMassKg;
+    float _bustCm;
+    float _waistCm;
+    float _hipCm;
+    readonly List<CharacterPartMassEntry> _partMasses = new();
 
     public string Id => _id;
     public string DisplayNameOverride => _displayNameOverride;
@@ -53,14 +52,13 @@ public sealed class CharacterAppearanceHost : MonoBehaviour
         return Loc.Get(_id);
     }
 
-    void Awake() =>
-        _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _bodyHost = refs != null ? refs.BodyHost : null;
+    }
 
     void RecalcRemainingMass()
     {
-        if (_bodyHost == null)
-            _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
-
         float remaining = _bodyMassKg;
         ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         if (body != null)

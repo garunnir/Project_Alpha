@@ -38,7 +38,7 @@ public static class CombatSurprise
         if (observer == null || subject == null || observer == subject)
             return false;
 
-        float visibility = CharacterPresenceHost.ResolveVisibility01(subject);
+        float visibility = CharacterPresenceHost.ResolveVisibility01(subject.BodyRefs);
         if (visibility <= 0f)
             return false;
 
@@ -46,7 +46,7 @@ public static class CombatSurprise
         Vector3 selfFeet = CharacterFeetPose.GetFeetWorld(observerTf);
         Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(subject.transform);
 
-        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(observer);
+        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(observer.BodyRefs);
         Vector3 forward = CharacterSightForward.ResolveXZ(state, observerTf);
 
         bool visionLock = false;
@@ -54,7 +54,7 @@ public static class CombatSurprise
         if (npcManager != null)
             visionLock = npcManager.TryGetVisionLock(observer, subject);
 
-        CharacterVision vision = CharacterBodyResolve.GetInBody<CharacterVision>(observer);
+        CharacterVision vision = CharacterBodyResolve.GetModule<CharacterVision>(observer.BodyRefs);
         return CharacterSightForward.IsWithinCone(
             vision,
             selfFeet,
@@ -79,7 +79,7 @@ public static class CombatSurprise
     public static int ResolveStrength(CharacterBodyHost host)
     {
         if (host != null &&
-            CharacterBodyResolve.TryGetInBody(host, out CharacterSkillsHost skillsHost) &&
+            CharacterBodyResolve.TryGetModule(host, out CharacterSkillsHost skillsHost) &&
             skillsHost.Skills != null)
             return skillsHost.Skills.Level(AttributeIds.Str);
         return CombatMath.StrengthBaseline;
@@ -114,14 +114,14 @@ public static class CombatSurprise
             npcTarget != null)
             return npcTarget;
 
-        if (!CharacterBodyResolve.TryGetInBody(attacker, out CharacterFactionHost selfFaction))
+        if (!CharacterBodyResolve.TryGetModule(attacker, out CharacterFactionHost selfFaction))
             return null;
 
         Transform tf = attacker.transform;
         Vector3 origin = CharacterFeetPose.GetFeetWorld(tf);
         Vector3 aimDir = tf.forward;
         float range = 2.5f;
-        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(attacker);
+        CharacterState state = CharacterBodyResolve.GetInBody<CharacterState>(attacker.BodyRefs);
         if (state != null)
         {
             Vector3 sight = state.SightDir;
@@ -136,7 +136,7 @@ public static class CombatSurprise
             }
         }
 
-        CharacterAttacker atk = CharacterBodyResolve.GetInBody<CharacterAttacker>(attacker);
+        CharacterAttacker atk = CharacterBodyResolve.GetModule<CharacterAttacker>(attacker.BodyRefs);
         if (atk != null)
         {
             ItemData item = atk.ItemFor(atk.ItemId);
@@ -160,7 +160,7 @@ public static class CombatSurprise
                 continue;
             if (host.Body == null || host.Body.IsDeadState)
                 continue;
-            if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
+            if (!CharacterBodyResolve.TryGetModule(host, out CharacterFactionHost otherFaction))
                 continue;
             if (!CharacterHostility.IsHostile(selfFaction, otherFaction))
                 continue;

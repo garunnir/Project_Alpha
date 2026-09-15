@@ -4,7 +4,7 @@
 > 인덱스: [`docs/README.md`](../README.md)  
 > 관련: [`DEFINITION.md`](DEFINITION.md) · [`ACTION.md`](ACTION.md) · [`../mood/MOOD.md`](../mood/MOOD.md) · [`SENSES.md`](SENSES.md)
 
-경로(호스트): `Assets/Dist/Scripts/Entity/Character/CharacterEmoteHost.cs`  
+경로(호스트): `Assets/Dist/Scripts/Entity/Character/CharacterEmoteHost.cs` (plain module, `CharacterBodyRefs` 소유)  
 경로(표현): `Assets/Dist/Scripts/UI/Character/UICharacterEmote.cs`  
 카탈로그 SO: `Assets/Dist/SOData/Gameplay/Character/CharacterEmoteCatalog.asset`  
 프리팹: `Assets/Dist/Visual/Prefabs/UIComponents/Character/Grp_CharacterEmote.prefab`  
@@ -20,7 +20,7 @@ PlayerStatus HUD 칩·Mood 수치와 **별개** — 월드 머리 위 1슬롯 �
 |------|------|
 | `EmoteId` | 감정·전투 ! 통합 카탈로그 키 (`MoodIconId`와 별개) |
 | `CharacterEmoteCatalog` | sprite / tint / `ObserverOnly` SSOT |
-| `CharacterEmoteHost` | 소스별 Request·우선순위·필터·가시성 게이트 (+ possessed Mood 구독, NPC combat alert API) |
+| `CharacterEmoteHost` | 소스별 Request·우선순위·필터·가시성 게이트 (+ possessed Mood 구독, NPC combat alert API). Catalog SO는 `CharacterBodyRefs` SerializeField, 튜닝은 `CharacterEmoteSettings.DefaultUnity` |
 | `UICharacterEmote` | WorldSpace Canvas + `WorldBillboard` presenter |
 
 ---

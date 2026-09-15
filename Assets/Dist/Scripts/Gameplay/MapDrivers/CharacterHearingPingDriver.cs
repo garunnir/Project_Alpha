@@ -34,9 +34,9 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         _playerFaction = null;
         if (_playerState != null)
         {
-            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
-            _playerHearing = CharacterBodyResolve.GetInBody<CharacterHearing>(_playerState);
-            _playerFaction = CharacterBodyResolve.GetInBody<CharacterFactionHost>(_playerState);
+            _playerVision = CharacterBodyResolve.GetModule<CharacterVision>(_playerState);
+            _playerHearing = CharacterBodyResolve.GetModule<CharacterHearing>(_playerState);
+            _playerFaction = CharacterBodyResolve.GetModule<CharacterFactionHost>(_playerState);
         }
     }
 
@@ -99,7 +99,7 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
                 continue;
             if (!IsPreferredHostile(bodyHost))
                 continue;
-            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetModule<CharacterSightFadeHost>(bodyHost);
             if (fadeHost == null)
                 continue;
             if (!CharacterBodyResolve.TryGetInBody(bodyHost, out CharacterMotor targetMotor))
@@ -187,18 +187,18 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
     void EnsurePlayerComponents()
     {
         if (_playerVision == null && _playerState != null)
-            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
+            _playerVision = CharacterBodyResolve.GetModule<CharacterVision>(_playerState);
         if (_playerHearing == null && _playerState != null)
-            _playerHearing = CharacterBodyResolve.GetInBody<CharacterHearing>(_playerState);
+            _playerHearing = CharacterBodyResolve.GetModule<CharacterHearing>(_playerState);
         if (_playerFaction == null && _playerState != null)
-            _playerFaction = CharacterBodyResolve.GetInBody<CharacterFactionHost>(_playerState);
+            _playerFaction = CharacterBodyResolve.GetModule<CharacterFactionHost>(_playerState);
     }
 
     bool IsPreferredHostile(CharacterBodyHost host)
     {
         if (host == null || _playerFaction == null)
             return false;
-        if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
+        if (!CharacterBodyResolve.TryGetModule(host, out CharacterFactionHost otherFaction))
             return false;
         return CharacterHostility.IsHostile(_playerFaction, otherFaction);
     }

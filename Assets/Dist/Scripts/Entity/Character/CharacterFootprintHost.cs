@@ -1,15 +1,14 @@
 // ============================================================
-// CharacterFootprintHost — CharacterDefinition grid footprint 런타임 보관
+// CharacterFootprintHost — CharacterDefinition grid footprint 런타임 보관 (plain module)
 // ============================================================
 
 using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterFootprintHost : MonoBehaviour
+public sealed class CharacterFootprintHost
 {
-    [SerializeField] Vector3Int _gridFootprint = CharacterGridFootprintDefaults.Default;
-
+    CharacterBodyRefs _refs;
+    Vector3Int _gridFootprint = CharacterGridFootprintDefaults.Default;
     Vector3Int _resolvedFootprint = CharacterGridFootprintDefaults.Default;
     bool _resolvedInitialized;
 
@@ -27,6 +26,15 @@ public sealed class CharacterFootprintHost : MonoBehaviour
     /// <summary>CharacterDefinition에서 적용한 기본 footprint (셀).</summary>
     public Vector3Int BaseGridFootprint => CharacterGridFootprintDefaults.Clamp(_gridFootprint);
 
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _refs = refs;
+        RebuildResolvedFootprint();
+#if UNITY_EDITOR
+        ValidateFootprintAgainstCapsule();
+#endif
+    }
+
     public void ApplyFromDefinition(CharacterDefinition definition)
     {
         _gridFootprint = definition != null
@@ -35,21 +43,11 @@ public sealed class CharacterFootprintHost : MonoBehaviour
         RebuildResolvedFootprint();
     }
 
-    void Awake() => RebuildResolvedFootprint();
-
-    void OnValidate()
-    {
-        _gridFootprint = CharacterGridFootprintDefaults.Clamp(_gridFootprint);
-        RebuildResolvedFootprint();
-#if UNITY_EDITOR
-        ValidateFootprintAgainstCapsule();
-#endif
-    }
-
     void RebuildResolvedFootprint()
     {
         Vector3Int baseFootprint = BaseGridFootprint;
-        if (!CharacterBodyResolve.TryGetInBody(this, out CapsuleCollider capsule))
+        CapsuleCollider capsule = ResolveCapsule();
+        if (capsule == null)
         {
             _resolvedFootprint = baseFootprint;
             _resolvedInitialized = true;
@@ -61,6 +59,13 @@ public sealed class CharacterFootprintHost : MonoBehaviour
             ResolveCellSize(),
             baseFootprint);
         _resolvedInitialized = true;
+    }
+
+    CapsuleCollider ResolveCapsule()
+    {
+        if (_refs == null)
+            return null;
+        return _refs.Get<CapsuleCollider>();
     }
 
     static float ResolveCellSize()
@@ -76,20 +81,22 @@ public sealed class CharacterFootprintHost : MonoBehaviour
 
     void ValidateFootprintAgainstCapsule()
     {
-        if (!CharacterBodyResolve.TryGetInBody(this, out CapsuleCollider capsule))
+        CapsuleCollider capsule = ResolveCapsule();
+        if (capsule == null)
             return;
 
         float cellSize = ResolveCellSize();
         Vector3Int baseFootprint = BaseGridFootprint;
         Vector3Int derived = CharacterGridFootprintResolver.DeriveFromCapsule(capsule, cellSize);
         Vector3Int resolved = CharacterGridFootprintResolver.Resolve(capsule, cellSize, baseFootprint);
+        Object logContext = _refs;
 
         if (resolved != baseFootprint)
         {
             Debug.Log(
-                $"[{nameof(CharacterFootprintHost)}] '{name}' runtime footprint expands to " +
+                $"[{nameof(CharacterFootprintHost)}] '{(_refs != null ? _refs.name : string.Empty)}' runtime footprint expands to " +
                 $"{resolved} from base {baseFootprint} (capsule-derived {derived}, cellSize={cellSize:0.###}).",
-                this);
+                logContext);
         }
 
         float expectedHeight = baseFootprint.y * cellSize;
@@ -98,10 +105,10 @@ public sealed class CharacterFootprintHost : MonoBehaviour
         if (Mathf.Abs(expectedHeight - capsuleHeight) > heightTolerance)
         {
             Debug.LogWarning(
-                $"[{nameof(CharacterFootprintHost)}] '{name}' base footprint Y={baseFootprint.y} " +
+                $"[{nameof(CharacterFootprintHost)}] '{(_refs != null ? _refs.name : string.Empty)}' base footprint Y={baseFootprint.y} " +
                 $"× cellSize={cellSize:0.###} → {expectedHeight:0.###} m, " +
                 $"but CapsuleCollider.height×scale={capsuleHeight:0.###} m.",
-                this);
+                logContext);
         }
 
         float expectedWidth = baseFootprint.x * cellSize;
@@ -111,11 +118,11 @@ public sealed class CharacterFootprintHost : MonoBehaviour
         if (derived.x > baseFootprint.x && Mathf.Abs(expectedWidth - capsuleDiameter) > widthTolerance)
         {
             Debug.LogWarning(
-                $"[{nameof(CharacterFootprintHost)}] '{name}' base footprint X/Z={baseFootprint.x} " +
+                $"[{nameof(CharacterFootprintHost)}] '{(_refs != null ? _refs.name : string.Empty)}' base footprint X/Z={baseFootprint.x} " +
                 $"× cellSize={cellSize:0.###} → {expectedWidth:0.###} m wide, " +
                 $"but CapsuleCollider diameter×scale={capsuleDiameter:0.###} m " +
                 $"(runtime uses {resolved.x} cells).",
-                this);
+                logContext);
         }
     }
 #endif

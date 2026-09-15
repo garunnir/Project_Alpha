@@ -20,8 +20,8 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 | `ICharacterBody` / `CharacterBody` | 소유권 트리. `RemovePart` / `TryAttach` / `ToDto` / `FromDto` |
 | `BodyPartNode` / `BodyPartKind` | 노드. `Organic` / `Prosthetic` |
 | `BodyPartIds` | ID·`ThermalParts`·`SeverableParts`·`FrostbiteParts`·`VitalOrgans` SSOT |
-| `CharacterBodyHost` | 엔티티별 `ICharacterBody` 소유 (플레이어·NPC 공용) |
-| `CharacterClimateHost` | 공용 체온·습윤 틱. frostbite/heat. 엔티티별 outdoor |
+| `CharacterBodyHost` | 엔티티별 `ICharacterBody` 소유 (plain module, `CharacterBodyRefs`) |
+| `CharacterClimateHost` | 공용 체온·습윤 틱. frostbite/heat. 엔티티별 outdoor (plain module) |
 | `BodyTemp` | 부위별 °C. 코어 getter = chest |
 | `WearEnvExposure` | 습윤 0..1 (공식은 GEAR Phase E) |
 | `WeatherExposure` | `Resolve(kind, period, outdoor)` → ambient °C / wetness gain |
@@ -229,7 +229,7 @@ HUD: `PlayerStatusMoodEffectCatalog` — Frostbite→`Hypothermia`, Heat→`Over
 
 ## DTO (왕복, 저장 UI 아님)
 
-`JsonUtility.ToJson` / `FromJson`. 세이브 슬롯·파일 경로 없음. 에디터 ContextMenu: `CharacterBodyHost` `CharacterBodyDtoRoundTrip.Execute`, `CharacterClimateHost` `BodyTemp.ExecuteDtoRoundTripVerify`. 런타임 적용: `CharacterBodyHost.ApplyBodyDto`, `CharacterClimateHost.ApplyBodyTempDto`.
+`JsonUtility.ToJson` / `FromJson`. 세이브 슬롯·파일 경로 없음. 왕복 검증: `CharacterBodyDtoRoundTrip.Execute`, `BodyTemp.ExecuteDtoRoundTripVerify` (런타임 디버그 창 / 코드). 런타임 적용: `CharacterBodyHost.ApplyBodyDto`, `CharacterClimateHost.ApplyBodyTempDto`.
 
 | DTO | 필드 | 왕복 |
 |-----|------|------|

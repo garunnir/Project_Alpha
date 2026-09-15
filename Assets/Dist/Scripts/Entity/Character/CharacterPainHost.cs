@@ -7,49 +7,54 @@ using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-public sealed class CharacterPainHost : MonoBehaviour
+public sealed class CharacterPainHost
 {
     readonly List<BodyPartEffect> _effectScratch = new(16);
 
+    CharacterBodyRefs _refs;
     CharacterBodyHost _bodyHost;
     CharacterMotor _motor;
     CharacterActionHost _actionHost;
-    CharacterAttacker _attacker;
     ICharacterBody _subscribed;
     bool _painShocked;
     bool _painLatched;
     float _lastEffective;
     float _surpriseStunRemain;
+    bool _enabled;
 
     public event Action Changed;
 
+    public CharacterBodyRefs BodyRefs => _refs;
     public bool IsPainShocked => _painShocked;
     public float EffectivePain01 => _lastEffective;
     public float SurpriseStunRemain => _surpriseStunRemain;
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _bodyHost = GetComponent<CharacterBodyHost>();
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _attacker);
+        _refs = refs;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        _motor = refs != null ? refs.Motor : null;
+        _actionHost = refs != null ? refs.ActionHost : null;
+        if (_enabled)
+            Enable();
     }
 
-    void OnEnable()
+    public void Enable()
     {
+        _enabled = true;
         BindBody();
         Refresh();
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        _enabled = false;
         UnbindBody();
         ReleasePossessedInputPolicy();
     }
 
-    void Update()
+    /// <summary>기습 스턴 잔여. heap 없음.</summary>
+    public void Tick()
     {
         if (_surpriseStunRemain <= 0f)
             return;
@@ -145,10 +150,7 @@ public sealed class CharacterPainHost : MonoBehaviour
         _motor?.SetMoveLocked(shocked);
         SyncPossessedInputPolicy();
         if (shocked)
-        {
-            _actionHost?.CancelAll();
-            _attacker?.CancelAllPendingCues();
-        }
+            _actionHost?.InterruptAll(CharacterInterruptReason.Knockdown);
 
         Changed?.Invoke();
     }

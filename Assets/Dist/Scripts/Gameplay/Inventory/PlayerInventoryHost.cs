@@ -4,7 +4,6 @@
 
 using System;
 using Garunnir.Runtime.Gameplay.Data;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
 public enum BodyLootDisplayKind
@@ -14,8 +13,7 @@ public enum BodyLootDisplayKind
     Dead = 2,
 }
 
-[DisallowMultipleComponent]
-public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProvider
+public sealed class PlayerInventoryHost : IInventoryContainerProvider
 {
     public const string DefaultInstanceId = "player-body";
     public const string DefaultContainerDefId = "player_body";
@@ -26,12 +24,13 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     public static string CreateUniqueBodyInstanceId() =>
         UniqueBodyInstanceIdPrefix + Guid.NewGuid().ToString("N");
 
-    [Required, SerializeField] CharacterState _characterState;
-    [SerializeField] string _containerDefId = DefaultContainerDefId;
-    [SerializeField] string _containerId = DefaultInstanceId;
-    [SerializeField, Min(0f)] float _baseMaxWeight = 50f;
-    [SerializeField, Min(0f)] float _baseMaxVolume = 30f;
+    string _containerDefId = DefaultContainerDefId;
+    string _containerId = DefaultInstanceId;
+    readonly float _baseMaxWeight = 50f;
+    readonly float _baseMaxVolume = 30f;
 
+    CharacterBodyRefs _refs;
+    CharacterState _characterState;
     InventoryContainer _container;
     PlayerCarryCapacityPolicy _capacityPolicy;
     CharacterPainHost _painHost;
@@ -41,11 +40,15 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     ICharacterDefeat _subscribedDefeat;
     BodyLootDisplayKind _lastLootDisplayKind = BodyLootDisplayKind.None;
     bool _lastLootAvailableToPlayer;
+    bool _enabled;
 
+    public CharacterBodyRefs BodyRefs => _refs;
     public InventoryContainer Container => _container;
     public string ContainerId => _containerId;
-    public Vector3 WorldPosition => transform.position;
-    public Vector3Int GridPosition => _characterState.GridPos;
+    public Vector3 WorldPosition =>
+        _refs != null ? _refs.transform.position : Vector3.zero;
+    public Vector3Int GridPosition =>
+        _characterState != null ? _characterState.GridPos : Vector3Int.zero;
 
     public void AssignInstanceId(string instanceId)
     {
@@ -54,7 +57,7 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
         if (_container != null)
         {
-            Debug.LogError("[PlayerInventoryHost] AssignInstanceId must run before Awake.", this);
+            Debug.LogError("[PlayerInventoryHost] AssignInstanceId must run before Enable.");
             return;
         }
 
@@ -65,16 +68,46 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
         !string.IsNullOrEmpty(instanceId) &&
         instanceId.StartsWith(UniqueBodyInstanceIdPrefix, StringComparison.Ordinal);
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        TryGetComponent(out _painHost);
-        TryGetComponent(out _skillsHost);
-        TryGetComponent(out _bodyHost);
+        _refs = refs;
+        _characterState = refs != null ? refs.State : null;
+        _painHost = refs != null ? refs.PainHost : null;
+        _skillsHost = refs != null ? refs.SkillsHost : null;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        if (string.IsNullOrWhiteSpace(_containerId))
+            _containerId = DefaultInstanceId;
+    }
+
+    public void Enable()
+    {
+        EnsureContainer();
+        InventoryContainerRegistry.Register(this);
+        SubscribeLootDisplaySignals();
+        CacheLootDisplaySnapshot();
+        _enabled = true;
+    }
+
+    public void Disable()
+    {
+        if (!_enabled)
+            return;
+
+        _enabled = false;
+        UnsubscribeLootDisplaySignals();
+        InventoryContainerRegistry.Unregister(this);
+    }
+
+    void EnsureContainer()
+    {
+        if (_container != null)
+            return;
 
         ContainerData containerDef = GameplayData.GetContainer(_containerDefId);
         if (containerDef == null)
         {
-            Debug.LogWarning($"[PlayerInventoryHost] Container definition '{_containerDefId}' not found in GameData.", this);
+            Debug.LogWarning(
+                $"[PlayerInventoryHost] Container definition '{_containerDefId}' not found in GameData.");
             return;
         }
 
@@ -83,30 +116,6 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
             () => _baseMaxVolume);
         string instanceId = string.IsNullOrWhiteSpace(_containerId) ? DefaultInstanceId : _containerId;
         _container = InventoryContainer.Create(containerDef, _capacityPolicy, instanceId);
-    }
-
-    void OnEnable()
-    {
-        InventoryContainerRegistry.Register(this);
-        SubscribeLootDisplaySignals();
-        CacheLootDisplaySnapshot();
-    }
-
-    void OnDisable()
-    {
-        UnsubscribeLootDisplaySignals();
-        InventoryContainerRegistry.Unregister(this);
-    }
-
-    void OnValidate() => EnsureReferences();
-    void Reset() => EnsureReferences();
-
-    void EnsureReferences()
-    {
-        if (!_characterState)
-            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        if (string.IsNullOrWhiteSpace(_containerId))
-            _containerId = DefaultInstanceId;
     }
 
     /// <summary>
@@ -162,7 +171,8 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     public string ResolveBodyLootDisplayName()
     {
-        if (TryGetComponent(out CharacterAppearanceHost appearance))
+        CharacterAppearanceHost appearance = _refs != null ? _refs.Appearance : null;
+        if (appearance != null)
         {
             string displayName = appearance.ResolveDisplayName();
             if (!string.IsNullOrEmpty(displayName))

@@ -6,11 +6,8 @@ using System;
 using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterSkillsHost))]
-public sealed class CharacterAttacker : MonoBehaviour
+public sealed class CharacterAttacker
 {
     const float AimHeight = 0.15f;
     public const float MinRayDistance = 0.001f;
@@ -20,19 +17,18 @@ public sealed class CharacterAttacker : MonoBehaviour
     const int HandCooldownSlotCount = (int)WieldHand.TwoHand + 1;
     const float CueCycleEpsilon = 1e-4f;
 
-    [FormerlySerializedAs("_weapon")]
-    [SerializeField] WeaponPresentation _presentation;
-    [Tooltip("GameplayData ItemData id. 비우면 비무장.")]
-    [SerializeField] string _itemId;
-    [SerializeField] WeaponPresentationCatalog _catalog;
-    [Tooltip("원거리 레이/탄 장애물. Character 포함(~0 권장). 자기 콜라이더는 IsOwnCollider로 제외.")]
-    [SerializeField] LayerMask _rangedObstructionMask = ~0;
-    [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
-    [FormerlySerializedAs("_selectedAction")]
-    [SerializeField] CombatLeaf _selectedLeaf = CombatLeaf.Strike;
-    [SerializeField] WieldHand _activeWieldHand = WieldHand.TwoHand;
-    [SerializeField] string _preferredPartId = BodyPartIds.Torso;
-    [SerializeField] TimeScaleChannel _combatVfxTimeChannel = TimeScaleChannel.World;
+    WeaponPresentation _presentation;
+    string _itemId;
+    WeaponPresentationCatalog _catalog;
+    LayerMask _rangedObstructionMask = ~0;
+    TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    CombatLeaf _selectedLeaf = CombatLeaf.Strike;
+    WieldHand _activeWieldHand = WieldHand.TwoHand;
+    string _preferredPartId = BodyPartIds.Torso;
+    TimeScaleChannel _combatVfxTimeChannel = TimeScaleChannel.World;
+    CharacterBodyRefs _refs;
+    bool _enabled;
+    bool _eventsBound;
     ItemInstance _wieldedInstance;
     ItemStack _wieldedStack;
     WieldSlotId _lastDualSlot;
@@ -142,6 +138,11 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
     }
 
+    public CharacterBodyRefs BodyRefs => _refs;
+    public GameObject gameObject => _refs != null ? _refs.gameObject : null;
+    public Transform transform => _refs != null ? _refs.transform : null;
+    public string name => _refs != null ? _refs.name : string.Empty;
+
     public LayerMask RangedObstructionMask => _rangedObstructionMask;
 
     public MapTopologyLineCast MapLineCast => _mapLineCast;
@@ -195,61 +196,60 @@ public sealed class CharacterAttacker : MonoBehaviour
     ItemData CurrentItem =>
         string.IsNullOrEmpty(_itemId) ? null : GameplayData.GetItem(_itemId);
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
+        _refs = refs;
+        if (refs != null)
+        {
+            if (refs.WeaponPresentationCatalog != null)
+                _catalog = refs.WeaponPresentationCatalog;
+            _rangedObstructionMask = refs.RangedObstructionMask;
+            _timeChannel = refs.AttackerTimeChannel;
+            _combatVfxTimeChannel = refs.CombatVfxTimeChannel;
+        }
+
         ResolveBodyRefs();
-        _hitStop = CharacterHitStopState.Find(this);
-        _combatVfx = new CharacterAttackerCombatVfx(this, _combatVfxTimeChannel);
-        _combatVfx.Bind();
+        _hitStop = _bodyHost != null ? _bodyHost.HitStop : null;
+        if (_combatVfx == null)
+            _combatVfx = new CharacterAttackerCombatVfx(this, _combatVfxTimeChannel);
         if (_presentation != null)
             _presentation.RebuildSupportedActions();
         RefreshPresentationFromCatalog();
         RebuildAvailableActions();
         ApplySelectedFromInstance();
+        if (_enabled)
+            Enable();
     }
 
-    /// <summary>NpcSample GameplayCore 분리 후 루트·자식 SSOT. 스폰 1회 <see cref="CharacterBodyRefs"/> 캐시.</summary>
+    /// <summary>NpcSample 루트 BodyRefs SSOT. 스폰 1회 캐시.</summary>
     void ResolveBodyRefs()
     {
-        CharacterBodyRefs refs = this.GetBodyRefs();
-        if (refs != null)
-        {
-            _skillsHost = refs.SkillsHost;
-            _gearHost = refs.GearHost;
-            refs.TryGet(out _climateHost);
-            _actionHost = refs.ActionHost;
-            _painHost = refs.PainHost;
-            refs.TryGet(out _imbalanceHost);
-            _bodyHost = refs.BodyHost;
-            _characterState = refs.State;
-            _motor = refs.Motor;
-            _appearance = refs.Appearance;
-            _locAnim = refs.LocomotionAnim;
-        }
-        else
-        {
-            _skillsHost = GetComponent<CharacterSkillsHost>();
-            _gearHost = GetComponent<PlayerGearHost>();
-            _climateHost = GetComponent<CharacterClimateHost>();
-            _actionHost = GetComponent<CharacterActionHost>();
-            _painHost = GetComponent<CharacterPainHost>();
-            _imbalanceHost = GetComponent<CharacterImbalanceHost>();
-            _bodyHost = GetComponent<CharacterBodyHost>();
-            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
-            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-            _appearance = CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
-            _locAnim = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
-            if (_bodyHost == null)
-                _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
-        }
+        if (_refs == null)
+            return;
 
-        _selfCollider = ResolveSelfCollider();
+        _skillsHost = _refs.SkillsHost;
+        _gearHost = _refs.GearHost;
+        _climateHost = _refs.ClimateHost;
+        _actionHost = _refs.ActionHost;
+        _painHost = _refs.PainHost;
+        _imbalanceHost = _refs.ImbalanceHost;
+        _bodyHost = _refs.BodyHost;
+        _characterState = _refs.State;
+        _motor = _refs.Motor;
+        _appearance = _refs.Appearance;
+        _locAnim = _refs.LocomotionAnim;
+        _selfCollider = CharacterBodyResolve.GetBodyCollider(_refs);
     }
 
-    Collider ResolveSelfCollider() => CharacterBodyResolve.GetBodyCollider(this);
-
-    void OnEnable()
+    public void Enable()
     {
+        ResolveBodyRefs();
+        _hitStop = _bodyHost != null ? _bodyHost.HitStop : _hitStop;
+        _enabled = true;
+        if (_eventsBound)
+            return;
+
+        _eventsBound = true;
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (skills != null)
             skills.Refreshed += OnSkillsRefreshed;
@@ -257,8 +257,13 @@ public sealed class CharacterAttacker : MonoBehaviour
         _combatVfx?.Bind();
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        _enabled = false;
+        if (!_eventsBound)
+            return;
+
+        _eventsBound = false;
         Camera.onPostRender -= OnCameraPostRender;
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (skills != null)
@@ -268,7 +273,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         _combatVfx?.Unbind();
     }
 
-    void Update()
+    /// <summary>쿨·조준·Raise. heap 없음 (고정 슬롯 배열).</summary>
+    public void Tick()
     {
         DrawMeleeHitboxDebugLines();
 
@@ -435,7 +441,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             Debug.LogWarning(
                 $"[CharacterAttacker] Action {action} not available on {name}",
-                this);
+                _refs);
             return AttackPerformResult.Unsupported;
         }
 
@@ -527,7 +533,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         if (targetHost == null)
             return null;
-        if (CharacterBodyResolve.TryGetInBody(targetHost, out PlayerGearHost gear))
+        if (CharacterBodyResolve.TryGetModule(targetHost, out PlayerGearHost gear))
             return gear.Wear;
         return null;
     }
@@ -925,7 +931,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             ? skills.Level(AttributeIds.Str)
             : CombatMath.StrengthBaseline;
 
-        CharacterActionHost host = CharacterBodyResolve.GetInBody<CharacterActionHost>(this);
+        CharacterActionHost host = _actionHost != null
+            ? _actionHost
+            : (_refs != null ? _refs.ActionHost : null);
         TileDefinition definition = host != null ? host.ChopPipeline.ActiveDefinition : null;
         return CombatMath.ResolveStructureDamage(
             item,
@@ -1001,7 +1009,9 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public Vector3 ResolveOrigin()
     {
-        GameObject root = CharacterBodyResolve.GetBodyRoot(gameObject);
+        GameObject root = _refs != null
+            ? CharacterBodyResolve.GetBodyRoot(_refs.gameObject)
+            : null;
         Transform basis = root != null ? root.transform : transform;
         return ResolveBodyCenter(basis, _selfCollider);
     }
@@ -1133,7 +1143,9 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     Vector3 ResolveBodyForwardXZ()
     {
-        GameObject root = CharacterBodyResolve.GetBodyRoot(gameObject);
+        GameObject root = _refs != null
+            ? CharacterBodyResolve.GetBodyRoot(_refs.gameObject)
+            : null;
         Transform basis = root != null ? root.transform : transform;
         Vector3 dir = basis.forward;
         dir.y = 0f;
@@ -1141,7 +1153,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     }
 
     public bool IsOwnCollider(Collider collider) =>
-        CharacterBodyResolve.IsColliderOnBody(this, collider);
+        CharacterBodyResolve.IsColliderOnBody(_refs, collider);
 
     public int CollectMeleeHits(
         ItemData item,
@@ -1363,6 +1375,19 @@ public sealed class CharacterAttacker : MonoBehaviour
             _pendingCues[i] = default;
     }
 
+    public void ClearInterruptBusy()
+    {
+        for (int i = 0; i < HandCooldownSlotCount; i++)
+        {
+            _actionCooldownRemaining[i] = 0f;
+            _actionCooldownDuration[i] = 0f;
+            _weaponCooldownRemaining[i] = 0f;
+            _weaponCooldownDuration[i] = 0f;
+        }
+
+        ApplyRaiseFromHandler(false);
+    }
+
     public void EmitJudgedGate(
         in ActionHandlerContext context,
         WeaponResolveMode resolveMode,
@@ -1519,7 +1544,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             damage = 0;
 
         if (surpriseMelee == SurpriseMeleeKind.Stun &&
-            CharacterBodyResolve.TryGetInBody(targetHost, out CharacterPainHost targetPain))
+            CharacterBodyResolve.TryGetModule(targetHost, out CharacterPainHost targetPain))
             targetPain.ApplySurpriseStun(CombatSurprise.StunSeconds);
 
         float jinIn = impulseJinOverride >= 0f
@@ -1893,7 +1918,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             MeleeHitbox.DrawDebugContact(_debugContacts[i], 0f);
     }
 
-    void OnDrawGizmos()
+    public void DrawGizmos()
     {
         if (!ShouldDrawMeleeHitbox)
             return;
@@ -1913,7 +1938,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             return;
         if (cam.cameraType == CameraType.Preview || cam.cameraType == CameraType.Reflection)
             return;
-        if ((cam.cullingMask & (1 << gameObject.layer)) == 0)
+        if (_refs == null || (cam.cullingMask & (1 << _refs.gameObject.layer)) == 0)
             return;
         if (!ShouldDrawMeleeHitbox)
             return;

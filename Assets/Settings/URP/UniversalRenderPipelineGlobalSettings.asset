@@ -74,7 +74,9 @@ MonoBehaviour:
   m_RenderingLayerNames:
   - Default
   - Selection
-  m_ValidRenderingLayers: 3
+  - CharacterSelection
+  - CharacterSelectionBlocked
+  m_ValidRenderingLayers: 15
   lightLayerName0: 
   lightLayerName1: 
   lightLayerName2: 

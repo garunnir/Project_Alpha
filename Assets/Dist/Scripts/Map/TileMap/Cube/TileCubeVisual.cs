@@ -91,10 +91,9 @@ namespace IsoTilemap
             _filter.sharedMesh = mesh;
             _renderer.sharedMaterial = mat;
 
-            // Play: Shade가 bake shared에서 material 인스턴스를 잡아 EmphasisAdd(Dig 하이라이트)가 먹게 함.
             var shade = GetComponent<ShadeObjectController>();
             if (shade != null)
-                shade.RebindMaterial(useSharedMaterial: !Application.isPlaying);
+                shade.RebindMaterial();
         }
     }
 }

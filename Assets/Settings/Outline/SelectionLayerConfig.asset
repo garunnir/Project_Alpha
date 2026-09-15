@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371e604b2b2a3204db6e2ba1fe5d4dbe, type: 3}
   m_Name: SelectionLayerConfig
   m_EditorClassIdentifier: DistScript::SelectionLayerConfig
-  _renderingLayerMask: 2
+  _tileRenderingLayerMask: 2
+  _characterAvailableOutlineColor: {r: 0.1886576, g: 1, b: 0.015686274, a: 1}
+  _characterUnavailableOutlineColor: {r: 1, g: 0.2, b: 0.15, a: 1}
+  _characterIdleOutlineColor: {r: 0, g: 0, b: 0, a: 0}

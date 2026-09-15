@@ -51,10 +51,10 @@ public static class CharacterFactory
         if (instance == null)
             return null;
 
+        CharacterBodyRefs.EnsureResolved(instance);
+
         if (useGameplayDataOwner)
             CharacterGameplayDataConfigurator.ConfigureAsGameplayDataOwner(instance);
-
-        CharacterBodyRefs.EnsureResolved(instance);
 
         CharacterDefinitionBinder binder = instance.GetComponent<CharacterDefinitionBinder>();
         if (binder == null)

@@ -1,23 +1,26 @@
 // ============================================================
-// CharacterBodyHost — 엔티티별 ICharacterBody 소유 (플레이어·NPC)
+// CharacterBodyHost — 엔티티별 ICharacterBody 소유 (plain module)
 // ============================================================
 
-using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterBodyHost : MonoBehaviour
+public sealed class CharacterBodyHost
 {
-    [SerializeField] bool _useGameplayDataBody;
-    [SerializeField] int _seedStrength = 8;
-    [SerializeField] bool _prototypeSeed;
-    [SerializeField] CombatHitStopSettings _hitStopSettings;
+    const int DefaultSeedStrength = 8;
 
+    CharacterBodyRefs _refs;
+    bool _useGameplayDataBody;
+    CombatHitStopSettings _hitStopSettings;
     ICharacterBody _body;
     CharacterHitStopState _hitStop;
+    bool _enabled;
 
-    static readonly List<CharacterBodyHost> s_active = new(16);
+    public CharacterBodyRefs BodyRefs => _refs;
+    public GameObject gameObject => _refs != null ? _refs.gameObject : null;
+    public Transform transform => _refs != null ? _refs.transform : null;
+    public bool isActiveAndEnabled => _enabled && _refs != null && _refs.isActiveAndEnabled;
+    public string name => _refs != null ? _refs.name : string.Empty;
 
     public ICharacterBody Body
     {
@@ -52,30 +55,38 @@ public sealed class CharacterBodyHost : MonoBehaviour
             _hitStop.SetSettings(settings);
     }
 
-    public static int ActiveCount => s_active.Count;
+    public static int ActiveCount => CharacterBodyRefs.ActiveCount;
 
-    public static CharacterBodyHost GetActive(int index) => s_active[index];
-
-    void Awake()
+    public static CharacterBodyHost GetActive(int index)
     {
-        EnsureBody();
-        EnsureHitStop();
+        CharacterBodyRefs refs = CharacterBodyRefs.GetActive(index);
+        return refs != null ? refs.BodyHost : null;
     }
 
-    void OnEnable()
+    public void Bind(CharacterBodyRefs refs)
     {
-        if (!s_active.Contains(this))
-            s_active.Add(this);
+        _refs = refs;
+        if (refs != null && refs.HitStopSettings != null)
+            _hitStopSettings = refs.HitStopSettings;
+        if (_enabled)
+            Enable();
+    }
+
+    public void Enable()
+    {
+        _enabled = true;
+        EnsureBody();
+        EnsureHitStop();
         HitStop?.Bind();
     }
 
-    void OnDisable()
+    public void Disable()
     {
-        s_active.Remove(this);
+        _enabled = false;
         _hitStop?.Unbind();
     }
 
-    void LateUpdate()
+    public void Tick()
     {
         if (_hitStop == null)
             return;
@@ -86,6 +97,9 @@ public sealed class CharacterBodyHost : MonoBehaviour
     {
         if (_hitStop != null)
             return;
+
+        if (_hitStopSettings == null && _refs != null)
+            _hitStopSettings = _refs.HitStopSettings;
 
 #if UNITY_EDITOR
         if (_hitStopSettings == null)
@@ -108,7 +122,7 @@ public sealed class CharacterBodyHost : MonoBehaviour
             return;
         }
 
-        _body = CharacterBody.CreateHumanDefault(_seedStrength, _prototypeSeed);
+        _body = CharacterBody.CreateHumanDefault(DefaultSeedStrength, prototypeSeed: false);
     }
 
     public void BindBody(ICharacterBody body)
@@ -121,31 +135,5 @@ public sealed class CharacterBodyHost : MonoBehaviour
         Body.FromDto(dto);
     }
 
-#if UNITY_EDITOR
-    [ContextMenu("Debug/Sever Arm L")]
-    void DebugSeverArmL() => Body?.RemovePart(BodyPartIds.UpperArmL);
-
-    [ContextMenu("Debug/Regen Arm L")]
-    void DebugRegenArmL() => BodyPartRestoreService.TryRegenerate(Body, BodyPartIds.UpperArmL);
-
-    [ContextMenu("Debug/Attach Prosthetic Arm L")]
-    void DebugAttachProstheticArmL() =>
-        BodyPartRestoreService.TryAttachProsthetic(Body, BodyPartIds.UpperArmL);
-
-    [ContextMenu("Debug/Sever Thigh L")]
-    void DebugSeverThighL() => Body?.RemovePart(BodyPartIds.ThighL);
-
-    [ContextMenu("Debug/Regen Thigh L")]
-    void DebugRegenThighL() => BodyPartRestoreService.TryRegenerate(Body, BodyPartIds.ThighL);
-
-    [ContextMenu("Debug/Attach Prosthetic Thigh L")]
-    void DebugAttachProstheticThighL() =>
-        BodyPartRestoreService.TryAttachProsthetic(Body, BodyPartIds.ThighL);
-
-    [ContextMenu("Debug/Verify Body DTO Round-Trip")]
-    void DebugVerifyBodyDtoRoundTrip()
-    {
-        Debug.Log("[CharacterBodyHost] CharacterBody DTO " + CharacterBodyDtoRoundTrip.Execute(), this);
-    }
-#endif
+    public int GetInstanceID() => _refs != null ? _refs.GetInstanceID() : 0;
 }

@@ -68,8 +68,7 @@ public static class CharacterVisionDefaults
         Mathf.Clamp(degrees, SpotAngleMinDegrees, SpotAngleMaxDegrees);
 }
 
-[DisallowMultipleComponent]
-public sealed class CharacterVision : MonoBehaviour
+public sealed class CharacterVision
 {
     CharacterSenseBlock _senses = CharacterSenseBlock.Default;
     float _spotAngleDegrees = CharacterVisionDefaults.SpotAngleDegrees;
@@ -145,19 +144,14 @@ public sealed class CharacterVision : MonoBehaviour
             EffectiveLoseRadius,
             EffectiveSpotAngleDegrees);
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        if (_gearHost == null)
-            _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
-        if (_definitionBinder == null)
-            _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
+        _gearHost = refs != null ? refs.GearHost : null;
+        _definitionBinder = refs != null ? refs.DefinitionBinder : null;
     }
 
     float ResolveBaseSpotAngle()
     {
-        if (_definitionBinder == null)
-            _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
-
         CharacterDefinition def = _definitionBinder != null ? _definitionBinder.Definition : null;
         if (def != null)
             return CharacterVisionDefaults.ClampSpotAngle(def.SpotAngleDegrees);

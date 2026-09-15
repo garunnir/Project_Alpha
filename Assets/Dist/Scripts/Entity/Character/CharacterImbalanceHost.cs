@@ -5,51 +5,56 @@
 using System;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-public sealed class CharacterImbalanceHost : MonoBehaviour
+public sealed class CharacterImbalanceHost
 {
+    CharacterBodyRefs _refs;
     CharacterMotor _motor;
     PlayerMovement _movement;
     CharacterActionHost _actionHost;
     CharacterAttacker _attacker;
     float _imbalance;
     float _lastEmittedBucket = -1f;
+    bool _enabled;
 
     public static CharacterImbalanceHost Active => PlayerPossessSession.ImbalanceHost;
 
     public void ClaimActive() { }
     public event Action Changed;
 
+    public CharacterBodyRefs BodyRefs => _refs;
     public float Imbalance01 => _imbalance;
     public bool IsFullyUnbalanced => _imbalance >= 1f - 1e-4f;
     public float MoveSpeedFactor => CombatImbalance.MoveSpeedFactor(_imbalance);
     public float HitAccuracyFactor => CombatImbalance.HitAccuracyFactor(_imbalance);
 
-    /// <summary>디버그/치트용. 클램프 후 이속 배율 적용 + Changed.</summary>
-    public void SetImbalance01(float value)
+    public void Bind(CharacterBodyRefs refs)
     {
-        float next = Mathf.Clamp01(value);
-        if (Mathf.Abs(next - _imbalance) < 1e-6f)
-            return;
-
-        _imbalance = next;
-        ApplySpeedFactor(MoveSpeedFactor);
-        _lastEmittedBucket = CombatImbalance.BucketIntensity(_imbalance);
-        Changed?.Invoke();
+        _refs = refs;
+        _motor = refs != null ? refs.Motor : null;
+        _actionHost = refs != null ? refs.ActionHost : null;
+        _attacker = refs != null ? refs.Attacker : null;
+        _movement = refs != null
+            ? CharacterBodyResolve.GetInBody<PlayerMovement>(refs)
+            : null;
+        if (_enabled)
+            Enable();
     }
 
-    void Awake()
+    public void Enable()
     {
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        _movement = CharacterBodyResolve.GetInBody<PlayerMovement>(this);
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _attacker);
+        _enabled = true;
+        if (_attacker == null && _refs != null)
+            _attacker = _refs.Attacker;
     }
 
-    void OnDisable() => ApplySpeedFactor(1f);
+    public void Disable()
+    {
+        _enabled = false;
+        ApplySpeedFactor(1f);
+    }
 
-    void Update()
+    /// <summary>불균형 회복. heap 없음.</summary>
+    public void Tick()
     {
         if (_imbalance <= 0f)
             return;
@@ -67,6 +72,19 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
 
         ApplySpeedFactor(MoveSpeedFactor);
         EmitChangedIfBucketMoved();
+    }
+
+    /// <summary>디버그/치트용. 클램프 후 이속 배율 적용 + Changed.</summary>
+    public void SetImbalance01(float value)
+    {
+        float next = Mathf.Clamp01(value);
+        if (Mathf.Abs(next - _imbalance) < 1e-6f)
+            return;
+
+        _imbalance = next;
+        ApplySpeedFactor(MoveSpeedFactor);
+        _lastEmittedBucket = CombatImbalance.BucketIntensity(_imbalance);
+        Changed?.Invoke();
     }
 
     /// <summary>

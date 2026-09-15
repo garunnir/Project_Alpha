@@ -158,22 +158,23 @@ public sealed class CharacterRuntimeDebugModel
             return;
         }
 
-        host.TryGetComponent(out _skillsHost);
-        host.TryGetComponent(out _climateHost);
-        host.TryGetComponent(out _needsHost);
-        host.TryGetComponent(out _imbalanceHost);
-        host.TryGetComponent(out _painHost);
-        host.TryGetComponent(out _moodHost);
-        host.TryGetComponent(out _actionHost);
-        host.TryGetComponent(out _appearance);
-        host.TryGetComponent(out _factionHost);
-        host.TryGetComponent(out _motor);
-        host.TryGetComponent(out _vision);
-        host.TryGetComponent(out _hearing);
-        host.TryGetComponent(out _presenceHost);
-        host.TryGetComponent(out _emoteHost);
-        host.TryGetComponent(out _definitionBinder);
-        host.TryGetComponent(out _encumbrance);
+        CharacterBodyRefs refs = host.BodyRefs;
+        _skillsHost = refs != null ? refs.SkillsHost : null;
+        _climateHost = refs != null ? refs.ClimateHost : null;
+        _needsHost = refs != null ? refs.NeedsHost : null;
+        _imbalanceHost = refs != null ? refs.ImbalanceHost : null;
+        _painHost = refs != null ? refs.PainHost : null;
+        _moodHost = refs != null ? refs.MoodHost : null;
+        _actionHost = refs != null ? refs.ActionHost : null;
+        _factionHost = refs != null ? refs.FactionHost : null;
+        _motor = refs != null ? refs.Motor : null;
+        _definitionBinder = refs != null ? refs.DefinitionBinder : null;
+        _encumbrance = refs != null ? refs.EncumbranceHost : null;
+        _vision = refs != null ? refs.Vision : null;
+        _hearing = refs != null ? refs.Hearing : null;
+        _presenceHost = refs != null ? refs.Presence : null;
+        _appearance = refs != null ? refs.Appearance : null;
+        _emoteHost = refs != null ? refs.Emote : null;
         RebuildRowCaches();
     }
 
@@ -913,8 +914,9 @@ public sealed class CharacterRuntimeDebugModel
     [ShowInInspector, ReadOnly, LabelText("Stealth")]
     bool PresenceStealthActive =>
         _bodyHost != null &&
-        _bodyHost.TryGetComponent(out CharacterState state) &&
-        state.IsStealth;
+        _bodyHost.BodyRefs != null &&
+        _bodyHost.BodyRefs.State != null &&
+        _bodyHost.BodyRefs.State.IsStealth;
 
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
     [ShowIf(nameof(HasCombat))]
@@ -941,7 +943,8 @@ public sealed class CharacterRuntimeDebugModel
             CharacterBodyHost candidate = CharacterBodyHost.GetActive(i);
             if (candidate == null)
                 continue;
-            if (!candidate.TryGetComponent(out CharacterMotor motor) || !motor.IsPossessed)
+            CharacterMotor motor = candidate.BodyRefs != null ? candidate.BodyRefs.Motor : null;
+            if (motor == null || !motor.IsPossessed)
                 continue;
             host = candidate;
             return true;

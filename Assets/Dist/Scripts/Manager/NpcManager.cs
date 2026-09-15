@@ -183,15 +183,15 @@ public sealed class NpcManager : MonoBehaviour
             GameObject go = _transform.gameObject;
 
             _motor = go.GetBodyComponent<CharacterMotor>();
-            _attacker = go.GetBodyComponent<CharacterAttacker>();
-            _skillsHost = go.GetBodyComponent<CharacterSkillsHost>();
+            _attacker = go.GetBodyModule<CharacterAttacker>();
+            _skillsHost = go.GetBodyModule<CharacterSkillsHost>();
             _characterState = go.GetBodyComponent<CharacterState>();
-            _selfHost = go.GetBodyComponent<CharacterBodyHost>();
-            _painHost = go.GetBodyComponent<CharacterPainHost>();
-            _selfFactionHost = go.GetBodyComponent<CharacterFactionHost>();
-            _vision = go.GetBodyComponent<CharacterVision>();
-            _hearing = go.GetBodyComponent<CharacterHearing>();
-            _emote = go.GetBodyComponent<CharacterEmoteHost>();
+            _selfHost = go.GetBodyModule<CharacterBodyHost>();
+            _painHost = go.GetBodyModule<CharacterPainHost>();
+            _selfFactionHost = go.GetBodyModule<CharacterFactionHost>();
+            _vision = go.GetBodyModule<CharacterVision>();
+            _hearing = go.GetBodyModule<CharacterHearing>();
+            _emote = go.GetBodyModule<CharacterEmoteHost>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -561,7 +561,7 @@ public sealed class NpcManager : MonoBehaviour
                 return false;
 
             Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
-            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost);
+            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost.BodyRefs);
             if (visibility <= 0f)
                 return false;
 
@@ -579,7 +579,7 @@ public sealed class NpcManager : MonoBehaviour
                 return false;
 
             Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
-            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost);
+            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost.BodyRefs);
             if (visibility <= 0f)
                 return false;
 
@@ -600,7 +600,7 @@ public sealed class NpcManager : MonoBehaviour
                 return false;
 
             Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
-            float noise = CharacterPresenceHost.ResolveNoise01(targetHost);
+            float noise = CharacterPresenceHost.ResolveNoise01(targetHost.BodyRefs);
             return _hearing.CanDetect(selfFeet, targetFeet, targetMotor, noise);
         }
 
@@ -608,7 +608,7 @@ public sealed class NpcManager : MonoBehaviour
         {
             if (host == null)
                 return false;
-            if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
+            if (!CharacterBodyResolve.TryGetModule(host, out CharacterFactionHost otherFaction))
                 return false;
             return CharacterHostility.IsHostile(_selfFactionHost, otherFaction);
         }
@@ -620,9 +620,9 @@ public sealed class NpcManager : MonoBehaviour
             ICharacterBody body = host.Body;
             if (body == null || body.IsDeadState)
                 return false;
-            if (CharacterBodyResolve.TryGetInBody(host, out CharacterPainHost painHost) && painHost.IsPainShocked)
+            if (CharacterBodyResolve.TryGetModule(host, out CharacterPainHost painHost) && painHost.IsPainShocked)
                 return false;
-            if (CharacterBodyResolve.TryGetInBody(host, out CharacterSkillsHost skillsHost) &&
+            if (CharacterBodyResolve.TryGetModule(host, out CharacterSkillsHost skillsHost) &&
                 skillsHost.Defeat != null &&
                 skillsHost.Defeat.IsDefeated)
                 return false;

@@ -54,7 +54,7 @@ public sealed class TileObjectInteractionTarget : MonoBehaviour, IInteractable
             return false;
 
         var leaves = new List<ContextMenuEntry>();
-        CollectExecutableLeaves(model.Roots, leaves);
+        ContextMenuQuery.CollectExecutableLeaves(model.Roots, leaves);
         if (leaves.Count != 1)
             return false;
 
@@ -122,30 +122,4 @@ public sealed class TileObjectInteractionTarget : MonoBehaviour, IInteractable
         return Guid.Empty;
     }
 
-    static void CollectExecutableLeaves(IReadOnlyList<ContextMenuEntry> entries, List<ContextMenuEntry> into)
-    {
-        if (entries == null)
-            return;
-
-        for (int i = 0; i < entries.Count; i++)
-        {
-            ContextMenuEntry entry = entries[i];
-            if (entry == null)
-                continue;
-
-            if (entry.HasChildren)
-            {
-                CollectExecutableLeaves(entry.Children, into);
-                continue;
-            }
-
-            if (entry.Action == null)
-                continue;
-
-            if (!string.IsNullOrEmpty(entry.Action.GetDisabledReason()))
-                continue;
-
-            into.Add(entry);
-        }
-    }
 }

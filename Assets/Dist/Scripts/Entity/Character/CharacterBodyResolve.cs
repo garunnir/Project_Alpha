@@ -69,10 +69,30 @@ public static class CharacterBodyResolve
         return result != null;
     }
 
-    /// <summary>전투·히트스캔 SSOT. Collider는 루트, Host는 자식일 수 있다.</summary>
+    public static T GetModule<T>(Component component) where T : class
+    {
+        if (component == null)
+            return null;
+
+        CharacterBodyRefs refs = GetRefs(component);
+        return refs != null ? refs.GetModule<T>() : null;
+    }
+
+    public static bool TryGetModule<T>(Component component, out T module) where T : class
+    {
+        module = GetModule<T>(component);
+        return module != null;
+    }
+
+    /// <summary>전투·히트스캔 SSOT. Collider는 루트, BodyHost는 BodyRefs module.</summary>
     public static bool TryResolveBodyHost(Collider collider, out CharacterBodyHost host)
     {
-        host = GetInBody<CharacterBodyHost>(collider);
+        host = null;
+        CharacterBodyRefs refs = GetRefs(collider);
+        if (refs == null)
+            return false;
+
+        host = refs.GetModule<CharacterBodyHost>();
         if (host == null || host.Body == null || host.Body.IsDeadState)
         {
             host = null;
@@ -80,6 +100,28 @@ public static class CharacterBodyResolve
         }
 
         return true;
+    }
+
+    public static T GetInBody<T>(CharacterBodyHost host) where T : Component
+    {
+        return host != null ? GetInBody<T>(host.BodyRefs) : null;
+    }
+
+    public static bool TryGetInBody<T>(CharacterBodyHost host, out T result) where T : Component
+    {
+        result = GetInBody<T>(host);
+        return result != null;
+    }
+
+    public static T GetModule<T>(CharacterBodyHost host) where T : class
+    {
+        return host != null ? GetModule<T>(host.BodyRefs) : null;
+    }
+
+    public static bool TryGetModule<T>(CharacterBodyHost host, out T module) where T : class
+    {
+        module = GetModule<T>(host);
+        return module != null;
     }
 
     public static bool IsSameBodyRoot(Component a, Component b)
@@ -127,6 +169,11 @@ public static class CharacterBodyResolve
         return GetInBody<CapsuleCollider>(bodyMember);
     }
 
+    public static Collider GetBodyCollider(CharacterBodyHost host)
+    {
+        return host != null ? GetBodyCollider(host.BodyRefs) : null;
+    }
+
     public static bool TryGetBodyCollider(Component bodyMember, out Collider collider)
     {
         collider = GetBodyCollider(bodyMember);
@@ -157,6 +204,15 @@ public static class CharacterBodyComponentExtensions
 
     public static CharacterBodyRefs GetBodyRefs(this Component body) =>
         CharacterBodyResolve.GetRefs(body);
+
+    public static T GetBodyModule<T>(this Component body) where T : class =>
+        CharacterBodyResolve.GetModule<T>(body);
+
+    public static bool TryGetBodyModule<T>(this Component body, out T module) where T : class
+    {
+        module = CharacterBodyResolve.GetModule<T>(body);
+        return module != null;
+    }
 }
 
 public static class CharacterBodyGameObjectExtensions
@@ -180,4 +236,13 @@ public static class CharacterBodyGameObjectExtensions
 
     public static CharacterBodyRefs GetBodyRefs(this GameObject body) =>
         body != null ? CharacterBodyResolve.GetRefs(body.transform) : null;
+
+    public static T GetBodyModule<T>(this GameObject body) where T : class =>
+        body != null ? CharacterBodyResolve.GetModule<T>(body.transform) : null;
+
+    public static bool TryGetBodyModule<T>(this GameObject body, out T module) where T : class
+    {
+        module = GetBodyModule<T>(body);
+        return module != null;
+    }
 }

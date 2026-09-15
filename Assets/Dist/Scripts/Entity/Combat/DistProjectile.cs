@@ -205,7 +205,7 @@ public sealed class DistProjectile : MonoBehaviour
     }
 
     bool IsSelf(Collider collider) =>
-        _attacker != null && CharacterBodyResolve.IsColliderOnBody(_attacker, collider);
+        _attacker != null && CharacterBodyResolve.IsColliderOnBody(_attacker.BodyRefs, collider);
 
     bool AlreadyHit(CharacterBodyHost host)
     {

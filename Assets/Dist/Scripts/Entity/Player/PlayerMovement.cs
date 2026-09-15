@@ -217,7 +217,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     void SyncBodyPainInputPolicy()
     {
         if (_motor != null &&
-            CharacterBodyResolve.TryGetInBody(_motor, out CharacterPainHost pain))
+            CharacterBodyResolve.TryGetModule(_motor, out CharacterPainHost pain))
             pain.SyncPossessedInputPolicy();
     }
 

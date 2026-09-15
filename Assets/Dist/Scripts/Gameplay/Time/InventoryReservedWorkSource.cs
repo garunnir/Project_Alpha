@@ -7,7 +7,7 @@ using UnityEngine;
 
 public sealed class InventoryReservedWorkSource : MonoBehaviour, IReservedWorkSource
 {
-    [SerializeField] InventoryTimedMoveHost _moveHost;
+    InventoryTimedMoveHost _moveHost;
 
     bool _lastBusy;
 
@@ -17,8 +17,9 @@ public sealed class InventoryReservedWorkSource : MonoBehaviour, IReservedWorkSo
 
     void Awake()
     {
+        _moveHost = this.GetBodyModule<InventoryTimedMoveHost>();
         if (_moveHost == null)
-            _moveHost = GetComponent<InventoryTimedMoveHost>();
+            _moveHost = PlayerPossessSession.TimedMoveHost;
     }
 
     void OnEnable() => ReservedWorkHub.Register(this);

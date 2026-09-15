@@ -11,11 +11,15 @@ public sealed class UICharacterActionGauge : MonoBehaviour
     [SerializeField] Image _fill;
     [SerializeField] Canvas _canvas;
     [SerializeField] GameObject _autoProgressIcon;
+    [SerializeField] CanvasGroup _canvasGroup;
 
     void Awake()
     {
         if (_host == null)
+            _host = CharacterBodyResolve.GetInBody<CharacterActionHost>(this);
+        if (_host == null)
             _host = GetComponentInParent<CharacterActionHost>();
+
         if (_fill == null)
         {
             Transform fill = transform.Find(CharacterActionGaugeLayout.FillName);
@@ -30,19 +34,31 @@ public sealed class UICharacterActionGauge : MonoBehaviour
             TryGetComponent(out _canvas);
         if (_canvas == null && transform.parent != null)
             transform.parent.TryGetComponent(out _canvas);
+
+        if (_canvasGroup == null)
+            TryGetComponent(out _canvasGroup);
+        if (_canvasGroup == null)
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
     }
 
     void OnEnable()
     {
-        if (_canvas != null && _canvas.worldCamera == null)
-            _canvas.worldCamera = Camera.main;
+        // 공유 부모 Canvas는 끄지 않음(Emote 등과 공유). 표시는 CanvasGroup만.
+        if (_canvas != null)
+        {
+            if (!_canvas.enabled)
+                _canvas.enabled = true;
+            if (_canvas.worldCamera == null)
+                _canvas.worldCamera = Camera.main;
+        }
+
         ApplyVisible(false);
         SetAutoProgressIcon(false);
     }
 
     void LateUpdate()
     {
-        // Rule 6: fillAmount·SetActive만. 할당 없음.
+        // Rule 6: fillAmount·alpha만. 할당 없음(Awake에서 CanvasGroup 확보).
         if (_host == null)
         {
             ApplyVisible(false);
@@ -50,13 +66,15 @@ public sealed class UICharacterActionGauge : MonoBehaviour
             return;
         }
 
-        bool show = _host.CurrentKind != CharacterActionKind.None;
+        bool show = _host.HasVisibleProgress;
         ApplyVisible(show);
         if (!show)
         {
             SetAutoProgressIcon(false);
             return;
         }
+
+        EnsureFillActive();
 
         bool autoMove = _host.IsCellArriving;
         SetAutoProgressIcon(autoMove);
@@ -88,14 +106,30 @@ public sealed class UICharacterActionGauge : MonoBehaviour
 
     void ApplyVisible(bool show)
     {
-        if (_canvas != null)
+        if (_canvasGroup != null)
         {
-            if (_canvas.enabled != show)
-                _canvas.enabled = show;
-            return;
+            float alpha = show ? 1f : 0f;
+            if (!Mathf.Approximately(_canvasGroup.alpha, alpha))
+                _canvasGroup.alpha = alpha;
+            if (_canvasGroup.blocksRaycasts != show)
+                _canvasGroup.blocksRaycasts = show;
+            if (_canvasGroup.interactable != show)
+                _canvasGroup.interactable = show;
+        }
+        else if (gameObject.activeSelf != show)
+        {
+            gameObject.SetActive(show);
         }
 
-        if (gameObject.activeSelf != show)
-            gameObject.SetActive(show);
+        if (show)
+            EnsureFillActive();
+    }
+
+    void EnsureFillActive()
+    {
+        if (_fill == null)
+            return;
+        if (!_fill.gameObject.activeSelf)
+            _fill.gameObject.SetActive(true);
     }
 }

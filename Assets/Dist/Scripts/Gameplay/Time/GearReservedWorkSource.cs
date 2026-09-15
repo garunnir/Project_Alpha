@@ -7,7 +7,7 @@ using UnityEngine;
 
 public sealed class GearReservedWorkSource : MonoBehaviour, IReservedWorkSource
 {
-    [SerializeField] PlayerGearHost _gearHost;
+    PlayerGearHost _gearHost;
 
     bool _lastBusy;
 
@@ -18,8 +18,9 @@ public sealed class GearReservedWorkSource : MonoBehaviour, IReservedWorkSource
 
     void Awake()
     {
+        _gearHost = this.GetBodyModule<PlayerGearHost>();
         if (_gearHost == null)
-            _gearHost = GetComponent<PlayerGearHost>();
+            _gearHost = PlayerGearHost.Active;
     }
 
     void OnEnable() => ReservedWorkHub.Register(this);

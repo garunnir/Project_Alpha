@@ -36,7 +36,7 @@ public static class MapStructureDamageSink
             return;
 
         CharacterAttacker attacker = outcome.Attacker != null
-            ? CharacterBodyResolve.GetInBody<CharacterAttacker>(outcome.Attacker)
+            ? CharacterBodyResolve.GetModule<CharacterAttacker>(outcome.Attacker)
             : null;
         if (attacker == null)
             return;
@@ -120,7 +120,7 @@ public static class MapStructureDamageSink
             attacker.WieldedStack,
             attacker.WieldedInstance);
         CharacterSkillsHost skillsHost =
-            CharacterBodyResolve.GetInBody<CharacterSkillsHost>(attacker);
+            CharacterBodyResolve.GetModule<CharacterSkillsHost>(attacker.BodyRefs);
         ICharacterSkills skills = skillsHost != null ? skillsHost.Skills : null;
         int strength = skills != null
             ? skills.Level(AttributeIds.Str)

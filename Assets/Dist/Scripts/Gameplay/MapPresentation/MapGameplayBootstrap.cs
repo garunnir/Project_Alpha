@@ -63,7 +63,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
     {
         actorWorld = default;
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear == null || !CharacterBodyResolve.TryGetInBody(gear, out CharacterState state))
+        if (gear == null || gear.BodyRefs == null ||
+            !CharacterBodyResolve.TryGetInBody(gear.BodyRefs, out CharacterState state))
             return false;
 
         actorWorld = CharacterFeetPose.GetFeetWorld(state.transform);
@@ -76,7 +77,9 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (gearHost == null)
             return false;
 
-        CharacterAttacker attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(gearHost);
+        CharacterAttacker attacker = gearHost.BodyRefs != null
+            ? gearHost.BodyRefs.Attacker
+            : null;
         ItemStack stack = attacker != null ? attacker.WieldedStack : null;
         return stack?.Item != null &&
                stack.Count > 0 &&
@@ -165,10 +168,10 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         EnsureVaultHost(instance, services, _vaultClipCatalog);
         BindCellWorkClips(instance, _farmWorkClipCatalog, _fishWorkClipCatalog);
 
-        CharacterAttacker attacker = instance.GetBodyComponent<CharacterAttacker>();
+        CharacterAttacker attacker = instance.GetBodyModule<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
 
-        CharacterHearing hearing = instance.GetBodyComponent<CharacterHearing>();
+        CharacterHearing hearing = instance.GetBodyModule<CharacterHearing>();
         hearing?.BindMapCollision(services.LineCast);
 
         DirectionalRaycaster raycaster = instance.GetComponent<DirectionalRaycaster>();
@@ -202,11 +205,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindCellWorkClipsOnSceneCharacters(_farmWorkClipCatalog, _fishWorkClipCatalog);
         BindWorkAnimOnSceneCharacters();
 
-        var attackers = FindObjectsByType<CharacterAttacker>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < attackers.Length; i++)
-            attackers[i].BindMapCollision(services.LineCast);
+        BindCharacterAttackers(services.LineCast);
 
         var aimControllers = FindObjectsByType<PlayerAimController>(
             FindObjectsInactive.Include,
@@ -243,12 +242,25 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (lineCast == null)
             return;
 
-        var hearings = FindObjectsByType<CharacterHearing>(
+        var bodies = FindObjectsByType<CharacterBodyRefs>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
 
-        for (int i = 0; i < hearings.Length; i++)
-            hearings[i].BindMapCollision(lineCast);
+        for (int i = 0; i < bodies.Length; i++)
+            bodies[i].Hearing?.BindMapCollision(lineCast);
+    }
+
+    static void BindCharacterAttackers(MapTopologyLineCast lineCast)
+    {
+        if (lineCast == null)
+            return;
+
+        var bodies = FindObjectsByType<CharacterBodyRefs>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < bodies.Length; i++)
+            bodies[i].Attacker?.BindMapCollision(lineCast);
     }
 
     static void BindWorldGridToContainers(IWorldGrid worldGrid)
@@ -291,7 +303,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (instance == null || instance.GetBodyComponent<CharacterState>() == null)
             return;
 
-        if (instance.GetBodyComponent<CharacterBodyHost>() == null)
+        if (instance.GetBodyModule<CharacterBodyHost>() == null)
             return;
 
         if (instance.GetBodyComponent<CharacterSwimHost>() != null)

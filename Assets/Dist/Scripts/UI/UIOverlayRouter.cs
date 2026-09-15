@@ -61,12 +61,15 @@ public sealed class UIOverlayRouter : MonoBehaviour
 
     public void ToggleInventory() => InventoryController?.ToggleInventory();
 
-    public void OpenLootFromInteractable(ContainerInteractable interactable)
+    public void OpenLootFromInteractable(ContainerInteractable interactable) =>
+        OpenLootFromContainer(interactable?.Container);
+
+    public void OpenLootFromContainer(InventoryContainer focusContainer)
     {
-        if (interactable?.Container == null)
+        if (focusContainer == null)
             return;
 
-        InventoryController?.OpenLoot(interactable.Container);
+        InventoryController?.OpenLoot(focusContainer);
     }
 
     public void HandlePopup(UIPopupType type, object data)

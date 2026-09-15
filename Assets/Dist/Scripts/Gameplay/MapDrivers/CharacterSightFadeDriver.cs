@@ -29,7 +29,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         _playerState = playerState;
         _playerVision = null;
         if (_playerState != null)
-            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
+            _playerVision = CharacterBodyResolve.GetModule<CharacterVision>(_playerState);
     }
 
     public void SetPlayerBody(Transform playerBody) => _playerBody = playerBody;
@@ -52,7 +52,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
             return;
 
         if (_playerVision == null && _playerState != null)
-            _playerVision = CharacterBodyResolve.GetInBody<CharacterVision>(_playerState);
+            _playerVision = CharacterBodyResolve.GetModule<CharacterVision>(_playerState);
 
         float radius = _playerVision != null
             ? _playerVision.EffectiveDetectRadius
@@ -87,7 +87,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
             if (bodyHost == null)
                 continue;
 
-            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetModule<CharacterSightFadeHost>(bodyHost);
             if (fadeHost == null)
                 continue;
 
@@ -135,7 +135,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         for (int i = 0; i < CharacterBodyHost.ActiveCount; i++)
         {
             CharacterBodyHost bodyHost = CharacterBodyHost.GetActive(i);
-            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(bodyHost);
+            CharacterSightFadeHost fadeHost = CharacterBodyResolve.GetModule<CharacterSightFadeHost>(bodyHost);
             if (fadeHost == null)
                 continue;
 
@@ -167,7 +167,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
         if (Application.isPlaying && _playerBody != null)
         {
             if (_playerVision == null && _playerState != null)
-                _playerState.TryGetComponent(out _playerVision);
+                _playerVision = CharacterBodyResolve.GetModule<CharacterVision>(_playerState);
 
             outer = _playerVision != null
                 ? _playerVision.EffectiveDetectRadius

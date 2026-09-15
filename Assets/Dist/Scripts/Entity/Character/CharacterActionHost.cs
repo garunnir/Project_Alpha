@@ -24,8 +24,11 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
 
     readonly List<Job> _queue = new();
     readonly List<BodyPartEffect> _effectScratch = new(16);
+    readonly ICharacterActionSource[] _sources = new ICharacterActionSource[(int)CharacterActionKind.Cell + 1];
 
     CharacterBodyHost _bodyHost;
+    CharacterSkillsHost _skillsHost;
+    CharacterPainHost _painHost;
     PlayerGearHost _gearHost;
     InventoryTimedMoveHost _moveHost;
     CharacterAttacker _attacker;
@@ -41,6 +44,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
+    bool _knockdownDown;
+    ICharacterDefeat _subscribedDefeat;
 
     public int CancelPriority => UiCancelPriority.CharacterAction;
 
@@ -49,6 +54,12 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     public bool IsDispatching => _dispatching;
     public float ActionTickScale => _tickScale;
     public bool IsBusy => _currentKind != CharacterActionKind.None || _queue.Count > 0;
+
+    /// <summary>게이지 표시 SSOT — CurrentKind만으로는 cancel 후 stale가 남을 수 있음.</summary>
+    public bool HasVisibleProgress =>
+        _currentKind != CharacterActionKind.None &&
+        (IsCellArriving || IsSourceBusy(_currentKind));
+
     public CharacterSightHost SightHost
     {
         get
@@ -90,40 +101,13 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         _arriveHost != null &&
         _arriveHost.IsBusy;
 
-    public float Progress01
-    {
-        get
-        {
-            switch (_currentKind)
-            {
-                case CharacterActionKind.Gear:
-                    return _gearHost != null && _gearHost.Timed != null
-                        ? _gearHost.Timed.Progress01
-                        : 0f;
-                case CharacterActionKind.Inventory:
-                    return _moveHost != null ? _moveHost.Progress01 : 0f;
-                case CharacterActionKind.Craft:
-                    return _crafting != null ? _crafting.CraftProgress01 : 0f;
-                case CharacterActionKind.Combat:
-                    return _attacker != null ? _attacker.CooldownProgress01 : 0f;
-                case CharacterActionKind.Cell:
-                    if (_vaultHost != null && _vaultHost.IsBusy)
-                        return _vaultHost.Progress01;
-                    if (_construction != null && _construction.IsBusy)
-                        return _construction.WorkProgress01;
-                    if (_fish != null && _fish.IsBusy)
-                        return _fish.WorkProgress01;
-                    return _farm != null ? _farm.WorkProgress01 : 0f;
-                default:
-                    return 0f;
-            }
-        }
-    }
+    public float Progress01 => GetSource(_currentKind)?.Progress01 ?? 0f;
 
     void Awake()
     {
         ResolveBodyRefs();
         EnsureCellPipelines();
+        BuildSources();
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
@@ -135,23 +119,44 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         if (refs != null)
         {
             _bodyHost = refs.BodyHost;
+            _skillsHost = refs.SkillsHost;
+            _painHost = refs.PainHost;
             _gearHost = refs.GearHost;
             _attacker = refs.Attacker;
             _motor = refs.Motor;
             _vaultHost = refs.VaultHost;
+            _moveHost = refs.TimedMoveHost;
         }
         else
         {
-            TryGetComponent(out _bodyHost);
-            TryGetComponent(out _gearHost);
-            TryGetComponent(out _attacker);
+            _bodyHost = CharacterBodyResolve.GetModule<CharacterBodyHost>(this);
+            _skillsHost = CharacterBodyResolve.GetModule<CharacterSkillsHost>(this);
+            _painHost = CharacterBodyResolve.GetModule<CharacterPainHost>(this);
+            _gearHost = CharacterBodyResolve.GetModule<PlayerGearHost>(this);
+            _attacker = CharacterBodyResolve.GetModule<CharacterAttacker>(this);
             _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
             _vaultHost = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
         }
 
         if (_moveHost == null)
-            TryGetComponent(out _moveHost);
+            _moveHost = CharacterBodyResolve.GetModule<InventoryTimedMoveHost>(this);
         _arriveHost = CharacterBodyResolve.GetInBody<CharacterArriveHost>(this);
+    }
+
+    void BuildSources()
+    {
+        _sources[(int)CharacterActionKind.Gear] = new GearActionSource(_gearHost);
+        _sources[(int)CharacterActionKind.Inventory] = new InventoryActionSource(_moveHost);
+        _sources[(int)CharacterActionKind.Craft] = new CraftActionSource(_crafting);
+        _sources[(int)CharacterActionKind.Combat] = new CombatActionSource(_attacker);
+        _sources[(int)CharacterActionKind.Cell] = new CellActionSource(
+            _farm,
+            _fish,
+            _construction,
+            _arriveHost,
+            _vaultHost,
+            _dig,
+            _chop);
     }
 
     void EnsureCellPipelines()
@@ -192,11 +197,17 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     void EnsureChopPipeline() =>
         _chop ??= new CharacterChopPipeline();
 
-    void OnEnable() => UiCancelRouter.Register(this);
+    void OnEnable()
+    {
+        UiCancelRouter.Register(this);
+        SubscribeKnockdownSignals();
+        _knockdownDown = IsKnockdownDown();
+    }
 
     void OnDisable()
     {
         UiCancelRouter.Unregister(this);
+        UnsubscribeKnockdownSignals();
         _queue.Clear();
         if (_currentKind != CharacterActionKind.Combat)
             CancelCurrentWork();
@@ -206,6 +217,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         _construction?.OnOwnerDisabled();
         _dig?.Clear();
         _chop?.Clear();
+        ResetKnockdownLatches();
     }
 
     public bool TryHandleCancel()
@@ -306,7 +318,32 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         return _construction != null && _construction.TryRun(data, cell, facingQuarters);
     }
 
-    public bool TryRunOrEnqueue(CharacterActionKind kind, Func<bool> start)
+    /// <summary>기본: 큐 flush + current CancelSoft(Combat 제외) 후 즉시 시작.</summary>
+    public bool TryRunImmediate(CharacterActionKind kind, Func<bool> start)
+    {
+        if (start == null || kind == CharacterActionKind.None)
+            return false;
+
+        if (_dispatching)
+            return start();
+
+        if (_currentKind == CharacterActionKind.Combat)
+            return false;
+
+        _queue.Clear();
+
+        if (_currentKind != CharacterActionKind.None)
+        {
+            GetSource(_currentKind)?.CancelSoft();
+            _currentKind = CharacterActionKind.None;
+            Changed?.Invoke();
+        }
+
+        return BeginNow(kind, start);
+    }
+
+    /// <summary>예약: 현재 작업 유지, busy면 큐 append/replace.</summary>
+    public bool TryEnqueue(CharacterActionKind kind, Func<bool> start)
     {
         if (start == null || kind == CharacterActionKind.None)
             return false;
@@ -323,18 +360,33 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         return BeginNow(kind, start);
     }
 
-    public void CancelAll()
+    /// <summary>호환 alias — 기본은 Immediate. 예약 경로는 TryEnqueue를 명시 호출.</summary>
+    public bool TryRunOrEnqueue(CharacterActionKind kind, Func<bool> start) =>
+        TryRunImmediate(kind, start);
+
+    public void CancelAll() => InterruptAll(CharacterInterruptReason.UserCancel);
+
+    public void InterruptAll(CharacterInterruptReason reason)
     {
         _queue.Clear();
         _dig?.Clear();
         _chop?.Clear();
+
+        if (reason == CharacterInterruptReason.Knockdown)
+        {
+            InterruptAllSourcesHard(reason);
+            _currentKind = CharacterActionKind.None;
+            Changed?.Invoke();
+            return;
+        }
+
         if (_currentKind == CharacterActionKind.Combat)
         {
             Changed?.Invoke();
             return;
         }
 
-        CancelCurrentWork();
+        GetSource(_currentKind)?.CancelSoft();
         _currentKind = CharacterActionKind.None;
         Changed?.Invoke();
     }
@@ -409,49 +461,81 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         Changed?.Invoke();
     }
 
-    bool IsSourceBusy(CharacterActionKind kind)
+    bool IsSourceBusy(CharacterActionKind kind) =>
+        GetSource(kind)?.IsBusy ?? false;
+
+    void CancelCurrentWork() => GetSource(_currentKind)?.CancelSoft();
+
+    ICharacterActionSource GetSource(CharacterActionKind kind)
     {
-        switch (kind)
+        if (kind == CharacterActionKind.None)
+            return null;
+
+        int index = (int)kind;
+        return index >= 0 && index < _sources.Length ? _sources[index] : null;
+    }
+
+    void InterruptAllSourcesHard(CharacterInterruptReason reason)
+    {
+        for (int i = 1; i < _sources.Length; i++)
+            _sources[i]?.InterruptHard(reason);
+    }
+
+    void SubscribeKnockdownSignals()
+    {
+        UnsubscribeKnockdownSignals();
+
+        if (_painHost != null)
+            _painHost.Changed += OnKnockdownLatchSignalsChanged;
+
+        if (_skillsHost != null)
         {
-            case CharacterActionKind.Gear:
-                return _gearHost != null && _gearHost.Service != null && _gearHost.Service.IsBusy;
-            case CharacterActionKind.Inventory:
-                return _moveHost != null && _moveHost.IsBusy;
-            case CharacterActionKind.Craft:
-                return _crafting != null && _crafting.IsCraftRunning;
-            case CharacterActionKind.Combat:
-                return _attacker != null && _attacker.IsActionBusy;
-            case CharacterActionKind.Cell:
-                return (_farm != null && _farm.IsBusy) ||
-                       (_fish != null && _fish.IsBusy) ||
-                       (_construction != null && _construction.IsBusy) ||
-                       (_arriveHost != null && _arriveHost.IsBusy) ||
-                       (_vaultHost != null && _vaultHost.IsBusy);
-            default:
-                return false;
+            _subscribedDefeat = _skillsHost.Defeat;
+            if (_subscribedDefeat != null)
+                _subscribedDefeat.Changed += OnDefeatKnockdownChanged;
         }
     }
 
-    void CancelCurrentWork()
+    void UnsubscribeKnockdownSignals()
     {
-        switch (_currentKind)
-        {
-            case CharacterActionKind.Gear:
-                _gearHost?.Timed?.Cancel();
-                break;
-            case CharacterActionKind.Inventory:
-                _moveHost?.Cancel();
-                break;
-            case CharacterActionKind.Craft:
-                _crafting?.CancelRunningCraft();
-                break;
-            case CharacterActionKind.Cell:
-                _farm?.Cancel();
-                _fish?.Cancel();
-                _construction?.Cancel();
-                _arriveHost?.Cancel();
-                _vaultHost?.Cancel();
-                break;
-        }
+        if (_painHost != null)
+            _painHost.Changed -= OnKnockdownLatchSignalsChanged;
+
+        if (_subscribedDefeat != null)
+            _subscribedDefeat.Changed -= OnDefeatKnockdownChanged;
+        _subscribedDefeat = null;
+    }
+
+    void OnKnockdownLatchSignalsChanged() =>
+        SyncKnockdownLatchState(IsKnockdownDown());
+
+    void OnDefeatKnockdownChanged()
+    {
+        bool down = IsKnockdownDown();
+        if (down && !_knockdownDown)
+            InterruptAll(CharacterInterruptReason.Knockdown);
+        SyncKnockdownLatchState(down);
+    }
+
+    void SyncKnockdownLatchState(bool down)
+    {
+        if (!down && _knockdownDown)
+            ResetKnockdownLatches();
+        _knockdownDown = down;
+    }
+
+    bool IsKnockdownDown()
+    {
+        if (_painHost != null && _painHost.IsPainShocked)
+            return true;
+
+        ICharacterDefeat defeat = _skillsHost != null ? _skillsHost.Defeat : null;
+        return defeat != null && defeat.IsDefeated;
+    }
+
+    void ResetKnockdownLatches()
+    {
+        for (int i = 0; i < _sources.Length; i++)
+            _sources[i]?.ResetKnockdownLatch();
     }
 }

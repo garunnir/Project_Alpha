@@ -24,7 +24,7 @@ public sealed class CharacterCellConstructionPipeline : CharacterCellPipelineBas
         if (ActionHost == null)
             return BeginPipeline(data, cell, facingQuarters);
 
-        return ActionHost.TryRunOrEnqueue(
+        return ActionHost.TryEnqueue(
             CharacterActionKind.Cell,
             () => BeginPipeline(data, cell, facingQuarters));
     }

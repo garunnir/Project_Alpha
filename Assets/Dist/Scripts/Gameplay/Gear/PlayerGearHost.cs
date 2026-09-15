@@ -5,32 +5,34 @@
 using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerInventoryHost))]
-[RequireComponent(typeof(InventoryTimedMoveHost))]
-[RequireComponent(typeof(CharacterActionHost))]
-public sealed class PlayerGearHost : MonoBehaviour
+public sealed class PlayerGearHost
 {
-    [SerializeField] PlayerInventoryHost _inventoryHost;
-    [SerializeField] CharacterSkillsHost _skillsHost;
-    [SerializeField] CharacterAttacker _attacker;
-    [SerializeField] PlayerMovement _movement;
-    [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
+    CharacterBodyRefs _refs;
+    PlayerInventoryHost _inventoryHost;
+    CharacterSkillsHost _skillsHost;
+    CharacterAttacker _attacker;
+    PlayerMovement _movement;
     CharacterGearService _service;
     CharacterActionHost _actionHost;
     CharacterClimateHost _climateHost;
     CharacterBodyHost _bodyHost;
+    CharacterState _characterState;
     ICharacterBody _subscribedBody;
     WorldWeatherHost _subscribedWeather;
     bool _bound;
+    bool _enabled;
     int _lastWetnessPercent = -1;
     int _lastBodyTempTenths = int.MinValue;
     int _lastVisionPercent = -1;
     bool _hasLastWeatherKind;
     WeatherKind _lastWeatherKind;
+
+    public CharacterBodyRefs BodyRefs => _refs;
 
     public static PlayerGearHost Active => PlayerPossessSession.GearHost;
 
@@ -52,15 +54,24 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     public event Action Changed;
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        EnsureReferences();
-        _service = new CharacterGearService();
+        _refs = refs;
+        _inventoryHost = refs != null ? refs.InventoryHost : null;
+        _skillsHost = refs != null ? refs.SkillsHost : null;
+        _attacker = refs != null ? refs.Attacker : null;
+        _climateHost = refs != null ? refs.ClimateHost : null;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        _actionHost = refs != null ? refs.ActionHost : null;
+        _characterState = refs != null ? refs.State : null;
+        if (_service == null)
+            _service = new CharacterGearService();
     }
 
-    void OnEnable()
+    public void Enable()
     {
         EnsureBound();
+        _climateHost = _refs != null ? _refs.ClimateHost : _climateHost;
         if (_climateHost != null)
             _climateHost.Changed += OnClimateChanged;
         EnsureWeatherSubscription();
@@ -69,10 +80,15 @@ public sealed class PlayerGearHost : MonoBehaviour
         ApplyLiftStrainMovement();
         ApplyVisionToCamera();
         RefreshPrimaryWield();
+        _enabled = true;
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        if (!_enabled)
+            return;
+
+        _enabled = false;
         if (_service != null)
         {
             _service.LiftStrainChanged -= ApplyLiftStrainMovement;
@@ -99,12 +115,12 @@ public sealed class PlayerGearHost : MonoBehaviour
             zoom.SetVisionFactor(HelmetVision.FullVisionFactor);
     }
 
-    void OnValidate() => EnsureReferences();
-
-    void Reset() => EnsureReferences();
-
-    void Update()
+    /// <summary>Gear timed + helmet vision. heap 없음.</summary>
+    public void Tick()
     {
+        if (!_enabled)
+            return;
+
         EnsureWeatherSubscription();
         if (_service == null)
             return;
@@ -189,24 +205,6 @@ public sealed class PlayerGearHost : MonoBehaviour
         ApplyLiftStrainMovement();
     }
 
-    void EnsureReferences()
-    {
-        if (_inventoryHost == null)
-            TryGetComponent(out _inventoryHost);
-        if (_skillsHost == null)
-            TryGetComponent(out _skillsHost);
-        if (_attacker == null)
-            TryGetComponent(out _attacker);
-        if (_movement == null)
-            TryGetComponent(out _movement);
-        if (_climateHost == null)
-            TryGetComponent(out _climateHost);
-        if (_bodyHost == null)
-            TryGetComponent(out _bodyHost);
-        if (_actionHost == null)
-            TryGetComponent(out _actionHost);
-    }
-
     public void BindDomainIfNeeded() => EnsureBound();
 
     void EnsureBound()
@@ -214,7 +212,6 @@ public sealed class PlayerGearHost : MonoBehaviour
         if (_bound || _service == null)
             return;
 
-        EnsureReferences();
         _service.Bind(
             Strength,
             Skills,
@@ -282,7 +279,7 @@ public sealed class PlayerGearHost : MonoBehaviour
                 && string.Equals(
                     c.InstanceId,
                     FloorLootHost.DefaultInstanceId,
-                    System.StringComparison.Ordinal))
+                    StringComparison.Ordinal))
                 return c;
         }
 
@@ -339,4 +336,44 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     bool ApplyStackSelectedLeaf(ItemStack stack, CombatLeaf? action) =>
         _attacker != null && _attacker.TryApplyStackSelectedLeaf(stack, action);
+
+    public void DropAllWieldedToWorld()
+    {
+        if (_service == null)
+            return;
+
+        _service.DropAllWieldedToWorld(
+            ResolveSmallItemPrefab(),
+            ResolveDropWorldPosition(),
+            ResolveWorldGrid());
+        RefreshPrimaryWield();
+    }
+
+    Vector3 ResolveDropWorldPosition()
+    {
+        if (_characterState != null && _characterState.BodyWorldPoint.sqrMagnitude > 1e-6f)
+            return _characterState.BodyWorldPoint;
+        return _refs != null ? _refs.transform.position : Vector3.zero;
+    }
+
+    IWorldGrid ResolveWorldGrid()
+    {
+        TileMapManager map = UnityEngine.Object.FindFirstObjectByType<TileMapManager>();
+        return map != null ? map.WorldGrid : null;
+    }
+
+    static SmallItemObject ResolveSmallItemPrefab()
+    {
+        SmallItemObject[] all = Resources.FindObjectsOfTypeAll<SmallItemObject>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            SmallItemObject obj = all[i];
+            if (obj == null || obj.gameObject.scene.IsValid())
+                continue;
+            return obj;
+        }
+
+        return UnityEngine.Object.FindFirstObjectByType<SmallItemObject>(
+            FindObjectsInactive.Include);
+    }
 }

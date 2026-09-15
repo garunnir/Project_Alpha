@@ -75,7 +75,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _bodyState = body != null ? body.GetBodyComponent<CharacterState>() : null;
 
         CharacterMotor motor = body != null ? body.GetBodyComponent<CharacterMotor>() : null;
-        CharacterAttacker attacker = body != null ? body.GetBodyComponent<CharacterAttacker>() : null;
+        CharacterAttacker attacker = body != null ? body.GetBodyModule<CharacterAttacker>() : null;
         CharacterActionHost actionHost = body != null ? body.GetBodyComponent<CharacterActionHost>() : null;
         CharacterFacingAnim facing = body != null ? body.GetBodyComponent<CharacterFacingAnim>() : null;
 

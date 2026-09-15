@@ -5,21 +5,21 @@
 using System.Collections.Generic;
 using System.Text;
 using IsoTilemap;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class NearbyContainerDetector : MonoBehaviour
+public sealed class NearbyContainerDetector
 {
     const string LogPrefix = "[NearbyContainerDetector]";
 
-    [Required, SerializeField] CharacterState _characterState;
-    [SerializeField] string _floorLootDefId = FloorLootHost.DefaultContainerDefId;
-    [SerializeField] string _lootAggregateDefId = LootAggregateHost.DefaultContainerDefId;
-    [Required, SerializeField] SmallItemObject _smallItemPrefab;
-    [SerializeField, Min(0)] int _radiusCells = 2;
-    [SerializeField] bool _sameFloorOnly = true;
-    [SerializeField, Min(0)] int _verticalToleranceCells = 0;
+    readonly string _floorLootDefId = FloorLootHost.DefaultContainerDefId;
+    readonly string _lootAggregateDefId = LootAggregateHost.DefaultContainerDefId;
+    readonly int _radiusCells = 2;
+    readonly bool _sameFloorOnly = true;
+    readonly int _verticalToleranceCells = 0;
+
+    CharacterBodyRefs _refs;
+    CharacterState _characterState;
+    SmallItemObject _smallItemPrefab;
 
     readonly List<IInventoryContainerProvider> _scanResults = new();
     readonly List<InventoryContainer> _detectedContainersScratch = new();
@@ -36,10 +36,22 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     bool _isActive;
     bool _isRefreshing;
 
+    public CharacterBodyRefs BodyRefs => _refs;
+
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _refs = refs;
+        _characterState = refs != null ? refs.State : null;
+        if (_smallItemPrefab == null)
+            _smallItemPrefab = ResolveSmallItemPrefab();
+    }
+
     public void Bind(InventorySession session, LootProximityCoordinator lootProximity)
     {
         _session = session;
         _lootProximity = lootProximity;
+        if (_smallItemPrefab == null)
+            _smallItemPrefab = ResolveSmallItemPrefab();
 
         _floorLootHost?.Dispose();
         _floorLootHost = !string.IsNullOrEmpty(_floorLootDefId)
@@ -65,7 +77,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         if (_cachedWorldGrid != null)
             return _cachedWorldGrid;
 
-        var tileMapManager = FindFirstObjectByType<TileMapManager>();
+        var tileMapManager = UnityEngine.Object.FindFirstObjectByType<TileMapManager>();
         _cachedWorldGrid = tileMapManager != null ? tileMapManager.WorldGrid : null;
         return _cachedWorldGrid;
     }
@@ -76,26 +88,10 @@ public sealed class NearbyContainerDetector : MonoBehaviour
             return;
 
         _isActive = true;
-        EnsureCookingHosts();
         _floorLootHost?.BeginContext();
         _lootAggregateHost?.BeginContext();
         Subscribe();
         RefreshImmediate();
-    }
-
-    void EnsureCookingHosts()
-    {
-        if (GetComponent<CraftingEnvironmentProvider>() == null)
-            gameObject.AddComponent<CraftingEnvironmentProvider>();
-        if (GetComponent<CraftingWorldTimeBridge>() == null)
-            gameObject.AddComponent<CraftingWorldTimeBridge>();
-        if (GetComponent<CraftingSideEffectsBridge>() == null)
-            gameObject.AddComponent<CraftingSideEffectsBridge>();
-        if (GetComponent<ItemFoodHotTicker>() == null)
-        {
-            var ticker = gameObject.AddComponent<ItemFoodHotTicker>();
-            // PlayerInventoryRuntime may bind later via SerializeField leave null → ticker no-ops until assigned
-        }
     }
 
     public void Deactivate()
@@ -138,22 +134,13 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Refresh(_characterState.GridPos);
     }
 
-    void OnDestroy()
+    public void Dispose()
     {
         Deactivate();
         _floorLootHost?.Dispose();
         _floorLootHost = null;
         _lootAggregateHost?.Dispose();
         _lootAggregateHost = null;
-    }
-
-    void OnValidate() => EnsureReferences();
-    void Reset() => EnsureReferences();
-
-    void EnsureReferences()
-    {
-        if (!_characterState)
-            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
     }
 
     void Subscribe()
@@ -467,7 +454,9 @@ public sealed class NearbyContainerDetector : MonoBehaviour
                 message.Append(' ').Append(id);
         }
 
-        DebugLogController.LogInventoryProximityScan(message.ToString(), this);
+        DebugLogController.LogInventoryProximityScan(
+            message.ToString(),
+            _refs != null ? _refs : null);
     }
 
     public bool IsManagedWorldContainer(string instanceId) =>
@@ -487,7 +476,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _managedWorldContainerIds.Add(instanceId);
         DebugLogController.LogInventoryProximityScan(
             $"{LogPrefix} TryIncludeManagedContainer manual include id={instanceId}",
-            this);
+            _refs != null ? _refs : null);
 
         PublishDetectedContainers();
         return true;
@@ -575,5 +564,20 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _managedWorldContainerIds.Clear();
         _detectedContainersScratch.Clear();
         PublishDetectedContainers();
+    }
+
+    static SmallItemObject ResolveSmallItemPrefab()
+    {
+        SmallItemObject[] all = Resources.FindObjectsOfTypeAll<SmallItemObject>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            SmallItemObject obj = all[i];
+            if (obj == null || obj.gameObject.scene.IsValid())
+                continue;
+            return obj;
+        }
+
+        return UnityEngine.Object.FindFirstObjectByType<SmallItemObject>(
+            FindObjectsInactive.Include);
     }
 }

@@ -36,15 +36,15 @@ public sealed class CharacterSwimHost : MonoBehaviour
             _state = refs.State;
             _motor = refs.Motor;
             _bodyHost = refs.BodyHost;
-            refs.TryGet(out CharacterPainHost pain);
+            refs.TryGetModule(out CharacterPainHost pain);
             _breath = new CharacterBreathHost(_bodyHost, pain);
         }
         else
         {
             _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
             _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-            _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
-            CharacterBodyResolve.TryGetInBody(this, out CharacterPainHost pain);
+            _bodyHost = CharacterBodyResolve.GetModule<CharacterBodyHost>(this);
+            CharacterBodyResolve.TryGetModule(this, out CharacterPainHost pain);
             _breath = new CharacterBreathHost(_bodyHost, pain);
         }
 

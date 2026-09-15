@@ -5,10 +5,7 @@
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-[RequireComponent(typeof(CharacterImbalanceHost))]
-public sealed class CharacterHitReact : MonoBehaviour
+public sealed class CharacterHitReact
 {
     public const string HurtLayerName = "Hurt Layer";
     public const string FlinchLayerName = "Flinch Layer";
@@ -26,6 +23,7 @@ public sealed class CharacterHitReact : MonoBehaviour
     public const string ClipPainDown = "HitPainDown_Slot";
     public const string ClipDead = "HitDead_Slot";
 
+    CharacterBodyRefs _refs;
     CharacterBodyHost _bodyHost;
     CharacterMotor _motor;
     CharacterActionHost _actionHost;
@@ -47,31 +45,56 @@ public sealed class CharacterHitReact : MonoBehaviour
     bool _hasStagger;
     bool _hasPainShocked;
     bool _hasDefeated;
+    bool _eventsBound;
 
-    void Awake()
+    public CharacterBodyRefs BodyRefs => _refs;
+
+    public void Bind(CharacterBodyRefs refs)
     {
-        _bodyHost = GetComponent<CharacterBodyHost>();
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _attacker);
-        _appearance = CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
-        TryGetComponent(out _gear);
-        TryGetComponent(out _pain);
-        TryGetComponent(out _skillsHost);
-        TryGetComponent(out _imbalance);
-        _animator = CharacterBodyResolve.GetInBody<Animator>(this);
-        if (_animator == null)
+        _refs = refs;
+        if (refs != null)
+        {
+            _bodyHost = refs.BodyHost;
+            _motor = refs.Motor;
+            _actionHost = refs.ActionHost;
+            _attacker = refs.Attacker;
+            _appearance = refs.Appearance;
+            _gear = refs.GearHost;
+            _pain = refs.PainHost;
+            _skillsHost = refs.SkillsHost;
+            _imbalance = refs.ImbalanceHost;
+            _animator = CharacterBodyResolve.GetInBody<Animator>(refs);
+        }
+
+        if (_animator == null && refs != null)
         {
             Debug.LogError(
-                $"[CharacterHitReact] '{name}' needs an Animator under the body root.",
-                this);
+                $"[CharacterHitReact] '{refs.name}' needs an Animator under the body root.",
+                refs);
         }
 
         CacheHurtParams();
+        if (_eventsBound)
+            Enable();
     }
 
-    void OnEnable()
+    public void Enable()
     {
+        if (_attacker == null && _refs != null)
+            _attacker = _refs.Attacker;
+        if (_pain == null && _refs != null)
+            _pain = _refs.PainHost;
+        if (_imbalance == null && _refs != null)
+            _imbalance = _refs.ImbalanceHost;
+
+        if (_eventsBound)
+        {
+            SyncPainBool();
+            SyncDeadBool();
+            return;
+        }
+
+        _eventsBound = true;
         CharacterAttacker.AnyAttackJudged += OnAnyAttackJudged;
         if (_pain != null)
             _pain.Changed += OnPainChanged;
@@ -80,8 +103,12 @@ public sealed class CharacterHitReact : MonoBehaviour
         SyncDeadBool();
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        if (!_eventsBound)
+            return;
+
+        _eventsBound = false;
         CharacterAttacker.AnyAttackJudged -= OnAnyAttackJudged;
         if (_pain != null)
             _pain.Changed -= OnPainChanged;
@@ -127,6 +154,7 @@ public sealed class CharacterHitReact : MonoBehaviour
     void BindDefeat()
     {
         UnbindDefeat();
+        _skillsHost = _refs != null ? _refs.SkillsHost : _skillsHost;
         _defeat = _skillsHost != null ? _skillsHost.Defeat : null;
         if (_defeat != null)
             _defeat.Changed += OnDefeatChanged;

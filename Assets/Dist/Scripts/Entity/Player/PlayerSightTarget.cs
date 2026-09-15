@@ -142,8 +142,8 @@ public static class PlayerSightTarget
             return CharacterFeetPose.GetFeetWorld(input.BodyTransform).y;
 
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear != null)
-            return CharacterFeetPose.GetFeetWorld(gear.transform).y;
+        if (gear != null && gear.BodyRefs != null)
+            return CharacterFeetPose.GetFeetWorld(gear.BodyRefs.transform).y;
 
         return 0f;
     }

@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterMoodHost — 사고 합산 기분 + Wander 양도 (possess 유지)
+// CharacterMoodHost — 사고 합산 기분 + Wander 양도 (plain module)
 // ============================================================
 // flowchart LR
 //   Clock[WorldClock.MinuteChanged] --> Host
@@ -15,14 +15,13 @@ using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterMoodHost : MonoBehaviour
+public sealed class CharacterMoodHost
 {
     public const string LocBreakWander = "msg.status.mood_break_wander";
     public const string LocBreakEnd = "msg.status.mood_break_end";
 
-    [SerializeField] MoodSettings _settings;
-
+    CharacterBodyRefs _refs;
+    MoodSettings _settings;
     CharacterMotor _motor;
     CharacterPainHost _pain;
     CharacterActionHost _action;
@@ -35,6 +34,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
     bool _vomitSubscribed;
     bool _bodySubscribed;
     bool _sourcesSubscribed;
+    bool _enabled;
 
     readonly List<MoodThought> _situational = new(16);
     readonly List<MoodThought> _memories = new(16);
@@ -58,30 +58,26 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     public void ClaimActive() { }
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _pain);
-        TryGetComponent(out _action);
-        TryGetComponent(out _bodyHost);
-        if (TryGetComponent(out CharacterSkillsHost skills))
-            _defeat = skills.Defeat;
+        _refs = refs;
+        _motor = refs != null ? refs.Motor : null;
+        _pain = refs != null ? refs.PainHost : null;
+        _action = refs != null ? refs.ActionHost : null;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        CharacterSkillsHost skills = refs != null ? refs.SkillsHost : null;
+        _defeat = skills != null ? skills.Defeat : null;
+        if (refs != null && refs.MoodSettings != null)
+            _settings = refs.MoodSettings;
 
         _break.Bind(_motor, _pain, _settings);
-        Recalculate(raise: false);
     }
 
-    void OnEnable()
+    public void Enable()
     {
-        SubscribeClock();
-        SubscribeVomit();
-        SubscribeSources();
-        if (IsPlayerBody())
-            ClaimActive();
-    }
-
-    void Start()
-    {
+        _enabled = true;
+        if (_defeat == null && _refs != null && _refs.SkillsHost != null)
+            _defeat = _refs.SkillsHost.Defeat;
         SubscribeClock();
         SubscribeVomit();
         SubscribeSources();
@@ -91,19 +87,20 @@ public sealed class CharacterMoodHost : MonoBehaviour
         Recalculate(raise: true);
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        _enabled = false;
         UnsubscribeClock();
         UnsubscribeVomit();
         UnsubscribeSources();
     }
 
-    void Update()
+    /// <summary>Wander break tick. heap 없음.</summary>
+    public void Tick()
     {
-        if (!_break.IsActive)
+        if (!_enabled || !_break.IsActive)
             return;
 
-        // Hot path: no alloc. Possessed motor uses Player channel.
         float dt = TimeScaleService.Delta(TimeScaleChannel.Player);
         _break.Tick(dt);
     }
@@ -189,7 +186,8 @@ public sealed class CharacterMoodHost : MonoBehaviour
             ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
 
             PlayerEncumbranceStage stage = PlayerEncumbranceStage.None;
-            if (TryGetComponent(out PlayerEncumbranceHost enc))
+            PlayerEncumbranceHost enc = _refs != null ? _refs.EncumbranceHost : null;
+            if (enc != null)
                 stage = enc.Stage;
 
             MoodSituationalCollector.Collect(
@@ -286,7 +284,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     static void ApplyYield(bool yielded)
     {
-        PlayerPossessedInputHost input = FindFirstObjectByType<PlayerPossessedInputHost>();
+        PlayerPossessedInputHost input = UnityEngine.Object.FindFirstObjectByType<PlayerPossessedInputHost>();
         if (input == null)
             return;
 
@@ -402,7 +400,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     void OnSourceChanged()
     {
-        if (!isActiveAndEnabled)
+        if (!IsPlayerBody() || !_enabled)
             return;
 
         Recalculate(raise: true);

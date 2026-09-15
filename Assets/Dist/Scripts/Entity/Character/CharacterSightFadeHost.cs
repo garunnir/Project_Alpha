@@ -1,21 +1,20 @@
 // ============================================================
-// CharacterSightFadeHost — 시야 페이드 display → ProPixelizer dither / renderer
+// CharacterSightFadeHost — 시야 페이드 display → ProPixelizer dither / renderer (plain module)
 // ============================================================
 
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterSightFadeHost : MonoBehaviour
+public sealed class CharacterSightFadeHost
 {
     const string UseAlphaKeyword = "USE_ALPHA_ON";
     const string UseAlphaFloat = "USE_ALPHA";
     static readonly int AlphaClipThresholdId = Shader.PropertyToID("_AlphaClipThreshold");
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
-    [SerializeField] Transform _renderRoot;
-    [SerializeField] CharacterSightFadeSettings _settings = CharacterSightFadeSettings.DefaultUnity;
-
+    CharacterSightFadeSettings _settings = CharacterSightFadeSettings.DefaultUnity;
+    CharacterBodyRefs _refs;
     CharacterState _state;
+    Transform _renderRoot;
     Renderer[] _renderers;
     Material[][] _materials;
     float[][] _baseThresholds;
@@ -32,6 +31,14 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
     public CharacterSightFadeSettings Settings => _settings;
 
     public void ConfigureSettings(in CharacterSightFadeSettings settings) => _settings = settings;
+
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _refs = refs;
+        _state = refs != null ? refs.State : null;
+        _renderRoot = refs != null ? refs.RenderRoot : null;
+        _cached = false;
+    }
 
     public void SetPossessedSkip(bool skip)
     {
@@ -62,13 +69,7 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
         ApplyDisplay(_display, force: false);
     }
 
-    void Awake()
-    {
-        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        EnsureCache();
-    }
-
-    void OnDisable()
+    public void Disable()
     {
         if (_cached)
             ApplyDisplay(1f, force: true);
@@ -79,15 +80,19 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
         if (_cached)
             return;
 
-        if (_renderRoot == null)
+        Transform searchRoot = _renderRoot;
+        if (searchRoot == null && _refs != null)
         {
-            Transform pivot = transform.Find("3DRenderPivot");
-            _renderRoot = pivot != null ? pivot : transform;
+            Transform pivot = _refs.transform.Find(CharacterBodyRefs.RenderPivotChildName);
+            searchRoot = pivot != null ? pivot : _refs.transform;
         }
 
-        _renderers = _renderRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        if (searchRoot == null)
+            return;
+
+        _renderers = searchRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
         if (_renderers == null || _renderers.Length == 0)
-            _renderers = _renderRoot.GetComponentsInChildren<Renderer>(true);
+            _renderers = searchRoot.GetComponentsInChildren<Renderer>(true);
 
         int n = _renderers.Length;
         _materials = new Material[n][];
@@ -129,6 +134,9 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
     void ApplyDisplay(float visibility01, bool force)
     {
         EnsureCache();
+        if (_renderers == null)
+            return;
+
         float eps = Mathf.Max(0f, _settings.FullHideEpsilon);
         bool hide = visibility01 <= eps;
         bool fullyVisible = visibility01 >= 1f - eps;
@@ -203,10 +211,14 @@ public sealed class CharacterSightFadeHost : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    void OnDrawGizmos()
+    public void DrawGizmos()
     {
         CharacterSightFadeSettings settings = _settings;
         if (!settings.DrawEditorGizmos)
+            return;
+
+        Transform transform = _refs != null ? _refs.transform : null;
+        if (transform == null)
             return;
 
         Vector3 pos = Application.isPlaying && _state != null && _state.BodyWorldPoint.sqrMagnitude > 1e-8f

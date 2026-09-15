@@ -1,15 +1,23 @@
 // ============================================================
-// CharacterFactionHost — 본체가 속한 세력을 보관
+// CharacterFactionHost — 본체가 속한 세력을 보관 (plain module)
 // ============================================================
 
-using UnityEngine;
-
-[DisallowMultipleComponent]
-public sealed class CharacterFactionHost : MonoBehaviour
+public sealed class CharacterFactionHost
 {
-    [SerializeField] CharacterFaction _faction;
+    CharacterBodyRefs _refs;
+    CharacterFaction _faction;
 
     public CharacterFaction Faction => _faction;
+    public string name => _refs != null ? _refs.name : string.Empty;
+
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _refs = refs;
+    }
+
+    public int GetInstanceID() => _refs != null ? _refs.GetInstanceID() : 0;
+
+    public UnityEngine.Object LogContext => _refs;
 
     public void ApplyFromDefinition(CharacterDefinition definition)
     {

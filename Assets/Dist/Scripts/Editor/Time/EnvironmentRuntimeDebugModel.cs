@@ -307,9 +307,8 @@ public sealed class EnvironmentRuntimeDebugModel
     static CharacterClimateHost ResolvePlayerClimate()
     {
         PlayerGearHost gear = PlayerGearHost.Active;
-        if (gear == null)
+        if (gear == null || gear.BodyRefs == null)
             return null;
-        gear.TryGetComponent(out CharacterClimateHost host);
-        return host;
+        return gear.BodyRefs.ClimateHost;
     }
 }

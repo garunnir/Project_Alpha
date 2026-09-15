@@ -9,6 +9,7 @@
         "Dist.Inventory",
         "Dist.Gameplay.Data",
         "Dist.Visual",
+        "ProPixelizer",
         "Dist.UI.ContextMenu",
         "IngameDebugConsole.Runtime",
         "GUID:4307f53044263cf4b835bd812fc161a4",

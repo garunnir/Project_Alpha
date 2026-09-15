@@ -11,13 +11,13 @@ public static class CharacterGameplayDataConfigurator
         if (instance == null)
             return;
 
-        if (instance.TryGetBodyComponent(out CharacterBodyHost bodyHost))
+        if (instance.TryGetBodyModule(out CharacterBodyHost bodyHost))
             bodyHost.ConfigureUseGameplayDataBody(true);
 
-        if (instance.TryGetBodyComponent(out CharacterSkillsHost skillsHost))
+        if (instance.TryGetBodyModule(out CharacterSkillsHost skillsHost))
             skillsHost.ConfigureUseGameplayDataSkills(true);
 
-        if (instance.TryGetBodyComponent(out CharacterTraitsHost traitsHost))
+        if (instance.TryGetBodyModule(out CharacterTraitsHost traitsHost))
             traitsHost.ConfigureUseGameplayDataTraits(true);
     }
 }

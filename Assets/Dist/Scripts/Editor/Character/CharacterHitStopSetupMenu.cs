@@ -53,15 +53,15 @@ public static class CharacterHitStopSetupMenu
     static int PatchOpenSceneHosts(CombatHitStopSettings settings)
     {
         int added = 0;
-        CharacterBodyHost[] hosts = Object.FindObjectsByType<CharacterBodyHost>(
+        CharacterBodyRefs[] refsList = Object.FindObjectsByType<CharacterBodyRefs>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
-        for (int i = 0; i < hosts.Length; i++)
+        for (int i = 0; i < refsList.Length; i++)
         {
-            CharacterBodyHost host = hosts[i];
-            if (host == null)
+            CharacterBodyRefs refs = refsList[i];
+            if (refs == null)
                 continue;
-            if (EnsureHitStopOn(host.gameObject, settings))
+            if (EnsureHitStopOn(refs.gameObject, settings))
                 added++;
         }
 
@@ -70,7 +70,22 @@ public static class CharacterHitStopSetupMenu
 
     static bool EnsureHitStopOn(GameObject go, CombatHitStopSettings settings)
     {
-        CharacterBodyHost bodyHost = go.GetComponentInChildren<CharacterBodyHost>(true);
+        CharacterBodyRefs refs = go.GetComponent<CharacterBodyRefs>();
+        if (refs == null)
+            refs = go.GetComponentInParent<CharacterBodyRefs>();
+        if (refs == null)
+            refs = go.GetComponentInChildren<CharacterBodyRefs>(true);
+        if (refs == null)
+            return false;
+
+        CharacterBodyHost bodyHost = refs.BodyHost;
+        if (bodyHost == null)
+        {
+            refs.Invalidate();
+            refs.ResolveFromHierarchy();
+            bodyHost = refs.BodyHost;
+        }
+
         if (bodyHost == null)
             return false;
 
@@ -85,7 +100,7 @@ public static class CharacterHitStopSetupMenu
                 Undo.DestroyObjectImmediate(component);
         }
 
-        SerializedObject so = new(bodyHost);
+        SerializedObject so = new(refs);
         SerializedProperty settingsProp = so.FindProperty("_hitStopSettings");
         bool changed = false;
         if (settingsProp != null && settingsProp.objectReferenceValue != settings)
@@ -96,7 +111,7 @@ public static class CharacterHitStopSetupMenu
         }
 
         bodyHost.ConfigureHitStopSettings(settings);
-        EditorUtility.SetDirty(bodyHost);
+        EditorUtility.SetDirty(refs);
         return changed;
     }
 }

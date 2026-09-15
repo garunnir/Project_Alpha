@@ -213,8 +213,8 @@ public static class PlayerSightVisionBinder
     }
 
     static CharacterVision ResolveVision(Component bodyMember) =>
-        bodyMember != null ? CharacterBodyResolve.GetInBody<CharacterVision>(bodyMember) : null;
+        bodyMember != null ? CharacterBodyResolve.GetModule<CharacterVision>(bodyMember) : null;
 
     static CharacterVision ResolveVision(GameObject body) =>
-        body != null ? body.GetBodyComponent<CharacterVision>() : null;
+        body != null ? body.GetBodyModule<CharacterVision>() : null;
 }

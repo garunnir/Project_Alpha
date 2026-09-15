@@ -213,9 +213,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
-        _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
-        _skillsHost = CharacterBodyResolve.GetInBody<CharacterSkillsHost>(this);
+        _attacker = CharacterBodyResolve.GetModule<CharacterAttacker>(this);
+            _gearHost = CharacterBodyResolve.GetModule<PlayerGearHost>(this);
+        _skillsHost = CharacterBodyResolve.GetModule<CharacterSkillsHost>(this);
         _locomotion = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         _vaultHost = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
     }

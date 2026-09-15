@@ -143,7 +143,7 @@ public sealed class CharacterAttackerCombatVfx
     {
         if (_attacker?.Catalog != null && _attacker.Catalog.AnimPipeline != null)
             return _attacker.Catalog.AnimPipeline;
-        CharacterLocomotionAnim loc = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(_attacker);
+        CharacterLocomotionAnim loc = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(_attacker.BodyRefs);
         return loc != null ? loc.ArmSlotCatalog : null;
     }
 

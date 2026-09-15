@@ -120,13 +120,14 @@ static class TimeScaleHudSetupMenu
 
     static void EnsureReservedWorkSources()
     {
-        PlayerGearHost gearHost = Object.FindAnyObjectByType<PlayerGearHost>();
-        if (gearHost != null && gearHost.GetComponent<GearReservedWorkSource>() == null)
-            Undo.AddComponent<GearReservedWorkSource>(gearHost.gameObject);
-
-        InventoryTimedMoveHost moveHost = Object.FindAnyObjectByType<InventoryTimedMoveHost>();
-        if (moveHost != null && moveHost.GetComponent<InventoryReservedWorkSource>() == null)
-            Undo.AddComponent<InventoryReservedWorkSource>(moveHost.gameObject);
+        CharacterBodyRefs refs = Object.FindAnyObjectByType<CharacterBodyRefs>();
+        if (refs != null)
+        {
+            if (refs.GetComponent<GearReservedWorkSource>() == null)
+                Undo.AddComponent<GearReservedWorkSource>(refs.gameObject);
+            if (refs.GetComponent<InventoryReservedWorkSource>() == null)
+                Undo.AddComponent<InventoryReservedWorkSource>(refs.gameObject);
+        }
 
         UICraftingController crafting = Object.FindAnyObjectByType<UICraftingController>();
         if (crafting != null && crafting.GetComponent<CraftingReservedWorkSource>() == null)

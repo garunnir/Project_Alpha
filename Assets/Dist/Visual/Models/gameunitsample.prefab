@@ -2042,6 +2042,7 @@ GameObject:
   - component: {fileID: 8588709482120131680}
   - component: {fileID: 154706132966335728}
   - component: {fileID: 8829749814005814825}
+  - component: {fileID: 755700954257640139}
   m_Layer: 0
   m_Name: 8.003
   m_TagString: Untagged
@@ -2202,3 +2203,20 @@ MonoBehaviour:
   angleResolution: 30
   AlignPixelGrid: 1
   PixelGridReference: {fileID: 377782585016988114}
+--- !u!114 &755700954257640139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9120795376697669555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2acf0adf62718e4199b68a60cb21ee5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProPixelizer::ProPixelizer.OutlineControl
+  ID: 0
+  UseRandomUID: 1
+  UseRootUID: 0
+  UseRootColor: 1
+  Color: {r: 0, g: 0, b: 0, a: 0}

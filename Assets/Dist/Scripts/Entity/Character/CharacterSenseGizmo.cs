@@ -4,63 +4,40 @@
 
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterVision))]
-public sealed class CharacterSenseGizmo : MonoBehaviour
+public static class CharacterSenseGizmo
 {
-    [SerializeField] bool _drawGizmos = true;
-    [SerializeField] bool _onlyWhenSelected;
-    [SerializeField] bool _drawVisionDetect = true;
-    [SerializeField] bool _drawVisionLose = true;
-    [SerializeField] bool _drawHearing = true;
-
-    CharacterVision _vision;
-    CharacterHearing _hearing;
-    CharacterState _state;
-    CharacterDefinitionBinder _definitionBinder;
-
-    void OnValidate() => EnsureRefs();
-
-    void Awake() => EnsureRefs();
-
-    void EnsureRefs()
-    {
-        TryGetComponent(out _vision);
-        TryGetComponent(out _hearing);
-        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
-    }
+    public const bool DrawGizmos = true;
+    public const bool OnlyWhenSelected = false;
+    public const bool DrawVisionDetect = true;
+    public const bool DrawVisionLose = true;
+    public const bool DrawHearing = true;
 
 #if UNITY_EDITOR
-    void OnDrawGizmos()
+    public static void Draw(CharacterBodyRefs refs, bool selectedOnly)
     {
-        if (!_onlyWhenSelected)
-            DrawSenseGizmos();
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        if (_onlyWhenSelected)
-            DrawSenseGizmos();
-    }
-
-    void DrawSenseGizmos()
-    {
-        if (!_drawGizmos || _vision == null)
+        if (!DrawGizmos || refs == null)
             return;
 
-        EnsureRefs();
+        if (OnlyWhenSelected != selectedOnly)
+            return;
+
         ResolveRadii(
+            refs,
             out float detectRadius,
             out float loseRadius,
             out float hearingRadius,
             out float spotAngle,
             out float innerSpotAngle);
 
-        Vector3 center = CharacterFeetPose.GetFeetWorld(transform);
-        Vector3 forward = CharacterSightForward.ResolveXZ(_state, transform);
+        Transform transform = refs.transform;
+        CharacterState state = refs.State;
+        if (state == null)
+            refs.TryGetComponent(out state);
 
-        if (_drawVisionDetect && detectRadius > 0f)
+        Vector3 center = CharacterFeetPose.GetFeetWorld(transform);
+        Vector3 forward = CharacterSightForward.ResolveXZ(state, transform);
+
+        if (DrawVisionDetect && detectRadius > 0f)
         {
             CharacterSightFadeGizmoColors.DrawVisionSectorXZ(
                 center,
@@ -71,7 +48,7 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
                 innerSpotAngle);
         }
 
-        if (_drawVisionLose && loseRadius > 0f && loseRadius > detectRadius + 0.01f)
+        if (DrawVisionLose && loseRadius > 0f && loseRadius > detectRadius + 0.01f)
         {
             CharacterSenseGizmoColors.DrawVisionConeWireXZ(
                 center,
@@ -81,28 +58,35 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
                 CharacterSenseGizmoColors.VisionLoseWire);
         }
 
-        if (_drawHearing && _hearing != null && hearingRadius > 0f)
+        if (DrawHearing && hearingRadius > 0f)
             CharacterSenseGizmoColors.DrawHearingSphereGizmos(center, hearingRadius);
     }
 
-    void ResolveRadii(
+    static void ResolveRadii(
+        CharacterBodyRefs refs,
         out float detectRadius,
         out float loseRadius,
         out float hearingRadius,
         out float spotAngle,
         out float innerSpotAngle)
     {
-        if (Application.isPlaying)
+        CharacterVision vision = refs.Vision;
+        CharacterHearing hearing = refs.Hearing;
+        if (Application.isPlaying && vision != null)
         {
-            detectRadius = _vision.EffectiveDetectRadius;
-            loseRadius = _vision.EffectiveLoseRadius;
-            spotAngle = _vision.EffectiveSpotAngleDegrees;
-            innerSpotAngle = _vision.EffectiveInnerSpotAngleDegrees;
-            hearingRadius = _hearing != null ? _hearing.EffectiveHearingRadius : 0f;
+            detectRadius = vision.EffectiveDetectRadius;
+            loseRadius = vision.EffectiveLoseRadius;
+            spotAngle = vision.EffectiveSpotAngleDegrees;
+            innerSpotAngle = vision.EffectiveInnerSpotAngleDegrees;
+            hearingRadius = hearing != null ? hearing.EffectiveHearingRadius : 0f;
             return;
         }
 
-        CharacterDefinition definition = _definitionBinder != null ? _definitionBinder.Definition : null;
+        CharacterDefinitionBinder binder = refs.DefinitionBinder;
+        if (binder == null)
+            refs.TryGetComponent(out binder);
+
+        CharacterDefinition definition = binder != null ? binder.Definition : null;
         CharacterSenseBlock senses = definition != null ? definition.Senses : CharacterSenseBlock.Default;
         detectRadius = senses.sightDetectMeters;
         loseRadius = senses.sightLoseMeters;
@@ -113,6 +97,9 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
                 : CharacterVisionDefaults.SpotAngleDegrees);
         innerSpotAngle = spotAngle * CharacterVisionDefaults.InnerSpotAngleRatio;
     }
-
+#else
+    public static void Draw(CharacterBodyRefs refs, bool selectedOnly)
+    {
+    }
 #endif
 }

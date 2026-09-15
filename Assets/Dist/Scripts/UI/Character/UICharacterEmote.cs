@@ -7,14 +7,14 @@ using UnityEngine.UI;
 
 public sealed class UICharacterEmote : MonoBehaviour
 {
-    [SerializeField] CharacterEmoteHost _host;
+    CharacterEmoteHost _host;
     [SerializeField] Image _icon;
     [SerializeField] Canvas _canvas;
 
     void Awake()
     {
         if (_host == null)
-            _host = GetComponentInParent<CharacterEmoteHost>();
+            _host = this.GetBodyModule<CharacterEmoteHost>();
 
         if (_icon == null)
         {

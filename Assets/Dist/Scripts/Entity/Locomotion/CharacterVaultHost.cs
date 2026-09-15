@@ -263,7 +263,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
         if (_actionHost == null)
             return TryBegin(candidate);
 
-        return _actionHost.TryRunOrEnqueue(
+        return _actionHost.TryEnqueue(
             CharacterActionKind.Cell,
             () => TryBegin(candidate));
     }

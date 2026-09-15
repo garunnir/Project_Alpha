@@ -3,16 +3,14 @@
 // ============================================================
 
 using System.Collections.Generic;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
 public sealed class PlayerInventoryRuntime : MonoBehaviour
 {
-    [SerializeField] PlayerInventoryHost _host;
-    [SerializeField] NearbyContainerDetector _detector;
-
     readonly LootProximityCoordinator _lootProximity = new();
 
+    PlayerInventoryHost _host;
+    NearbyContainerDetector _detector;
     InventorySession _session;
     bool _inventoryContextActive;
     readonly HashSet<object> _contextOwners = new();
@@ -29,14 +27,12 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
     {
         _host = host;
         _detector = detector;
-        EnsureReferences();
         if (_session != null && _detector != null)
             _detector.Bind(_session, _lootProximity);
     }
 
     void Awake()
     {
-        EnsureReferences();
         _session = new InventorySession();
         if (_detector != null)
             _detector.Bind(_session, _lootProximity);
@@ -62,15 +58,6 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
     void OnDestroy()
     {
         EndInventoryContext();
-    }
-
-    void OnValidate() => EnsureReferences();
-    void Reset() => EnsureReferences();
-
-    void EnsureReferences()
-    {
-        if (!_host) TryGetComponent(out _host);
-        if (!_detector) TryGetComponent(out _detector);
     }
 
     public void AcquireContext(object owner)
@@ -99,7 +86,7 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 
     void BeginInventoryContext()
     {
-        if (_inventoryContextActive || _session == null)
+        if (_inventoryContextActive || _session == null || _host == null || _detector == null)
             return;
 
         _host.RegisterToSession(_session);
@@ -115,8 +102,8 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
         if (!_inventoryContextActive || _session == null)
             return;
 
-        _detector.Deactivate();
-        _host.UnregisterFromSession(_session);
+        _detector?.Deactivate();
+        _host?.UnregisterFromSession(_session);
         _inventoryContextActive = false;
     }
 

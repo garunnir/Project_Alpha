@@ -118,6 +118,9 @@ public static class GameplayPlayerRuntime
         _possessedTraitsResolver = resolver;
     }
 
+    /// <summary>Backing only — skips possessed resolver (host Ensure/Bind must not recurse).</summary>
+    public static ICharacterTraits PeekTraitsBacking() => _traits;
+
     public static ICharacterTraits Traits
     {
         get

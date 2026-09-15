@@ -11,7 +11,7 @@ public sealed class MeleePlantTargetHandler : IActionHandler
         if (attacker == null)
             return;
 
-        CharacterActionHost host = CharacterBodyResolve.GetInBody<CharacterActionHost>(attacker);
+        CharacterActionHost host = CharacterBodyResolve.GetInBody<CharacterActionHost>(attacker.BodyRefs);
         CharacterChopPipeline pipeline = host != null ? host.ChopPipeline : null;
         if (pipeline == null || !pipeline.IsActive)
             return;

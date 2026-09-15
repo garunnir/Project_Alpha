@@ -1376,7 +1376,8 @@ public sealed class UICraftingWindow : MonoBehaviour
         CharacterActionHost host = ResolveActionHost();
         if (host != null)
         {
-            host.TryRunOrEnqueue(CharacterActionKind.Craft, TryStartCraftNow);
+            // Craft는 예약 화이트리스트 — busy면 큐, idle면 즉시 Begin.
+            host.TryEnqueue(CharacterActionKind.Craft, TryStartCraftNow);
             return;
         }
 

@@ -20,7 +20,7 @@
 | Type | Role |
 |------|------|
 | `PlayerNeedsSettings` | 위장 ml·소화율·일일 kcal/갈증·활동 배율·무드/산문 비율·팽만/부패/경고·수면 τ SSOT |
-| `PlayerNeedsHost` | possessed 플레이어 위장·대사·수면 피로 틱. `Active` |
+| `PlayerNeedsHost` | possessed 플레이어 위장·대사·수면 피로 틱. `Active`. plain module (`CharacterBodyRefs`). Settings는 `PlayerNeedsSettings` SO (`DefaultAssetPath`), 본체 Host Inspector 아님 |
 | `ConsumeService` | 인벤 1개 Eat/Drink/Use → 위장·대사·MED heal. 실행은 `TryBegin` (`CharacterHandWork`) |
 | `ConsumeDuration` | Eat/Drink mealtime=250 moves→초 (`CombatMath.MovesPerSecond`). Use/MED는 0. 아이템 JSON 없음 |
 | `ItemRot` | `CreatedWorldMinute` + 부패 판정. 호스트가 possessed+open 컨테이너 스캔 |
@@ -60,7 +60,7 @@ digest mlWater (빠름) / mlFood / kcal→stored
 
 `SleepDisplay01` = max(`PerceivedFatigue01`, `SleepDebt01`). Stim ≥ \|`RotFunPenalty`\| 이면 당일 피로만 `StimFatigueMask`로 가린다. Debt는 가리지 않는다.
 
-`TrySleep` / `Wake`: 기립 휴식. 이동(`CurrentSpeed` ≥ `WalkActivitySpeedMin`)·행동(`IsBusy`)·ESC(`IUiCancelConsumer`)면 기상. 침대·배속 자동·붕괴·마이크로슬립 없음. Play 중 Inspector `Needs/Sleep`.
+`TrySleep` / `Wake`: 기립 휴식. 이동(`CurrentSpeed` ≥ `WalkActivitySpeedMin`)·행동(`IsBusy`)·ESC(`IUiCancelConsumer`)면 기상. 침대·배속 자동·붕괴·마이크로슬립 없음. Play 중 `Tools/Character Runtime Debug` Needs 탭.
 
 HUD: `SleepDisplay01` ≥ `MoodNeedRestRatio` → NeedRest, ≥ `MoodVeryTiredRatio` → VeryTired, ≥ `MoodTiredRatio` → Tired. 그 아래 아이콘 없음.
 

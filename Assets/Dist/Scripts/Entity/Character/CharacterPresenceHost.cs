@@ -1,52 +1,56 @@
 // ============================================================
-// CharacterPresenceHost — 타인 탐지용 가시성·소음 스탯 SSOT (본체 공용)
+// CharacterPresenceHost — 타인 탐지용 가시성·소음 스탯 SSOT (plain module)
 // ============================================================
 
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterPresenceHost : MonoBehaviour, ICharacterPresence
+public sealed class CharacterPresenceHost : ICharacterPresence
 {
-    [SerializeField] CharacterPresenceSettings _settings = CharacterPresenceSettings.DefaultUnity;
+    readonly CharacterPresenceSettings _settings = CharacterPresenceSettings.DefaultUnity;
 
     CharacterState _state;
     CharacterMotor _motor;
     CharacterPresenceResolved _resolved = CharacterPresenceResolved.Identity;
+    bool _enabled;
 
     public float Visibility01 => _resolved.Visibility01;
     public float Noise01 => _resolved.Noise01;
     public CharacterPresenceResolved Resolved => _resolved;
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+        if (_state != null)
+            _state.StealthChanged -= OnStealthChanged;
+
+        _state = refs != null ? refs.State : null;
+        _motor = refs != null ? refs.Motor : null;
+        if (_enabled)
+            Enable();
+        else
+            Refresh();
     }
 
-    void OnEnable()
+    public void Enable()
     {
+        _enabled = true;
         if (_state != null)
             _state.StealthChanged += OnStealthChanged;
         Refresh();
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        _enabled = false;
         if (_state != null)
             _state.StealthChanged -= OnStealthChanged;
     }
 
-    void LateUpdate() => Refresh();
+    public void Tick() => Refresh();
 
     void OnStealthChanged(bool _) => Refresh();
 
     void Refresh()
     {
-        if (_state == null)
-            _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        if (_motor == null)
-            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-
         var ctx = new CharacterPresenceContext
         {
             IsStealthActive = _state != null && _state.IsStealth,
@@ -61,8 +65,8 @@ public sealed class CharacterPresenceHost : MonoBehaviour, ICharacterPresence
 
     public static bool TryResolve(Component target, out CharacterPresenceResolved resolved)
     {
-        if (target != null &&
-            target.TryGetComponent(out CharacterPresenceHost host))
+        CharacterPresenceHost host = CharacterBodyResolve.GetModule<CharacterPresenceHost>(target);
+        if (host != null)
         {
             resolved = host.Resolved;
             return true;

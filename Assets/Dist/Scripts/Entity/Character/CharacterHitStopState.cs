@@ -29,7 +29,7 @@ public sealed class CharacterHitStopState
 
     public static CharacterHitStopState Find(Component origin)
     {
-        CharacterBodyHost host = CharacterBodyResolve.GetInBody<CharacterBodyHost>(origin);
+        CharacterBodyHost host = CharacterBodyResolve.GetModule<CharacterBodyHost>(origin);
         return host != null ? host.HitStop : null;
     }
 
@@ -39,7 +39,7 @@ public sealed class CharacterHitStopState
             return;
 
         if (_attacker == null && _bodyHost != null)
-            _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(_bodyHost);
+            _attacker = _bodyHost.BodyRefs != null ? _bodyHost.BodyRefs.Attacker : null;
 
         if (_attacker != null)
             _attacker.AttackJudged += OnAttackerJudged;

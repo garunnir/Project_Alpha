@@ -11760,7 +11760,7 @@ MonoBehaviour:
   _refCam: {fileID: 210656668}
   _hitMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 119
   _maxRayDistance: 200
 --- !u!114 &739639490
 MonoBehaviour:

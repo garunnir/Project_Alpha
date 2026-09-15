@@ -46,9 +46,14 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     void Awake()
     {
-        _attacker = GetComponent<CharacterAttacker>();
+        CharacterBodyRefs refs = this.GetBodyRefs();
+        _attacker = refs != null ? refs.Attacker : this.GetBodyModule<CharacterAttacker>();
         _characterState = GetComponent<CharacterState>();
+        if (_characterState == null && refs != null)
+            _characterState = refs.State;
         TryGetComponent(out _actionHost);
+        if (_actionHost == null && refs != null)
+            _actionHost = refs.ActionHost;
     }
 
     void OnDisable()

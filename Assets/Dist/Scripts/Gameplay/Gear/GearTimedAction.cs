@@ -16,7 +16,8 @@ public sealed class GearTimedAction
         Unwield,
         InventoryTransfer,
         AmmoLoad,
-        MagAttach
+        MagAttach,
+        StripWear
     }
 
     float _elapsed;
@@ -52,6 +53,18 @@ public sealed class GearTimedAction
         }
 
         return true;
+    }
+
+    /// <summary>Immediate 경로 — running이면 Cancel 후 Begin.</summary>
+    public bool TryBeginOrPreempt(Kind kind, float durationSeconds, Action onComplete)
+    {
+        if (kind == Kind.None || onComplete == null)
+            return false;
+
+        if (IsRunning)
+            Cancel();
+
+        return TryBegin(kind, durationSeconds, onComplete);
     }
 
     public void Cancel()

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using UnityEngine;
 
 public sealed class CharacterGearService
@@ -177,7 +178,7 @@ public sealed class CharacterGearService
 
     public bool TryBeginWear(ItemStack stack, InventoryContainer source)
     {
-        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWearCore(stack, source));
+        return Run(CharacterActionKind.Gear, () => TryBeginWearCore(stack, source));
     }
 
     bool TryBeginWearCore(ItemStack stack, InventoryContainer source)
@@ -192,7 +193,7 @@ public sealed class CharacterGearService
 
         ItemStack captured = stack;
         InventoryContainer capturedSource = source;
-        return BeginTimed(captured, GearTimedAction.Kind.Wear, duration, () =>
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.Wear, duration, () =>
         {
             if (!capturedSource.ContainsStackReference(captured))
                 return;
@@ -212,17 +213,17 @@ public sealed class CharacterGearService
 
     public bool TryBeginTakeOff(ItemStack stack, bool toFloor)
     {
-        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginTakeOffCore(stack, toFloor));
+        return Run(CharacterActionKind.Gear, () => TryBeginTakeOffCore(stack, toFloor));
     }
 
     bool TryBeginTakeOffCore(ItemStack stack, bool toFloor)
     {
-        if (_toolSession.IsActive || IsBusy || stack == null || !_wear.Contains(stack))
+        if (_toolSession.IsActive || stack == null || !_wear.Contains(stack))
             return false;
 
         float duration = GearActionDuration.TakeOffSeconds(stack.Item);
         ItemStack captured = stack;
-        return BeginTimed(captured, GearTimedAction.Kind.TakeOff, duration, () =>
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.TakeOff, duration, () =>
         {
             if (!_wear.TryRemove(captured))
                 return;
@@ -231,9 +232,47 @@ public sealed class CharacterGearService
         });
     }
 
+    /// <summary>
+    /// 벗겨주기 — timed/게이지는 interactor(this), wear deposit는 victim.
+    /// </summary>
+    public bool TryBeginAssistedStripWear(CharacterGearService victimGear, ItemStack stack)
+    {
+        return Run(CharacterActionKind.Gear, () => TryBeginAssistedStripWearCore(victimGear, stack));
+    }
+
+    bool TryBeginAssistedStripWearCore(CharacterGearService victimGear, ItemStack stack)
+    {
+        if (_toolSession.IsActive || victimGear == null || stack == null)
+            return false;
+        if (victimGear.ToolSession.IsActive)
+            return false;
+        if (!victimGear.Wear.Contains(stack))
+            return false;
+
+        float duration = GearActionDuration.TakeOffSeconds(stack.Item);
+        ItemStack captured = stack;
+        CharacterGearService victim = victimGear;
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.StripWear, duration, () =>
+        {
+            victim.TryCompleteAssistedStripDeposit(captured);
+        });
+    }
+
+    /// <summary>Assisted strip complete — victim wear → body container.</summary>
+    public bool TryCompleteAssistedStripDeposit(ItemStack stack)
+    {
+        if (stack == null || !_wear.Contains(stack))
+            return false;
+        if (!_wear.TryRemove(stack))
+            return false;
+        DepositStack(stack, toFloor: false);
+        NotifyPrimaryDirty();
+        return true;
+    }
+
     public bool TryBeginWield(ItemStack stack, InventoryContainer source, WieldHand hand)
     {
-        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWieldCore(stack, source, hand));
+        return Run(CharacterActionKind.Gear, () => TryBeginWieldCore(stack, source, hand));
     }
 
     bool TryBeginWieldCore(ItemStack stack, InventoryContainer source, WieldHand hand)
@@ -249,7 +288,7 @@ public sealed class CharacterGearService
         ItemStack captured = stack;
         InventoryContainer capturedSource = source;
         WieldHand capturedHand = hand;
-        return BeginTimed(captured, GearTimedAction.Kind.Wield, duration, () =>
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.Wield, duration, () =>
         {
             if (!capturedSource.ContainsStackReference(captured))
                 return;
@@ -292,17 +331,17 @@ public sealed class CharacterGearService
 
     public bool TryBeginUnwield(ItemStack stack, bool toFloor)
     {
-        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginUnwieldCore(stack, toFloor));
+        return Run(CharacterActionKind.Gear, () => TryBeginUnwieldCore(stack, toFloor));
     }
 
     bool TryBeginUnwieldCore(ItemStack stack, bool toFloor)
     {
-        if (_toolSession.IsActive || IsBusy || stack == null || !_wield.Contains(stack))
+        if (_toolSession.IsActive || stack == null || !_wield.Contains(stack))
             return false;
 
         float duration = GearActionDuration.UnwieldSeconds(stack.Item);
         ItemStack captured = stack;
-        return BeginTimed(captured, GearTimedAction.Kind.Unwield, duration, () =>
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.Unwield, duration, () =>
         {
             if (!_wield.TryUnwield(captured, out ItemStack removed) || removed == null)
                 return;
@@ -319,7 +358,7 @@ public sealed class CharacterGearService
 
     public bool TryBeginWieldGrip(ItemStack stack, WieldHand hand)
     {
-        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWieldGripCore(stack, hand));
+        return Run(CharacterActionKind.Gear, () => TryBeginWieldGripCore(stack, hand));
     }
 
     bool TryBeginWieldGripCore(ItemStack stack, WieldHand hand)
@@ -330,7 +369,7 @@ public sealed class CharacterGearService
         float duration = GearActionDuration.WieldSeconds(stack.Item);
         ItemStack captured = stack;
         WieldHand capturedHand = hand;
-        return BeginTimed(captured, GearTimedAction.Kind.Wield, duration, () =>
+        return BeginTimedOrPreempt(captured, GearTimedAction.Kind.Wield, duration, () =>
         {
             if (!_wield.Contains(captured))
                 return;
@@ -381,7 +420,7 @@ public sealed class CharacterGearService
         float durationSeconds,
         Action onComplete)
     {
-        return RunOrEnqueue(
+        return Run(
             CharacterActionKind.Gear,
             () => TryBeginDomainTimedCore(activeStack, kind, durationSeconds, onComplete));
     }
@@ -394,9 +433,9 @@ public sealed class CharacterGearService
     {
         if (activeStack == null || onComplete == null)
             return false;
-        if (_toolSession.IsActive || IsBusy)
+        if (_toolSession.IsActive)
             return false;
-        return BeginTimed(activeStack, kind, durationSeconds, onComplete);
+        return BeginTimedOrPreempt(activeStack, kind, durationSeconds, onComplete);
     }
 
     public void NotifyAmmoChanged() => NotifyPrimaryDirty();
@@ -467,6 +506,58 @@ public sealed class CharacterGearService
         if (ok)
             NotifyPrimaryDirty();
         return ok;
+    }
+
+    /// <summary>넉다운 등 — 들고 있는 스택을 월드 SmallItem으로 투하 (FloorLootHost 미사용).</summary>
+    public void DropAllWieldedToWorld(
+        SmallItemObject prefab,
+        Vector3 worldPosition,
+        IWorldGrid grid)
+    {
+        if (_toolSession.IsActive)
+            TryEndToolUse();
+
+        if (_timed.IsRunning)
+            _timed.Cancel();
+
+        CollectWieldedStacksForDrop(_filterScratch);
+        for (int i = 0; i < _filterScratch.Count; i++)
+        {
+            ItemStack stack = _filterScratch[i];
+            if (stack == null || !_wield.Contains(stack))
+                continue;
+
+            if (!_wield.TryUnwield(stack, out ItemStack removed) || removed == null)
+                continue;
+
+            if (prefab == null)
+            {
+                Debug.LogWarning("[CharacterGearService] SmallItem prefab missing; wield drop skipped.");
+                continue;
+            }
+
+            SmallItemSpawner.Spawn(prefab, removed, worldPosition, grid);
+        }
+
+        _filterScratch.Clear();
+        NotifyPrimaryDirty();
+    }
+
+    void CollectWieldedStacksForDrop(List<ItemStack> into)
+    {
+        into.Clear();
+        if (_wield.IsTwoHand)
+        {
+            ItemStack stack = _wield.Left ?? _wield.Right;
+            if (stack != null)
+                into.Add(stack);
+            return;
+        }
+
+        if (_wield.Left != null)
+            into.Add(_wield.Left);
+        if (_wield.Right != null && _wield.Right != _wield.Left)
+            into.Add(_wield.Right);
     }
 
     public void RefreshLiftStrain()
@@ -579,7 +670,7 @@ public sealed class CharacterGearService
         NotifyPrimaryDirty();
     }
 
-    bool RunOrEnqueue(CharacterActionKind kind, Func<bool> start)
+    bool Run(CharacterActionKind kind, Func<bool> start)
     {
         if (MoodGameplayGate.IsBlocked)
             return false;
@@ -587,13 +678,37 @@ public sealed class CharacterGearService
             return false;
         if (_actionHost == null)
             return start();
-        return _actionHost.TryRunOrEnqueue(kind, start);
+        return _actionHost.TryRunImmediate(kind, start);
+    }
+
+    /// <summary>예약 전용 — Gear domain 연속 배치 등 예외 경로.</summary>
+    bool RunEnqueue(CharacterActionKind kind, Func<bool> start)
+    {
+        if (MoodGameplayGate.IsBlocked)
+            return false;
+        if (start == null)
+            return false;
+        if (_actionHost == null)
+            return start();
+        return _actionHost.TryEnqueue(kind, start);
     }
 
     bool BeginTimed(ItemStack stack, GearTimedAction.Kind kind, float duration, Action onComplete)
     {
         _activeStack = stack;
         if (!_timed.TryBegin(kind, duration, onComplete))
+        {
+            _activeStack = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    bool BeginTimedOrPreempt(ItemStack stack, GearTimedAction.Kind kind, float duration, Action onComplete)
+    {
+        _activeStack = stack;
+        if (!_timed.TryBeginOrPreempt(kind, duration, onComplete))
         {
             _activeStack = null;
             return false;

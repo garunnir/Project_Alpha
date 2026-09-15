@@ -22,7 +22,7 @@ public sealed class MeleeSwingPerformDriver : ICombatPerformDriver
         CharacterAttacker attacker = ctx.Attacker;
         if (ctx.ActionHost != null)
         {
-            ctx.ActionHost.TryRunOrEnqueue(CharacterActionKind.Combat, () => Execute(attacker));
+            ctx.ActionHost.TryEnqueue(CharacterActionKind.Combat, () => Execute(attacker));
             return true;
         }
 

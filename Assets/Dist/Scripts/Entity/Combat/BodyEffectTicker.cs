@@ -8,21 +8,29 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-public sealed class BodyEffectTicker : MonoBehaviour
+public sealed class BodyEffectTicker
 {
-    [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
+    CharacterBodyRefs _refs;
     CharacterBodyHost _bodyHost;
     readonly Dictionary<string, float> _bleedAgeByPart = new();
     readonly Dictionary<string, BodyInjuryTend.Accum> _injuryHealAccum = new();
     readonly Dictionary<string, float> _bandageDirtyAccumByPart = new();
     float _dripAccum;
 
-    void Awake() => _bodyHost = GetComponent<CharacterBodyHost>();
+    public CharacterBodyRefs BodyRefs => _refs;
 
-    void Update()
+    public void Bind(CharacterBodyRefs refs)
+    {
+        _refs = refs;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        if (refs != null)
+            _timeChannel = refs.BodyEffectTimeChannel;
+    }
+
+    /// <summary>부상 tend·출혈·감염·독소. heap 없음 (Dictionary 재사용).</summary>
+    public void Tick()
     {
         ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         if (body == null)
@@ -133,7 +141,7 @@ public sealed class BodyEffectTicker : MonoBehaviour
         if (host == null)
             return;
 
-        Vector3 feet = transform.position;
+        Vector3 feet = _refs != null ? _refs.transform.position : Vector3.zero;
         feet.x += Random.Range(-MapBloodConsts.DripJitterWorld, MapBloodConsts.DripJitterWorld);
         feet.z += Random.Range(-MapBloodConsts.DripJitterWorld, MapBloodConsts.DripJitterWorld);
         host.AddStamp(

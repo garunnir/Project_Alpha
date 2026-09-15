@@ -1,6 +1,6 @@
 # Character Sight Fade
 
-**구현:** `CharacterSightFadeDriver` · `CharacterSightFadeHost` · `CharacterSightFadeEvaluator`  
+**구현:** `CharacterSightFadeDriver` · `CharacterSightFadeHost` (plain module, `CharacterBodyRefs` 소유) · `CharacterSightFadeEvaluator`  
 **시야 판정 SSOT (PC/NPC 공통):** `CharacterVision` — 각=`CharacterDefinition.spotAngleDegrees`, 탐지/유지 반경=`CharacterDefinition.Senses` → `EffectiveDetect/LoseRadius` (× HelmetVision)  
 **청력·채널:** [`SENSES.md`](SENSES.md)  
 **뷰(시스템만):** Driver/Host 페이드 · Spot 동기  
@@ -23,7 +23,7 @@ trait `omnivision` (만시): `CharacterSightFadeDriver`가 `EvaluateTarget` 없�
 | `CharacterDefinition` | Spot Angle Degrees |
 | `CharacterDefinition.Senses` | sightDetect / sightLose / hearingRadius (기본값은 `CharacterVisionDefaults` / `CharacterHearingDefaults`) |
 | `CharacterVisionDefaults` | Detect/Lose **폴백** (SenseBlock default 파생) |
-| Driver Settings | FadeWidth, LOS, LosHeightOffset |
+| Driver Settings | FadeWidth, LOS, LosHeightOffset (시스템 Inspector). Host display 속도·epsilon은 `CharacterSightFadeSettings.DefaultUnity` — 본체 Host Inspector 아님 |
 
 ## See also
 

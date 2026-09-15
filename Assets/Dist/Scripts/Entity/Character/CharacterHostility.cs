@@ -53,6 +53,6 @@ public static class CharacterHostility
         string otherId = otherFaction != null ? otherFaction.Id : "(null)";
         Debug.LogError(
             $"[CharacterHostility] Missing faction assignment: {selfName}={selfId}, {otherName}={otherId}.",
-            self);
+            self.LogContext);
     }
 }

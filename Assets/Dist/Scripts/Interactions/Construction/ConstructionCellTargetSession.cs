@@ -130,13 +130,14 @@ public sealed class ConstructionCellTargetSession : IFarmCellTargetSession, ICel
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            CharacterActionHost fromGear = gear.GetBodyComponent<CharacterActionHost>();
+            CharacterActionHost fromGear = gear.BodyRefs != null ? gear.BodyRefs.ActionHost : null;
             if (fromGear != null)
                 return fromGear;
         }
 
-        return PlayerInventoryRuntime.Active?.Host != null
-            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+        PlayerInventoryHost inventory = PlayerInventoryRuntime.Active?.Host;
+        return inventory != null && inventory.BodyRefs != null
+            ? inventory.BodyRefs.ActionHost
             : null;
     }
 

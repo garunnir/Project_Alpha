@@ -1,11 +1,10 @@
 // ============================================================
-// CharacterEmoteHost — 월드 이모트 소스 우선순위·필터·표시 SSOT
+// CharacterEmoteHost — 월드 이모트 소스 우선순위·필터·표시 SSOT (plain module)
 // ============================================================
 
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterEmoteHost : MonoBehaviour
+public sealed class CharacterEmoteHost
 {
     const int SourceSlotCount = 4;
 
@@ -16,13 +15,14 @@ public sealed class CharacterEmoteHost : MonoBehaviour
         public bool Active;
     }
 
-    [SerializeField] CharacterEmoteCatalog _catalog;
-    [SerializeField] CharacterEmoteSettings _settings = CharacterEmoteSettings.DefaultUnity;
+    readonly CharacterEmoteSettings _settings = CharacterEmoteSettings.DefaultUnity;
+    readonly SourceSlot[] _slots = new SourceSlot[SourceSlotCount];
 
+    CharacterEmoteCatalog _catalog;
     CharacterMotor _motor;
     CharacterSightFadeHost _fadeHost;
     CharacterMoodHost _moodHost;
-    readonly SourceSlot[] _slots = new SourceSlot[SourceSlotCount];
+    bool _enabled;
 
     EmoteId _resolvedId = EmoteId.None;
     EmoteSource _resolvedSource = EmoteSource.None;
@@ -42,36 +42,50 @@ public sealed class CharacterEmoteHost : MonoBehaviour
 
     public void ConfigureCatalog(CharacterEmoteCatalog catalog) => _catalog = catalog;
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        CharacterBodyRefs refs = this.GetBodyRefs();
-        if (refs != null)
-        {
-            _motor = refs.Motor;
-            _fadeHost = refs.SightFade;
-            refs.TryGet(out _moodHost);
-        }
-        else
-        {
-            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-            _fadeHost = CharacterBodyResolve.GetInBody<CharacterSightFadeHost>(this);
-            _moodHost = CharacterBodyResolve.GetInBody<CharacterMoodHost>(this);
-        }
+        if (_moodHost != null)
+            _moodHost.Changed -= OnMoodChanged;
 
-        RebuildResolved();
+        _motor = refs != null ? refs.Motor : null;
+        _fadeHost = refs != null ? refs.SightFade : null;
+        _moodHost = refs != null ? refs.MoodHost : null;
+        if (refs != null && refs.EmoteCatalog != null)
+            _catalog = refs.EmoteCatalog;
+
+        if (_enabled)
+            Enable();
+        else
+            RebuildResolved();
     }
 
-    void OnEnable()
+    public void Enable()
     {
+        _enabled = true;
         if (_moodHost != null)
             _moodHost.Changed += OnMoodChanged;
         RefreshMoodEmote();
     }
 
-    void OnDisable()
+    public void Disable()
     {
+        _enabled = false;
         if (_moodHost != null)
             _moodHost.Changed -= OnMoodChanged;
+    }
+
+    /// <summary>만료 슬롯 틱. heap 없음.</summary>
+    public void Tick()
+    {
+        float now = TimeScaleService.TimeNow(TimeScaleChannel.Realtime);
+        if (now < _nextExpireCheck)
+            return;
+
+        _nextExpireCheck = now + 0.05f;
+        if (!TickExpirations(now))
+            return;
+
+        RebuildResolved();
     }
 
     void OnMoodChanged() => RefreshMoodEmote();
@@ -108,19 +122,6 @@ public sealed class CharacterEmoteHost : MonoBehaviour
 
     bool CanApplyObserverEmote() =>
         _motor == null || !_motor.IsPossessed;
-
-    void Update()
-    {
-        float now = TimeScaleService.TimeNow(TimeScaleChannel.Realtime);
-        if (now < _nextExpireCheck)
-            return;
-
-        _nextExpireCheck = now + 0.05f;
-        if (!TickExpirations(now))
-            return;
-
-        RebuildResolved();
-    }
 
     public void Request(in EmoteRequest request)
     {

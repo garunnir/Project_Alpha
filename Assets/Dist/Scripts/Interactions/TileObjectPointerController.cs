@@ -1,5 +1,5 @@
 // ============================================================
-// TileObjectPointerController — 타일 오브젝트 호버 하이라이트 + RMB 클릭 메뉴
+// TileObjectPointerController — 타일/캐릭터 호버 하이라이트 + RMB 클릭 메뉴
 // ============================================================
 
 using System;
@@ -16,19 +16,30 @@ public sealed class TileObjectPointerController : MonoBehaviour
     const int PhysicsHitBufferSize = 16;
 
     [SerializeField] Camera _refCam;
-    [SerializeField] LayerMask _hitMask = ~0;
+    [SerializeField] LayerMask _hitMask;
     [SerializeField] float _maxRayDistance = 200f;
 
     readonly List<RaycastResult> _uiRaycastResults = new();
     readonly RaycastHit[] _physicsHits = new RaycastHit[PhysicsHitBufferSize];
 
-    TileObjectInteractionTarget _hovered;
-    bool _hoverSelectionOwned;
+    TileObjectInteractionTarget _hoveredTile;
+    PlayerInventoryHost _hoveredBody;
+    bool _tileHoverOwned;
+    bool _bodyHoverOwned;
+    PlayerInventoryHost _cachedBodyContextHost;
+    bool _cachedBodyHasContext;
     bool _connected;
     bool _inputEnabled = true;
 
+    void Awake() => EnsurePointerPickMask();
+
+    void Reset() => _hitMask = DistPhysicsLayerMasks.PointerWorldPick;
+
+    void OnValidate() => EnsurePointerPickMask();
+
     void OnEnable()
     {
+        EnsurePointerPickMask();
         if (_inputEnabled)
             Connect();
     }
@@ -37,6 +48,14 @@ public sealed class TileObjectPointerController : MonoBehaviour
     {
         if (_inputEnabled)
             Connect();
+    }
+
+    void EnsurePointerPickMask()
+    {
+        if (DistPhysicsLayerMasks.IncludesCharacter(_hitMask))
+            return;
+
+        _hitMask = DistPhysicsLayerMasks.WithCharacterPick(_hitMask);
     }
 
     void OnDisable()
@@ -95,18 +114,18 @@ public sealed class TileObjectPointerController : MonoBehaviour
             return;
         }
 
-        if (!TryRaycastTarget(screenPos, out TileObjectInteractionTarget target))
+        if (!TryRaycastHits(
+                screenPos,
+                out TileObjectInteractionTarget tileTarget,
+                out float tileDistance,
+                out PlayerInventoryHost bodyTarget,
+                out float bodyDistance))
         {
             ClearHover();
             return;
         }
 
-        if (target == _hovered)
-            return;
-
-        ClearHover();
-        _hovered = target;
-        ApplyHoverSelection(true);
+        ApplyResolvedHover(tileTarget, tileDistance, bodyTarget, bodyDistance);
     }
 
     void OnLookAtTapPerformed(InputAction.CallbackContext context)
@@ -132,8 +151,17 @@ public sealed class TileObjectPointerController : MonoBehaviour
         if (IsPointerBlockedByUiAt(screenPosition))
             return;
 
-        TileObjectInteractionTarget target = _hovered;
-        if (target == null && !TryRaycastTarget(screenPosition, out target))
+        if (!TryRaycastPointerTargets(
+                screenPosition,
+                out TileObjectInteractionTarget tileTarget,
+                out PlayerInventoryHost bodyLoot))
+            return;
+
+        if (bodyLoot != null && CharacterBodyContextMenuBuilder.TryShow(bodyLoot, screenPosition))
+            return;
+
+        TileObjectInteractionTarget target = tileTarget ?? _hoveredTile;
+        if (target == null)
             return;
 
         ContextMenuModel model = target.BuildContextMenuModel();
@@ -148,9 +176,119 @@ public sealed class TileObjectPointerController : MonoBehaviour
         }
     }
 
-    bool TryRaycastTarget(Vector2 screenPos, out TileObjectInteractionTarget target)
+    void ApplyResolvedHover(
+        TileObjectInteractionTarget tileTarget,
+        float tileDistance,
+        PlayerInventoryHost bodyTarget,
+        float bodyDistance)
     {
-        target = null;
+        bool bodyEligible = bodyTarget != null && HasBodyHoverOutlineContext(bodyTarget);
+
+        if (bodyTarget != null && tileTarget != null)
+        {
+            if (bodyDistance < tileDistance)
+            {
+                if (bodyEligible)
+                    SetBodyHover(bodyTarget);
+                else
+                    SetTileHover(tileTarget);
+                return;
+            }
+
+            SetTileHover(tileTarget);
+            return;
+        }
+
+        if (bodyTarget != null)
+        {
+            if (bodyEligible)
+                SetBodyHover(bodyTarget);
+            else
+                ClearHover();
+            return;
+        }
+
+        if (tileTarget != null)
+            SetTileHover(tileTarget);
+        else
+            ClearHover();
+    }
+
+    void SetTileHover(TileObjectInteractionTarget target)
+    {
+        if (_hoveredTile == target && _tileHoverOwned && _hoveredBody == null)
+            return;
+
+        ClearHover();
+        _hoveredTile = target;
+        ApplyTileHoverSelection(true);
+    }
+
+    void SetBodyHover(PlayerInventoryHost body)
+    {
+        if (_hoveredBody == body && _bodyHoverOwned && _hoveredTile == null)
+            return;
+
+        ClearHover();
+        _hoveredBody = body;
+        ApplyBodyHoverSelection(true);
+    }
+
+    bool HasBodyHoverOutlineContext(PlayerInventoryHost body)
+    {
+        if (body == null)
+            return false;
+
+        if (body == _cachedBodyContextHost)
+            return _cachedBodyHasContext;
+
+        _cachedBodyContextHost = body;
+        _cachedBodyHasContext = CharacterBodyContextMenuBuilder.HasHoverOutlineContext(body);
+        return _cachedBodyHasContext;
+    }
+
+    bool TryRaycastPointerTargets(
+        Vector2 screenPos,
+        out TileObjectInteractionTarget tileTarget,
+        out PlayerInventoryHost bodyLoot)
+    {
+        tileTarget = null;
+        bodyLoot = null;
+
+        if (!TryRaycastHits(
+                screenPos,
+                out tileTarget,
+                out float tileDistance,
+                out bodyLoot,
+                out float bodyDistance))
+            return false;
+
+        if (tileTarget != null && bodyLoot != null)
+        {
+            if (bodyDistance < tileDistance)
+            {
+                tileTarget = null;
+                return true;
+            }
+
+            bodyLoot = null;
+        }
+
+        return tileTarget != null || bodyLoot != null;
+    }
+
+    bool TryRaycastHits(
+        Vector2 screenPos,
+        out TileObjectInteractionTarget tileTarget,
+        out float tileDistance,
+        out PlayerInventoryHost bodyTarget,
+        out float bodyDistance)
+    {
+        tileTarget = null;
+        bodyTarget = null;
+        tileDistance = float.MaxValue;
+        bodyDistance = float.MaxValue;
+
         Camera cam = _refCam != null ? _refCam : Camera.main;
         if (cam == null)
             return false;
@@ -163,67 +301,92 @@ public sealed class TileObjectPointerController : MonoBehaviour
             _hitMask,
             QueryTriggerInteraction.Collide);
 
-        float bestDistance = float.MaxValue;
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit hit = _physicsHits[i];
             if (hit.collider == null)
                 continue;
 
-            TileObjectInteractionTarget candidate =
+            TileObjectInteractionTarget tileCandidate =
                 hit.collider.GetComponentInParent<TileObjectInteractionTarget>();
-            if (candidate == null)
-                continue;
+            if (tileCandidate != null && hit.distance < tileDistance)
+            {
+                tileDistance = hit.distance;
+                tileTarget = tileCandidate;
+            }
 
-            if (hit.distance >= bestDistance)
-                continue;
-
-            bestDistance = hit.distance;
-            target = candidate;
+            PlayerInventoryHost bodyCandidate =
+                CharacterBodyResolve.GetModule<PlayerInventoryHost>(hit.collider);
+            if (bodyCandidate != null && hit.distance < bodyDistance)
+            {
+                bodyDistance = hit.distance;
+                bodyTarget = bodyCandidate;
+            }
         }
 
-        return target != null;
+        return tileTarget != null || bodyTarget != null;
     }
 
-    void ApplyHoverSelection(bool selected)
+    void ApplyTileHoverSelection(bool selected)
     {
-        if (_hovered == null)
+        if (_hoveredTile == null)
             return;
 
         if (selected)
         {
-            if (ShouldSkipHoverClearForLoot(_hovered))
+            if (ShouldSkipHoverClearForLoot(_hoveredTile))
             {
-                _hoverSelectionOwned = false;
+                _tileHoverOwned = false;
                 return;
             }
 
-            _hovered.SetHoverSelected(true);
-            _hoverSelectionOwned = true;
+            _hoveredTile.SetHoverSelected(true);
+            _tileHoverOwned = true;
             return;
         }
 
-        if (!_hoverSelectionOwned)
+        if (!_tileHoverOwned)
             return;
 
-        if (ShouldSkipHoverClearForLoot(_hovered))
+        if (ShouldSkipHoverClearForLoot(_hoveredTile))
         {
-            _hoverSelectionOwned = false;
+            _tileHoverOwned = false;
             return;
         }
 
-        _hovered.SetHoverSelected(false);
-        _hoverSelectionOwned = false;
+        _hoveredTile.SetHoverSelected(false);
+        _tileHoverOwned = false;
+    }
+
+    void ApplyBodyHoverSelection(bool selected)
+    {
+        if (_hoveredBody == null)
+            return;
+
+        CharacterSelectionOutlineHost outlineHost =
+            CharacterBodyResolve.GetModule<CharacterSelectionOutlineHost>(_hoveredBody.BodyRefs);
+        if (outlineHost == null)
+            return;
+
+        outlineHost.SetHoverOutline(
+            selected ? CharacterOutlineHoverState.Available : CharacterOutlineHoverState.None);
+        _bodyHoverOwned = selected;
     }
 
     void ClearHover()
     {
-        if (_hovered == null)
-            return;
+        if (_hoveredTile != null)
+            ApplyTileHoverSelection(false);
 
-        ApplyHoverSelection(false);
-        _hovered = null;
-        _hoverSelectionOwned = false;
+        if (_hoveredBody != null)
+            ApplyBodyHoverSelection(false);
+
+        _hoveredTile = null;
+        _hoveredBody = null;
+        _tileHoverOwned = false;
+        _bodyHoverOwned = false;
+        _cachedBodyContextHost = null;
+        _cachedBodyHasContext = false;
     }
 
     static bool ShouldSkipHoverClearForLoot(TileObjectInteractionTarget target)

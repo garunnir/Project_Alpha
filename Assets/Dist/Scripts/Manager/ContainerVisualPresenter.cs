@@ -101,8 +101,9 @@ public static class ContainerVisualPresenter
         if (icon != null)
             return true;
 
-        if (CharacterBodyResolve.TryGetInBody(host, out CharacterAppearanceHost appearance) &&
-            appearance.PortraitSprite != null)
+            CharacterAppearanceHost appearance =
+                host.BodyRefs != null ? host.BodyRefs.Appearance : null;
+        if (appearance != null && appearance.PortraitSprite != null)
         {
             icon = appearance.PortraitSprite;
             return true;

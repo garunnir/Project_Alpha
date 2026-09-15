@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerNeedsHost — 플레이어 위장·저장 kcal·갈증·수면 피로 분 틱 + 섭취/대사 API
+// PlayerNeedsHost — 플레이어 위장·저장 kcal·갈증·수면 피로 분 틱 (plain module)
 // ============================================================
 // WorldClock.MinuteChanged
 //   → digest mlWater (fast) / mlFood / kcal→stored
@@ -18,16 +18,16 @@ using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
+public sealed class PlayerNeedsHost : IUiCancelConsumer
 {
-    [SerializeField] PlayerNeedsSettings _settings;
-
+    CharacterBodyRefs _refs;
+    PlayerNeedsSettings _settings;
     CharacterMotor _motor;
     CharacterActionHost _actionHost;
     PlayerInventoryHost _inventoryHost;
     WorldClock _clock;
     bool _clockSubscribed;
+    bool _enabled;
     readonly List<BodyPartEffect> _effectScratch = new(8);
 
     float _mlFood;
@@ -96,44 +96,42 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
 
     public void ClaimActive() { }
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        TryGetComponent(out _actionHost);
-        TryGetComponent(out _inventoryHost);
+        _refs = refs;
+        _motor = refs != null ? refs.Motor : null;
+        _actionHost = refs != null ? refs.ActionHost : null;
+        _inventoryHost = refs != null ? refs.InventoryHost : null;
+        if (refs != null && refs.NeedsSettings != null)
+            _settings = refs.NeedsSettings;
     }
 
-    void OnEnable()
+    public void Enable()
     {
+        _enabled = true;
+        if (_inventoryHost == null && _refs != null)
+            _inventoryHost = _refs.InventoryHost;
         SubscribeClock();
         UiCancelRouter.Register(this);
+        if (_settings == null)
+            Debug.LogError("[PlayerNeedsHost] PlayerNeedsSettings is missing.", _refs);
         if (IsPlayerBody())
             BindPlayer();
     }
 
-    void Start()
+    public void Disable()
     {
-        SubscribeClock();
-        if (!IsPlayerBody())
-            return;
-
-        if (_settings == null)
-            Debug.LogError("[PlayerNeedsHost] PlayerNeedsSettings is missing.", this);
-        BindPlayer();
-    }
-
-    void OnDisable()
-    {
+        _enabled = false;
         UiCancelRouter.Unregister(this);
         UnsubscribeClock();
         if (_isSleeping)
             _isSleeping = false;
     }
 
-    void Update()
+    /// <summary>Sleep wake checks. heap 없음.</summary>
+    public void Tick()
     {
-        // Hot path: wake checks only. No alloc/LINQ/string.
-        if (!_isSleeping || !IsPlayerBody())
+        if (!_enabled || !_isSleeping || !IsPlayerBody())
             return;
 
         if (_actionHost != null && _actionHost.IsBusy)
@@ -799,28 +797,6 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
     }
 
     void RaiseChanged() => Changed?.Invoke();
-
-#if UNITY_EDITOR
-    [ContextMenu("Needs/Sleep")]
-    void DebugSleep() => TrySleep();
-
-    [ContextMenu("Needs/Wake")]
-    void DebugWake() => Wake();
-
-    [ContextMenu("Needs/Add Fatigue 0.3")]
-    void DebugAddFatigue()
-    {
-        _fatigue01 = Mathf.Clamp01(_fatigue01 + 0.3f);
-        RaiseChanged();
-    }
-
-    [ContextMenu("Needs/Add Sleep Debt 0.3")]
-    void DebugAddSleepDebt()
-    {
-        _sleepDebt01 = Mathf.Clamp01(_sleepDebt01 + 0.3f);
-        RaiseChanged();
-    }
-#endif
 }
 
 public enum NeedsFatalKind

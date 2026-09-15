@@ -1,15 +1,12 @@
 // ============================================================
-// CharacterTraitsHost — 상시 패시브 특성 보유 (SkillsHost와 분리)
+// CharacterTraitsHost — 상시 패시브 특성 보유 (plain module)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
-using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterTraitsHost : MonoBehaviour
+public sealed class CharacterTraitsHost
 {
-    [SerializeField] bool _useGameplayDataTraits;
-
+    bool _useGameplayDataTraits;
     DefaultCharacterTraits _ownedTraits;
     ICharacterTraits _traits;
 
@@ -22,6 +19,9 @@ public sealed class CharacterTraitsHost : MonoBehaviour
         }
     }
 
+    /// <summary>Already-bound instance. Does not Ensure — possessed resolver must not call Traits.</summary>
+    public ICharacterTraits BoundTraits => _traits;
+
     public bool UseGameplayDataTraits => _useGameplayDataTraits;
 
     public void ConfigureUseGameplayDataTraits(bool useGameplayDataTraits)
@@ -29,7 +29,9 @@ public sealed class CharacterTraitsHost : MonoBehaviour
         _useGameplayDataTraits = useGameplayDataTraits;
     }
 
-    void Awake() => EnsureTraits();
+    public void Bind(CharacterBodyRefs refs)
+    {
+    }
 
     void EnsureTraits()
     {
@@ -38,7 +40,14 @@ public sealed class CharacterTraitsHost : MonoBehaviour
 
         if (_useGameplayDataTraits)
         {
-            _traits = GameplayData.Traits;
+            ICharacterTraits backing = GameplayPlayerRuntime.PeekTraitsBacking();
+            if (backing == null)
+            {
+                backing = new DefaultCharacterTraits();
+                GameplayData.Traits = backing;
+            }
+
+            _traits = backing;
             return;
         }
 
@@ -54,7 +63,7 @@ public sealed class CharacterTraitsHost : MonoBehaviour
         if (_useGameplayDataTraits)
         {
             GameplayData.Traits = traits;
-            _traits = GameplayData.Traits;
+            _traits = traits;
             return;
         }
 

@@ -219,7 +219,8 @@ public sealed class CharacterSpawner : MonoBehaviour
 
     static void AssignBodyInventoryId(GameObject instance, CharacterSpawnRole role)
     {
-        if (!instance.TryGetBodyComponent(out PlayerInventoryHost host))
+        PlayerInventoryHost host = instance.GetBodyModule<PlayerInventoryHost>();
+        if (host == null)
             return;
 
         if (role == CharacterSpawnRole.Possessed)

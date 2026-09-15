@@ -5,6 +5,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -27,47 +28,22 @@ public static class CharacterBodyPrefabOrganizeMenu
 
     static readonly Type[] GameplayCoreTypes =
     {
-        typeof(CharacterBodyHost),
-        typeof(CharacterSkillsHost),
-        typeof(CharacterTraitsHost),
-        typeof(CharacterFootprintHost),
         typeof(CharacterActionHost),
         typeof(CharacterSightHost),
         typeof(CharacterArriveHost),
-        typeof(PlayerInventoryHost),
-        typeof(PlayerGearHost),
-        typeof(PlayerEncumbranceHost),
-        typeof(InventoryTimedMoveHost),
-        typeof(NearbyContainerDetector),
-        typeof(CharacterAttacker),
-        typeof(BodyEffectTicker),
-        typeof(CharacterPainHost),
-        typeof(CharacterHitReact),
-        typeof(CharacterImbalanceHost),
-        typeof(PlayerNeedsHost),
-        typeof(CharacterMoodHost),
-        typeof(CharacterClimateHost),
-        typeof(CharacterFactionHost),
     };
 
-    static readonly Type[] SensesTypes =
-    {
-        typeof(CharacterPresenceHost),
-        typeof(CharacterVision),
-        typeof(CharacterHearing),
-        typeof(CharacterSenseGizmo),
-    };
+    static readonly Type[] SensesTypes = { };
 
-    static readonly Type[] PresentationTypes =
-    {
-        typeof(CharacterEmoteHost),
-        typeof(CharacterSightFadeHost),
-        typeof(CharacterAppearanceHost),
-    };
+    static readonly Type[] PresentationTypes = { };
+
+    const string SelectionLayerConfigPath = "Assets/Settings/Outline/SelectionLayerConfig.asset";
 
     [MenuItem(DistMcpMenus.CharacterEnsureNpcSampleBodyRefs)]
     public static void EnsureNpcSampleBodyRefs()
     {
+        StripConvertedInventoryModuleYaml(NpcSamplePrefabPath);
+
         GameObject prefabRoot = PrefabUtility.LoadPrefabContents(NpcSamplePrefabPath);
         if (prefabRoot == null)
         {
@@ -88,7 +64,11 @@ public static class CharacterBodyPrefabOrganizeMenu
 
             StripBodyMarkersFromChildren(prefabRoot);
             EnsureSensesComponents(prefabRoot);
-            EnsureFactionHostOnGameplayCore(prefabRoot);
+            StripSensesLegacyComponents(prefabRoot);
+            EnsurePresentationFolder(prefabRoot);
+            StripPresentationLegacyComponents(prefabRoot);
+            EnsurePresentationWiring(prefabRoot);
+            StripStatsVitalityLegacyComponents(prefabRoot);
             EnsureArriveHostOnGameplayCore(prefabRoot);
             EnsureVaultHostOnRoot(prefabRoot);
             EnsureSwimHostOnRoot(prefabRoot);
@@ -105,7 +85,7 @@ public static class CharacterBodyPrefabOrganizeMenu
                 return;
             }
 
-            PrefabUtility.SaveAsPrefabAsset(prefabRoot, NpcSamplePrefabPath);
+            SaveNpcSamplePrefab(prefabRoot);
             Debug.Log(
                 "[CharacterBodyPrefabOrganizeMenu] NpcSample BodyRefs ensured on root.",
                 prefabRoot);
@@ -114,11 +94,15 @@ public static class CharacterBodyPrefabOrganizeMenu
         {
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
+
+        StripConvertedInventoryModuleYaml(NpcSamplePrefabPath);
     }
 
     [MenuItem(DistMcpMenus.CharacterOrganizeNpcSampleBody)]
     public static void OrganizeNpcSamplePrefab()
     {
+        StripConvertedInventoryModuleYaml(NpcSamplePrefabPath);
+
         GameObject prefabRoot = PrefabUtility.LoadPrefabContents(NpcSamplePrefabPath);
         if (prefabRoot == null)
         {
@@ -154,7 +138,11 @@ public static class CharacterBodyPrefabOrganizeMenu
             StripMovedComponentsFromRoot(prefabRoot);
             StripBodyMarkersFromChildren(prefabRoot);
             EnsureSensesComponents(prefabRoot);
-            EnsureFactionHostOnGameplayCore(prefabRoot);
+            StripSensesLegacyComponents(prefabRoot);
+            EnsurePresentationFolder(prefabRoot);
+            StripPresentationLegacyComponents(prefabRoot);
+            EnsurePresentationWiring(prefabRoot);
+            StripStatsVitalityLegacyComponents(prefabRoot);
             EnsureArriveHostOnGameplayCore(prefabRoot);
             EnsureVaultHostOnRoot(prefabRoot);
             EnsureSwimHostOnRoot(prefabRoot);
@@ -162,7 +150,12 @@ public static class CharacterBodyPrefabOrganizeMenu
 
             RemoveLegacyMissingScripts(prefabRoot);
             RemoveMissingScripts(prefabRoot);
+            StripSensesLegacyComponents(prefabRoot);
+            StripPresentationLegacyComponents(prefabRoot);
+            StripStatsVitalityLegacyComponents(prefabRoot);
 
+            bodyRefs.Invalidate();
+            bodyRefs.ResolveFromHierarchy();
             if (!ValidateColliderBodyHostResolution(prefabRoot, out string resolveError))
             {
                 Debug.LogError(
@@ -171,8 +164,6 @@ public static class CharacterBodyPrefabOrganizeMenu
                     prefabRoot);
             }
 
-            bodyRefs.Invalidate();
-            bodyRefs.ResolveFromHierarchy();
             if (!ValidateBodyRefsResolution(bodyRefs, out string refsError))
             {
                 Debug.LogError(
@@ -181,7 +172,7 @@ public static class CharacterBodyPrefabOrganizeMenu
                     prefabRoot);
             }
 
-            PrefabUtility.SaveAsPrefabAsset(prefabRoot, NpcSamplePrefabPath);
+            SaveNpcSamplePrefab(prefabRoot);
             Debug.Log(
                 "[CharacterBodyPrefabOrganizeMenu] NpcSample organized: root physics + GameplayCore / Senses / Presentation.",
                 prefabRoot);
@@ -190,6 +181,8 @@ public static class CharacterBodyPrefabOrganizeMenu
         {
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
+
+        StripConvertedInventoryModuleYaml(NpcSamplePrefabPath);
     }
 
     static Transform EnsureChild(Transform parent, string name)
@@ -447,49 +440,154 @@ public static class CharacterBodyPrefabOrganizeMenu
 
     static void EnsureSensesComponents(GameObject prefabRoot)
     {
-        Transform senses = prefabRoot.transform.Find("Senses");
-        if (senses == null)
-            return;
-
-        GameObject sensesGo = senses.gameObject;
-        EnsureComponent<CharacterPresenceHost>(sensesGo);
-        EnsureComponent<CharacterVision>(sensesGo);
-        EnsureComponent<CharacterHearing>(sensesGo);
-        EnsureComponent<CharacterSenseGizmo>(sensesGo);
+        EnsureChild(prefabRoot.transform, "Senses");
     }
 
-    static void EnsureFactionHostOnGameplayCore(GameObject prefabRoot)
+    static void EnsurePresentationFolder(GameObject prefabRoot)
     {
-        Transform gameplayCore = prefabRoot.transform.Find("GameplayCore");
-        if (gameplayCore == null)
+        EnsureChild(prefabRoot.transform, "Presentation");
+    }
+
+    static void StripSensesLegacyComponents(GameObject prefabRoot)
+    {
+        StripFolderLegacyComponents(prefabRoot, "Senses");
+    }
+
+    static void StripPresentationLegacyComponents(GameObject prefabRoot)
+    {
+        StripFolderLegacyComponents(prefabRoot, "Presentation");
+    }
+
+    static void StripFolderLegacyComponents(GameObject prefabRoot, string childName)
+    {
+        Transform folder = prefabRoot.transform.Find(childName);
+        if (folder == null)
             return;
 
-        GameObject coreGo = gameplayCore.gameObject;
-        CharacterFactionHost onCore = coreGo.GetComponent<CharacterFactionHost>();
-        if (onCore != null)
-        {
-            RemoveDuplicateComponents<CharacterFactionHost>(prefabRoot, coreGo);
-            return;
-        }
+        GameObject folderGo = folder.gameObject;
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(folderGo);
 
-        CharacterFactionHost[] all = prefabRoot.GetComponentsInChildren<CharacterFactionHost>(true);
-        for (int i = 0; i < all.Length; i++)
+        Component[] components = folderGo.GetComponents<Component>();
+        for (int i = 0; i < components.Length; i++)
         {
-            CharacterFactionHost source = all[i];
-            if (source == null || source.gameObject == coreGo)
+            Component component = components[i];
+            if (component == null || component is Transform)
                 continue;
 
-            if (ComponentUtility.CopyComponent(source))
-                ComponentUtility.PasteComponentAsNew(coreGo);
-
-            Undo.DestroyObjectImmediate(source);
-            break;
+            Undo.DestroyObjectImmediate(component);
         }
 
-        if (coreGo.GetComponent<CharacterFactionHost>() == null)
-            EnsureComponent<CharacterFactionHost>(coreGo);
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(folderGo);
+    }
 
-        RemoveDuplicateComponents<CharacterFactionHost>(prefabRoot, coreGo);
+    static void EnsurePresentationWiring(GameObject prefabRoot)
+    {
+        CharacterBodyRefs refs = prefabRoot.GetComponent<CharacterBodyRefs>();
+        if (refs == null)
+            return;
+
+        SerializedObject so = new(refs);
+
+        SerializedProperty renderRoot = so.FindProperty("_renderRoot");
+        if (renderRoot != null && renderRoot.objectReferenceValue == null)
+        {
+            Transform pivot = prefabRoot.transform.Find(CharacterBodyRefs.RenderPivotChildName);
+            if (pivot != null)
+                renderRoot.objectReferenceValue = pivot;
+        }
+
+        SerializedProperty selectionLayer = so.FindProperty("_selectionLayer");
+        if (selectionLayer != null && selectionLayer.objectReferenceValue == null)
+        {
+            SelectionLayerConfig config =
+                AssetDatabase.LoadAssetAtPath<SelectionLayerConfig>(SelectionLayerConfigPath);
+            if (config != null)
+                selectionLayer.objectReferenceValue = config;
+        }
+
+        SerializedProperty catalog = so.FindProperty("_emoteCatalog");
+        if (catalog != null && catalog.objectReferenceValue == null)
+        {
+            CharacterEmoteCatalog emoteCatalog =
+                AssetDatabase.LoadAssetAtPath<CharacterEmoteCatalog>(
+                    CharacterEmoteCatalog.DefaultAssetPath);
+            if (emoteCatalog != null)
+                catalog.objectReferenceValue = emoteCatalog;
+        }
+
+        SerializedProperty needsSettings = so.FindProperty("_needsSettings");
+        if (needsSettings != null && needsSettings.objectReferenceValue == null)
+        {
+            PlayerNeedsSettings needs =
+                AssetDatabase.LoadAssetAtPath<PlayerNeedsSettings>(PlayerNeedsSettings.DefaultAssetPath);
+            if (needs != null)
+                needsSettings.objectReferenceValue = needs;
+        }
+
+        SerializedProperty moodSettings = so.FindProperty("_moodSettings");
+        if (moodSettings != null && moodSettings.objectReferenceValue == null)
+        {
+            MoodSettings mood = AssetDatabase.LoadAssetAtPath<MoodSettings>(MoodSettings.DefaultAssetPath);
+            if (mood != null)
+                moodSettings.objectReferenceValue = mood;
+        }
+
+        SerializedProperty hitStop = so.FindProperty("_hitStopSettings");
+        if (hitStop != null && hitStop.objectReferenceValue == null)
+        {
+            CombatHitStopSettings settings =
+                AssetDatabase.LoadAssetAtPath<CombatHitStopSettings>(CombatHitStopSettings.DefaultAssetPath);
+            if (settings != null)
+                hitStop.objectReferenceValue = settings;
+        }
+
+        SerializedProperty weaponCatalog = so.FindProperty("_weaponPresentationCatalog");
+        if (weaponCatalog != null && weaponCatalog.objectReferenceValue == null)
+        {
+            WeaponPresentationCatalog weapons =
+                AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(
+                    WeaponPresentationCatalog.DefaultAssetPath);
+            if (weapons != null)
+                weaponCatalog.objectReferenceValue = weapons;
+        }
+
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static void StripStatsVitalityLegacyComponents(GameObject prefabRoot)
+    {
+        if (prefabRoot == null)
+            return;
+
+        StripConvertedModuleComponentsByName(prefabRoot, ConvertedStatsVitalityTypeNames);
+        Transform gameplayCore = prefabRoot.transform.Find("GameplayCore");
+        if (gameplayCore != null)
+            StripConvertedModuleComponentsByName(gameplayCore.gameObject, ConvertedStatsVitalityTypeNames);
+    }
+
+    static void StripConvertedModuleComponentsByName(GameObject go, string[] typeNames)
+    {
+        if (go == null || typeNames == null || typeNames.Length == 0)
+            return;
+
+        Component[] components = go.GetComponents<Component>();
+        for (int i = 0; i < components.Length; i++)
+        {
+            Component component = components[i];
+            if (component == null)
+                continue;
+
+            string typeName = component.GetType().Name;
+            for (int j = 0; j < typeNames.Length; j++)
+            {
+                if (typeName != typeNames[j])
+                    continue;
+                Undo.DestroyObjectImmediate(component);
+                break;
+            }
+        }
+
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
     }
 
     static void EnsureArriveHostOnGameplayCore(GameObject prefabRoot)
@@ -595,9 +693,9 @@ public static class CharacterBodyPrefabOrganizeMenu
             return false;
         }
 
-        if (prefabRoot.GetComponentInChildren<CharacterBodyHost>(true) == null)
+        if (prefabRoot.GetComponent<CharacterBodyRefs>() == null)
         {
-            error = "no CharacterBodyHost under prefab root";
+            error = "no CharacterBodyRefs on prefab root";
             return false;
         }
 
@@ -653,19 +751,145 @@ public static class CharacterBodyPrefabOrganizeMenu
 
         if (refs.Vision == null)
         {
-            error = "missing CharacterVision";
+            error = "missing CharacterVision module";
+            return false;
+        }
+
+        if (refs.Hearing == null)
+        {
+            error = "missing CharacterHearing module";
+            return false;
+        }
+
+        if (refs.Presence == null)
+        {
+            error = "missing CharacterPresenceHost module";
+            return false;
+        }
+
+        if (refs.Appearance == null)
+        {
+            error = "missing CharacterAppearanceHost module";
+            return false;
+        }
+
+        if (refs.SightFade == null)
+        {
+            error = "missing CharacterSightFadeHost module";
+            return false;
+        }
+
+        if (refs.SelectionOutline == null)
+        {
+            error = "missing CharacterSelectionOutlineHost module";
+            return false;
+        }
+
+        if (refs.Emote == null)
+        {
+            error = "missing CharacterEmoteHost module";
+            return false;
+        }
+
+        if (refs.InventoryHost == null)
+        {
+            error = "missing PlayerInventoryHost module";
+            return false;
+        }
+
+        if (refs.GearHost == null)
+        {
+            error = "missing PlayerGearHost module";
+            return false;
+        }
+
+        if (refs.EncumbranceHost == null)
+        {
+            error = "missing PlayerEncumbranceHost module";
+            return false;
+        }
+
+        if (refs.TimedMoveHost == null)
+        {
+            error = "missing InventoryTimedMoveHost module";
+            return false;
+        }
+
+        if (refs.NearbyDetector == null)
+        {
+            error = "missing NearbyContainerDetector module";
+            return false;
+        }
+
+        if (refs.FootprintHost == null)
+        {
+            error = "missing CharacterFootprintHost module";
+            return false;
+        }
+
+        if (refs.NeedsHost == null)
+        {
+            error = "missing PlayerNeedsHost module";
+            return false;
+        }
+
+        if (refs.MoodHost == null)
+        {
+            error = "missing CharacterMoodHost module";
+            return false;
+        }
+
+        if (refs.ClimateHost == null)
+        {
+            error = "missing CharacterClimateHost module";
+            return false;
+        }
+
+        if (refs.SkillsHost == null)
+        {
+            error = "missing CharacterSkillsHost module";
+            return false;
+        }
+
+        if (refs.TraitsHost == null)
+        {
+            error = "missing CharacterTraitsHost module";
             return false;
         }
 
         if (refs.Attacker == null)
         {
-            error = "missing CharacterAttacker";
+            error = "missing CharacterAttacker module";
+            return false;
+        }
+
+        if (refs.PainHost == null)
+        {
+            error = "missing CharacterPainHost module";
+            return false;
+        }
+
+        if (refs.ImbalanceHost == null)
+        {
+            error = "missing CharacterImbalanceHost module";
+            return false;
+        }
+
+        if (refs.HitReact == null)
+        {
+            error = "missing CharacterHitReact module";
+            return false;
+        }
+
+        if (refs.BodyEffectTicker == null)
+        {
+            error = "missing BodyEffectTicker module";
             return false;
         }
 
         if (refs.FactionHost == null)
         {
-            error = "missing CharacterFactionHost";
+            error = "missing CharacterFactionHost module";
             return false;
         }
 
@@ -682,6 +906,195 @@ public static class CharacterBodyPrefabOrganizeMenu
         }
 
         return true;
+    }
+
+    static void SaveNpcSamplePrefab(GameObject prefabRoot)
+    {
+        bool saved = false;
+        try
+        {
+            saved = PrefabUtility.SaveAsPrefabAsset(prefabRoot, NpcSamplePrefabPath);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(
+                "[CharacterBodyPrefabOrganizeMenu] SaveAsPrefabAsset failed (non-MB leftover): "
+                + ex.Message);
+        }
+
+        if (!saved)
+        {
+            Debug.LogWarning(
+                "[CharacterBodyPrefabOrganizeMenu] Prefab save returned false; YAML-stripping converted inventory modules.");
+        }
+    }
+
+    static readonly string[] ConvertedInventoryModuleGuids =
+    {
+        "c3f81d322b541c44bb9bc28bd6cc756f",
+        "eb66a306ab71d494fa692517ca17868f",
+        "40a213a98d9432148ae56f8665372397",
+        "774d2807e2a86604394e7caa89abe288",
+        "343725b234bf87446abdc32bad955f82",
+        "173bf695b91ad7842975bff0459f7a99",
+        "d48c0eca271ad70409cacb0d075bd78f",
+        "a7c3e1f42b8d4e5096f2a1c8d3b7e4f0",
+        "82d3f4a5b6c7489dab0c1d2e3f445566",
+        "a7c3e1f94b2d4a6e9f0c8d5b3a1e7f42",
+        "b31707533045dc6479ffd15cf6928ab9",
+        "46d9a88e7fefefa48b455e4e609cf4f0",
+        "7c4e2a91b0d84f6e9a3c5d8e1f2b4a60",
+        "2d73ef868a1f0064fbc932cd62762a6f",
+        "29bca86be602f6e4688d3478970c2e0f",
+        "ebde6a9e2f207874691e335bc49fa6ac",
+        "49bd65d988e0726488607cc42bee200f",
+        "d818f78d88b48464cb03c278ab5ab789",
+    };
+
+    static readonly string[] ConvertedInventoryModuleTypeNames =
+    {
+        "DistScript::PlayerInventoryHost",
+        "DistScript::PlayerGearHost",
+        "DistScript::PlayerEncumbranceHost",
+        "DistScript::InventoryTimedMoveHost",
+        "DistScript::NearbyContainerDetector",
+        "DistScript::CharacterBodyHost",
+        "DistScript::CharacterSkillsHost",
+        "DistScript::CharacterTraitsHost",
+        "DistScript::CharacterFactionHost",
+        "DistScript::CharacterFootprintHost",
+        "DistScript::PlayerNeedsHost",
+        "DistScript::CharacterMoodHost",
+        "DistScript::CharacterClimateHost",
+        "DistScript::CharacterAttacker",
+        "DistScript::BodyEffectTicker",
+        "DistScript::CharacterPainHost",
+        "DistScript::CharacterImbalanceHost",
+        "DistScript::CharacterHitReact",
+    };
+
+    static readonly string[] ConvertedStatsVitalityTypeNames =
+    {
+        "CharacterBodyHost",
+        "CharacterSkillsHost",
+        "CharacterTraitsHost",
+        "CharacterFactionHost",
+        "CharacterFootprintHost",
+        "PlayerNeedsHost",
+        "CharacterMoodHost",
+        "CharacterClimateHost",
+        "CharacterAttacker",
+        "BodyEffectTicker",
+        "CharacterPainHost",
+        "CharacterImbalanceHost",
+        "CharacterHitReact",
+    };
+
+    static void StripConvertedInventoryModuleYaml(string prefabPath)
+    {
+        string fullPath = ResolveAssetFullPath(prefabPath);
+        if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
+            return;
+
+        string yaml = File.ReadAllText(fullPath);
+        string stripped = StripConvertedModuleBlocks(yaml);
+        if (stripped == yaml)
+            return;
+
+        File.WriteAllText(fullPath, stripped);
+        AssetDatabase.ImportAsset(prefabPath);
+        Debug.Log("[CharacterBodyPrefabOrganizeMenu] YAML-stripped leftover converted module MB slots.");
+    }
+
+    static string ResolveAssetFullPath(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath))
+            return null;
+
+        string dataPath = Application.dataPath;
+        if (string.IsNullOrEmpty(dataPath))
+            return assetPath;
+
+        DirectoryInfo projectRoot = Directory.GetParent(dataPath);
+        if (projectRoot == null)
+            return assetPath;
+
+        return Path.Combine(projectRoot.FullName, assetPath.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    static string StripConvertedModuleBlocks(string yaml)
+    {
+        if (string.IsNullOrEmpty(yaml))
+            return yaml;
+
+        var fileIds = new HashSet<string>();
+        var kept = new System.Text.StringBuilder(yaml.Length);
+        int cursor = 0;
+        while (cursor < yaml.Length)
+        {
+            int nextDoc = yaml.IndexOf("--- !u!", cursor, StringComparison.Ordinal);
+            if (nextDoc < 0)
+            {
+                kept.Append(yaml, cursor, yaml.Length - cursor);
+                break;
+            }
+
+            if (nextDoc > cursor)
+                kept.Append(yaml, cursor, nextDoc - cursor);
+
+            int after = yaml.IndexOf("--- !u!", nextDoc + 7, StringComparison.Ordinal);
+            if (after < 0)
+                after = yaml.Length;
+
+            string part = yaml.Substring(nextDoc, after - nextDoc);
+            if (part.StartsWith("--- !u!114", StringComparison.Ordinal) &&
+                IsConvertedInventoryModuleBlock(part))
+            {
+                int amp = part.IndexOf('&');
+                if (amp >= 0)
+                {
+                    int idStart = amp + 1;
+                    int idLen = 0;
+                    while (idStart + idLen < part.Length && char.IsDigit(part[idStart + idLen]))
+                        idLen++;
+                    if (idLen > 0)
+                        fileIds.Add(part.Substring(idStart, idLen));
+                }
+            }
+            else
+            {
+                kept.Append(part);
+            }
+
+            cursor = after;
+        }
+
+        string next = kept.ToString();
+        foreach (string fileId in fileIds)
+        {
+            string needle = "  - component: {fileID: " + fileId + "}";
+            next = next.Replace("\r\n" + needle, string.Empty);
+            next = next.Replace("\n" + needle, string.Empty);
+        }
+
+        return next;
+    }
+
+    static bool IsConvertedInventoryModuleBlock(string block)
+    {
+        for (int i = 0; i < ConvertedInventoryModuleGuids.Length; i++)
+        {
+            if (block.IndexOf(ConvertedInventoryModuleGuids[i], StringComparison.Ordinal) >= 0)
+                return true;
+        }
+
+        for (int i = 0; i < ConvertedInventoryModuleTypeNames.Length; i++)
+        {
+            if (block.IndexOf(ConvertedInventoryModuleTypeNames[i], StringComparison.Ordinal) >= 0)
+                return true;
+        }
+
+        return false;
     }
 
     static string GetHierarchyPath(Transform transform)

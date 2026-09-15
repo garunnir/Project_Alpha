@@ -1,16 +1,12 @@
 // ============================================================
-// CharacterSkillsHost ó skills + Defeat host (pairs with BodyHost)
+// CharacterSkillsHost ù skills + Defeat host (plain module, pairs with BodyHost)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
-using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-public sealed class CharacterSkillsHost : MonoBehaviour
+public sealed class CharacterSkillsHost
 {
-    [SerializeField] bool _useGameplayDataSkills;
-
+    CharacterBodyRefs _refs;
     CharacterBodyHost _bodyHost;
     DefaultCharacterSkills _ownedSkills;
     ICharacterSkills _skills;
@@ -19,6 +15,8 @@ public sealed class CharacterSkillsHost : MonoBehaviour
     ICharacterDefeat _defeat;
     DefaultCharacterRecipeMemory _ownedRecipeMemory;
     ICharacterRecipeMemory _recipeMemory;
+    bool _useGameplayDataSkills;
+    bool _bodySubscribed;
 
     public ICharacterSkills Skills
     {
@@ -54,34 +52,37 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         _useGameplayDataSkills = useGameplayDataSkills;
     }
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _bodyHost = GetComponent<CharacterBodyHost>();
+        UnsubscribeBody();
+        _refs = refs;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+    }
+
+    public void Enable()
+    {
+        _bodyHost = _refs != null ? _refs.BodyHost : _bodyHost;
         EnsureSkills();
         BindBodyToSkills();
         EnsureDefeat();
         EnsureRecipeMemory();
+        SubscribeBody();
     }
 
-    void OnEnable()
+    public void Disable()
     {
-        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
-        if (body != null)
-            body.Changed += OnBodyChanged;
+        UnsubscribeBody();
     }
 
-    void OnDisable()
+    public void Dispose()
     {
-        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
-        if (body != null)
-            body.Changed -= OnBodyChanged;
-    }
-
-    void OnDestroy()
-    {
+        UnsubscribeBody();
         if (_bodyAggregator != null && _skills != null)
             _skills.RemoveModifierSource(_bodyAggregator);
+        _bodyAggregator = null;
         _ownedDefeat?.Dispose();
+        _ownedDefeat = null;
+        _defeat = null;
     }
 
     void EnsureSkills()
@@ -114,10 +115,10 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         _recipeMemory = _ownedRecipeMemory;
     }
 
-    /// <summary>Definition Apply ó replace owned skills instance.</summary>
+    /// <summary>Definition Apply ù replace owned skills instance.</summary>
     public void BindSkills(DefaultCharacterSkills skills)
     {
-        _bodyHost ??= GetComponent<CharacterBodyHost>();
+        _bodyHost = _refs != null ? _refs.BodyHost : _bodyHost;
 
         if (_bodyAggregator != null && _skills != null)
         {
@@ -169,6 +170,27 @@ public sealed class CharacterSkillsHost : MonoBehaviour
 
         _ownedDefeat = new DefaultCharacterDefeat(_bodyHost != null ? _bodyHost.Body : null, Skills);
         _defeat = _ownedDefeat;
+    }
+
+    void SubscribeBody()
+    {
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body == null || _bodySubscribed)
+            return;
+
+        body.Changed += OnBodyChanged;
+        _bodySubscribed = true;
+    }
+
+    void UnsubscribeBody()
+    {
+        if (!_bodySubscribed)
+            return;
+
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body != null)
+            body.Changed -= OnBodyChanged;
+        _bodySubscribed = false;
     }
 
     void OnBodyChanged()

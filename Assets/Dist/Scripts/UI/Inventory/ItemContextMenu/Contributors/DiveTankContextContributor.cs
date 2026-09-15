@@ -34,7 +34,9 @@ public sealed class DiveTankContextContributor : IContextMenuContributor
         PlayerGearHost gear = PlayerGearHost.Active;
         if (gear != null)
         {
-            CharacterSwimHost swim = gear.GetBodyComponent<CharacterSwimHost>();
+            CharacterSwimHost swim = gear.BodyRefs != null
+                ? gear.BodyRefs.Get<CharacterSwimHost>()
+                : null;
             if (swim?.Breath != null)
                 return swim.Breath;
         }

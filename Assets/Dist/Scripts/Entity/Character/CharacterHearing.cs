@@ -5,8 +5,7 @@
 using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class CharacterHearing : MonoBehaviour
+public sealed class CharacterHearing
 {
     float _hearingRadiusMeters = CharacterHearingDefaults.BaseRadius;
     IMapTopologyQuery _topologyQuery;

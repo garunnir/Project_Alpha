@@ -113,21 +113,22 @@ public sealed class PlayerPossessSession
 
     void ResolveHosts(GameObject body)
     {
-        _bodyHost = body.GetBodyComponent<CharacterBodyHost>();
-        _skillsHost = body.GetBodyComponent<CharacterSkillsHost>();
-        _traitsHost = body.GetBodyComponent<CharacterTraitsHost>();
-        _gear = body.GetBodyComponent<PlayerGearHost>();
-        _encumbrance = body.GetBodyComponent<PlayerEncumbranceHost>();
-        _timedMove = body.GetBodyComponent<InventoryTimedMoveHost>();
-        _inventory = body.GetBodyComponent<PlayerInventoryHost>();
-        _detector = body.GetBodyComponent<NearbyContainerDetector>();
-        _action = body.GetBodyComponent<CharacterActionHost>();
-        _sight = body.GetBodyComponent<CharacterSightHost>();
+        CharacterBodyRefs refs = body.GetBodyRefs();
+        _bodyHost = refs != null ? refs.BodyHost : body.GetBodyModule<CharacterBodyHost>();
+        _skillsHost = refs != null ? refs.SkillsHost : body.GetBodyModule<CharacterSkillsHost>();
+        _traitsHost = refs != null ? refs.TraitsHost : body.GetBodyModule<CharacterTraitsHost>();
+        _gear = refs != null ? refs.GearHost : body.GetBodyModule<PlayerGearHost>();
+        _encumbrance = refs != null ? refs.EncumbranceHost : body.GetBodyModule<PlayerEncumbranceHost>();
+        _timedMove = refs != null ? refs.TimedMoveHost : body.GetBodyModule<InventoryTimedMoveHost>();
+        _inventory = refs != null ? refs.InventoryHost : body.GetBodyModule<PlayerInventoryHost>();
+        _detector = refs != null ? refs.NearbyDetector : body.GetBodyModule<NearbyContainerDetector>();
+        _action = refs != null ? refs.ActionHost : body.GetBodyComponent<CharacterActionHost>();
+        _sight = refs != null ? refs.Get<CharacterSightHost>() : body.GetBodyComponent<CharacterSightHost>();
         if (_sight == null && _action != null)
             _sight = _action.SightHost;
-        _imbalance = body.GetBodyComponent<CharacterImbalanceHost>();
-        _mood = body.GetBodyComponent<CharacterMoodHost>();
-        _needs = body.GetBodyComponent<PlayerNeedsHost>();
+        _imbalance = refs != null ? refs.ImbalanceHost : body.GetBodyModule<CharacterImbalanceHost>();
+        _mood = refs != null ? refs.MoodHost : body.GetBodyModule<CharacterMoodHost>();
+        _needs = refs != null ? refs.NeedsHost : body.GetBodyModule<PlayerNeedsHost>();
     }
 
     void Activate(PlayerMovement movement, PlayerInventoryRuntime inventoryRuntime)
@@ -158,7 +159,7 @@ public sealed class PlayerPossessSession
             GameplayData.Stats = new DefaultPlayerStats(seeded);
 
         if (_traitsHost != null)
-            GameplayPlayerRuntime.RegisterPossessedTraitsResolver(() => _traitsHost.Traits);
+            GameplayPlayerRuntime.RegisterPossessedTraitsResolver(() => _traitsHost.BoundTraits);
 
         CharacterDefinitionBinder binder = Body.GetBodyRefs()?.DefinitionBinder;
         if (binder == null)

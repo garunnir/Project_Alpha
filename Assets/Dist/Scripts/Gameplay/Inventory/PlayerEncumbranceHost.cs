@@ -5,20 +5,21 @@
 using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerInventoryHost))]
-public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
+public sealed class PlayerEncumbranceHost : ISkillModifierSource
 {
-    [Required, SerializeField] PlayerInventoryHost _inventoryHost;
-    [SerializeField] PlayerMovement _movement;
-    [SerializeField] CharacterSkillsHost _skillsHost;
+    CharacterBodyRefs _refs;
+    PlayerInventoryHost _inventoryHost;
+    PlayerMovement _movement;
+    CharacterSkillsHost _skillsHost;
 
     InventoryContainer _subscribedContainer;
     ICharacterSkills _skills;
     bool _modifierRegistered;
+    bool _enabled;
+
+    public CharacterBodyRefs BodyRefs => _refs;
 
     public static PlayerEncumbranceHost Active => PlayerPossessSession.EncumbranceHost;
 
@@ -43,35 +44,30 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
         }
     }
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        EnsureReferences();
+        _refs = refs;
+        _inventoryHost = refs != null ? refs.InventoryHost : null;
+        _skillsHost = refs != null ? refs.SkillsHost : null;
     }
 
-    void OnEnable()
+    public void Enable()
     {
-        EnsureReferences();
         SubscribeContainer();
         RegisterModifierSource();
         Refresh();
+        _enabled = true;
     }
 
-    void Start()
+    public void Disable()
     {
-        // PlayerInventoryHost.Awake 이후 컨테이너가 생길 수 있음.
-        SubscribeContainer();
-        RegisterModifierSource();
-        Refresh();
-    }
+        if (!_enabled)
+            return;
 
-    void OnDisable()
-    {
+        _enabled = false;
         UnsubscribeContainer();
         UnregisterModifierSource();
     }
-
-    void OnValidate() => EnsureReferences();
-    void Reset() => EnsureReferences();
 
     public void ClaimActive() => ActiveChanged?.Invoke();
 
@@ -81,16 +77,6 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
     {
         _movement = movement;
         Refresh();
-    }
-
-    void EnsureReferences()
-    {
-        if (_inventoryHost == null)
-            TryGetComponent(out _inventoryHost);
-        if (_movement == null)
-            TryGetComponent(out _movement);
-        if (_skillsHost == null)
-            TryGetComponent(out _skillsHost);
     }
 
     void SubscribeContainer()

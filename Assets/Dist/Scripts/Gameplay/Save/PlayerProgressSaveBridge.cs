@@ -103,7 +103,7 @@ public static class PlayerProgressSaveBridge
         if (session.BodyHost?.Body is CharacterBody characterBody)
             dto.body = characterBody.ToDto();
 
-        if (body.TryGetBodyComponent(out CharacterClimateHost climate))
+        if (body.TryGetBodyModule(out CharacterClimateHost climate))
             dto.bodyTemp = ToBodyTempSave(climate.BodyTemperature.ToDto());
 
         if (ResolveSkills(body) is DefaultCharacterSkills skills)
@@ -125,7 +125,7 @@ public static class PlayerProgressSaveBridge
 
         if (session.Inventory != null)
         {
-            body.TryGetBodyComponent(out PlayerGearHost gearHost);
+            PlayerGearHost gearHost = body.GetBodyModule<PlayerGearHost>();
             InventoryGearSaveDto inventory = InventoryProgressSaveMapper.Capture(session.Inventory, gearHost?.Service);
             if (inventory != null)
                 dto.inventoryJson = JsonUtility.ToJson(inventory);
@@ -141,13 +141,13 @@ public static class PlayerProgressSaveBridge
 
         SnapBodyTransform(body, snapshot);
 
-        if (!body.TryGetBodyComponent(out CharacterBodyHost bodyHost))
+        if (!body.TryGetBodyModule(out CharacterBodyHost bodyHost))
             return;
 
         if (snapshot.body != null && bodyHost.Body != null)
             bodyHost.ApplyBodyDto(snapshot.body);
 
-        if (snapshot.bodyTemp != null && body.TryGetBodyComponent(out CharacterClimateHost climate))
+        if (snapshot.bodyTemp != null && body.TryGetBodyModule(out CharacterClimateHost climate))
             climate.BodyTemperature.FromDto(FromBodyTempSave(snapshot.bodyTemp));
 
         DefaultCharacterSkills skills = ResolveSkills(body);
@@ -167,14 +167,17 @@ public static class PlayerProgressSaveBridge
         if (traits != null)
             CharacterProgressSaveMapper.ApplyDto(traits, snapshot.traits);
 
-        if (!string.IsNullOrEmpty(snapshot.inventoryJson)
-            && body.TryGetBodyComponent(out PlayerInventoryHost inventoryHost)
-            && body.TryGetBodyComponent(out PlayerGearHost gearHost))
+        if (!string.IsNullOrEmpty(snapshot.inventoryJson))
         {
-            InventoryGearSaveDto inventory = JsonUtility.FromJson<InventoryGearSaveDto>(snapshot.inventoryJson);
-            gearHost.BindDomainIfNeeded();
-            InventoryProgressSaveMapper.TryApply(inventory, inventoryHost, gearHost.Service);
-            gearHost.RefreshPrimaryWield();
+            PlayerInventoryHost inventoryHost = body.GetBodyModule<PlayerInventoryHost>();
+            PlayerGearHost gearHost = body.GetBodyModule<PlayerGearHost>();
+            if (inventoryHost != null && gearHost != null)
+            {
+                InventoryGearSaveDto inventory = JsonUtility.FromJson<InventoryGearSaveDto>(snapshot.inventoryJson);
+                gearHost.BindDomainIfNeeded();
+                InventoryProgressSaveMapper.TryApply(inventory, inventoryHost, gearHost.Service);
+                gearHost.RefreshPrimaryWield();
+            }
         }
 
         PlayerStatusUIBridge.RebindFromGameplayData();
@@ -186,7 +189,7 @@ public static class PlayerProgressSaveBridge
             return stats.Skills;
 
         if (body != null
-            && body.TryGetBodyComponent(out CharacterSkillsHost skillsHost)
+            && body.TryGetBodyModule(out CharacterSkillsHost skillsHost)
             && skillsHost.Skills is DefaultCharacterSkills owned)
             return owned;
 
@@ -196,7 +199,7 @@ public static class PlayerProgressSaveBridge
     static DefaultCharacterTraits ResolveTraits(GameObject body)
     {
         if (body != null
-            && body.TryGetBodyComponent(out CharacterTraitsHost traitsHost)
+            && body.TryGetBodyModule(out CharacterTraitsHost traitsHost)
             && traitsHost.Traits is DefaultCharacterTraits owned)
             return owned;
 

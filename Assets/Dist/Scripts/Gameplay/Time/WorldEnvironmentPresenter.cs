@@ -85,8 +85,8 @@ public sealed class WorldEnvironmentPresenter : MonoBehaviour
         if (_vfxFollow == null)
         {
             PlayerGearHost gear = PlayerGearHost.Active;
-            if (gear != null)
-                _vfxFollow = gear.transform;
+            if (gear != null && gear.BodyRefs != null)
+                _vfxFollow = gear.BodyRefs.transform;
         }
 
         if (_vfxFollow != null)
@@ -232,8 +232,8 @@ public sealed class WorldEnvironmentPresenter : MonoBehaviour
         if (_playerClimate == null)
         {
             PlayerGearHost gear = PlayerGearHost.Active;
-            if (gear != null)
-                gear.TryGetComponent(out _playerClimate);
+            if (gear != null && gear.BodyRefs != null)
+                _playerClimate = gear.BodyRefs.ClimateHost;
         }
 
         if (_playerClimate != null)

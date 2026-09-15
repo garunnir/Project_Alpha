@@ -1,8 +1,8 @@
 # Character Senses (Sight + Hearing)
 
 **SSOT:** `CharacterDefinition.Senses` (`CharacterSenseBlock`)  
-**시력:** `CharacterVision` — XZ 부채꼴 (`IsWithinConeXZ`)  
-**청력:** `CharacterHearing` + `CharacterHearingEvaluator` — 3D 구형 (시야 API **미사용**)  
+**시력:** `CharacterVision` (plain module, `CharacterBodyRefs` 소유) — XZ 부채꼴 (`IsWithinConeXZ`)  
+**청력:** `CharacterHearing` (plain module) + `CharacterHearingEvaluator` — 3D 구형 (시야 API **미사용**)  
 **채널:** `CharacterSenseContactResolver` — **Vision > Hearing**
 
 ## CharacterSenseBlock
@@ -27,8 +27,8 @@
 
 ## Presence (대상별 탐지 보정 — 가시성·소음 스탯)
 
-**SSOT:** `CharacterPresenceHost` (`ICharacterPresence`) → `CharacterPresenceResolved.Evaluate`  
-**튜닝:** `CharacterPresenceSettings` (본체 Inspector)
+**SSOT:** `CharacterPresenceHost` (`ICharacterPresence`, plain module) → `CharacterPresenceResolved.Evaluate`  
+**튜닝:** `CharacterPresenceSettings.DefaultUnity` (코드 SSOT. 본체 Inspector 아님)
 
 Listener(시력/청력 능력)와 분리 — `CharacterVision` / `CharacterHearing` 은 **탐지자**, Presence는 **대상** 스탯.
 
@@ -82,18 +82,14 @@ NPC가 이미 Vision 타깃이면 LoseRadius, 아니면 DetectRadius (`NpcManage
 
 ## 맵 바인딩
 
-- `CharacterHearing.BindMapCollision(MapTopologyLineCast)` — `MapGameplayBootstrap` (Start + 스폰 증분)
+- `CharacterHearing.BindMapCollision(MapTopologyLineCast)` — `MapGameplayBootstrap` (`CharacterBodyRefs.Hearing`, Start + 스폰 증분)
 - 청각 핑 — `TileMapManager`가 `IMapHearingPingDriver.Init` + `MapHearingPingHost` Ensure
 
 ## 디버그
 
 `Tools/Character Runtime Debug` → Combat 탭 → **Senses** (Definition base / effective radii). 스킬 목록에 넣지 않음.
 
-Scene/Play 기즈모: `CharacterSenseGizmo` (NpcSample 등 본체 프리팹)
-- **시야 detect** — 하늘색 채움 부채꼴 (`CharacterSightFadeGizmoColors`)
-- **시야 lose** — 보라 외곽선 부채꼴 (detect보다 클 때만)
-- **청각** — 청록 반투명 구 (`CharacterSenseGizmoColors`)
-- Inspector: `Only When Selected`로 선택 시에만 표시 가능
+Scene/Play 기즈모: `CharacterSenseGizmo.Draw` (`CharacterBodyRefs` OnDrawGizmos)
 
 ## See also
 

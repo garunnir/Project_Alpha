@@ -24,7 +24,7 @@ Data Definitions (`Tools/Data Definitions`) **Characters/** 트리(Definitions �
 
 ## Runtime debug
 
-Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterBodyHost`. Hierarchy 선택 또는 창 상단 라이브 호스트 드롭다운. 인벤·Wear/Wield·정의 SO와 분리한다. 구현: `CharacterRuntimeDebugWindow` / `CharacterRuntimeDebugModel` (`CharacterRuntimeDebugDomain` = 커버 목록 SSOT).
+Play 전용 `Tools/Character Runtime Debug` (Odin). 대상은 `CharacterBodyRefs` / `CharacterBodyHost` module (`GetModule` from selected GO). Hierarchy 선택 또는 창 상단 라이브 호스트 드롭다운. 인벤·Wear/Wield·정의 SO와 분리한다. 구현: `CharacterRuntimeDebugWindow` / `CharacterRuntimeDebugModel` (`CharacterRuntimeDebugDomain` = 커버 목록 SSOT).
 
 | 탭 | 내용 |
 |----|------|
@@ -49,7 +49,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 |------|------|
 | `CharacterDefinition` | 스펙 SO (`CreateAssetMenu`: Dist/Character/Definition) |
 | `CharacterDefinitionBinder` | 씬/프리팹 GO에 Apply (`DefaultExecutionOrder` -80) |
-| `CharacterAppearanceHost` | 성향·초상·체형·이름 오버라이드 **저장만** (소비처 후속) |
+| `CharacterAppearanceHost` | 성향·초상·체형·이름 오버라이드 **저장만** (plain module, `CharacterBodyRefs` 소유). Apply는 Binder |
 | `CharacterFactory.Instantiate` | prefab + Apply. 맵 바인딩은 `MapGameplayBootstrap.BindSpawnedCharacter` |
 | `PlayerPossessSession` | possess 플레이어 세션 SSOT (plain). `PlayerPossessedInputHost.Bind` → `Begin` (`SessionSightHost` 등 static 파사드). `InventorySession`과 별개 |
 | `CharacterSpawner` | 셀 SSOT 행 → Factory → `SetActive` → `CharacterSpawnGearApplier` → possess / `NpcManager.Register` |
@@ -134,14 +134,14 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 ## NpcSample 본체 계층 (에디터 SSOT)
 
 **SSOT:** `CharacterBodyPrefabOrganizeMenu` (`Dist/MCP/Character/Organize NpcSample Body Hierarchy` · `Ensure NpcSample Body Refs`).  
-**Resolve:** 루트 `CharacterBodyRefs` — 스폰 시 1회 `ResolveFromHierarchy`, 소비자는 `GetBodyRefs()` / `GetInBody` (캐시 우선). **Update 등 hot path에서 `GetInBody` 금지** — Awake·바인드 시 캐시.
+**Resolve:** 루트 `CharacterBodyRefs` — 스폰 시 1회 `ResolveFromHierarchy`. MB는 `GetInBody` / `GetBodyRefs()`, plain module은 `GetModule` / `refs.Vision` · `refs.Appearance` 등. **Update 등 hot path에서 `GetInBody`/`GetModule` 금지** — Awake·바인드 시 캐시.
 
 | GO | 역할 | 대표 컴포넌트 |
 |----|------|----------------|
 | **루트** | 물리·정의·애니·resolve 캐시 | `Rigidbody`, `CapsuleCollider`, `CharacterBodyRoot`, `CharacterBodyRefs`, `CharacterState`, `CharacterMotor`, `CharacterDefinitionBinder`, `CharacterLocomotionAnim`, `CharacterVaultHost`, `CharacterFootDustVfx` |
-| **GameplayCore** | 몸 데이터·전투·기분·기후 | `CharacterBodyHost`, `CharacterActionHost`, `CharacterArriveHost`, `CharacterAttacker`, `PlayerGearHost`, `PlayerInventoryHost`, … (`CharacterBodyPrefabOrganizeMenu.GameplayCoreTypes`) |
-| **Senses** | 시야·청각·Presence | `CharacterVision`, `CharacterHearing`, `CharacterPresenceHost`, `CharacterSenseGizmo` |
-| **Presentation** | 이모트·페이드·외형 | `CharacterSightFadeHost`, `CharacterAppearanceHost`, `CharacterEmoteHost` |
+| **GameplayCore** | 행동·시야·도착 | `CharacterActionHost`, `CharacterArriveHost`, `CharacterSightHost` (`CharacterBodyPrefabOrganizeMenu.GameplayCoreTypes`). Attacker/Pain/HitReact/Imbalance/BodyEffectTicker는 `CharacterBodyRefs` plain module |
+| **Senses** | (폴더 GO, MB 없음) | Vision/Hearing/Presence는 `CharacterBodyRefs` plain module. 기즈모는 root `OnDrawGizmos` |
+| **Presentation** | (폴더 GO, MB 없음) | Emote/Fade/Outline/Appearance는 `CharacterBodyRefs` plain module. 프리팹 배선(`_renderRoot`, `SelectionLayerConfig`, Emote catalog)은 root `CharacterBodyRefs` SerializeField |
 
 **MUST NOT:** 자식 GO에 `CharacterBodyRoot` / `CharacterBodyRefs` 중복. `PlayerController`를 NpcSample에 올리지 않음 (입력은 `PlayerPossessedInputHost`).
 

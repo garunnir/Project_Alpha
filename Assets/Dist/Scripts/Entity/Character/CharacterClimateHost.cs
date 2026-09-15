@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterClimateHost — PC/NPC 공용 체온·습윤 틱 (frostbite/heat, per-entity outdoor)
+// CharacterClimateHost — PC/NPC 공용 체온·습윤 틱 (plain module)
 // ============================================================
 
 using System;
@@ -8,10 +8,7 @@ using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterBodyHost))]
-[DefaultExecutionOrder(10)]
-public sealed class CharacterClimateHost : MonoBehaviour
+public sealed class CharacterClimateHost
 {
     /// <summary>머리/손/발이 FrostbiteOnsetTempC 이하로 이 시간(World초) 유지되면 frostbite.</summary>
     public const float FrostbiteOnsetSeconds = 30f;
@@ -25,6 +22,7 @@ public sealed class CharacterClimateHost : MonoBehaviour
     /// <summary>극단 코어 피해 간격 (World초).</summary>
     public const float ExtremeCoreDamageIntervalSeconds = 4f;
 
+    CharacterBodyRefs _refs;
     CharacterBodyHost _bodyHost;
     PlayerGearHost _gearHost;
     CharacterState _characterState;
@@ -82,17 +80,21 @@ public sealed class CharacterClimateHost : MonoBehaviour
     }
 #endif
 
-    void Awake()
+    public void Bind(CharacterBodyRefs refs)
     {
-        _bodyHost = GetComponent<CharacterBodyHost>();
-        TryGetComponent(out _gearHost);
-        _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
-        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
-        _movement = CharacterBodyResolve.GetInBody<PlayerMovement>(this);
+        if (_bodyTemp != null)
+            _bodyTemp.Changed -= OnBodyTempChanged;
+
+        _refs = refs;
+        _bodyHost = refs != null ? refs.BodyHost : null;
+        _gearHost = refs != null ? refs.GearHost : null;
+        _characterState = refs != null ? refs.State : null;
+        _motor = refs != null ? refs.Motor : null;
+        _movement = refs != null ? refs.Get<PlayerMovement>() : null;
         _bodyTemp.Changed += OnBodyTempChanged;
     }
 
-    void OnDestroy()
+    public void Dispose()
     {
         _bodyTemp.Changed -= OnBodyTempChanged;
     }
@@ -121,10 +123,11 @@ public sealed class CharacterClimateHost : MonoBehaviour
         Changed?.Invoke();
     }
 
-    void Update()
+    public void Tick()
     {
-        // Hot path: World dt, 10 thermal parts, floor-cell outdoor query, no LINQ/alloc (preallocated arrays + effect scratch).
-        // UNITY_EDITOR: DebugOutdoorOverride is a static enum read before the map query.
+        if (_gearHost == null && _refs != null)
+            _gearHost = _refs.GearHost;
+
         float dt = TimeScaleService.Delta(TimeScaleChannel.World);
         if (dt <= 0f)
             return;
@@ -228,13 +231,13 @@ public sealed class CharacterClimateHost : MonoBehaviour
                 return body;
         }
 
-        return transform.position;
+        return _refs != null ? _refs.transform.position : Vector3.zero;
     }
 
     void EnsureMapCellSize()
     {
         if (_tileMapManager == null)
-            _tileMapManager = FindFirstObjectByType<TileMapManager>();
+            _tileMapManager = UnityEngine.Object.FindFirstObjectByType<TileMapManager>();
 
         IWorldGrid grid = _tileMapManager != null ? _tileMapManager.WorldGrid : null;
         if (grid != null)
@@ -360,7 +363,7 @@ public sealed class CharacterClimateHost : MonoBehaviour
     [ContextMenu("Debug/Verify BodyTemp DTO Round-Trip")]
     void DebugVerifyBodyTempDtoRoundTrip()
     {
-        Debug.Log("[CharacterClimateHost] BodyTemp DTO " + BodyTemp.ExecuteDtoRoundTripVerify(), this);
+        Debug.Log("[CharacterClimateHost] BodyTemp DTO " + BodyTemp.ExecuteDtoRoundTripVerify(), _refs);
     }
 #endif
 }

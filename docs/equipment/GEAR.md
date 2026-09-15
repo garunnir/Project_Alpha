@@ -30,18 +30,19 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `GearHandleRules` | CanLift / RequiredStr / LiftStrain / IsWearable |
 | `EquipmentWearState` | Worn stacks |
 | `WieldSlots` | L/R (+ two-hand mode). 든 스택 한손→반대 한손은 출발 칸을 비움 |
-| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. Deposit/source remove → `InventorySession.NotifyExternalStacksChanged`. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착. 든 스택 손 전환=`TryBeginWieldGrip` |
+| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. Deposit/source remove → `InventorySession.NotifyExternalStacksChanged`. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착. 든 스택 손 전환=`TryBeginWieldGrip`. 넉다운 드롭=`DropAllWieldedToWorld` (`SmallItemSpawner`, FloorLootHost 아님) |
+| `ICharacterActionSource` | `CharacterActionHost` 소스 레지스트리(Gear/Inv/Craft/Combat/Cell). `InterruptAll(Knockdown)` — PC·NPC 공통, 들기 드롭 latch |
 | `WeaponAmmoFit` | Dist.Inventory — 허용 탄창 id / 탄종 / clip vs well |
 | `WeaponAmmoService` | 삽탄·장착·교체·분리·탄 빼기. 탄창=`SupplyRounds`, 총=`ItemStack.LoadedMagazine` (Nested 아님) |
 | `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
 | `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
-| `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + `HelmetVision` + Kind **포워드** (`WorldWeatherHost`). BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
+| `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + `HelmetVision` + Kind **포워드** (`WorldWeatherHost`). BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드. **plain module** — `CharacterBodyRefs` 소유. inventory/skills/attacker는 Bind에서 BodyRefs resolve (프리팹 배선 아님). `Active` = `PlayerPossessSession.GearHost` (possessed only ClaimActive) |
 | `CharacterSpawnGearApplier` | 스폰 직후 Definition 로드아웃 즉시 Wear/Wield + 총 탄 채움 (`WeaponAmmoService` 타이머 아님) |
 | `ItemInstance.SelectedLeaf` | 선택 동사 SSOT. 런타임 동기 = `CharacterAttacker.TryApplyStackSelectedLeaf` (Gear UI·Q 공용) |
 | `CombatLeafRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |
-| `CharacterHandWork` | 손 비움(Unwield→body) → 대상 Wield → act. ESC=`CancelAll`, 완료 단계 유지(원복 아님). 섭취 등 |
+| `CharacterHandWork` | 손 비움(Unwield→body) → 대상 Wield → act. ESC=`CancelAll`→`InterruptAll(UserCancel)`(Combat 현재 작업 스킵 parity), 완료 단계 유지(원복 아님). 섭취 등 |
 | `GearActionDuration` | Wear/TakeOff/Wield/Unwield seconds (proxy) |
 | `InventoryTransferDuration` | MoveStacks / bag draw seconds — `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling |
 | `InventoryTimedMoveHost` | Per-stack sequential transfer (no summed delay); `ActiveStacks` = current only |

@@ -17,6 +17,7 @@ public static class CharacterGearLabels
     const string KeyTabBodyTemp = "Character.Tab.BodyTemp";
     const string KeyWear = "Character.Wear";
     const string KeyTakeOff = "Character.TakeOff";
+    const string KeyStripWear = "Character.StripWear";
     const string KeyWieldGroup = "Character.WieldGroup";
     const string KeyWieldLeft = "Character.WieldLeft";
     const string KeyWieldRight = "Character.WieldRight";
@@ -92,6 +93,7 @@ public static class CharacterGearLabels
     public static string TabBodyTemp => GetOr(KeyTabBodyTemp, "체온");
     public static string Wear => GetOr(KeyWear, "착용");
     public static string TakeOff => GetOr(KeyTakeOff, "벗기");
+    public static string StripWear => GetOr(KeyStripWear, "벗겨내기");
     public static string WieldGroup => GetOr(KeyWieldGroup, "들기");
     public static string WieldLeft => GetOr(KeyWieldLeft, "왼손 들기");
     public static string WieldRight => GetOr(KeyWieldRight, "오른손 들기");

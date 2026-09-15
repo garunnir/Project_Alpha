@@ -100,11 +100,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   _layerConfig: {fileID: 11400000, guid: c70ec1a880df4f04d90d465eb917ea4f, type: 2}
-  _maskShader: {fileID: 4800000, guid: 4a8c65543ada81942925d1732b92f698, type: 3}
+  _tileMaskShader: {fileID: 4800000, guid: 4a8c65543ada81942925d1732b92f698, type: 3}
   _outlineShader: {fileID: 4800000, guid: 8731560c1474faa4c9ee285324370cd8, type: 3}
   _outlineColor: {r: 0.1886576, g: 1, b: 0.015686274, a: 1}
   _outlineThicknessPx: 1
-  _passEvent: 600
+  _passEvent: 500
 --- !u!114 &8765432109876543210
 MonoBehaviour:
   m_ObjectHideFlags: 0

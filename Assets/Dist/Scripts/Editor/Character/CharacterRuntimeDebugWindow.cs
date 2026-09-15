@@ -224,7 +224,7 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
         if (go == null)
             return false;
 
-        CharacterBodyHost host = go.GetBodyComponent<CharacterBodyHost>();
+        CharacterBodyHost host = go.GetBodyModule<CharacterBodyHost>();
         if (host == null)
             return false;
 
@@ -279,12 +279,6 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
             AddLiveHost(host);
         }
 
-        CharacterBodyHost[] found = UnityEngine.Object.FindObjectsByType<CharacterBodyHost>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < found.Length; i++)
-            AddLiveHost(found[i]);
-
         _liveHosts.Sort(CompareHosts);
     }
 
@@ -327,7 +321,7 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
                 return host;
         }
 
-        return EditorUtility.InstanceIDToObject(instanceId) as CharacterBodyHost;
+        return null;
     }
 
     static int CompareHosts(CharacterBodyHost a, CharacterBodyHost b)
@@ -342,8 +336,9 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
     static bool IsPossessed(CharacterBodyHost host)
     {
         return host != null
-               && host.TryGetComponent(out CharacterMotor motor)
-               && motor.IsPossessed;
+               && host.BodyRefs != null
+               && host.BodyRefs.Motor != null
+               && host.BodyRefs.Motor.IsPossessed;
     }
 
     static string ResolveLabel(CharacterBodyHost host, int index)
@@ -354,7 +349,10 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
         string prefix = index >= 0 ? (index + 1) + ". " : "";
         string possessed = IsPossessed(host) ? " [P]" : "";
         string display = host.name;
-        if (host.TryGetComponent(out CharacterAppearanceHost appearance))
+        CharacterAppearanceHost appearance = host.BodyRefs != null
+            ? host.BodyRefs.Appearance
+            : CharacterBodyResolve.GetModule<CharacterAppearanceHost>(host);
+        if (appearance != null)
         {
             string name = appearance.ResolveDisplayName();
             if (!string.IsNullOrEmpty(name))

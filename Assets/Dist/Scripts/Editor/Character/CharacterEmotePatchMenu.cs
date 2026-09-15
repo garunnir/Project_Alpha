@@ -198,15 +198,15 @@ public static class CharacterEmotePatchMenu
     static int PatchOpenSceneHosts(CharacterEmoteCatalog catalog, GameObject prefab)
     {
         int patched = 0;
-        CharacterBodyHost[] hosts = UnityEngine.Object.FindObjectsByType<CharacterBodyHost>(
+        CharacterBodyRefs[] refsList = UnityEngine.Object.FindObjectsByType<CharacterBodyRefs>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
-        for (int i = 0; i < hosts.Length; i++)
+        for (int i = 0; i < refsList.Length; i++)
         {
-            CharacterBodyHost host = hosts[i];
-            if (host == null)
+            CharacterBodyRefs refs = refsList[i];
+            if (refs == null)
                 continue;
-            if (EnsureEmoteOn(host.gameObject, catalog, prefab, recordUndo: true))
+            if (EnsureEmoteOn(refs.gameObject, catalog, prefab, recordUndo: true))
                 patched++;
         }
 
@@ -221,13 +221,20 @@ public static class CharacterEmotePatchMenu
     {
         bool changed = false;
 
-        CharacterEmoteHost emoteHost = go.GetComponent<CharacterEmoteHost>();
-        if (emoteHost == null)
+        CharacterBodyRefs refs = go.GetComponent<CharacterBodyRefs>();
+        if (refs == null)
+            refs = go.GetComponentInParent<CharacterBodyRefs>();
+
+        if (refs != null)
         {
-            emoteHost = recordUndo
-                ? Undo.AddComponent<CharacterEmoteHost>(go)
-                : go.AddComponent<CharacterEmoteHost>();
-            changed = true;
+            SerializedObject refsSo = new(refs);
+            SerializedProperty catalogProp = refsSo.FindProperty("_emoteCatalog");
+            if (catalogProp != null && catalogProp.objectReferenceValue != catalog)
+            {
+                catalogProp.objectReferenceValue = catalog;
+                refsSo.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
         }
 
         // Strip legacy glue MBs folded into CharacterEmoteHost.
@@ -248,15 +255,6 @@ public static class CharacterEmotePatchMenu
                 Undo.DestroyObjectImmediate(combat);
             else
                 UnityEngine.Object.DestroyImmediate(combat);
-            changed = true;
-        }
-
-        SerializedObject hostSo = new(emoteHost);
-        SerializedProperty catalogProp = hostSo.FindProperty("_catalog");
-        if (catalogProp != null && catalogProp.objectReferenceValue != catalog)
-        {
-            catalogProp.objectReferenceValue = catalog;
-            hostSo.ApplyModifiedPropertiesWithoutUndo();
             changed = true;
         }
 

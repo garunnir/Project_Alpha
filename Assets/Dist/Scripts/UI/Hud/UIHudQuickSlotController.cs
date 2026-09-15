@@ -91,8 +91,8 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
         _attacker = null;
         if (host != null)
         {
-            CharacterBodyRefs refs = host.GetBodyRefs();
-            _attacker = refs != null ? refs.Attacker : CharacterBodyResolve.GetInBody<CharacterAttacker>(host);
+            CharacterBodyRefs refs = host.BodyRefs;
+            _attacker = refs != null ? refs.Attacker : null;
         }
         _gear.Changed += OnGearChanged;
         if (_gearHost != null)

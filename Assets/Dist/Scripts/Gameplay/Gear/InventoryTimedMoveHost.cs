@@ -10,9 +10,9 @@ using UnityEngine;
 /// InventoryTransferDuration SSOT. 다중 스택은 합산 없이 1스택씩 순차.
 /// 진행 중 IsBusy면 추가 이동 거부.
 /// </summary>
-public sealed class InventoryTimedMoveHost : MonoBehaviour
+public sealed class InventoryTimedMoveHost
 {
-    [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
     struct QueuedStackMove
     {
@@ -21,6 +21,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         public int UnitCount;
     }
 
+    CharacterBodyRefs _refs;
     CharacterActionHost _actionHost;
     readonly GearTimedAction _timed = new();
     readonly List<QueuedStackMove> _queue = new(8);
@@ -46,19 +47,22 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
     public event Action Changed;
 
-    void Awake()
+    public CharacterBodyRefs BodyRefs => _refs;
+
+    public void Bind(CharacterBodyRefs refs)
     {
-        TryGetComponent(out _actionHost);
+        _refs = refs;
+        _actionHost = refs != null ? refs.ActionHost : null;
     }
 
-    void OnEnable()
+    public void Enable()
     {
         _timed.Changed += OnTimedChanged;
         _timed.Completed += OnTimedCompleted;
         _timed.Cancelled += OnTimedCancelled;
     }
 
-    void OnDisable()
+    public void Disable()
     {
         _timed.Changed -= OnTimedChanged;
         _timed.Completed -= OnTimedCompleted;
@@ -66,7 +70,8 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         Cancel();
     }
 
-    void Update()
+    /// <summary>Transfer tick. heap 없음.</summary>
+    public void Tick()
     {
         if (!_timed.IsRunning)
             return;
@@ -185,7 +190,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
             return false;
         if (_actionHost == null)
             return start();
-        return _actionHost.TryRunOrEnqueue(CharacterActionKind.Inventory, start);
+        return _actionHost.TryEnqueue(CharacterActionKind.Inventory, start);
     }
 
     bool TryBeginQueue(

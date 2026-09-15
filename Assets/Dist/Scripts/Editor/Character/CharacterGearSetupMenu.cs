@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterGearSetupMenu — Dist/MCP Gear 컴포넌트 Ensure (에이전트용)
+// CharacterGearSetupMenu — Dist/MCP Gear 모듈 존재 확인 (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -11,23 +11,25 @@ public static class CharacterGearSetupMenu
     [MenuItem(DistMcpMenus.CharacterEnsurePlayerGearComponents)]
     static void EnsurePlayerGearComponents()
     {
-        PlayerInventoryRuntime runtime = Object.FindAnyObjectByType<PlayerInventoryRuntime>();
-        if (runtime == null)
+        CharacterBodyRefs refs = Object.FindAnyObjectByType<CharacterBodyRefs>();
+        if (refs == null)
         {
-            Debug.LogError("[CharacterGearSetupMenu] PlayerInventoryRuntime not found in scene.");
+            Debug.LogError("[CharacterGearSetupMenu] CharacterBodyRefs not found in scene.");
             return;
         }
 
-        GameObject go = runtime.gameObject;
-        Undo.RegisterCompleteObjectUndo(go, "Ensure Player Gear Components");
+        refs.ResolveFromHierarchy();
+        if (refs.GearHost == null || refs.TimedMoveHost == null)
+        {
+            Debug.LogError(
+                "[CharacterGearSetupMenu] Gear/TimedMove modules missing on CharacterBodyRefs.",
+                refs);
+            return;
+        }
 
-        if (go.GetComponent<InventoryTimedMoveHost>() == null)
-            Undo.AddComponent<InventoryTimedMoveHost>(go);
-        if (go.GetComponent<PlayerGearHost>() == null)
-            Undo.AddComponent<PlayerGearHost>(go);
-
-        EditorUtility.SetDirty(go);
-        Debug.Log("[CharacterGearSetupMenu] Player gear components ensured.", go);
+        Debug.Log(
+            "[CharacterGearSetupMenu] Gear/Inventory modules live on CharacterBodyRefs (plain).",
+            refs);
     }
 }
 #endif

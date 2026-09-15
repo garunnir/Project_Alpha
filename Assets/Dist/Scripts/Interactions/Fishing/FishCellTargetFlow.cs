@@ -26,7 +26,9 @@ public static class FishCellTargetFlow
             PlayerGearHost gear = PlayerGearHost.Active;
             if (gear != null)
             {
-                CharacterBodyRoot bodyRoot = gear.GetComponentInParent<CharacterBodyRoot>();
+                CharacterBodyRoot bodyRoot = gear.BodyRefs != null
+                    ? gear.BodyRefs.GetComponent<CharacterBodyRoot>()
+                    : null;
                 if (bodyRoot != null)
                     CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
             }
@@ -37,15 +39,18 @@ public static class FishCellTargetFlow
         PlayerGearHost activeGear = PlayerGearHost.Active;
         if (activeGear != null)
         {
-            CharacterActionHost fromGear = activeGear.GetBodyComponent<CharacterActionHost>();
-            CharacterBodyRoot bodyRoot = activeGear.GetComponentInParent<CharacterBodyRoot>();
+            CharacterActionHost fromGear = activeGear.BodyRefs != null ? activeGear.BodyRefs.ActionHost : null;
+            CharacterBodyRoot bodyRoot = activeGear.BodyRefs != null
+                ? activeGear.BodyRefs.GetComponent<CharacterBodyRoot>()
+                : null;
             if (bodyRoot != null)
                 CharacterWorkAnimBinder.BindBody(bodyRoot.gameObject);
             return fromGear;
         }
 
-        return PlayerInventoryRuntime.Active?.Host != null
-            ? PlayerInventoryRuntime.Active.Host.GetBodyComponent<CharacterActionHost>()
+        PlayerInventoryHost inventory = PlayerInventoryRuntime.Active?.Host;
+        return inventory != null && inventory.BodyRefs != null
+            ? inventory.BodyRefs.ActionHost
             : null;
     }
 }
