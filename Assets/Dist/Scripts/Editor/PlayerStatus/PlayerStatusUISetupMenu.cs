@@ -26,6 +26,10 @@ static class PlayerStatusUISetupMenu
     const string FullBandageObjectName = "bandage";
     const float BandageMaskAlphaMin = 0.5f;
     const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood";
+    /// <summary>Icons.png 8×8 시트 — ExtendedMoodIconIds[0..63] (GoodMood..Respect) SSOT.</summary>
+    const string MoodIconsAtlasPath = MoodSpriteFolder + "/Icons.png";
+    const int MoodIconsAtlasCount = 64;
+    const int MoodIconsAtlasCropSize = 72;
     const string MoodCatalogAssetPath = PlayerStatusMoodIconCatalog.DefaultAssetPath;
     const string SoGameplayFolder = "Assets/Dist/SOData/Gameplay";
     const string SoPlayerStatusFolder = SoGameplayFolder + "/PlayerStatus";
@@ -1808,6 +1812,8 @@ static class PlayerStatusUISetupMenu
             AssetDatabase.CreateFolder("Assets/Dist/Visual/Sprites/UI/PlayerStatus", "Mood");
         }
 
+        EnsureMoodIconsAtlas();
+
         EnsureCircleSprite(MoodSpriteFolder + "/Mood_Back.png", 64, Color.white, filled: true);
         for (int i = 0; i < LegacyMoodCatalogEntries.Length; i++)
             EnsureCircleSprite(
@@ -1816,11 +1822,14 @@ static class PlayerStatusUISetupMenu
                 Color.white,
                 filled: false);
 
-        for (int i = 0; i < ExtendedMoodIconIds.Length; i++)
+        // Atlas covers ExtendedMoodIconIds[0..63]; remaining keep single-file placeholders.
+        for (int i = MoodIconsAtlasCount; i < ExtendedMoodIconIds.Length; i++)
         {
             string fileName = "Mood_" + ExtendedMoodIconIds[i] + ".png";
             EnsureCircleSprite(MoodSpriteFolder + "/" + fileName, 48, Color.white, filled: false);
         }
+
+        DeleteObsoleteAtlasIndividualPngs();
 
         AssetDatabase.Refresh();
         AssetDatabase.SaveAssets();
@@ -1842,7 +1851,7 @@ static class PlayerStatusUISetupMenu
                 entries,
                 i,
                 LegacyMoodCatalogEntries[i].Id,
-                LegacyMoodCatalogEntries[i].FileName);
+                LoadMoodFrontSprite(LegacyMoodCatalogEntries[i].Id));
         }
 
         for (int i = 0; i < ExtendedMoodIconIds.Length; i++)
@@ -1852,7 +1861,7 @@ static class PlayerStatusUISetupMenu
                 entries,
                 LegacyMoodCatalogEntries.Length + i,
                 iconId,
-                "Mood_" + iconId + ".png");
+                LoadMoodFrontSprite(iconId));
         }
 
         catalogSo.ApplyModifiedPropertiesWithoutUndo();
@@ -1860,12 +1869,218 @@ static class PlayerStatusUISetupMenu
         AssetDatabase.SaveAssets();
     }
 
-    static void SetCatalogEntry(SerializedProperty entries, int index, MoodIconId iconId, string fileName)
+    /// <summary>
+    /// Icons.png → Multiple sprites named Mood_&lt;Id&gt; (icon-only rect, no sheet number/label).
+    /// </summary>
+    static void EnsureMoodIconsAtlas()
+    {
+        if (!File.Exists(MoodIconsAtlasPath))
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Missing mood atlas: {MoodIconsAtlasPath}");
+            return;
+        }
+
+        if (ExtendedMoodIconIds.Length < MoodIconsAtlasCount)
+        {
+            Debug.LogError(
+                "[PlayerStatusUISetupMenu] ExtendedMoodIconIds shorter than MoodIconsAtlasCount.");
+            return;
+        }
+
+        string absPath = Path.Combine(
+            Application.dataPath,
+            "Dist/Visual/Sprites/UI/PlayerStatus/Mood/Icons.png");
+        byte[] bytes = File.ReadAllBytes(absPath);
+        var src = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        if (!src.LoadImage(bytes))
+        {
+            Object.DestroyImmediate(src);
+            Debug.LogError("[PlayerStatusUISetupMenu] Icons.png LoadImage failed.");
+            return;
+        }
+
+        int w = src.width;
+        int h = src.height;
+        int cMinX = w;
+        int cMinY = h;
+        int cMaxX = 0;
+        int cMaxY = 0;
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                Color c = src.GetPixel(x, y);
+                float lum = (c.r + c.g + c.b) / 3f;
+                if (c.a < 0.1f || lum > 0.92f)
+                    continue;
+                if (x < cMinX)
+                    cMinX = x;
+                if (y < cMinY)
+                    cMinY = y;
+                if (x > cMaxX)
+                    cMaxX = x;
+                if (y > cMaxY)
+                    cMaxY = y;
+            }
+        }
+
+        const int cols = 8;
+        const int rows = 8;
+        float cellW = (cMaxX - cMinX + 1) / (float)cols;
+        float cellH = (cMaxY - cMinY + 1) / (float)rows;
+
+        var metas = new SpriteMetaData[MoodIconsAtlasCount];
+        for (int i = 0; i < MoodIconsAtlasCount; i++)
+        {
+            int col = i % cols;
+            int row = i / cols;
+            int x0 = cMinX + Mathf.RoundToInt(col * cellW);
+            int x1 = cMinX + Mathf.RoundToInt((col + 1) * cellW) - 1;
+            int yTop = cMaxY - Mathf.RoundToInt(row * cellH);
+            int yBot = cMaxY - Mathf.RoundToInt((row + 1) * cellH) + 1;
+            int ch = yTop - yBot + 1;
+
+            int dropTop = Mathf.RoundToInt(ch * 0.30f);
+            int dropBot = Mathf.RoundToInt(ch * 0.34f);
+            int yHi = yTop - dropTop;
+            int yLo = yBot + dropBot;
+
+            double sumX = 0;
+            double sumY = 0;
+            double weight = 0;
+            double sumXc = 0;
+            double sumYc = 0;
+            double weightC = 0;
+            for (int y = yLo; y <= yHi; y++)
+            {
+                for (int x = x0; x <= x1; x++)
+                {
+                    Color c = src.GetPixel(x, y);
+                    float max = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+                    float min = Mathf.Min(c.r, Mathf.Min(c.g, c.b));
+                    float chroma = max - min;
+                    float lum = (c.r + c.g + c.b) / 3f;
+                    if (c.a < 0.15f || lum > 0.88f)
+                        continue;
+
+                    float wgt = 1f - lum;
+                    sumX += x * wgt;
+                    sumY += y * wgt;
+                    weight += wgt;
+
+                    if (chroma > 0.10f && max < 0.95f)
+                    {
+                        float wc = chroma * wgt;
+                        sumXc += x * wc;
+                        sumYc += y * wc;
+                        weightC += wc;
+                    }
+                }
+            }
+
+            int cx;
+            int cy;
+            if (weightC > 5.0)
+            {
+                cx = (int)System.Math.Round(sumXc / weightC);
+                cy = (int)System.Math.Round(sumYc / weightC);
+            }
+            else if (weight > 5.0)
+            {
+                cx = (int)System.Math.Round(sumX / weight);
+                cy = (int)System.Math.Round(sumY / weight);
+            }
+            else
+            {
+                cx = (x0 + x1) / 2;
+                cy = (yLo + yHi) / 2;
+            }
+
+            cy = Mathf.Clamp(cy + 2, yLo, yHi);
+
+            int half = MoodIconsAtlasCropSize / 2;
+            int sx0 = Mathf.Clamp(cx - half, 0, w - MoodIconsAtlasCropSize);
+            int sy0 = Mathf.Clamp(cy - half, 0, h - MoodIconsAtlasCropSize);
+
+            MoodIconId iconId = ExtendedMoodIconIds[i];
+            metas[i] = new SpriteMetaData
+            {
+                name = "Mood_" + iconId,
+                rect = new Rect(sx0, sy0, MoodIconsAtlasCropSize, MoodIconsAtlasCropSize),
+                alignment = (int)SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f),
+                border = Vector4.zero,
+            };
+        }
+
+        Object.DestroyImmediate(src);
+
+        var importer = (TextureImporter)AssetImporter.GetAtPath(MoodIconsAtlasPath);
+        if (importer == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] No TextureImporter at {MoodIconsAtlasPath}");
+            return;
+        }
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Multiple;
+        importer.spritePixelsPerUnit = 100f;
+        importer.mipmapEnabled = false;
+        importer.alphaIsTransparency = true;
+        importer.filterMode = FilterMode.Bilinear;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.spritesheet = metas;
+        EditorUtility.SetDirty(importer);
+        importer.SaveAndReimport();
+
+        Debug.Log(
+            $"[PlayerStatusUISetupMenu] Mood atlas sliced: {MoodIconsAtlasCount} sprites on {MoodIconsAtlasPath}");
+    }
+
+    static void DeleteObsoleteAtlasIndividualPngs()
+    {
+        for (int i = 0; i < MoodIconsAtlasCount && i < ExtendedMoodIconIds.Length; i++)
+        {
+            string path = MoodSpriteFolder + "/Mood_" + ExtendedMoodIconIds[i] + ".png";
+            if (!File.Exists(path))
+                continue;
+            AssetDatabase.DeleteAsset(path);
+        }
+    }
+
+    static Sprite LoadMoodFrontSprite(MoodIconId iconId)
+    {
+        for (int i = 0; i < MoodIconsAtlasCount && i < ExtendedMoodIconIds.Length; i++)
+        {
+            if (ExtendedMoodIconIds[i] != iconId)
+                continue;
+
+            string spriteName = "Mood_" + iconId;
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(MoodIconsAtlasPath);
+            for (int a = 0; a < assets.Length; a++)
+            {
+                if (assets[a] is Sprite sprite && sprite.name == spriteName)
+                    return sprite;
+            }
+
+            Debug.LogWarning(
+                $"[PlayerStatusUISetupMenu] Atlas sprite missing: {spriteName} on {MoodIconsAtlasPath}");
+            return null;
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(
+            MoodSpriteFolder + "/Mood_" + iconId + ".png");
+    }
+
+    static void SetCatalogEntry(
+        SerializedProperty entries,
+        int index,
+        MoodIconId iconId,
+        Sprite front)
     {
         SerializedProperty entry = entries.GetArrayElementAtIndex(index);
         entry.FindPropertyRelative("IconId").enumValueIndex = (int)iconId;
-        entry.FindPropertyRelative("FrontSprite").objectReferenceValue =
-            AssetDatabase.LoadAssetAtPath<Sprite>(MoodSpriteFolder + "/" + fileName);
+        entry.FindPropertyRelative("FrontSprite").objectReferenceValue = front;
     }
 
     static void EnsureCircleSprite(string assetPath, int size, Color color, bool filled)

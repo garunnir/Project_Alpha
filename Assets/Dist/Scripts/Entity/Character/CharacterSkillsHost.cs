@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterSkillsHost ù skills + Defeat host (plain module, pairs with BodyHost)
+// CharacterSkillsHost ? skills + Defeat host (plain module, pairs with BodyHost)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -115,7 +115,7 @@ public sealed class CharacterSkillsHost
         _recipeMemory = _ownedRecipeMemory;
     }
 
-    /// <summary>Definition Apply ù replace owned skills instance.</summary>
+    /// <summary>Definition Apply ? replace owned skills instance.</summary>
     public void BindSkills(DefaultCharacterSkills skills)
     {
         _bodyHost = _refs != null ? _refs.BodyHost : _bodyHost;
@@ -135,6 +135,7 @@ public sealed class CharacterSkillsHost
 
         BindBodyToSkills();
         EnsureDefeat();
+        NotifyDefeatConsumers();
     }
 
     void BindBodyToSkills()
@@ -196,5 +197,11 @@ public sealed class CharacterSkillsHost
     void OnBodyChanged()
     {
         _skills?.Refresh();
+    }
+
+    void NotifyDefeatConsumers()
+    {
+        _refs?.HitReact?.NotifyDefeatHostRebuilt();
+        _refs?.InventoryHost?.RefreshDefeatLootSubscription();
     }
 }

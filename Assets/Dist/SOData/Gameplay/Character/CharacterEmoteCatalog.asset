@@ -14,35 +14,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterEmoteCatalog
   _entries:
   - Id: 1
-    Sprite: {fileID: 21300000, guid: 58bc4dfe3bcdfbe4cabf0d734caf558b, type: 3}
+    Sprite: {fileID: -4263674839067123987, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 2
-    Sprite: {fileID: 21300000, guid: e4daa4f414938934aa284bf6cf5797ba, type: 3}
+    Sprite: {fileID: -5403095251590801387, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 3
-    Sprite: {fileID: 21300000, guid: 45b242bbc8a7bc0408bb72875ed3adb9, type: 3}
+    Sprite: {fileID: -7420302538709255929, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 4
-    Sprite: {fileID: 21300000, guid: 677dc45e5cbc3ed48b8aa81a068ce573, type: 3}
+    Sprite: {fileID: 2758188610188750995, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 5
-    Sprite: {fileID: 21300000, guid: c81fdef6d3cb5b64fad149074848a80a, type: 3}
+    Sprite: {fileID: 7195586177981226420, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 6
-    Sprite: {fileID: 21300000, guid: 309d8832fdeb87f4d8ebbb10930d2a59, type: 3}
+    Sprite: {fileID: -4047681360269781493, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 7
-    Sprite: {fileID: 21300000, guid: fcd57c2c487728647bd053203eefbc81, type: 3}
+    Sprite: {fileID: -3678355751302303308, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 8
-    Sprite: {fileID: 21300000, guid: 4325b02891c75cd46bd8b5e82b3a8e1b, type: 3}
+    Sprite: {fileID: -1701817002219604823, guid: 3d3b475cf93f7b847ac8b782f018865b,
+      type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
   - Id: 100

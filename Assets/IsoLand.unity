@@ -11845,8 +11845,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9295618bde8f1d41a1308245ea83916, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerInventoryRuntime
-  _host: {fileID: 0}
-  _detector: {fileID: 0}
 --- !u!114 &739639495
 MonoBehaviour:
   m_ObjectHideFlags: 0

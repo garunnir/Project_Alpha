@@ -685,6 +685,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         CacheAnimatorParameters();
         RefreshWorkLayerIndex();
+        this.GetBodyRefs()?.HitReact?.RefreshAnimatorHurtBinding();
 
         if (forceRebind || _manualControl)
         {

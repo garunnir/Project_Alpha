@@ -1,12 +1,204 @@
 fileFormatVersion: 2
 guid: 3d3b475cf93f7b847ac8b782f018865b
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: -151231432242703062
+    second: Mood_GoodMood
+  - first:
+      213: -3678355751302303308
+    second: Mood_Happy
+  - first:
+      213: -1701817002219604823
+    second: Mood_VeryHappy
+  - first:
+      213: 8532337397613406670
+    second: Mood_Stable
+  - first:
+      213: -4047681360269781493
+    second: Mood_SlightlyHappy
+  - first:
+      213: 7195586177981226420
+    second: Mood_Neutral
+  - first:
+      213: 2758188610188750995
+    second: Mood_SlightlySad
+  - first:
+      213: -7420302538709255929
+    second: Mood_Sad
+  - first:
+      213: -5403095251590801387
+    second: Mood_VerySad
+  - first:
+      213: -4263674839067123987
+    second: Mood_Depressed
+  - first:
+      213: 7312753654528389507
+    second: Mood_Stressed
+  - first:
+      213: 8895688700175501259
+    second: Mood_SeverelyStressed
+  - first:
+      213: 8161613914550307328
+    second: Mood_Fear
+  - first:
+      213: -7435672222799901655
+    second: Mood_ExtremeFear
+  - first:
+      213: -2459515456925066285
+    second: Mood_Angry
+  - first:
+      213: 2919733824071371470
+    second: Mood_Furious
+  - first:
+      213: -5871116291440732153
+    second: Mood_Tired
+  - first:
+      213: -5321953717878471230
+    second: Mood_VeryTired
+  - first:
+      213: 5748510179289645480
+    second: Mood_NeedRest
+  - first:
+      213: -2259970827893051029
+    second: Mood_WellRested
+  - first:
+      213: 8851434404545625285
+    second: Mood_Hungry
+  - first:
+      213: 4886758359224915137
+    second: Mood_VeryHungry
+  - first:
+      213: 1313468342264048257
+    second: Mood_Fed
+  - first:
+      213: -8335025986516346244
+    second: Mood_Full
+  - first:
+      213: 58146026353690549
+    second: Mood_Thirsty
+  - first:
+      213: -6883487612209398967
+    second: Mood_VeryThirsty
+  - first:
+      213: -1512951528862864436
+    second: Mood_ThirstQuenched
+  - first:
+      213: 850066911000197824
+    second: Mood_Discomfort
+  - first:
+      213: 177257223675253818
+    second: Mood_Pain
+  - first:
+      213: -1651977331988028243
+    second: Mood_SeverePain
+  - first:
+      213: 5712325072355506062
+    second: Mood_Injured
+  - first:
+      213: -2433679774185814515
+    second: Mood_SeverelyInjured
+  - first:
+      213: 6398687078257510701
+    second: Mood_Sick
+  - first:
+      213: 3485473182102836491
+    second: Mood_SeverelySick
+  - first:
+      213: 3199572782318942946
+    second: Mood_LowImmunity
+  - first:
+      213: 376701282515657970
+    second: Mood_Recovering
+  - first:
+      213: -9053177568249669475
+    second: Mood_Pale
+  - first:
+      213: -8623743781970995056
+    second: Mood_Overheated
+  - first:
+      213: 4820453308485148351
+    second: Mood_Hypothermia
+  - first:
+      213: 205486218546027228
+    second: Mood_Comfortable
+  - first:
+      213: 8572496996621331310
+    second: Mood_Dirty
+  - first:
+      213: 4979356061501097027
+    second: Mood_VeryDirty
+  - first:
+      213: -157757695403527083
+    second: Mood_NeedShower
+  - first:
+      213: 1201593661690926865
+    second: Mood_Attractive
+  - first:
+      213: -7996952315543680229
+    second: Mood_Warm
+  - first:
+      213: 5426017873209862518
+    second: Mood_TooHot
+  - first:
+      213: -5000878051809407107
+    second: Mood_TooCold
+  - first:
+      213: 6040613962557481122
+    second: Mood_Dark
+  - first:
+      213: 8116198166376206162
+    second: Mood_Lonely
+  - first:
+      213: -7701202748323380253
+    second: Mood_Bored
+  - first:
+      213: 819701836074203502
+    second: Mood_Idle
+  - first:
+      213: -4525303316015970697
+    second: Mood_PleasantConversation
+  - first:
+      213: 4798955741524500049
+    second: Mood_GoodMeal
+  - first:
+      213: -6126202179584175683
+    second: Mood_RestArea
+  - first:
+      213: 2614606857029959409
+    second: Mood_SuitableEnvironment
+  - first:
+      213: -186544813017568940
+    second: Mood_NatureFriendly
+  - first:
+      213: -7824527208614773063
+    second: Mood_Inspired
+  - first:
+      213: 1341582132549408930
+    second: Mood_Motivated
+  - first:
+      213: -2196242665927010845
+    second: Mood_SkillUp
+  - first:
+      213: 2838349263486108138
+    second: Mood_RelationshipImproved
+  - first:
+      213: 2700344017270985432
+    second: Mood_Loved
+  - first:
+      213: -4509311320071678424
+    second: Mood_MarriedEngaged
+  - first:
+      213: 2608276552026086370
+    second: Mood_Trust
+  - first:
+      213: -2050104012864913384
+    second: Mood_Respect
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     sRGBTexture: 1
     linearTexture: 0
     fadeOut: 0
@@ -37,13 +229,13 @@ TextureImporter:
     filterMode: 1
     aniso: 1
     mipBias: 0
-    wrapU: 0
-    wrapV: 0
+    wrapU: 1
+    wrapV: 1
     wrapW: 0
-  nPOTScale: 1
+  nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 0
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -52,9 +244,9 @@ TextureImporter:
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
-  alphaIsTransparency: 0
+  alphaIsTransparency: 1
   spriteTessellationDetail: -1
-  textureType: 0
+  textureType: 8
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -72,7 +264,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -108,12 +300,1420 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Mood_GoodMood
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 916
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a25dc4a40d7b6edf0800000000000000
+      internalID: -151231432242703062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Happy
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 916
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b17c16deead3fcc0800000000000000
+      internalID: -3678355751302303308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VeryHappy
+      rect:
+        serializedVersion: 2
+        x: 439
+        y: 917
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a4fafdf37ee168e0800000000000000
+      internalID: -1701817002219604823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Stable
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 918
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec9278828a3f86670800000000000000
+      internalID: 8532337397613406670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SlightlyHappy
+      rect:
+        serializedVersion: 2
+        x: 794
+        y: 918
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0656259f3fb3d7c0800000000000000
+      internalID: -4047681360269781493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Neutral
+      rect:
+        serializedVersion: 2
+        x: 972
+        y: 915
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bd1849418bdbd360800000000000000
+      internalID: 7195586177981226420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SlightlySad
+      rect:
+        serializedVersion: 2
+        x: 1150
+        y: 919
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39034dd6ded074620800000000000000
+      internalID: 2758188610188750995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Sad
+      rect:
+        serializedVersion: 2
+        x: 1331
+        y: 909
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7093e4ec72ac50990800000000000000
+      internalID: -7420302538709255929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VerySad
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 787
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5189459de795405b0800000000000000
+      internalID: -5403095251590801387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Depressed
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 789
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dee12a3e25264d4c0800000000000000
+      internalID: -4263674839067123987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Stressed
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 785
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 381ba1444be1c7560800000000000000
+      internalID: 7312753654528389507
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SeverelyStressed
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 785
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc7ca6ecdb5d37b70800000000000000
+      internalID: 8895688700175501259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Fear
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 788
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00a08aafc90e34170800000000000000
+      internalID: 8161613914550307328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_ExtremeFear
+      rect:
+        serializedVersion: 2
+        x: 974
+        y: 793
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92cc5cd528f2fc890800000000000000
+      internalID: -7435672222799901655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Angry
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 785
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3db166619bb0eddd0800000000000000
+      internalID: -2459515456925066285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Furious
+      rect:
+        serializedVersion: 2
+        x: 1333
+        y: 784
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eca877e817af48820800000000000000
+      internalID: 2919733824071371470
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Tired
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 660
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7089aa5e6da958ea0800000000000000
+      internalID: -5871116291440732153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VeryTired
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 662
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c5c8ce5a4f9426b0800000000000000
+      internalID: -5321953717878471230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_NeedRest
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 655
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a1c6481d8fc6cf40800000000000000
+      internalID: 5748510179289645480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_WellRested
+      rect:
+        serializedVersion: 2
+        x: 597
+        y: 655
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6170b08188f2a0e0800000000000000
+      internalID: -2259970827893051029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Hungry
+      rect:
+        serializedVersion: 2
+        x: 795
+        y: 660
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ccfc9ba1bc96da70800000000000000
+      internalID: 8851434404545625285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VeryHungry
+      rect:
+        serializedVersion: 2
+        x: 978
+        y: 656
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c495c826d041d340800000000000000
+      internalID: 4886758359224915137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Fed
+      rect:
+        serializedVersion: 2
+        x: 1150
+        y: 654
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18aae5c8f706a3210800000000000000
+      internalID: 1313468342264048257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Full
+      rect:
+        serializedVersion: 2
+        x: 1331
+        y: 656
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7a1b00b60a045c80800000000000000
+      internalID: -8335025986516346244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Thirsty
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 533
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b789edb0839ec000800000000000000
+      internalID: 58146026353690549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VeryThirsty
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 531
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94bf47aac70f870a0800000000000000
+      internalID: -6883487612209398967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_ThirstQuenched
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 530
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccbaeb7b99ae00be0800000000000000
+      internalID: -1512951528862864436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Discomfort
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 534
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cafa790a5b0ccb00800000000000000
+      internalID: 850066911000197824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Pain
+      rect:
+        serializedVersion: 2
+        x: 791
+        y: 540
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a34190b718eb57200800000000000000
+      internalID: 177257223675253818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SeverePain
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 538
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da42bdd7e5ff219e0800000000000000
+      internalID: -1651977331988028243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Injured
+      rect:
+        serializedVersion: 2
+        x: 1149
+        y: 532
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e87be4b5361464f40800000000000000
+      internalID: 5712325072355506062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SeverelyInjured
+      rect:
+        serializedVersion: 2
+        x: 1331
+        y: 534
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d060a9ab325d93ed0800000000000000
+      internalID: -2433679774185814515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Sick
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 411
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d29cb68fef3bcc850800000000000000
+      internalID: 6398687078257510701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SeverelySick
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 416
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b05d36d6463ee5030800000000000000
+      internalID: 3485473182102836491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_LowImmunity
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 411
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2eaf0235e7a276c20800000000000000
+      internalID: 3199572782318942946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Recovering
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 411
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f4a7c212df4a3500800000000000000
+      internalID: 376701282515657970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Pale
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 408
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9891fba7f6ac5280800000000000000
+      internalID: -9053177568249669475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Overheated
+      rect:
+        serializedVersion: 2
+        x: 974
+        y: 407
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09892a988be425880800000000000000
+      internalID: -8623743781970995056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Hypothermia
+      rect:
+        serializedVersion: 2
+        x: 1156
+        y: 411
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbe1d948eb0b5e240800000000000000
+      internalID: 4820453308485148351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Comfortable
+      rect:
+        serializedVersion: 2
+        x: 1326
+        y: 407
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cda9ca680a80ad200800000000000000
+      internalID: 205486218546027228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Dirty
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 296
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6ba7b17990a7f670800000000000000
+      internalID: 8572496996621331310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_VeryDirty
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 287
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34406f7c4f93a1540800000000000000
+      internalID: 4979356061501097027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_NeedShower
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 287
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55473ec36388fcdf0800000000000000
+      internalID: -157757695403527083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Attractive
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 287
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 117d279a11beca010800000000000000
+      internalID: 1201593661690926865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Warm
+      rect:
+        serializedVersion: 2
+        x: 791
+        y: 288
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1b084a1d3e150190800000000000000
+      internalID: -7996952315543680229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_TooHot
+      rect:
+        serializedVersion: 2
+        x: 974
+        y: 286
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6792895e1861d4b40800000000000000
+      internalID: 5426017873209862518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_TooCold
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 290
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7f4adc58ef499ab0800000000000000
+      internalID: -5000878051809407107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Dark
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 286
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a0e087f46294d350800000000000000
+      internalID: 6040613962557481122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Lonely
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 173
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25fc7891b3782a070800000000000000
+      internalID: 8116198166376206162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Bored
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 162
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e34ce237e4df1590800000000000000
+      internalID: -7701202748323380253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Idle
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 165
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6930f81a7a206b00800000000000000
+      internalID: 819701836074203502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_PleasantConversation
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 169
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77688f33c94e231c0800000000000000
+      internalID: -4525303316015970697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_GoodMeal
+      rect:
+        serializedVersion: 2
+        x: 785
+        y: 165
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15e936a22d0599240800000000000000
+      internalID: 4798955741524500049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_RestArea
+      rect:
+        serializedVersion: 2
+        x: 977
+        y: 166
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db159af539b5bfaa0800000000000000
+      internalID: -6126202179584175683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SuitableEnvironment
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 165
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fe329c6513f84420800000000000000
+      internalID: 2614606857029959409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_NatureFriendly
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 164
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 459656d1b72496df0800000000000000
+      internalID: -186544813017568940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Inspired
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 48
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9be332bb5f1b96390800000000000000
+      internalID: -7824527208614773063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Motivated
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 42
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a85e9f67d14e9210800000000000000
+      internalID: 1341582132549408930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_SkillUp
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 49
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e51dd87ee06581e0800000000000000
+      internalID: -2196242665927010845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_RelationshipImproved
+      rect:
+        serializedVersion: 2
+        x: 613
+        y: 49
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae1c49eed97d36720800000000000000
+      internalID: 2838349263486108138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Loved
+      rect:
+        serializedVersion: 2
+        x: 790
+        y: 46
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d2d9c0a39c897520800000000000000
+      internalID: 2700344017270985432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_MarriedEngaged
+      rect:
+        serializedVersion: 2
+        x: 975
+        y: 45
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 826da79ee35bb61c0800000000000000
+      internalID: -4509311320071678424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Trust
+      rect:
+        serializedVersion: 2
+        x: 1151
+        y: 43
+        width: 72
+        height: 72
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ebde7f64b5723420800000000000000
+      internalID: 2608276552026086370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mood_Respect
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 44
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 810859023419c83e0800000000000000
+      internalID: -2050104012864913384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 1ddb410a0c9a4eb48912336929656563
     internalID: 0
     vertices: []
     indices: 
@@ -121,8 +1721,77 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+      entries:
+      - key: SpriteEditor.SliceOnImport
+        value: False
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":8.0,"y":8.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":65.0,"y":37.0},"gridSpritePadding":{"x":118.0,"y":61.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      Icons_0: -1873619632
+      Mood_Angry: -2459515456925066285
+      Mood_Attractive: 1201593661690926865
+      Mood_Bored: -7701202748323380253
+      Mood_Comfortable: 205486218546027228
+      Mood_Dark: 6040613962557481122
+      Mood_Depressed: -4263674839067123987
+      Mood_Dirty: 8572496996621331310
+      Mood_Discomfort: 850066911000197824
+      Mood_ExtremeFear: -7435672222799901655
+      Mood_Fear: 8161613914550307328
+      Mood_Fed: 1313468342264048257
+      Mood_Full: -8335025986516346244
+      Mood_Furious: 2919733824071371470
+      Mood_GoodMeal: 4798955741524500049
+      Mood_GoodMood: -151231432242703062
+      Mood_Happy: -3678355751302303308
+      Mood_Hungry: 8851434404545625285
+      Mood_Hypothermia: 4820453308485148351
+      Mood_Idle: 819701836074203502
+      Mood_Injured: 5712325072355506062
+      Mood_Inspired: -7824527208614773063
+      Mood_Lonely: 8116198166376206162
+      Mood_Loved: 2700344017270985432
+      Mood_LowImmunity: 3199572782318942946
+      Mood_MarriedEngaged: -4509311320071678424
+      Mood_Motivated: 1341582132549408930
+      Mood_NatureFriendly: -186544813017568940
+      Mood_NeedRest: 5748510179289645480
+      Mood_NeedShower: -157757695403527083
+      Mood_Neutral: 7195586177981226420
+      Mood_Overheated: -8623743781970995056
+      Mood_Pain: 177257223675253818
+      Mood_Pale: -9053177568249669475
+      Mood_PleasantConversation: -4525303316015970697
+      Mood_Recovering: 376701282515657970
+      Mood_RelationshipImproved: 2838349263486108138
+      Mood_Respect: -2050104012864913384
+      Mood_RestArea: -6126202179584175683
+      Mood_Sad: -7420302538709255929
+      Mood_SeverePain: -1651977331988028243
+      Mood_SeverelyInjured: -2433679774185814515
+      Mood_SeverelySick: 3485473182102836491
+      Mood_SeverelyStressed: 8895688700175501259
+      Mood_Sick: 6398687078257510701
+      Mood_SkillUp: -2196242665927010845
+      Mood_SlightlyHappy: -4047681360269781493
+      Mood_SlightlySad: 2758188610188750995
+      Mood_Stable: 8532337397613406670
+      Mood_Stressed: 7312753654528389507
+      Mood_SuitableEnvironment: 2614606857029959409
+      Mood_ThirstQuenched: -1512951528862864436
+      Mood_Thirsty: 58146026353690549
+      Mood_Tired: -5871116291440732153
+      Mood_TooCold: -5000878051809407107
+      Mood_TooHot: 5426017873209862518
+      Mood_Trust: 2608276552026086370
+      Mood_VeryDirty: 4979356061501097027
+      Mood_VeryHappy: -1701817002219604823
+      Mood_VeryHungry: 4886758359224915137
+      Mood_VerySad: -5403095251590801387
+      Mood_VeryThirsty: -6883487612209398967
+      Mood_VeryTired: -5321953717878471230
+      Mood_Warm: -7996952315543680229
+      Mood_WellRested: -2259970827893051029
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

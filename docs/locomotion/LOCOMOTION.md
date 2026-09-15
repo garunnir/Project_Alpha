@@ -119,7 +119,7 @@ flowchart LR
 - **불균형 (Imbalance 0..1):** 피격 `Δv`만큼 `+= clamp01(Δv / StaggerDeltaV)`. 시간으로 `RecoverPerSecond` 회복. 능동 이속·원거리 HitChance 모두 × `(1 − Imbalance)` (1이면 목표 속도 0 / 명중 0). 필드 읽기만. 관성·넉백은 이속에 안 곱함. 별도 Stagger 이동 잠금 타이머 없음. 근접 확정 히트는 미적용.
 - **자빠짐:** Imbalance가 1에 닿는 프레임 && 능동 `|CurrentSpeed| ≥ FallSpeedMin`. 넉백만으로는 안 넘어짐. 효과: 기존 `HitStagger` + `CancelAll` + cue 폐기. 전투 쿨은 남김. 서 있는 채 1이면 애니 없이 이속 0만.
 - **고통 쇼크:** effective Pain ≥ 0.8로 진입 **또는** `BodyCapacity.IsCapacityDowned`(의식 &lt; 0.3 / Moving &lt; 0.15 / Breathing ≤ 0)이면 살아 있는 다운 (`SetMoveLocked`). Hurt `PainDown` (`IsPainShocked`). `ICharacterDefeat` / `NpcManager.EnterDead`에 넣지 않는다. 고통 래치 기상: `PainWakeThreshold`(0.5) 아래. NPC는 `NpcSteer.Stop` 후 return. `PainHost`는 사망(의식 ≤ 0 — [`BODY.md`](../body/BODY.md))이면 쇼크를 끈다. 고통 SSOT는 조직 부상: [`BODY.md`](../body/BODY.md) PainTotal.
-- **사망 포즈:** `IsDefeated` → Hurt `Dead` (`HitDead_Slot` ← `Dying1`, 1회 후 마지막 프레임). PainDown과 별 상태. 렉돌은 후속.
+- **사망 포즈:** `ICharacterDefeat.IsDefeated` → `CharacterHitReact`가 Animator `IsDefeated` → Hurt `Dead` (`HitDead_Slot` ← `Dying1`, 1회 후 마지막 프레임). PainDown과 별 상태. `body.IsDeadState` 직접 읽기 금지 — `DefaultCharacterDefeat`가 `body.Changed`에서 래치. `CharacterHitReact`는 `defeat.Changed`·`pain.Changed`·`body.Changed`(안전망) 구독; `BindSkills`·무기 Override 후 `NotifyDefeatHostRebuilt` / `RefreshAnimatorHurtBinding`. 루팅 탭 Dead도 동일 Defeat SSOT ([`inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md)). 렉돌은 후속.
 - **이속:** `BodyLocomotionPenalties` 절뚝 유지. Moving 용량을 이속에 곱하지 않는다.
 - **사수 킥:** `AddRecoilKick`가 `ShooterDeltaV`를 모터에 넣고, 같은 Δv로 조준 분산 킥을 올린다. handling은 사수만.
 - `ApplyHit`(출혈·체온)로 Flinch/넉백 금지.
@@ -205,7 +205,7 @@ Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **Pain
 | `ImpactRecoil` / `ImpactBlocked` | trigger | cue → Recoil; `Obstructed` → Blocked |
 | `HitFlinch` / `HitStagger` | trigger | 피해자 `CharacterHitReact`. 쇼크·사망 중 생략 |
 | `IsPainShocked` | bool | `CharacterPainHost` (살아 있는 다운) |
-| `IsDefeated` | bool | `ICharacterDefeat` → Hurt `Dead` |
+| `IsDefeated` | bool | `ICharacterDefeat.IsDefeated` (`CharacterHitReact.SyncDeadBool`; `body.IsDeadState` 직접 금지) |
 | `WeaponPresentation.AnimatorOverride` | Override | 클립 배속 테이블 호스트. Hold/Aim/Attack/Recoil/Blocked는 동작 줄. 컨트롤러에 AnimVerb 키 없음. Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님) |
 | `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | Entry 클립→없으면 Catalog Leaf→Action thin. Recoil/Blocked: Entry→Catalog Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |

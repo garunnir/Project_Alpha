@@ -269,7 +269,7 @@ LiftStrain 배율만 `PlayerGearHost` (별 슬롯). 히트 배율: `ResolveAttac
 
 `CharacterPainHost`: effective ≥ `PainShockThreshold`(0.8)로 진입 **또는** `BodyCapacity.IsCapacityDowned`이면 살아 있는 다운 — `SetMoveLocked` + 액션/큐 취소. Defeat/Dead가 아니다. 고통 래치 기상은 `PainWakeThreshold`(0.5) 아래. 용량 다운은 대칭 문턱.
 
-루팅: `PlayerInventoryHost.IsAvailableToPlayer`가 self이거나 `IsDefeated || IsPainShocked`.
+루팅: `PlayerInventoryHost.IsAvailableToPlayer`가 self이거나 `IsDefeated || IsPainShocked`. 몸 탭 Dead/Unconscious·Hurt Dead 애니는 `ICharacterDefeat` SSOT (`body.IsDeadState` 소비처 직접 읽기 금지).
 
 HUD: `PlayerStatusMoodEntries`가 effective Pain ≥ `PainHudMin`이면 `MoodIconId.Pain`, ≥ `SeverePainHudMin`이면 `SeverePain`. 부위 Bleed로 Blood01이 빠지는 중이면 `Bleed`(디버프 아님). `Blood01` &lt; `BloodHudMin`이면 `Pale`. 의식만 `Fading`: &lt; `ConsciousnessHudMin` → 흐릿하다, &lt; `ConsciousnessDownedThreshold` → 가물거린다, ≤ 0 → 끊겼다. `StatCollapse`는 능력치 **Buffed ≤ 0**일 때 `MoodIconId.StatCollapse`(정신이 무너졌다). `IsDefeated`로 Fading을 덮지 않는다. 독소·저여과(`LowImmunity`)도 수집. 슬롯은 엔트리 수만큼 늘린다.
 

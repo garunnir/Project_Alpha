@@ -35,8 +35,6 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
     PlayerCarryCapacityPolicy _capacityPolicy;
     CharacterPainHost _painHost;
     CharacterSkillsHost _skillsHost;
-    CharacterBodyHost _bodyHost;
-    ICharacterBody _subscribedBody;
     ICharacterDefeat _subscribedDefeat;
     BodyLootDisplayKind _lastLootDisplayKind = BodyLootDisplayKind.None;
     bool _lastLootAvailableToPlayer;
@@ -74,7 +72,6 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
         _characterState = refs != null ? refs.State : null;
         _painHost = refs != null ? refs.PainHost : null;
         _skillsHost = refs != null ? refs.SkillsHost : null;
-        _bodyHost = refs != null ? refs.BodyHost : null;
         if (string.IsNullOrWhiteSpace(_containerId))
             _containerId = DefaultInstanceId;
     }
@@ -135,16 +132,13 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
     }
 
     /// <summary>
-    /// Nearby NPC 몸 탭 아이콘·폴백 라벨 SSOT. 사망 &gt; 기절·무력(고통 쇼크·비사망 Defeat).
+    /// Nearby NPC 몸 탭 아이콘·폴백 라벨 SSOT. 사망·무력은 <see cref="ICharacterDefeat"/>만 본다
+    /// (<c>body.IsDeadState</c> 직접 읽기 금지 — Hurt Dead 애니와 동일 신호).
     /// </summary>
     public BodyLootDisplayKind GetBodyLootDisplayKind()
     {
         if (!IsNpcBodyInstanceId(_containerId))
             return BodyLootDisplayKind.None;
-
-        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
-        if (body != null && body.IsDeadState)
-            return BodyLootDisplayKind.Dead;
 
         ICharacterDefeat defeat = _skillsHost != null ? _skillsHost.Defeat : null;
         if (defeat != null && defeat.IsDefeated && defeat.Cause == DefeatCause.BodyFatal)
@@ -157,6 +151,22 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
             return BodyLootDisplayKind.Unconscious;
 
         return BodyLootDisplayKind.None;
+    }
+
+    /// <summary><see cref="CharacterSkillsHost.BindSkills"/> 후 Defeat 인스턴스 재구독.</summary>
+    public void RefreshDefeatLootSubscription()
+    {
+        if (!_enabled || !IsNpcBodyInstanceId(_containerId))
+            return;
+
+        if (_subscribedDefeat != null)
+            _subscribedDefeat.Changed -= OnLootDisplaySignalsChanged;
+
+        _subscribedDefeat = _skillsHost != null ? _skillsHost.Defeat : null;
+        if (_subscribedDefeat != null)
+            _subscribedDefeat.Changed += OnLootDisplaySignalsChanged;
+
+        OnLootDisplaySignalsChanged();
     }
 
     public string ResolveBodyLootContainerDefId()
@@ -197,8 +207,6 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
             if (_subscribedDefeat != null)
                 _subscribedDefeat.Changed += OnLootDisplaySignalsChanged;
         }
-
-        BindBodyLootSignals();
     }
 
     void UnsubscribeLootDisplaySignals()
@@ -211,23 +219,6 @@ public sealed class PlayerInventoryHost : IInventoryContainerProvider
             _subscribedDefeat.Changed -= OnLootDisplaySignalsChanged;
             _subscribedDefeat = null;
         }
-
-        UnbindBodyLootSignals();
-    }
-
-    void BindBodyLootSignals()
-    {
-        UnbindBodyLootSignals();
-        _subscribedBody = _bodyHost != null ? _bodyHost.Body : null;
-        if (_subscribedBody != null)
-            _subscribedBody.Changed += OnLootDisplaySignalsChanged;
-    }
-
-    void UnbindBodyLootSignals()
-    {
-        if (_subscribedBody != null)
-            _subscribedBody.Changed -= OnLootDisplaySignalsChanged;
-        _subscribedBody = null;
     }
 
     void CacheLootDisplaySnapshot()

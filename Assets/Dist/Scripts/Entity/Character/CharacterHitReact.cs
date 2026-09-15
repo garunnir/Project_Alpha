@@ -33,6 +33,7 @@ public sealed class CharacterHitReact
     CharacterPainHost _pain;
     CharacterSkillsHost _skillsHost;
     ICharacterDefeat _defeat;
+    ICharacterBody _subscribedBody;
     CharacterImbalanceHost _imbalance;
     Animator _animator;
     int _hashFlinch;
@@ -89,8 +90,9 @@ public sealed class CharacterHitReact
 
         if (_eventsBound)
         {
-            SyncPainBool();
-            SyncDeadBool();
+            BindDefeat();
+            BindBodySignals();
+            SyncHurtBools();
             return;
         }
 
@@ -99,8 +101,8 @@ public sealed class CharacterHitReact
         if (_pain != null)
             _pain.Changed += OnPainChanged;
         BindDefeat();
-        SyncPainBool();
-        SyncDeadBool();
+        BindBodySignals();
+        SyncHurtBools();
     }
 
     public void Disable()
@@ -113,6 +115,25 @@ public sealed class CharacterHitReact
         if (_pain != null)
             _pain.Changed -= OnPainChanged;
         UnbindDefeat();
+        UnbindBodySignals();
+    }
+
+    /// <summary><see cref="CharacterSkillsHost.BindSkills"/> 후 Defeat 재구독·Hurt bool 동기화.</summary>
+    public void NotifyDefeatHostRebuilt()
+    {
+        if (!_eventsBound)
+            return;
+
+        BindDefeat();
+        SyncHurtBools();
+    }
+
+    /// <summary>무기 Override·컨트롤러 교체 후 Hurt 파라미터 캐시·bool 재동기화.</summary>
+    public void RefreshAnimatorHurtBinding()
+    {
+        CacheHurtParams();
+        if (_eventsBound)
+            SyncHurtBools();
     }
 
     void CacheHurtParams()
@@ -150,6 +171,29 @@ public sealed class CharacterHitReact
     void OnPainChanged() => SyncPainBool();
 
     void OnDefeatChanged() => SyncDeadBool();
+
+    void OnBodyChanged() => SyncHurtBools();
+
+    void BindBodySignals()
+    {
+        UnbindBodySignals();
+        _subscribedBody = _bodyHost != null ? _bodyHost.Body : null;
+        if (_subscribedBody != null)
+            _subscribedBody.Changed += OnBodyChanged;
+    }
+
+    void UnbindBodySignals()
+    {
+        if (_subscribedBody != null)
+            _subscribedBody.Changed -= OnBodyChanged;
+        _subscribedBody = null;
+    }
+
+    void SyncHurtBools()
+    {
+        SyncPainBool();
+        SyncDeadBool();
+    }
 
     void BindDefeat()
     {
