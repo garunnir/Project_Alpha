@@ -78,7 +78,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | TwoHand / 한 손만 | 그 손 1회 |
 | L·R 듀얼 | 교대할 손 1회. 그 손이 NoAmmo/Unsupported면 반대손만 이어서 시도 |
 
-`TryPerformSelected` 진입에서 `IsActionBusy`(pending cue 또는 어느 손 쿨)면 Cooling — 호출측이 가드를 복제하지 않음. 듀얼에서 활성 손을 `SetWieldedItem`하는 것은 데미지·Entry resolve용이며, 이미 든 양손 스택 사이 교체는 `PresentationChanged`를 올리지 않는다.
+`TryPerformSelected` 진입에서 `IsActionBusy`(pending cue 또는 **동작 쿨**)면 Cooling — 호출측이 가드를 복제하지 않음. **무기 쿨**은 `GateAction`/`GetWeaponCooldown`만. ActionHost·컨텍스트 메뉴 disabledReason·선점에 쓰지 않음. UI는 손 슬롯 `GetCooldownOverlay01`로 **반영만**. 듀얼에서 활성 손을 `SetWieldedItem`하는 것은 데미지·Entry resolve용이며, 이미 든 양손 스택 사이 교체는 `PresentationChanged`를 올리지 않는다.
 
 ### Melee connect (cue 히트박스)
 
@@ -118,7 +118,7 @@ Excavate: **RMB 조준** + LMB hold → `AimWorldPoint` → Dig ([`DIG.md`](../m
 | 조준 포인터 | **Ranged:** RMB + `TryPreviewRangedSpread` → `UIAimPointer`(TopMost). 센터 프리팹 고정, 퍼짐=`Dist/UI/AimRing` SDF. UI는 식 복제 안 함. **MeleeBlock(Excavate):** RMB + `TryPreviewMeleeBlockTarget` → `SetDigHighlight` on HorizontalFace (UI 링 없음; 발끝 transform→목표 셀 중심 월드 유클리드 clamp=`DigActionRangeCells × cellSize`). 근접 Strike/Pierce Pending |
 | 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. 마스크 기본 `~0`(Character 포함). 자기 콜라이더는 `IsOwnCollider`/`IsSelf` 제외. 맵 벽은 `MapTopologyLineCast`(조준과 동일)에서 멈추고 `Obstructed`+`ImpactPoint` — `MapStructureDamageSink` Occupied 벽 remaining HP. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
 
-동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략). 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피). 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
+동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략) — ActionHost Combat busy·머리 위 `ActionPerformProgress01`. 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피) — **무기/손 주체**, 공격 게이트와 슬롯 fill만. 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
 
 ```mermaid
 flowchart LR

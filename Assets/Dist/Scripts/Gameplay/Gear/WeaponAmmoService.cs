@@ -10,21 +10,10 @@ using Garunnir.Runtime.Gameplay.Data;
 /// </summary>
 public static class WeaponAmmoService
 {
-    public static bool IsBusy()
-    {
-        CharacterGearService gear = PlayerGearHost.Active?.Service;
-        if (gear != null && (gear.IsBusy || gear.ToolSession.IsActive))
-            return true;
-        InventoryTimedMoveHost move = InventoryTimedMoveHost.Active;
-        return move != null && move.IsBusy;
-    }
-
     public static string GetLoadBlockedReason(ItemStack ammo, ItemStack target)
     {
         if (ammo?.Item?.ammo == null || target?.Item == null)
             return WeaponAmmoLabels.Blocked;
-        if (IsBusy())
-            return WeaponAmmoLabels.Busy;
 
         ItemStack mag = WeaponAmmoFit.ResolveLoadMagazine(target);
         if (mag != null)
@@ -73,8 +62,6 @@ public static class WeaponAmmoService
     {
         if (magazine?.Item?.magazine == null || gun?.Item?.gun == null)
             return WeaponAmmoLabels.Blocked;
-        if (IsBusy())
-            return WeaponAmmoLabels.Busy;
         if (ReferenceEquals(gun.LoadedMagazine, magazine))
             return WeaponAmmoLabels.Blocked;
         if (!WeaponAmmoFit.AcceptsMagazine(gun.Item, magazine.Item))
@@ -91,8 +78,6 @@ public static class WeaponAmmoService
     {
         if (gun?.LoadedMagazine == null)
             return WeaponAmmoLabels.Blocked;
-        if (IsBusy())
-            return WeaponAmmoLabels.Busy;
         CharacterGearService gear = PlayerGearHost.Active?.Service;
         if (gear != null && !gear.CanDepositToBody(gun.LoadedMagazine))
             return WeaponAmmoLabels.NoRoom;
@@ -103,8 +88,6 @@ public static class WeaponAmmoService
     {
         if (magazine?.Instance == null || magazine.Instance.SupplyRounds <= 0)
             return WeaponAmmoLabels.Blocked;
-        if (IsBusy())
-            return WeaponAmmoLabels.Busy;
 
         ItemData ammo = GameplayData.GetItem(magazine.Instance.SupplyAmmoId);
         if (ammo == null)

@@ -104,18 +104,23 @@ public sealed class CharacterAttacker
         return index >= 0 && _pendingCues[index].Armed && !_pendingCues[index].CueFired;
     }
 
+    /// <summary>
+    /// 동작 busy — pending cue 또는 동작 쿨. 무기 쿨은 포함하지 않음.
+    /// </summary>
     public bool IsActionBusy
     {
         get
         {
             if (HasPendingAttackCue)
                 return true;
-            return HasAnyRemaining(_actionCooldownRemaining) ||
-                   HasAnyRemaining(_weaponCooldownRemaining);
+            return HasAnyRemaining(_actionCooldownRemaining);
         }
     }
 
-    public float CooldownProgress01
+    /// <summary>
+    /// 머리 위 행동 게이지용 진행(0→1). pending cue + 동작 쿨만. 무기 쿨 제외.
+    /// </summary>
+    public float ActionPerformProgress01
     {
         get
         {
@@ -124,11 +129,6 @@ public sealed class CharacterAttacker
             ConsiderProgress(
                 _actionCooldownRemaining,
                 _actionCooldownDuration,
-                ref bestRemaining,
-                ref bestDuration);
-            ConsiderProgress(
-                _weaponCooldownRemaining,
-                _weaponCooldownDuration,
                 ref bestRemaining,
                 ref bestDuration);
 
@@ -674,7 +674,8 @@ public sealed class CharacterAttacker
 
     /// <summary>
     /// Occupied 손 시전. 호출 1회=시전 의도 1회 (플레이어 클릭·NPC Attack 틱 공통).
-    /// <see cref="IsActionBusy"/>면 Cooling. TwoHand·한손=그 손 1회.
+    /// <see cref="IsActionBusy"/>면 Cooling. 무기 쿨은 <see cref="GateAction"/>/<see cref="GetWeaponCooldown"/>.
+    /// TwoHand·한손=그 손 1회.
     /// 듀얼=이번 손 1회, 그 손이 NoAmmo/Unsupported면 같은 호출 안 반대손.
     /// 손별 액션은 인스턴스 Selected.
     /// </summary>
@@ -983,7 +984,7 @@ public sealed class CharacterAttacker
     public float GetCooldown(WieldHand hand) =>
         Mathf.Max(GetActionCooldown(hand), GetWeaponCooldown(hand));
 
-    /// <summary>슬롯 radial fill. 동작·무기 쿨 중 남은 비율 (1=쿨 시작, 0=준비).</summary>
+    /// <summary>손 슬롯 radial fill 반영. 동작·무기 쿨 중 남은 비율 (1=쿨 시작, 0=준비). 행동 차단에 쓰지 않음.</summary>
     public float GetCooldownOverlay01(WieldHand hand)
     {
         int index = CooldownIndex(hand);
@@ -1373,6 +1374,17 @@ public sealed class CharacterAttacker
     {
         for (int i = 0; i < _pendingCues.Length; i++)
             _pendingCues[i] = default;
+    }
+
+    /// <summary>선점용 — pending·동작 쿨만 지움. 무기 쿨은 유지.</summary>
+    public void ClearActionBusy()
+    {
+        CancelAllPendingCues();
+        for (int i = 0; i < HandCooldownSlotCount; i++)
+        {
+            _actionCooldownRemaining[i] = 0f;
+            _actionCooldownDuration[i] = 0f;
+        }
     }
 
     public void ClearInterruptBusy()

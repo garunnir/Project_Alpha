@@ -17,18 +17,19 @@ Patch: `Dist/MCP/Character/Patch Action Gauge On Player`
 
 | Before | After |
 |--------|--------|
-| 장비 타이머·인벤 이동·전투 쿨·제작이 겹칠 수 있음 | 같은 행위자에서 **한 줄만** 진행, 나머지는 종류별 큐 |
-| busy면 거절 | `TryRunOrEnqueue` — idle이면 즉시 Start, busy면 종류 정책 |
-| ESC가 행동을 안 끊음 | possessed만 `CancelAll` (현재 작업+큐). 전투 쿨은 스킵하지 않음 |
+| 장비 타이머·인벤 이동·전투 쿨·제작이 겹칠 수 있음 | 같은 행위자에서 **한 줄만** 진행. Gear/Inv/Cell은 선점, Craft는 큐 |
+| busy면 거절 | `TryRunImmediate` — idle이면 즉시 Start, busy면 현재 CancelSoft 후 시작. Craft만 `TryEnqueue` |
+| ESC가 행동을 안 끊음 | possessed만 `CancelAll` (현재 작업+큐). Combat **동작 busy**는 스킵. **무기 쿨은 ActionHost와 무관** |
 | 상태이상이 행동 시간에 무관 | `BodyPartEffect` → `TickScale`을 실제 dt에 곱함 |
 
 ```text
-요청 → CharacterActionHost.TryRunOrEnqueue
-         idle  → Start (기존 Gear/Inv/Craft/Attack 타이머)
-         busy  → 종류별 EnqueueOrReplace
+요청 → CharacterActionHost.TryRunImmediate (기본) / TryEnqueue (Craft·Combat 연타)
+         idle  → Start
+         busy  → Immediate: 현재 CancelSoft + 큐 flush 후 Start
+                 Enqueue: 종류별 EnqueueOrReplace
          완료  → dequeue 다음 Start
-CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
-            (누가 호출하든 동일. possessed ESC / AI / 상호작용 중단)
+CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기. Combat 동작 busy는 스킵.
+            무기 쿨은 Attacker 손 슬롯에 남음 (ActionHost 아님).
 ```
 
 종류별 큐 정책 (`EnqueueOrReplace`) — 이산 작업과 연타 입력을 같은 FIFO에 넣지 않는다.
@@ -59,10 +60,15 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 
 | Kind | busy일 때 | 이유 |
 |------|-----------|------|
-| Gear / Inventory / Craft / Cell | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. **Cell** = 그리드/월드 셀 스크립트 행동 (`CharacterArriveHost` 도착 · ActionHost Cell pipeline 작업 · vault). Arrive 중 게이지는 `Img_AutoProgressIcon`. TileMap 시스템과 무관 |
-| Combat | 큐에 **최대 1개**. 이미 Combat이 있으면 Start만 교체 | LMB 연타는 “지금 한 대”이지 N대 예약이 아님 |
+| Gear / Inventory / Cell | Immediate 선점 (CancelSoft + 큐 flush) | 클릭 = 지금 이 작업. 이전 작업은 미적용 취소. **Cell** = 그리드/월드 셀 스크립트 행동 (`CharacterArriveHost` 도착 · ActionHost Cell pipeline 작업 · vault). Arrive 중 게이지는 `Img_AutoProgressIcon`. TileMap 시스템과 무관 |
+| Craft | FIFO append | busy면 예약. 클릭 1 = 작업 1 |
+| Combat | 큐에 **최대 1개**. 이미 Combat이 있으면 Start만 교체 | LMB 연타는 “지금 한 대”이지 N대 예약이 아님. **동작 busy**(pending cue + 동작 쿨)만 ActionHost. **무기 쿨은 손/무기 게이트·슬롯 fill만** |
 
-교차 종류는 그대로 한 줄: 착용 중 공격은 Combat 1칸이 뒤에 앉는다. 쿨 중 연타는 그 1칸만 최신 클릭으로 덮는다.
+교차 종류 Immediate: 착용 중 벗기 = 착용 취소 후 벗기. Combat 동작 busy 중 Gear = 동작 busy 취소(무기 쿨 유지) 후 Gear. 무기 쿨만 남은 동안은 ActionHost idle → 벗기/삽탄 즉시.
+
+**머리 위 게이지** (`Grp_CharacterActionGauge`): `ICharacterActionSource.Progress01`. Combat 분기는 `CharacterAttacker.ActionPerformProgress01` (동작 진행). 무기 쿨을 올리지 않음.
+
+**손 슬롯 fill**: `GetCooldownOverlay01` — 동작·무기 쿨 **반영만**. 메뉴 disabledReason·선점 판단에 쓰지 않음.
 
 **Dig** / **Chop**은 Combat perform 계열(홀드·Structure pipeline). 표·핸들러: [`COMBAT_PIPELINE.md`](../equipment/COMBAT_PIPELINE.md). 맵 파괴: [`DIG.md`](../map/DIG.md).
 
@@ -113,13 +119,13 @@ flowchart LR
 
 `CharacterActionDelay.TickScale(body)` — 트리 효과 순회, catalog 배율을 intensity만큼 곱. 미등록 1. 그다음 `BodyCapacity.ManipulationTickScale` 한 번 곱. 하한 `MinTickScale`.
 
-적용: GearTimedAction, InventoryTimedMove, 전투 쿨, 제작 경과. 이동 속도(`BodyLocomotionPenalties`)와 별개. Feeling/습윤/과적은 후속 가산.
+적용: GearTimedAction, InventoryTimedMove, 전투 **동작 쿨**, 제작 경과. 무기 쿨도 Attacker Tick에서 같은 `ActionTickScale`을 곱하지만 ActionHost busy가 아님. 이동 속도(`BodyLocomotionPenalties`)와 별개. Feeling/습윤/과적은 후속 가산.
 
 ---
 
 ## CancelAll
 
-모든 Host 공통. 전투 쿨은 남긴다. 작업/큐가 있으면 그것만 취소.
+모든 Host 공통. Combat **동작 busy**는 남긴다(ESC가 스윙/동작 쿨을 끊지 않음). 무기 쿨은 원래 ActionHost 밖. 작업/큐가 있으면 그것만 취소. 다른 Kind의 `TryRunImmediate`는 Combat `CancelSoft` → `ClearActionBusy`(pending·동작 쿨만, 무기 쿨 유지).
 
 possessed ESC: `CharacterActionCancelConsumer` → `UiCancelPriority.CharacterAction` (60). 메뉴(100)가 먼저. 다른 오브젝트 큐를 ESC가 끊지 않음.
 
@@ -133,4 +139,4 @@ possessed ESC: `CharacterActionCancelConsumer` → `UiCancelPriority.CharacterAc
 
 ## 검증
 
-IsoLand `>PlayerCharacter`: 착용 중 인벤 이동은 큐. ESC는 미적용+큐 소멸. 컨텍스트 메뉴 ESC는 메뉴만. 쿨만 남은 ESC는 세팅. 골절 등이 있으면 진행이 더 김. 조준 중 LMB 연타 → 쿨 끝난 뒤 **한 대만** (손 뗀 뒤 지연 연타 없음).
+IsoLand `>PlayerCharacter`: 착용 중 벗기/인벤 드롭은 **선점**. 제작 busy만 큐. ESC는 미적용+큐 소멸(Combat 동작 busy·무기 쿨은 남김). 컨텍스트 메뉴 ESC는 메뉴만. 무기 쿨만 남은 동안 삽탄·벗기 메뉴는 클릭 가능. 조준 중 LMB 연타 → 쿨 끝난 뒤 **한 대만** (손 뗀 뒤 지연 연타 없음).

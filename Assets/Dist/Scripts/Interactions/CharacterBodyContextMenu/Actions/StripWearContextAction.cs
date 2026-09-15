@@ -28,8 +28,6 @@ public sealed class StripWearContextAction : IContextMenuAction
             return CharacterGearLabels.BlockedInvalid;
         if (interactor.ToolSession.IsActive)
             return CharacterGearLabels.BlockedToolSession;
-        if (host.CurrentKind == CharacterActionKind.Combat)
-            return CharacterGearLabels.BlockedBusy;
 
         return null;
     }

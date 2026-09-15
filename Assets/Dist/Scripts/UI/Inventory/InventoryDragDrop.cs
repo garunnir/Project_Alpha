@@ -39,8 +39,6 @@ public static class InventoryDragDrop
             InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
             if (timed != null)
             {
-                if (timed.IsBusy)
-                    return false;
                 return timed.TryBeginSequentialUntilFull(
                     session,
                     payload.SourceContainer,
@@ -105,9 +103,6 @@ public static class InventoryDragDrop
         InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
         if (timed != null)
         {
-            if (timed.IsBusy)
-                return false;
-
             return timed.TryBeginMultiSourceSequentialUntilFull(
                 session,
                 target,
@@ -173,9 +168,6 @@ public static class InventoryDragDrop
         InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
         if (timed != null)
         {
-            if (timed.IsBusy)
-                return false;
-
             return timed.TryBeginMove(
                 session,
                 from,

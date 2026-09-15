@@ -33,7 +33,7 @@ public sealed class CharacterCellFarmPipeline : CharacterCellPipelineBase
         if (ActionHost == null)
             return BeginPipeline(kind, cell, stack, container);
 
-        return ActionHost.TryEnqueue(
+        return ActionHost.TryRunImmediate(
             CharacterActionKind.Cell,
             () => BeginPipeline(kind, cell, stack, container));
     }

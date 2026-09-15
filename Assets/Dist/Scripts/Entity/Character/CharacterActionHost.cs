@@ -318,7 +318,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         return _construction != null && _construction.TryRun(data, cell, facingQuarters);
     }
 
-    /// <summary>기본: 큐 flush + current CancelSoft(Combat 제외) 후 즉시 시작.</summary>
+    /// <summary>기본: 큐 flush + current CancelSoft 후 즉시 시작. ESC CancelAll은 Combat 스킵.</summary>
     public bool TryRunImmediate(CharacterActionKind kind, Func<bool> start)
     {
         if (start == null || kind == CharacterActionKind.None)
@@ -326,9 +326,6 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
 
         if (_dispatching)
             return start();
-
-        if (_currentKind == CharacterActionKind.Combat)
-            return false;
 
         _queue.Clear();
 

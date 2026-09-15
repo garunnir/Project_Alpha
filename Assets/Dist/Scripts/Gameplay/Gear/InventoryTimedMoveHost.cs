@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// InventoryTransferDuration SSOT. 다중 스택은 합산 없이 1스택씩 순차.
-/// 진행 중 IsBusy면 추가 이동 거부.
+/// 새 이동은 ActionHost Immediate 선점(현재 이동 Cancel).
 /// </summary>
 public sealed class InventoryTimedMoveHost
 {
@@ -190,7 +190,7 @@ public sealed class InventoryTimedMoveHost
             return false;
         if (_actionHost == null)
             return start();
-        return _actionHost.TryEnqueue(CharacterActionKind.Inventory, start);
+        return _actionHost.TryRunImmediate(CharacterActionKind.Inventory, start);
     }
 
     bool TryBeginQueue(
