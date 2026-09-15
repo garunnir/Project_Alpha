@@ -12,8 +12,8 @@ public sealed class CharacterLocomotionHurtAnimancer
 {
     public const int LayerFlinch = 5;
     public const int LayerHurt = 6;
-    /// <summary>Unused Hybrid remnant (weight 0, non-SSOT). Work uses LayerWork = 8.</summary>
-    public const int LayerHybrid = 7;
+    /// <summary>Unused layer spacer (weight 0, non-SSOT). Work uses LayerWork = 8.</summary>
+    public const int LayerUnused = 7;
 
     enum HurtMode
     {
@@ -32,24 +32,24 @@ public sealed class CharacterLocomotionHurtAnimancer
 
     public bool IsReady => _ready;
 
-    public int HybridLayerIndex => LayerHybrid;
+    public int UnusedLayerIndex => LayerUnused;
 
-    public void Ensure(HybridAnimancerComponent hybrid, AvatarMask headTorsoMask)
+    public void Ensure(AnimancerComponent animancer, AvatarMask headTorsoMask)
     {
         _ready = false;
-        if (hybrid == null || headTorsoMask == null)
+        if (animancer == null || headTorsoMask == null)
             return;
-        if (!hybrid.IsGraphInitialized && hybrid.Animator == null)
+        if (!animancer.IsGraphInitialized && animancer.Animator == null)
             return;
 
         AnimancerLayer flinch = ConfigureLayer(
-            hybrid,
+            animancer,
             LayerFlinch,
             "Animancer Flinch",
             headTorsoMask,
             additive: true);
         AnimancerLayer hurt = ConfigureLayer(
-            hybrid,
+            animancer,
             LayerHurt,
             "Animancer Hurt",
             mask: null,
@@ -58,40 +58,26 @@ public sealed class CharacterLocomotionHurtAnimancer
         if (flinch == null || hurt == null)
             return;
 
-        AnimancerLayer hybridLayer = hybrid.Layers[LayerHybrid];
-        ClearForeignController(hybrid, LayerFlinch, hybridLayer);
-        ClearForeignController(hybrid, LayerHurt, hybridLayer);
+        AnimancerLayer unused = animancer.Layers[LayerUnused];
+        unused.SetDebugName("Unused layer spacer");
+        unused.Weight = 0f;
 
         _ready = true;
     }
 
     static AnimancerLayer ConfigureLayer(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         int index,
         string debugName,
         AvatarMask mask,
         bool additive)
     {
-        AnimancerLayer layer = hybrid.Layers[index];
+        AnimancerLayer layer = animancer.Layers[index];
         layer.SetDebugName(debugName);
         layer.SetLayerWeightOnPlay = false;
         layer.Mask = mask;
         layer.IsAdditive = additive;
         return layer;
-    }
-
-    static void ClearForeignController(
-        HybridAnimancerComponent hybrid,
-        int layerIndex,
-        AnimancerLayer hybridLayer)
-    {
-        if (hybrid == null || !hybrid.Controller.IsValid)
-            return;
-
-        AnimancerLayer layer = hybrid.Layers[layerIndex];
-        AnimancerState current = layer.CurrentState;
-        if (current != null && current == hybrid.Controller.State)
-            hybridLayer.Play(hybrid.Controller.State);
     }
 
     public void Invalidate()
@@ -104,12 +90,12 @@ public sealed class CharacterLocomotionHurtAnimancer
         _hurtMode = HurtMode.None;
     }
 
-    public void PlayFlinch(HybridAnimancerComponent hybrid, AnimationClip clip)
+    public void PlayFlinch(AnimancerComponent animancer, AnimationClip clip)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized || clip == null)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized || clip == null)
             return;
 
-        AnimancerLayer layer = hybrid.Layers[LayerFlinch];
+        AnimancerLayer layer = animancer.Layers[LayerFlinch];
         AnimancerState state = layer.Play(clip);
         state.Time = 0f;
         state.Speed = 1f;
@@ -118,35 +104,35 @@ public sealed class CharacterLocomotionHurtAnimancer
         layer.Weight = 1f;
     }
 
-    public void PlayStagger(HybridAnimancerComponent hybrid, AnimationClip clip)
+    public void PlayStagger(AnimancerComponent animancer, AnimationClip clip)
     {
         if (_hurtMode == HurtMode.Dead || _hurtMode == HurtMode.PainDown)
             return;
-        PlayHurtClip(hybrid, clip, HurtMode.Stagger, loopHold: false);
+        PlayHurtClip(animancer, clip, HurtMode.Stagger, loopHold: false);
     }
 
-    public void PlayPainDown(HybridAnimancerComponent hybrid, AnimationClip clip)
+    public void PlayPainDown(AnimancerComponent animancer, AnimationClip clip)
     {
         if (_hurtMode == HurtMode.Dead)
             return;
-        PlayHurtClip(hybrid, clip, HurtMode.PainDown, loopHold: true);
+        PlayHurtClip(animancer, clip, HurtMode.PainDown, loopHold: true);
     }
 
-    public void PlayDead(HybridAnimancerComponent hybrid, AnimationClip clip)
+    public void PlayDead(AnimancerComponent animancer, AnimationClip clip)
     {
-        PlayHurtClip(hybrid, clip, HurtMode.Dead, loopHold: false);
+        PlayHurtClip(animancer, clip, HurtMode.Dead, loopHold: false);
     }
 
     void PlayHurtClip(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         AnimationClip clip,
         HurtMode mode,
         bool loopHold)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized || clip == null)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized || clip == null)
             return;
 
-        AnimancerLayer layer = hybrid.Layers[LayerHurt];
+        AnimancerLayer layer = animancer.Layers[LayerHurt];
         bool same = ReferenceEquals(_hurtClip, clip)
             && _hurtState != null
             && _hurtState.IsValid()
@@ -170,30 +156,30 @@ public sealed class CharacterLocomotionHurtAnimancer
         _ = loopHold;
     }
 
-    public void ClearHurtIfMode(HybridAnimancerComponent hybrid, bool clearPain, bool clearDead)
+    public void ClearHurtIfMode(AnimancerComponent animancer, bool clearPain, bool clearDead)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized)
             return;
 
         if (_hurtMode == HurtMode.PainDown && clearPain)
-            StopHurt(hybrid);
+            StopHurt(animancer);
         else if (_hurtMode == HurtMode.Dead && clearDead)
-            StopHurt(hybrid);
+            StopHurt(animancer);
     }
 
-    public void StopHurt(HybridAnimancerComponent hybrid)
+    public void StopHurt(AnimancerComponent animancer)
     {
-        if (hybrid != null && hybrid.IsGraphInitialized)
-            hybrid.Layers[LayerHurt].Weight = 0f;
+        if (animancer != null && animancer.IsGraphInitialized)
+            animancer.Layers[LayerHurt].Weight = 0f;
         _hurtState = null;
         _hurtClip = null;
         _hurtMode = HurtMode.None;
     }
 
-    public void StopFlinch(HybridAnimancerComponent hybrid)
+    public void StopFlinch(AnimancerComponent animancer)
     {
-        if (hybrid != null && hybrid.IsGraphInitialized)
-            hybrid.Layers[LayerFlinch].Weight = 0f;
+        if (animancer != null && animancer.IsGraphInitialized)
+            animancer.Layers[LayerFlinch].Weight = 0f;
         _flinchState = null;
         _flinchClip = null;
     }
@@ -221,29 +207,29 @@ public sealed class CharacterLocomotionHurtAnimancer
         return true;
     }
 
-    public void TickEmptyWeights(HybridAnimancerComponent hybrid)
+    public void TickEmptyWeights(AnimancerComponent animancer)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized)
             return;
 
-        if (!IsFlinchPlaying() && hybrid.Layers[LayerFlinch].Weight > 0f)
-            StopFlinch(hybrid);
+        if (!IsFlinchPlaying() && animancer.Layers[LayerFlinch].Weight > 0f)
+            StopFlinch(animancer);
 
         if (_hurtMode == HurtMode.Stagger && !IsHurtWeightActive())
-            StopHurt(hybrid);
+            StopHurt(animancer);
     }
 
-    public float GetLayerWeight(HybridAnimancerComponent hybrid, int animancerLayerIndex)
+    public float GetLayerWeight(AnimancerComponent animancer, int animancerLayerIndex)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized)
+        if (animancer == null || !animancer.IsGraphInitialized)
             return 0f;
-        return hybrid.Layers[animancerLayerIndex].Weight;
+        return animancer.Layers[animancerLayerIndex].Weight;
     }
 
-    public void SetLayerWeight(HybridAnimancerComponent hybrid, int animancerLayerIndex, float weight)
+    public void SetLayerWeight(AnimancerComponent animancer, int animancerLayerIndex, float weight)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized)
+        if (animancer == null || !animancer.IsGraphInitialized)
             return;
-        hybrid.Layers[animancerLayerIndex].Weight = weight;
+        animancer.Layers[animancerLayerIndex].Weight = weight;
     }
 }

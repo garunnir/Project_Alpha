@@ -188,7 +188,7 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 패키지: `Packages/com.kybernetik.animancer` (Pro v8.4.0). **기본 재생 경로 = Animancer layers.** Mecanim `CharacterAnimController` SM은 라이브 재생 SSOT가 아니다.
 
 **끝 상태:**
-- 몸 재생 호스트 = Hybrid/Animancer graph + Animancer layers (Move/Arm/Impact/Hurt/Work). Hybrid `Controller`는 비움 — `CharacterAnimController` SM 불필요. Layers[7] remnant weight 0 (non-SSOT).
+- 몸 재생 호스트 = `AnimancerComponent` graph + Animancer layers (Move/Arm/Impact/Hurt/Work). `CharacterAnimController` SM 불필요. Layers[7] unused spacer weight 0.
 - **유지 SSOT (불변):** `ArmAnimSlotCatalog` / thin 슬롯 키 / `TimeScaleService` 채널 틱. 재생 칸·thin만 안다 — 동작 이름·`LibraryKeys` 금지 (`arm-anim-layers.mdc`).
 - **Dynamic Layers:** 정지=전신 Move base, 이동=Work layer에 `UpperBody.mask` (발은 Animancer Move).
 - **TwoHand** = `UpperBody.mask`.
@@ -203,16 +203,16 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 | S4 | Arm / Impact = Animancer clip layers |
 | S5 | Hurt / Flinch = Animancer |
 | S6 | Work = Animancer Play(clip) |
-| S7 | Mecanim 재생 경로 폐기 + 문서/룰 (`WEAPON_VISUAL`·`arm-anim-layers`) |
+| S7 | Mecanim 재생 경로 폐기 + docs/rules; Hybrid 제거 → `AnimancerComponent` |
 
-**시간:** `Animator.enabled == false` + Animancer `Graph.PauseGraph()`. 시간 소스 = `CharacterLocomotionAnim` → `HybridAnimancerComponent.Update(channelDelta)`(= `Evaluate`). `_poseRate` 플립북 양자화 (`0`=연속). 채널 pause(`delta<=0`)면 틱 스킵.
+**시간:** `Animator.enabled == true` + Animancer `Graph.PauseGraph()`. 시간 소스 = `CharacterLocomotionAnim` → `AnimancerComponent.Evaluate(channelDelta)`. `_poseRate` 플립북 양자화 (`0`=연속). 채널 pause(`delta<=0`)면 틱 스킵.
 
 **재생 ownership:**
 - **Move** `Layers[0]` DirectionalMixer (`CharacterLocomotionMoveSet`)
 - **Arm + Impact** `Layers[1..4]` via `ResolvePoseClip` / `ResolveImpactClip`
 - **Flinch + Hurt** `Layers[5..6]` (`CharacterLocomotionHurtAnimancer`; `CharacterHitReact` → CLA)
 - **Work** `Layers[8]` Play(clip) (`CharacterLocomotionWorkAnimancer` / `CharacterWorkLayerAnim`)
-- Layers[7] unused remnant @0 (non-SSOT). clip.name↔controller state **not required**
+- Layers[7] unused spacer @0. clip.name↔controller state **not required**
 
 **클립 배속:** Animancer `state.Speed` (`WeaponAnimClipSpeeds` on Presentation / Override host). Override = 배속 테이블이지 동작 슬롯장이 아님.
 
@@ -281,7 +281,7 @@ Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** 
 **Impact Kind 확장:** `ArmImpactKind` (Reaction: Recoil/Blocked) + Impact SM 상태·trigger·행.  
 **Hurt:** Animancer Flinch (Additive HeadTorso) + Hurt Override (`CharacterLocomotionHurtAnimancer`). Catalog 행 추가 아님. CharacterAnimController Flinch/Hurt SM은 remnant(non-SSOT, weight 0).
 
-**Work:** Animancer `Layers[8]` Play(clip) (`CharacterLocomotionWorkAnimancer`). Layers[7] remnant @0 (non-SSOT). clip.name↔controller state 재생 계약 없음.
+**Work:** Animancer `Layers[8]` Play(clip) (`CharacterLocomotionWorkAnimancer`). Layers[7] unused spacer @0. clip.name↔controller state 재생 계약 없음.
 
 **Pending:** BN `modes` JSON bake → Leaf 마스크 자동 매핑 ([`BN_BAKE.md`](../equipment/BN_BAKE.md)).
 
@@ -308,7 +308,7 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 - 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
 - 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` → Animancer Evaluate; Animator auto-update 아님).
-- Play 중 `Animator.enabled == false` + Hybrid graph Pause는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
+- Play 중 `Animator.enabled == true` + Animancer `Graph.PauseGraph`는 **정상** (Evaluate가 본에 쓰려면 Animator on). `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
 - Locomotion/Arm 클립은 FBX `loopTime` 필요.
 - 장애물 판정은 `AttackPerformResult.Obstructed` (Miss와 구분) → Impact `Blocked`.
 

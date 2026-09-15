@@ -8,7 +8,7 @@ using UnityEngine;
 /// Owns Animancer layers for RightArm / LeftArm / TwoHand poses and Impact Recoil/Blocked.
 /// Thin semantic stays Entry→Catalog→clip via <see cref="ArmAnimSlotResolver"/> /
 /// <see cref="ArmImpactSlotResolver"/>. Layer order: after Move (0), before Flinch/Hurt (5–6);
-/// Layers[7] unused Hybrid remnant (non-SSOT, weight 0).
+/// Layers[7] unused layer spacer (non-SSOT, weight 0).
 /// </summary>
 public sealed class CharacterLocomotionArmImpactAnimancer
 {
@@ -22,8 +22,8 @@ public sealed class CharacterLocomotionArmImpactAnimancer
     public const int LayerLeftArm = 2;
     public const int LayerTwoHand = 3;
     public const int LayerImpact = 4;
-    /// <summary>Unused Hybrid remnant slot (weight 0, non-SSOT). Flinch=5 Hurt=6 Work=8.</summary>
-    public const int LayerHybrid = CharacterLocomotionHurtAnimancer.LayerHybrid;
+    /// <summary>Unused layer spacer slot (weight 0, non-SSOT). Flinch=5 Hurt=6 Work=8.</summary>
+    public const int LayerUnused = CharacterLocomotionHurtAnimancer.LayerUnused;
 
     readonly AnimancerState[] _handStates = new AnimancerState[3];
     readonly AnimationClip[] _handClips = new AnimationClip[3];
@@ -36,70 +36,47 @@ public sealed class CharacterLocomotionArmImpactAnimancer
 
     public bool IsReady => _ready;
 
-    public int HybridLayerIndex => LayerHybrid;
+    public int UnusedLayerIndex => LayerUnused;
 
     public void Ensure(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         AvatarMask rightArmMask,
         AvatarMask leftArmMask,
         AvatarMask twoHandMask)
     {
         _ready = false;
-        if (hybrid == null || rightArmMask == null || leftArmMask == null || twoHandMask == null)
+        if (animancer == null || rightArmMask == null || leftArmMask == null || twoHandMask == null)
             return;
-        if (!hybrid.IsGraphInitialized && hybrid.Animator == null)
+        if (!animancer.IsGraphInitialized && animancer.Animator == null)
             return;
 
         // Touch Layers to ensure capacity; Play later connects states.
-        AnimancerLayer right = ConfigureArmLayer(hybrid, LayerRightArm, "Animancer RightArm", rightArmMask);
-        AnimancerLayer left = ConfigureArmLayer(hybrid, LayerLeftArm, "Animancer LeftArm", leftArmMask);
-        AnimancerLayer twoHand = ConfigureArmLayer(hybrid, LayerTwoHand, "Animancer TwoHand", twoHandMask);
-        AnimancerLayer impact = ConfigureArmLayer(hybrid, LayerImpact, "Animancer Impact", mask: null);
+        AnimancerLayer right = ConfigureArmLayer(animancer, LayerRightArm, "Animancer RightArm", rightArmMask);
+        AnimancerLayer left = ConfigureArmLayer(animancer, LayerLeftArm, "Animancer LeftArm", leftArmMask);
+        AnimancerLayer twoHand = ConfigureArmLayer(animancer, LayerTwoHand, "Animancer TwoHand", twoHandMask);
+        AnimancerLayer impact = ConfigureArmLayer(animancer, LayerImpact, "Animancer Impact", mask: null);
 
         if (right == null || left == null || twoHand == null || impact == null)
             return;
 
-        AnimancerLayer hybridLayer = hybrid.Layers[LayerHybrid];
-        hybridLayer.SetDebugName("Unused Hybrid remnant (non-SSOT)");
-        hybridLayer.Weight = 0f;
-
-        // If Controller was left on an arm slot from a prior layout, keep remnant-only on LayerHybrid.
-        ClearForeignController(hybrid, LayerRightArm, hybridLayer);
-        ClearForeignController(hybrid, LayerLeftArm, hybridLayer);
-        ClearForeignController(hybrid, LayerTwoHand, hybridLayer);
-        ClearForeignController(hybrid, LayerImpact, hybridLayer);
+        AnimancerLayer unused = animancer.Layers[LayerUnused];
+        unused.SetDebugName("Unused layer spacer");
+        unused.Weight = 0f;
 
         _ready = true;
     }
 
     static AnimancerLayer ConfigureArmLayer(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         int index,
         string debugName,
         AvatarMask mask)
     {
-        AnimancerLayer layer = hybrid.Layers[index];
+        AnimancerLayer layer = animancer.Layers[index];
         layer.SetDebugName(debugName);
         layer.SetLayerWeightOnPlay = false;
         layer.Mask = mask;
         return layer;
-    }
-
-    static void ClearForeignController(
-        HybridAnimancerComponent hybrid,
-        int layerIndex,
-        AnimancerLayer hybridLayer)
-    {
-        if (hybrid == null || !hybrid.Controller.IsValid)
-            return;
-
-        AnimancerLayer layer = hybrid.Layers[layerIndex];
-        AnimancerState current = layer.CurrentState;
-        if (current == null || current == hybrid.Controller.State)
-        {
-            if (current != null && current.Layer == layer)
-                hybridLayer.Play(hybrid.Controller.State);
-        }
     }
 
     public void Invalidate()
@@ -116,29 +93,29 @@ public sealed class CharacterLocomotionArmImpactAnimancer
         _impactClip = null;
     }
 
-    public float GetLayerWeight(HybridAnimancerComponent hybrid, int animancerLayerIndex)
+    public float GetLayerWeight(AnimancerComponent animancer, int animancerLayerIndex)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized)
+        if (animancer == null || !animancer.IsGraphInitialized)
             return 0f;
-        return hybrid.Layers[animancerLayerIndex].Weight;
+        return animancer.Layers[animancerLayerIndex].Weight;
     }
 
-    public void SetLayerWeight(HybridAnimancerComponent hybrid, int animancerLayerIndex, float weight)
+    public void SetLayerWeight(AnimancerComponent animancer, int animancerLayerIndex, float weight)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized)
+        if (animancer == null || !animancer.IsGraphInitialized)
             return;
-        hybrid.Layers[animancerLayerIndex].Weight = weight;
+        animancer.Layers[animancerLayerIndex].Weight = weight;
     }
 
-    public float MaxArmImpactWeight(HybridAnimancerComponent hybrid)
+    public float MaxArmImpactWeight(AnimancerComponent animancer)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized || !_ready)
+        if (animancer == null || !animancer.IsGraphInitialized || !_ready)
             return 0f;
         float max = 0f;
-        max = Mathf.Max(max, hybrid.Layers[LayerRightArm].Weight);
-        max = Mathf.Max(max, hybrid.Layers[LayerLeftArm].Weight);
-        max = Mathf.Max(max, hybrid.Layers[LayerTwoHand].Weight);
-        max = Mathf.Max(max, hybrid.Layers[LayerImpact].Weight);
+        max = Mathf.Max(max, animancer.Layers[LayerRightArm].Weight);
+        max = Mathf.Max(max, animancer.Layers[LayerLeftArm].Weight);
+        max = Mathf.Max(max, animancer.Layers[LayerTwoHand].Weight);
+        max = Mathf.Max(max, animancer.Layers[LayerImpact].Weight);
         return max;
     }
 
@@ -161,19 +138,19 @@ public sealed class CharacterLocomotionArmImpactAnimancer
     }
 
     public void SyncPose(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         WieldHand hand,
         AnimationClip clip,
         float speed,
         ArmAnimSlotResolver.PoseKind pose,
         bool restartAttack)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized || clip == null)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized || clip == null)
             return;
 
         int hi = HandIndex(hand);
         int layerIndex = AnimancerLayerForHand(hand);
-        AnimancerLayer layer = hybrid.Layers[layerIndex];
+        AnimancerLayer layer = animancer.Layers[layerIndex];
 
         bool sameClip = ReferenceEquals(_handClips[hi], clip)
             && _handStates[hi] != null
@@ -276,14 +253,14 @@ public sealed class CharacterLocomotionArmImpactAnimancer
     }
 
     public void PlayImpact(
-        HybridAnimancerComponent hybrid,
+        AnimancerComponent animancer,
         AnimationClip clip,
         float speed)
     {
-        if (!_ready || hybrid == null || !hybrid.IsGraphInitialized || clip == null)
+        if (!_ready || animancer == null || !animancer.IsGraphInitialized || clip == null)
             return;
 
-        AnimancerLayer layer = hybrid.Layers[LayerImpact];
+        AnimancerLayer layer = animancer.Layers[LayerImpact];
         AnimancerState state = layer.Play(clip);
         state.Time = 0f;
         state.Speed = speed;
@@ -301,11 +278,11 @@ public sealed class CharacterLocomotionArmImpactAnimancer
         return true;
     }
 
-    public void StopImpactWeight(HybridAnimancerComponent hybrid)
+    public void StopImpactWeight(AnimancerComponent animancer)
     {
-        if (hybrid == null || !hybrid.IsGraphInitialized)
+        if (animancer == null || !animancer.IsGraphInitialized)
             return;
-        hybrid.Layers[LayerImpact].Weight = 0f;
+        animancer.Layers[LayerImpact].Weight = 0f;
         _impactState = null;
         _impactClip = null;
     }

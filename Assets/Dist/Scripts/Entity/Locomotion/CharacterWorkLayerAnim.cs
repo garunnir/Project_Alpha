@@ -7,7 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// 농사·낚시·vault 공용 Work Layer.
-/// S6: 재생 ownership = Animancer <c>Layers[Work]</c> Play(clip). Mecanim Work weight = 0.
+/// S6: 재생 ownership = Animancer <c>Layers[Work]</c> Play(clip).
 /// 컨트롤러 상태 이름 = clip.name 계약은 재생에 더 이상 필요하지 않다.
 /// </summary>
 public static class CharacterWorkLayerAnim
@@ -22,10 +22,10 @@ public static class CharacterWorkLayerAnim
         if (animator == null)
             return -1;
 
-        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
-        if (hybrid != null)
+        AnimancerComponent animancer = ResolveAnimancer(animator);
+        if (animancer != null)
         {
-            EnsureAnimancerWorkReady(hybrid, animator);
+            EnsureAnimancerWorkReady(animancer, animator);
             return CharacterLocomotionWorkAnimancer.LayerWork;
         }
 
@@ -39,14 +39,14 @@ public static class CharacterWorkLayerAnim
         if (animator == null || clip == null)
             return false;
 
-        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
-        if (hybrid != null)
+        AnimancerComponent animancer = ResolveAnimancer(animator);
+        if (animancer != null)
         {
-            EnsureAnimancerWorkReady(hybrid, animator);
+            EnsureAnimancerWorkReady(animancer, animator);
             layerIndex = CharacterLocomotionWorkAnimancer.LayerWork;
-            ForceMecanimWorkWeightZero(hybrid, animator);
+            ForceMecanimWorkWeightZero(animator);
 
-            AnimancerLayer layer = hybrid.Layers[layerIndex];
+            AnimancerLayer layer = animancer.Layers[layerIndex];
             AnimancerState state = layer.Play(clip);
             state.Time = 0f;
             state.Speed = 1f;
@@ -79,14 +79,14 @@ public static class CharacterWorkLayerAnim
         if (animator == null)
             return;
 
-        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
-        if (hybrid != null)
+        AnimancerComponent animancer = ResolveAnimancer(animator);
+        if (animancer != null)
         {
-            EnsureAnimancerWorkReady(hybrid, animator);
+            EnsureAnimancerWorkReady(animancer, animator);
             int index = layerIndex >= 0 ? layerIndex : CharacterLocomotionWorkAnimancer.LayerWork;
-            if (hybrid.IsGraphInitialized)
-                hybrid.Layers[index].Weight = 0f;
-            ForceMecanimWorkWeightZero(hybrid, animator);
+            if (animancer.IsGraphInitialized)
+                animancer.Layers[index].Weight = 0f;
+            ForceMecanimWorkWeightZero(animator);
             return;
         }
 
@@ -102,17 +102,17 @@ public static class CharacterWorkLayerAnim
         if (animator == null)
             return false;
 
-        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
-        if (hybrid != null)
+        AnimancerComponent animancer = ResolveAnimancer(animator);
+        if (animancer != null)
         {
-            EnsureAnimancerWorkReady(hybrid, animator);
-            if (hybrid.IsGraphInitialized || hybrid.Animator != null)
+            EnsureAnimancerWorkReady(animancer, animator);
+            if (animancer.IsGraphInitialized || animancer.Animator != null)
                 return true;
 
             Object ctx = context != null ? context : animator;
             Debug.LogError(
-                $"[CharacterWorkLayerAnim] Hybrid Animancer Work layer '{LayerName}' not ready. " +
-                "Vault/Farm/Fish work clips will not play. Prefab-wire HybridAnimancerComponent.",
+                $"[CharacterWorkLayerAnim] Animancer Work layer '{LayerName}' not ready. " +
+                "Vault/Farm/Fish work clips will not play. Prefab-wire AnimancerComponent.",
                 ctx);
             return false;
         }
@@ -124,50 +124,40 @@ public static class CharacterWorkLayerAnim
         return false;
     }
 
-    static HybridAnimancerComponent ResolveHybrid(Animator animator)
+    static AnimancerComponent ResolveAnimancer(Animator animator)
     {
         if (animator == null)
             return null;
 
-        if (animator.TryGetComponent(out HybridAnimancerComponent onSelf))
+        if (animator.TryGetComponent(out AnimancerComponent onSelf))
             return onSelf;
 
-        HybridAnimancerComponent inChildren =
-            animator.GetComponentInChildren<HybridAnimancerComponent>(true);
+        AnimancerComponent inChildren =
+            animator.GetComponentInChildren<AnimancerComponent>(true);
         if (inChildren != null)
             return inChildren;
 
-        return animator.GetComponentInParent<HybridAnimancerComponent>();
+        return animator.GetComponentInParent<AnimancerComponent>();
     }
 
-    static void EnsureAnimancerWorkReady(HybridAnimancerComponent hybrid, Animator animator)
+    static void EnsureAnimancerWorkReady(AnimancerComponent animancer, Animator animator)
     {
-        if (hybrid == null)
+        if (animancer == null)
             return;
 
-        if (hybrid.Animator == null && animator != null)
-            hybrid.Animator = animator;
+        if (animancer.Animator == null && animator != null)
+            animancer.Animator = animator;
 
-        if (!hybrid.IsGraphInitialized)
-            hybrid.PlayController();
+        // Touch Layers to init graph; no AnimatorController host.
+        CharacterLocomotionWorkAnimancer.ConfigureLayer(animancer);
 
-        if (hybrid.IsGraphInitialized)
-            hybrid.Graph.PauseGraph();
-
-        CharacterLocomotionWorkAnimancer.ConfigureLayer(hybrid);
+        if (animancer.IsGraphInitialized)
+            animancer.Graph.PauseGraph();
     }
 
-    static void ForceMecanimWorkWeightZero(HybridAnimancerComponent hybrid, Animator animator)
+    static void ForceMecanimWorkWeightZero(Animator animator)
     {
-        if (hybrid != null && hybrid.Controller.IsValid)
-        {
-            int mecanimIndex = hybrid.GetLayerIndex(LayerName);
-            if (mecanimIndex >= 0 && !Mathf.Approximately(hybrid.GetLayerWeight(mecanimIndex), 0f))
-                hybrid.SetLayerWeight(mecanimIndex, 0f);
-            return;
-        }
-
-        if (animator == null)
+        if (animator == null || animator.runtimeAnimatorController == null)
             return;
 
         int index = animator.GetLayerIndex(LayerName);
@@ -179,10 +169,10 @@ public static class CharacterWorkLayerAnim
     {
         Object ctx = context != null ? context : animator;
         Debug.LogError(
-            $"[CharacterWorkLayerAnim] Animator / Hybrid missing Work capability '{LayerName}'. " +
+            $"[CharacterWorkLayerAnim] Animator / Animancer missing Work capability '{LayerName}'. " +
             "Vault/Farm/Fish work clips will not play. " +
-            "S6: Animancer Play(clip) on Work layer — wire HybridAnimancerComponent on prefab. " +
-            $"Legacy controller path (remnant until S7): {DefaultControllerPath}",
+            "Wire AnimancerComponent on prefab for Play(clip) Work layer. " +
+            $"Legacy controller path remnant: {DefaultControllerPath}",
             ctx);
     }
 }

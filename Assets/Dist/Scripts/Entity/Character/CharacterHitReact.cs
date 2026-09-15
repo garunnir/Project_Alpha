@@ -2,7 +2,6 @@
 // CharacterHitReact — 피격 밀침·Flinch·Stagger·PainDown·사망 Dead 애니 큐 (ApplyHit 미구독)
 // ============================================================
 
-using Animancer;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
@@ -37,7 +36,6 @@ public sealed class CharacterHitReact
     ICharacterBody _subscribedBody;
     CharacterImbalanceHost _imbalance;
     Animator _animator;
-    HybridAnimancerComponent _hybrid;
     CharacterLocomotionAnim _loco;
     int _hashFlinch;
     int _hashStagger;
@@ -68,15 +66,11 @@ public sealed class CharacterHitReact
             _skillsHost = refs.SkillsHost;
             _imbalance = refs.ImbalanceHost;
             _animator = CharacterBodyResolve.GetInBody<Animator>(refs);
-            _hybrid = CharacterBodyResolve.GetInBody<HybridAnimancerComponent>(refs);
             _loco = refs.LocomotionAnim;
-            if (_hybrid != null && _hybrid.Animator == null && _animator != null)
-                _hybrid.Animator = _animator;
         }
         else
         {
             _animator = null;
-            _hybrid = null;
             _loco = null;
         }
 
@@ -147,16 +141,7 @@ public sealed class CharacterHitReact
     public void RefreshAnimatorHurtBinding()
     {
         if (_refs != null)
-        {
-            if (_hybrid == null)
-            {
-                _hybrid = CharacterBodyResolve.GetInBody<HybridAnimancerComponent>(_refs);
-                if (_hybrid != null && _hybrid.Animator == null && _animator != null)
-                    _hybrid.Animator = _animator;
-            }
-
             _loco = _refs.LocomotionAnim;
-        }
 
         CacheHurtParams();
         if (_eventsBound)
@@ -179,9 +164,8 @@ public sealed class CharacterHitReact
         _hashPainShocked = Animator.StringToHash(ParamPainShocked);
         _hashDefeated = Animator.StringToHash(ParamDefeated);
 
-        // S7+: Hybrid Controller often cleared — Mecanim Hurt layers/params unavailable.
-        // Animancer path uses CLA TryPlay*/TrySync* (indices/_has* unused).
-        if (UsesAnimancerHurt || (_hybrid != null && !HasHybridControllerPlayable()))
+        // Animancer Hurt path uses CLA TryPlay*/TrySync* — Mecanim params unused.
+        if (UsesAnimancerHurt || _animator.runtimeAnimatorController == null)
             return;
 
         _hurtLayerIndex = AnimGetLayerIndex(HurtLayerName);
@@ -204,27 +188,10 @@ public sealed class CharacterHitReact
         }
     }
 
-    bool HasHybridControllerPlayable() =>
-        _hybrid != null
-        && _hybrid.Controller.IsValid
-        && _hybrid.Controller.State != null;
-
     bool TryGetHurtParameters(out AnimatorControllerParameter[] parameters)
     {
         parameters = null;
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (_hybrid.Controller.IsValid && _hybrid.Controller.State != null)
-            {
-                parameters = _hybrid.parameters;
-                return parameters != null;
-            }
-
-            return false;
-        }
-
-        if (_animator == null)
+        if (_animator == null || _animator.runtimeAnimatorController == null)
             return false;
 
         parameters = _animator.parameters;
@@ -403,96 +370,40 @@ public sealed class CharacterHitReact
         AnimSetLayerWeight(_hurtLayerIndex, 1f);
     }
 
-    void EnsureHybridReady()
-    {
-        if (_hybrid == null)
-            return;
-
-        if (_hybrid.Animator == null && _animator != null)
-            _hybrid.Animator = _animator;
-
-        // CLA owns Animancer layer layout when S5 Hurt path is active — do not PlayController.
-        if (_loco != null && _loco.OwnsAnimancerHurt)
-        {
-            if (_hybrid.IsGraphInitialized)
-                _hybrid.Graph.PauseGraph();
-            return;
-        }
-
-        _hybrid.PlayController();
-        if (_hybrid.IsGraphInitialized)
-            _hybrid.Graph.PauseGraph();
-    }
-
     void AnimSetBool(int id, bool value)
     {
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (!HasHybridControllerPlayable())
-                return;
-            _hybrid.SetBool(id, value);
+        if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
-        }
-
         _animator.SetBool(id, value);
     }
 
     void AnimSetTrigger(int id)
     {
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (!HasHybridControllerPlayable())
-                return;
-            _hybrid.SetTrigger(id);
+        if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
-        }
-
         _animator.SetTrigger(id);
     }
 
     void AnimResetTrigger(int id)
     {
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (!HasHybridControllerPlayable())
-                return;
-            _hybrid.ResetTrigger(id);
+        if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
-        }
-
         _animator.ResetTrigger(id);
     }
 
     void AnimSetLayerWeight(int layerIndex, float weight)
     {
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (!HasHybridControllerPlayable())
-                return;
-            _hybrid.SetLayerWeight(layerIndex, weight);
+        if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
-        }
-
         _animator.SetLayerWeight(layerIndex, weight);
     }
 
     int AnimGetLayerIndex(string layerName)
     {
-        if (string.IsNullOrEmpty(layerName))
+        if (string.IsNullOrEmpty(layerName) || _animator == null)
             return -1;
-
-        if (_hybrid != null)
-        {
-            EnsureHybridReady();
-            if (!HasHybridControllerPlayable())
-                return -1;
-            return _hybrid.GetLayerIndex(layerName);
-        }
-
-        return _animator != null ? _animator.GetLayerIndex(layerName) : -1;
+        if (_animator.runtimeAnimatorController == null)
+            return -1;
+        return _animator.GetLayerIndex(layerName);
     }
 }

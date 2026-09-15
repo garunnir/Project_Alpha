@@ -21,7 +21,7 @@ alwaysApply: false
 - Override Inspector는 배속 테이블만 (`WeaponAnimOverrideEditor`)
 - Catalog Ensure는 `WeaponActionUtil.All` / `CombatLeafUtil.All` (Leaf 전부) — `Dist/MCP/Ensure Arm Anim Pipeline`
 - Hurt(Flinch Additive HeadTorso, Hurt Override Stagger/PainDown/Dead, `Hit*_Slot`)는 Catalog·무기 동작 줄 밖. thin은 Ensure Pipeline이 유지
-- `CharacterAnimController` SM / Hybrid Controller는 라이브 재생 SSOT 아님 (S7)
+- `CharacterAnimController` SM은 라이브 재생 SSOT 아님 (S7). 호스트 = `AnimancerComponent` (Hybrid 제거)
 
 ## MUST NOT
 - `LibraryKeys` 또는 동작 이름 상태를 `CharacterAnimController`·Animancer 슬롯에 추가

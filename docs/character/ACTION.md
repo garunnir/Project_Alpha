@@ -54,7 +54,7 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기. Combat �
 | 컨트롤러 remnant | `CharacterWorkLayerAnim.DefaultControllerPath` — S7 전 Ensure/Rebuild 가능하나 **재생 필수 아님** |
 | 에이전트 | Unity MCP `Dist/MCP/Ensure Work Layer`는 remnant 유지용. MCP 꺼짐·오류 시 → **MCP 복구 요청** |
 | Play 진입 검사 | `WorkLayerPlayModeContractGuard` — **카탈로그 AnimationClip 존재** (Mecanim state 이름 일치 불필요) |
-| 런타임 검사 | `CharacterWorkLayerAnim.ValidateOrLog` — Hybrid Animancer Work 능력 |
+| 런타임 검사 | `CharacterWorkLayerAnim.ValidateOrLog` — Animancer Work 능력 |
 
 S6: Animancer가 클립을 **직접** Play한다. `clip.name` = Animator 상태 이름 계약은 **재생에 더 이상 필요하지 않다** (동작명 파라미터 추가 금지는 유지).
 

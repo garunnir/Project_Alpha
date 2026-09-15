@@ -378,7 +378,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterLocomotionAnim
   _timeChannel: 1
   _animator: {fileID: 293100225542826288}
-  _hybrid: {fileID: 3384167925000119489}
+  _animancer: {fileID: 3384167925000119489}
   _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
   _armSlotCatalog: {fileID: 11400000, guid: 05420430cc89c3d44bdb6b6edb99740c, type: 2}
   _moveSet: {fileID: 11400000, guid: 076e68d8e43ebfd4d8b33f51d6e62007, type: 2}
@@ -1215,30 +1215,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 956867471781853680}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6ad7b53f86f9da4da426b673c422513, type: 3}
+  m_Script: {fileID: 11500000, guid: 0ad50f81b1d25c441943c37a89ba23f6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Kybernetik.Animancer::Animancer.HybridAnimancerComponent
+  m_EditorClassIdentifier: Kybernetik.Animancer::Animancer.AnimancerComponent
   _Animator: {fileID: 293100225542826288}
   _Transitions: {fileID: 0}
-  _ActionOnDisable: 0
-  _PlayAutomatically: 0
-  _Names: []
-  _Animations: []
-  _Controller:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Controller: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
-    _ParameterBindings:
-      _Mode: 0
-      _Bindings: []
-    _ActionsOnStop: 
-  references:
-    version: 2
-    RefIds: []
+  _ActionOnDisable: 1
 --- !u!4 &1262594646898817497 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 377782585016988114, guid: af0c8e385ddbcff46b27e6ce116e272c,
