@@ -404,11 +404,7 @@ namespace IsoTilemap
 
                 seeds.Add(kv.Key);
 
-                VisitWalkableFloorFootprintCells(kv.Key.x, kv.Key.y, kv.Key.z, cell =>
-                {
-                    if (!ShouldBlockComponentFloodCell(cell, componentRoot))
-                        seeds.Add(cell);
-                });
+                // Walkable floor cell itself may seed; Floor face incident cells must not.
             }
         }
 
@@ -455,9 +451,14 @@ namespace IsoTilemap
                 CollectStructuralForPatch(cur, _structuralPatchTileScratch);
                 for (int i = 0; i < _structuralPatchTileScratch.Count; i++)
                 {
+                    TileData patchTile = _structuralPatchTileScratch[i];
+                    // Thin VerticalFace incident must not push component tags into the outer cell.
+                    if (!ComponentBakeRules.ExpandsComponentThroughIdentity(patchTile.identity))
+                        continue;
+
                     _occupiedCellAffectedScratch.Clear();
                     TileIdentityUtil.CollectAffectedCells(
-                        _structuralPatchTileScratch[i].identity, _occupiedCellAffectedScratch);
+                        patchTile.identity, _occupiedCellAffectedScratch);
                     foreach (var affected in _occupiedCellAffectedScratch)
                     {
                         if (ShouldBlockComponentFloodCell(affected, componentRoot))
@@ -471,11 +472,17 @@ namespace IsoTilemap
                     }
                 }
 
+                // Volume: full 6dir. Floor-only: enqueue adjacent volume only (not ±Y into another slab).
+                bool curVolume = _topology.TryCollectTilesAtOccupiedCell(cur, _occupiedCellCollectScratch) &&
+                    CollectedCellHasVolumeStructural();
                 for (int d = 0; d < OccupiedCellFloodDirs.Length; d++)
                 {
-                    Vector3Int dir = OccupiedCellFloodDirs[d];
+                    Vector3Int next = cur + OccupiedCellFloodDirs[d];
+                    if (!curVolume && !CellHasVolumeStructuralOccupancy(next))
+                        continue;
+
                     EnqueueComponentFloodCellIfTraversable(
-                        componentRoot, cur + dir, q, cur, $"6dir:{dir.x},{dir.y},{dir.z}");
+                        componentRoot, next, q, cur, $"6dir:{OccupiedCellFloodDirs[d].x},{OccupiedCellFloodDirs[d].y},{OccupiedCellFloodDirs[d].z}");
                 }
             }
 
@@ -515,6 +522,13 @@ namespace IsoTilemap
                 if (ShouldBlockComponentFloodCell(columnCell, componentRoot))
                     break;
 
+                if (!_topology.TryCollectTilesAtOccupiedCell(columnCell, _occupiedCellCollectScratch))
+                    continue;
+
+                // Face-only occupancy (Floor/SlimWall incident) — skip, do not bridge via thin faces.
+                if (!CollectedCellHasVolumeStructural())
+                    continue;
+
                 newFloorTags += TryBridgeWalkableFloorForComponent(componentRoot, x, y, z, q);
                 newFloorTags += TryBridgeWalkableFloorAboveCellForComponent(componentRoot, x, y, z, q);
                 TagStructuralOccupiedCellsAt(columnCell, componentRoot);
@@ -526,7 +540,14 @@ namespace IsoTilemap
         int TryBridgeFloorComponentFromStructuralFlood(int componentRoot, Vector3Int cell, Queue<Vector3Int> q)
         {
             int bridged = TryBridgeWalkableFloorForComponent(componentRoot, cell.x, cell.y, cell.z, q);
-            bridged += TryBridgeWalkableFloorAboveCellForComponent(componentRoot, cell.x, cell.y, cell.z, q);
+            // Above-bridge only from volume cells — Floor face must not pull the next slab via incident.
+            if (_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch) &&
+                CollectedCellHasVolumeStructural())
+            {
+                bridged += TryBridgeWalkableFloorAboveCellForComponent(
+                    componentRoot, cell.x, cell.y, cell.z, q);
+            }
+
             return bridged;
         }
 
@@ -565,8 +586,6 @@ namespace IsoTilemap
         void EnqueueComponentFloodOccupiedCells(int componentRoot, int x, int cellY, int z, Queue<Vector3Int> q)
         {
             EnqueueComponentFloodCellIfTraversable(componentRoot, new Vector3Int(x, cellY, z), q);
-            VisitWalkableFloorFootprintCells(x, cellY, z, cell =>
-                EnqueueComponentFloodCellIfTraversable(componentRoot, cell, q));
         }
 
         void EnqueueComponentFloodCellIfTraversable(
@@ -590,8 +609,26 @@ namespace IsoTilemap
         void EnqueueComponentFloodCellIfTraversable(int componentRoot, Vector3Int cell, Queue<Vector3Int> q) =>
             EnqueueComponentFloodCellIfTraversable(componentRoot, cell, q, cell, "enqueue");
 
-        bool CanTraverseOccupiedCellForComponentFlood(int componentRoot, Vector3Int cell) =>
-            !ShouldBlockComponentFloodCell(cell, componentRoot);
+        bool CanTraverseOccupiedCellForComponentFlood(int componentRoot, Vector3Int cell)
+        {
+            if (ShouldBlockComponentFloodCell(cell, componentRoot))
+                return false;
+
+            if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
+                return false;
+
+            // Volume (OccupiedCell) or the walkable floor cell itself — not thin-face-only mid cells.
+            return CollectedCellHasVolumeStructural() ||
+                   CellHasWalkableFloorForComponentTraverse(cell);
+        }
+
+        bool CellHasVolumeStructuralOccupancy(Vector3Int cell)
+        {
+            if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
+                return false;
+
+            return CollectedCellHasVolumeStructural();
+        }
 
         bool ShouldBlockComponentFloodCell(Vector3Int cell, int componentRoot)
         {
@@ -610,6 +647,9 @@ namespace IsoTilemap
             if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
                 return;
 
+            if (!CollectedCellHasVolumeStructural())
+                return;
+
             for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
             {
                 TileData tile = _occupiedCellCollectScratch[i];
@@ -622,6 +662,10 @@ namespace IsoTilemap
 
         void TagStructuralOccupiedCell(Vector3Int cell, int componentRoot)
         {
+            if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch) ||
+                !CollectedCellHasVolumeStructural())
+                return;
+
             if (!TryGetOccupiedComponentRoot(cell, out int existingRoot))
             {
                 TagOccupiedCellWithComponentRoot(cell, componentRoot);
@@ -698,7 +742,11 @@ namespace IsoTilemap
 
                 for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
                 {
-                    int bid = _occupiedCellCollectScratch[i].identity.buildingId;
+                    TileData tile = _occupiedCellCollectScratch[i];
+                    if (!ShouldStampBuildingIdForComponentCell(kv.Key, tile.identity))
+                        continue;
+
+                    int bid = tile.identity.buildingId;
                     if (!BuildingIdBakeRules.IsHardPartitionBuildingId(bid))
                         continue;
 
@@ -748,8 +796,24 @@ namespace IsoTilemap
                 if (!BuildingIdBakeRules.ShouldPatchBuildingIdAtOccupiedCell(tile.identity))
                     continue;
 
+                // Floor is thin face: stamp only from its walkable cell, not CellBelow shared with the slab below.
+                if (!ShouldStampBuildingIdForComponentCell(cell, tile.identity))
+                    continue;
+
                 _model.PatchTileIdentity(tile.tileDefId, buildingId, tile.identity.roomId);
             }
+        }
+
+        /// <summary>
+        /// HorizontalFace는 walkable 칸에서만 buildingId stamp.
+        /// CellBelow 공유로 위층 Floor가 아래 component id를 받아 먹지 않게 함.
+        /// </summary>
+        static bool ShouldStampBuildingIdForComponentCell(Vector3Int cell, in TileIdentity id)
+        {
+            if (!TileIdentityUtil.IsHorizontalFace(id))
+                return true;
+
+            return TileIdentityUtil.GetWalkableCell(id) == cell;
         }
 
         void ResetIndoorBuildingIds()

@@ -1,6 +1,7 @@
 // ============================================================
 // SpaceLeakEvaluator — Space bake 후 topology 누수 → isOutdoor
 // leak seal: footprint·outdoor·structural/floor topology — buildingId 동일성 미사용
+// 천장 = walkable 셀에서 위로의 volume 통과가 막혔는가 (SpaceFloodFill3D와 동일)
 // collisionFlags leak 금지 — TILEMAP_BUILDING_BAKE.md 대전제 §1·§7.3
 // ============================================================
 using System;
@@ -71,7 +72,7 @@ namespace IsoTilemap
 
             foreach (var kv in columnMaxY)
             {
-                if (ColumnHasCeilingLeak(index, kv.Key.x, kv.Key.z, kv.Value + 1, capY))
+                if (ColumnHasCeilingLeak(index, kv.Key.x, kv.Key.z, kv.Value, capY))
                     return true;
             }
 
@@ -111,34 +112,45 @@ namespace IsoTilemap
             return false;
         }
 
-        static bool ColumnHasCeilingLeak(FloorMapIndex index, int x, int z, int startY, int capY)
+        /// <summary>
+        /// walkable floor 셀 <paramref name="floorY"/>에서 위로 한 칸씩 통과 시도.
+        /// 위 칸으로의 이동이 Floor 면·OccupiedCell structural로 막히면 밀폐.
+        /// <paramref name="capY"/>를 넘는 칸으로 나가면 천장 leak.
+        /// </summary>
+        static bool ColumnHasCeilingLeak(FloorMapIndex index, int x, int z, int floorY, int capY)
         {
+            int y = floorY;
             for (int step = 0; step < CeilingProbeMaxSteps; step++)
             {
-                int y = startY + step;
-                if (CeilingSealsAt(index, x, y, z))
-                    break;
-
-                if (y > capY)
+                int above = y + 1;
+                if (above > capY)
                     return true;
+
+                if (VerticalUpPassageBlocked(index, x, y, z))
+                    return false;
+
+                y = above;
             }
 
-            return false;
+            return true;
         }
 
-        static bool CeilingSealsAt(FloorMapIndex index, int x, int y, int z)
+        /// <summary>
+        /// (x,y,z) → (x,y+1,z) volume 통과 차단.
+        /// walkable Floor at y+1 = 면 y↔y+1 (<see cref="SpaceFloodFill3D"/>와 동일).
+        /// </summary>
+        static bool VerticalUpPassageBlocked(FloorMapIndex index, int x, int y, int z)
         {
-            if (OccupiedCellHasStructural(index, x, y, z))
+            int above = y + 1;
+            if (index.CellHasFloor(x, above, z))
                 return true;
 
-            return index.CellHasFloor(x, y, z) &&
-                   TryGetWalkableFloorBuildingId(index, x, y, z, out int floorBid) &&
-                   IsIndoorFloorBid(floorBid);
+            return OccupiedCellHasStructural(index, x, above, z);
         }
 
         static bool LateralEdgeSeals(FloorMapIndex index, Vector3Int cellA, Vector3Int cellB)
         {
-            if (!index.TryGetEdgeBetween(cellA, cellB, out var edge))
+            if (!index.TryGetEdgeSealingLateral(cellA, cellB, out var edge))
                 return false;
 
             return TileIdentityUtil.IsStructural(edge.identity);
@@ -157,8 +169,6 @@ namespace IsoTilemap
 
             return false;
         }
-
-        static bool IsIndoorFloorBid(int buildingId) => buildingId > 0;
 
         static bool TryGetWalkableFloorBuildingId(
             FloorMapIndex index,
@@ -217,7 +227,7 @@ namespace IsoTilemap
             }
         }
 
-        /// <summary>디버그: 천장 leak 발생 column (x,z), probeY, 사유. 없으면 빈 목록.</summary>
+        /// <summary>디버그: 천장 leak 발생 column (x,z), 탈출 probeY, 사유. 없으면 빈 목록.</summary>
         public static void DiagnoseCeilingLeaks(
             IReadOnlyCollection<Vector3Int> floorCells,
             int buildingId,
@@ -236,19 +246,21 @@ namespace IsoTilemap
             {
                 int x = kv.Key.x;
                 int z = kv.Key.z;
-                int startY = kv.Value + 1;
+                int y = kv.Value;
 
                 for (int step = 0; step < CeilingProbeMaxSteps; step++)
                 {
-                    int y = startY + step;
-                    if (CeilingSealsAt(index, x, y, z))
-                        break;
-
-                    if (y > capY)
+                    int above = y + 1;
+                    if (above > capY)
                     {
-                        into.Add((x, z, y, $"probeY={y}>maxStructuralY={capY}"));
+                        into.Add((x, z, above, $"upTo={above}>maxStructuralY={capY}"));
                         break;
                     }
+
+                    if (VerticalUpPassageBlocked(index, x, y, z))
+                        break;
+
+                    y = above;
                 }
             }
         }
@@ -298,4 +310,3 @@ namespace IsoTilemap
         }
     }
 }
-

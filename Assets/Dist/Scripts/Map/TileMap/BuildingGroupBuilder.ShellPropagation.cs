@@ -90,11 +90,7 @@ namespace IsoTilemap
 
             seeds.Add(occ);
 
-            VisitWalkableFloorFootprintCells(x, cellY, z, cell =>
-            {
-                if (!ShouldBlockBuildingFloodCell(cell, buildingId))
-                    seeds.Add(cell);
-            });
+            // Floor face incident cells must not seed shell flood.
         }
         void TagStructuralFromOccupiedCellFlood(int buildingId, HashSet<Vector3Int> seedCells)
         {
@@ -138,6 +134,9 @@ namespace IsoTilemap
                     patchedThisFlood++;
                     _model.PatchTileIdentity(tile.tileDefId, buildingId, tile.identity.roomId);
 
+                    if (!BuildingIdBakeRules.ExpandsBuildingFloodThroughIdentity(tile.identity))
+                        continue;
+
                     _occupiedCellAffectedScratch.Clear();
                     TileIdentityUtil.CollectAffectedCells(tile.identity, _occupiedCellAffectedScratch);
                     foreach (var affected in _occupiedCellAffectedScratch)
@@ -149,8 +148,16 @@ namespace IsoTilemap
                     }
                 }
 
+                bool curVolume = _topology.TryCollectTilesAtOccupiedCell(cur, _occupiedCellCollectScratch) &&
+                    CollectedCellHasVolumeStructural();
                 for (int d = 0; d < OccupiedCellFloodDirs.Length; d++)
-                    EnqueueStructuralFloodCellIfTraversable(buildingId, cur + OccupiedCellFloodDirs[d], q);
+                {
+                    Vector3Int next = cur + OccupiedCellFloodDirs[d];
+                    if (!curVolume && !CellHasVolumeStructuralOccupancy(next))
+                        continue;
+
+                    EnqueueStructuralFloodCellIfTraversable(buildingId, next, q);
+                }
             }
 
             PropagateBuildingIdUpVisitedColumns(buildingId, q, ref patchedThisFlood, ref bridgedFloorsThisFlood);
@@ -193,6 +200,12 @@ namespace IsoTilemap
 
                 if (ShouldBlockBuildingFloodCell(columnCell, buildingId))
                     break;
+
+                if (!_topology.TryCollectTilesAtOccupiedCell(columnCell, _occupiedCellCollectScratch))
+                    continue;
+
+                if (!CollectedCellHasVolumeStructural())
+                    continue;
 
                 bridgedFloors += TryBridgeWalkableFloorAt(buildingId, x, y, z, q);
                 bridgedFloors += TryBridgeWalkableFloorAboveCell(buildingId, x, y, z, q);
@@ -244,6 +257,9 @@ namespace IsoTilemap
                 patchedHere++;
                 _model.PatchTileIdentity(tile.tileDefId, buildingId, tile.identity.roomId);
 
+                if (!BuildingIdBakeRules.ExpandsBuildingFloodThroughIdentity(tile.identity))
+                    continue;
+
                 _occupiedCellAffectedScratch.Clear();
                 TileIdentityUtil.CollectAffectedCells(tile.identity, _occupiedCellAffectedScratch);
                 foreach (var affected in _occupiedCellAffectedScratch)
@@ -260,9 +276,15 @@ namespace IsoTilemap
         int TryBridgeFloorBuildingFromStructuralFlood(int buildingId, Vector3Int cell, Queue<Vector3Int> q)
         {
             int bridged = TryBridgeWalkableFloorAt(buildingId, cell.x, cell.y, cell.z, q);
-            bridged += TryBridgeWalkableFloorAboveCell(buildingId, cell.x, cell.y, cell.z, q);
+            if (_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch) &&
+                CollectedCellHasVolumeStructural())
+            {
+                bridged += TryBridgeWalkableFloorAboveCell(buildingId, cell.x, cell.y, cell.z, q);
+            }
+
             return bridged;
         }
+
         void EnqueueStructuralFloodOccupiedCells(
             int buildingId,
             int x,
@@ -271,8 +293,6 @@ namespace IsoTilemap
             Queue<Vector3Int> q)
         {
             EnqueueStructuralFloodCellIfTraversable(buildingId, new Vector3Int(x, cellY, z), q);
-            VisitWalkableFloorFootprintCells(x, cellY, z, cell =>
-                EnqueueStructuralFloodCellIfTraversable(buildingId, cell, q));
         }
         void EnqueueStructuralFloodCellIfTraversable(int buildingId, Vector3Int cell, Queue<Vector3Int> q)
         {
@@ -285,8 +305,17 @@ namespace IsoTilemap
             if (_occupiedCellFloodVisitedScratch.Add(cell))
                 q.Enqueue(cell);
         }
-        bool CanTraverseOccupiedCellForStructuralFlood(int buildingId, Vector3Int cell) =>
-            !ShouldBlockBuildingFloodCell(cell, buildingId);
+        bool CanTraverseOccupiedCellForStructuralFlood(int buildingId, Vector3Int cell)
+        {
+            if (ShouldBlockBuildingFloodCell(cell, buildingId))
+                return false;
+
+            if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
+                return false;
+
+            return CollectedCellHasVolumeStructural() ||
+                   CellHasWalkableFloorForComponentTraverse(cell);
+        }
 
         bool ShouldBlockBuildingFloodCell(Vector3Int cell, int buildingId)
         {
@@ -308,6 +337,9 @@ namespace IsoTilemap
             {
                 TileData tile = _occupiedCellCollectScratch[i];
                 if (!BuildingIdBakeRules.ShouldPatchBuildingIdAtOccupiedCell(tile.identity))
+                    continue;
+
+                if (!ShouldStampBuildingIdForComponentCell(cell, tile.identity))
                     continue;
 
                 if (_structuralPatchGuidScratch.Add(tile.tileDefId))

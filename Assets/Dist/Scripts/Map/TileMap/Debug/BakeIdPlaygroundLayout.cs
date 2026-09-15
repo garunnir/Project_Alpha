@@ -39,7 +39,7 @@ namespace IsoTilemap
             public static readonly Vector3Int Bridge_B2 = new Vector3Int(7, 1, 20);
             public static readonly Vector3Int Bridge_B2b = new Vector3Int(8, 1, 20);
 
-            // ColumnStack — AABB volume same Space across Y
+            // ColumnStack — floor face separates vertical Space volumes
             public static readonly Vector3Int Column_HFloor_Lower = new Vector3Int(0, 1, 25);
             public static readonly Vector3Int Column_HFloor_Upper = new Vector3Int(0, 2, 25);
 

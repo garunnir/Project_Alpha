@@ -1,5 +1,5 @@
 // ============================================================
-// [BakeIdPlaygroundHost] — 씬 직렬화 Sim 배치·probe·rule + 실타일 미리보기
+// [BakeIdPlaygroundHost] — 씬 직렬화 Sim 배치·probe·rule + Authoring 표시 SSOT
 // ============================================================
 
 using System.Collections.Generic;
@@ -23,11 +23,14 @@ namespace IsoTilemap
 
         const string VisualRootName = "BakeIdVisualRoot";
         const string AuthoringRootName = "BakeIdAuthoring";
+        const string LabelsRootName = "BakeIdLabels";
+        const float IdLabelYOffsetCells = 0.55f;
 #if UNITY_EDITOR
         const string DefaultPrefabDbPath = "Assets/Dist/SOData/Tile/Tile Prefab DB.asset";
         const float EditCellGizmoSize = 0.1f;
         const float EditCellGizmoSizeActive = 0.12f;
 #endif
+
 
         const string Tab = "BakeId";
 
@@ -63,11 +66,12 @@ namespace IsoTilemap
         [Button("Rebuild From Sim Tiles", ButtonSizes.Medium)]
         public void RebuildFromSimTiles() => RebuildFromSimTilesInternal(preferAuthoringSync: false);
 
-        void RebuildFromSimTilesInternal(bool preferAuthoringSync)
+        void RebuildFromSimTilesInternal(bool preferAuthoringSync, bool skipAuthoringRepopulate = false)
         {
+            bool syncedFromAuthoring = false;
 #if UNITY_EDITOR
             if (preferAuthoringSync && authoringLiveSync && !Application.isPlaying)
-                TrySyncSimTilesFromAuthoringScene();
+                syncedFromAuthoring = TrySyncSimTilesFromAuthoringScene();
 #endif
             TearDownRuntime();
             if (!EnsurePrefabDb())
@@ -80,6 +84,8 @@ namespace IsoTilemap
             {
                 Debug.LogWarning(
                     "[BakeIdPlayground] simTiles empty — Inspector: Import From Seed Layout, then save scene");
+                ClearLeftoverVisualRoot();
+                ClearIdLabels();
                 return;
             }
 
@@ -89,12 +95,6 @@ namespace IsoTilemap
             _model.SetMapCacheHub(_hub);
             _builder = new BuildingGroupBuilder(_model, _hub);
             _model.SetBuildingGroupBuilder(_builder);
-
-            EnsureVisualRoot();
-            float cs = Mathf.Max(1e-4f, cellSize);
-            var hierarchy = BuildingViewHierarchy.EnsureUnder(_visualRoot, cs);
-            hierarchy.BindRegistry(registry);
-            _factory = new TileObjFactory(_visualRoot, prefabDb, null, hierarchy);
 
             List<TileData> tiles = BakeIdSimTileUtil.ToTileDataList(simTiles, out int skipped, "[BakeIdPlayground]");
             if (tiles.Count == 0)
@@ -111,7 +111,11 @@ namespace IsoTilemap
 
             registry.ReplaceOutdoorFloorCells(BakeIdPlaygroundLayout.MasterPlayground.OutdoorFloorCells);
             _builder.RebakeAllBuildingPartitions();
-            RefreshVisuals();
+            RefreshBakeIdDisplay();
+
+            // Display SSOT = Authoring. Repopulate when rebuild source was simTiles, not live Authoring.
+            if (!skipAuthoringRepopulate && !syncedFromAuthoring)
+                PopulateAuthoringFromSimTilesInternal(logSummary: false);
         }
 
         [TabGroup(Tab, "Setup")]
@@ -124,10 +128,6 @@ namespace IsoTilemap
             simSteps.Clear();
             MarkSimDirty();
             RebuildFromSimTilesInternal(preferAuthoringSync: false);
-#if UNITY_EDITOR
-            if (authoringLiveSync)
-                PopulateAuthoringFromSimTilesInternal(logSummary: true);
-#endif
         }
 
         [TabGroup(Tab, "Setup")]
@@ -185,7 +185,7 @@ namespace IsoTilemap
                 RebuildAuthoringSnapshotFromScene();
             }
 
-            RebuildFromSimTilesInternal(preferAuthoringSync: false);
+            RebuildFromSimTilesInternal(preferAuthoringSync: false, skipAuthoringRepopulate: true);
             Debug.Log(
                 $"[BakeIdPlayground] Replace Sim From Authoring OK — simTiles={simTiles.Count} (skipped {skipped})");
         }
@@ -239,6 +239,7 @@ namespace IsoTilemap
                 }
 
                 RebuildAuthoringSnapshotFromScene();
+                ApplyProbeLabelsFromSimProbesToAuthoring();
                 MarkSimDirty();
                 if (logSummary)
                 {
@@ -256,7 +257,7 @@ namespace IsoTilemap
         {
             EnsureRuntime();
             _builder.RebakeAllBuildingPartitions();
-            RefreshVisuals();
+            RefreshBakeIdDisplay();
         }
 
         [TabGroup(Tab, "Setup")]
@@ -299,7 +300,7 @@ namespace IsoTilemap
                 return;
             }
 
-            RefreshVisuals();
+            RefreshBakeIdDisplay();
             Debug.Log($"[BakeIdPlayground] Preview OK — applied {simSteps.Count} step(s)");
         }
 
@@ -354,9 +355,11 @@ namespace IsoTilemap
             EnsureRuntime();
             var entry = BakeIdSimTileEntry.Floor(editCellA);
             simTiles.Add(entry);
-            _model.SetTile(entry.ToTileData());
+            TileData tile = entry.ToTileData();
+            _model.SetTile(tile);
             MarkSimDirty();
-            RefreshVisuals();
+            SyncAuthoringViewForEditAdd(tile);
+            RefreshBakeIdDisplay();
         }
 
         [TabGroup(Tab, "Edit")]
@@ -368,9 +371,11 @@ namespace IsoTilemap
             EnsureRuntime();
             var entry = BakeIdSimTileEntry.Cube(editCellA);
             simTiles.Add(entry);
-            _model.SetTile(entry.ToTileData());
+            TileData tile = entry.ToTileData();
+            _model.SetTile(tile);
             MarkSimDirty();
-            RefreshVisuals();
+            SyncAuthoringViewForEditAdd(tile);
+            RefreshBakeIdDisplay();
         }
 
         [TabGroup(Tab, "Edit")]
@@ -390,7 +395,8 @@ namespace IsoTilemap
             simTiles.Add(entry);
             _model.SetTile(tile);
             MarkSimDirty();
-            RefreshVisuals();
+            SyncAuthoringViewForEditAdd(tile);
+            RefreshBakeIdDisplay();
         }
 
         [TabGroup(Tab, "Edit")]
@@ -414,7 +420,8 @@ namespace IsoTilemap
                 RemoveMatchingSimEntry(tile);
 
             MarkSimDirty();
-            RefreshVisuals();
+            SyncAuthoringViewForEditRemove(tile);
+            RefreshBakeIdDisplay();
         }
 
         [TabGroup(Tab, "Edit")]
@@ -560,13 +567,13 @@ namespace IsoTilemap
         public IReadOnlyList<BakeIdSimProbe> SimProbes => simProbes;
         public IReadOnlyList<BakeIdSimRule> SimRules => simRules;
         public IReadOnlyList<BakeIdSimStep> SimSteps => simSteps;
+        public float CellSize => cellSize;
 
         TileMapModel _model;
         TileMapCacheHub _hub;
         BuildingGroupBuilder _builder;
-        TileObjFactory _factory;
-        Transform _visualRoot;
         Transform _authoringRoot;
+        Transform _labelsRoot;
 
 #if UNITY_EDITOR
         bool _sceneGuiSubscribed;
@@ -604,7 +611,6 @@ namespace IsoTilemap
             if (!Application.isPlaying)
                 return;
 #endif
-            ClearVisuals();
             TearDownRuntime();
         }
 
@@ -643,6 +649,212 @@ namespace IsoTilemap
             MarkSimDirty();
             Debug.Log($"[BakeIdPlayground] Probe added '{name}' @ {cell}");
             return true;
+        }
+
+        /// <summary>ViewLink Push 버튼 — Authoring label → simProbes (빈 라벨은 Clear Probe 사용).</summary>
+        public void PushProbeFromAuthoringLink(BakeIdAuthoringViewLink link)
+        {
+            if (link == null)
+            {
+                Debug.LogWarning("[BakeIdPlayground] Push probe failed: link null");
+                return;
+            }
+
+            if (!link.TryResolveSimEntry(out BakeIdSimTileEntry entry, out string error, prepareGather: false))
+            {
+                Debug.LogWarning($"[BakeIdPlayground] Push probe failed: {error}");
+                return;
+            }
+
+            Vector3Int cell = entry.cell;
+            string label = link.ProbeLabel != null ? link.ProbeLabel.Trim() : string.Empty;
+            if (string.IsNullOrEmpty(label))
+            {
+                Debug.LogWarning("[BakeIdPlayground] Push probe: label empty — use Clear Probe, or type a name first");
+                return;
+            }
+
+            if (simProbes == null)
+                simProbes = new List<BakeIdSimProbe>();
+
+            int byName = IndexOfProbeName(label);
+            int byCell = IndexOfProbeCell(cell);
+
+            if (byName >= 0)
+            {
+                if (simProbes[byName].cell != cell)
+                {
+                    simProbes[byName] = new BakeIdSimProbe(label, cell);
+                    MarkSimDirty();
+                    Debug.Log($"[BakeIdPlayground] Probe '{label}' → {cell} (Push)");
+                }
+                else
+                {
+                    Debug.Log($"[BakeIdPlayground] Probe '{label}' @ {cell} already synced");
+                }
+
+                if (byCell >= 0 && byCell != byName)
+                {
+                    simProbes.RemoveAt(byCell);
+                    MarkSimDirty();
+                }
+
+                return;
+            }
+
+            if (byCell >= 0)
+            {
+                simProbes[byCell] = new BakeIdSimProbe(label, cell);
+                MarkSimDirty();
+                Debug.Log($"[BakeIdPlayground] Probe @ {cell} renamed → '{label}' (Push)");
+                return;
+            }
+
+            simProbes.Add(new BakeIdSimProbe(label, cell));
+            MarkSimDirty();
+            Debug.Log($"[BakeIdPlayground] Probe '{label}' @ {cell} (Push)");
+        }
+
+        /// <summary>ViewLink Pull 버튼 — simProbes @ cell → Authoring label.</summary>
+        public void PullProbeToAuthoringLink(BakeIdAuthoringViewLink link)
+        {
+            if (link == null)
+            {
+                Debug.LogWarning("[BakeIdPlayground] Pull probe failed: link null");
+                return;
+            }
+
+            if (!link.TryResolveSimEntry(out BakeIdSimTileEntry entry, out string error, prepareGather: false))
+            {
+                Debug.LogWarning($"[BakeIdPlayground] Pull probe failed: {error}");
+                return;
+            }
+
+            int byCell = IndexOfProbeCell(entry.cell);
+            if (byCell < 0)
+            {
+                Debug.LogWarning($"[BakeIdPlayground] Pull probe: no simProbe @ {entry.cell}");
+                return;
+            }
+
+            string name = simProbes[byCell].name;
+            link.SetProbeLabelWithoutNotify(name);
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(link);
+#endif
+            Debug.Log($"[BakeIdPlayground] Probe '{name}' @ {entry.cell} → Authoring label (Pull)");
+        }
+
+        /// <summary>ViewLink Clear 버튼 — label 비우고 해당 name/cell 프로브 제거.</summary>
+        public void ClearProbeFromAuthoringLink(BakeIdAuthoringViewLink link)
+        {
+            if (link == null)
+                return;
+
+            RemoveProbeOwnedByAuthoringLink(link, logReason: "Clear", onlyIfBoundToThisCell: false);
+            link.SetProbeLabelWithoutNotify(string.Empty);
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(link);
+#endif
+        }
+
+        /// <param name="onlyIfBoundToThisCell">
+        /// true(destroy): label이 이 타일 cell의 프로브와 일치할 때만 제거 — 미Push 타이핑으로 다른 프로브 지우지 않음.
+        /// </param>
+        void RemoveProbeOwnedByAuthoringLink(
+            BakeIdAuthoringViewLink link,
+            string logReason,
+            bool onlyIfBoundToThisCell)
+        {
+            if (link == null || simProbes == null || simProbes.Count == 0)
+                return;
+
+            string label = link.ProbeLabel != null ? link.ProbeLabel.Trim() : string.Empty;
+            bool resolved = link.TryResolveSimEntry(out BakeIdSimTileEntry entry, out _, prepareGather: false);
+
+            if (!string.IsNullOrEmpty(label))
+            {
+                int byName = IndexOfProbeName(label);
+                if (byName < 0)
+                    return;
+
+                if (onlyIfBoundToThisCell && (!resolved || simProbes[byName].cell != entry.cell))
+                    return;
+
+                simProbes.RemoveAt(byName);
+                MarkSimDirty();
+                Debug.Log($"[BakeIdPlayground] Probe '{label}' removed ({logReason})");
+                return;
+            }
+
+            if (onlyIfBoundToThisCell || !resolved)
+                return;
+
+            int byCell = IndexOfProbeCell(entry.cell);
+            if (byCell < 0)
+                return;
+
+            string removed = simProbes[byCell].name;
+            simProbes.RemoveAt(byCell);
+            MarkSimDirty();
+            Debug.Log($"[BakeIdPlayground] Probe '{removed}' @ {entry.cell} removed ({logReason})");
+        }
+
+        int IndexOfProbeName(string name)
+        {
+            if (simProbes == null || string.IsNullOrEmpty(name))
+                return -1;
+            for (int i = 0; i < simProbes.Count; i++)
+            {
+                if (simProbes[i].name == name)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        int IndexOfProbeCell(Vector3Int cell)
+        {
+            if (simProbes == null)
+                return -1;
+            for (int i = 0; i < simProbes.Count; i++)
+            {
+                if (simProbes[i].cell == cell)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        void ApplyProbeLabelsFromSimProbesToAuthoring()
+        {
+            if (simProbes == null || simProbes.Count == 0 || _authoringRoot == null)
+                return;
+
+            TileView[] views = CollectAuthoringTileViews();
+            for (int i = 0; i < views.Length; i++)
+            {
+                TileView view = views[i];
+                if (view == null)
+                    continue;
+
+                BakeIdAuthoringViewLink link = BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
+                if (link == null || !link.TryResolveSimEntry(out BakeIdSimTileEntry entry, out _))
+                    continue;
+
+                int probeIdx = IndexOfProbeCell(entry.cell);
+                if (probeIdx < 0)
+                    continue;
+
+                string name = simProbes[probeIdx].name;
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                link.SetProbeLabelWithoutNotify(name);
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(link);
+#endif
+            }
         }
 
         void RecordStep(BakeIdSimStepKind kind, Vector3Int cell)
@@ -715,15 +927,15 @@ namespace IsoTilemap
 
         void EnsureRuntime()
         {
-            if (_hub != null && _builder != null && _model != null && _factory != null)
+            if (_hub != null && _builder != null && _model != null)
                 return;
             RebuildFromSimTilesInternal(preferAuthoringSync: authoringLiveSync);
         }
 
         void TearDownRuntime()
         {
-            ClearVisuals();
-            _factory = null;
+            ClearLeftoverVisualRoot();
+            ClearIdLabels();
             _builder = null;
             _hub = null;
             _model = null;
@@ -802,23 +1014,6 @@ namespace IsoTilemap
         }
 #endif
 
-        void EnsureVisualRoot()
-        {
-            if (_visualRoot != null)
-                return;
-
-            Transform existing = transform.Find(VisualRootName);
-            if (existing != null)
-            {
-                _visualRoot = existing;
-                return;
-            }
-
-            var go = new GameObject(VisualRootName);
-            go.transform.SetParent(transform, false);
-            _visualRoot = go.transform;
-        }
-
         void EnsureAuthoringRoot()
         {
             if (_authoringRoot != null)
@@ -896,60 +1091,80 @@ namespace IsoTilemap
             }
 
             view.UpdateTile(tile, cs);
+#if UNITY_EDITOR
             _authoringEverUsed = true;
+#endif
             BakeIdAuthoringViewLink.Ensure(view, this, cs);
             return true;
         }
 
-        void ClearVisuals()
+        void ClearLeftoverVisualRoot()
         {
-            if (_visualRoot == null)
+            Transform existing = transform.Find(VisualRootName);
+            if (existing != null)
+                DestroyImmediateSafe(existing.gameObject);
+        }
+
+        void EnsureLabelsRoot()
+        {
+            if (_labelsRoot != null)
+                return;
+
+            EnsureAuthoringRoot();
+            Transform existing = _authoringRoot.Find(LabelsRootName);
+            if (existing != null)
             {
-                Transform existing = transform.Find(VisualRootName);
-                if (existing != null)
-                    DestroyImmediateSafe(existing.gameObject);
+                _labelsRoot = existing;
                 return;
             }
 
-            DestroyImmediateSafe(_visualRoot.gameObject);
-            _visualRoot = null;
+            var go = new GameObject(LabelsRootName);
+            go.transform.SetParent(_authoringRoot, false);
+            _labelsRoot = go.transform;
         }
 
-        void RefreshVisuals()
+        void ClearIdLabels()
         {
-            ClearVisuals();
-            EnsureVisualRoot();
-            if (_model == null || !EnsurePrefabDb())
+            if (_labelsRoot == null)
+            {
+                EnsureAuthoringRoot();
+                if (_authoringRoot != null)
+                {
+                    Transform existing = _authoringRoot.Find(LabelsRootName);
+                    if (existing != null)
+                        DestroyImmediateSafe(existing.gameObject);
+                }
+
+                return;
+            }
+
+            DestroyImmediateSafe(_labelsRoot.gameObject);
+            _labelsRoot = null;
+        }
+
+        /// <summary>
+        /// Display SSOT = Authoring tiles. Refresh only bake ID labels (no VisualRoot tile meshes).
+        /// </summary>
+        void RefreshBakeIdDisplay()
+        {
+            ClearLeftoverVisualRoot();
+            ClearIdLabels();
+            if (_model == null || _hub == null || !EnsurePrefabDb())
+                return;
+
+            if (!showIdLabels)
                 return;
 
             float cs = Mathf.Max(1e-4f, cellSize);
-            var hierarchy = BuildingViewHierarchy.EnsureUnder(_visualRoot, cs);
-            hierarchy.BindRegistry(_hub != null ? _hub.Buildings.Registry : null);
-            _factory = new TileObjFactory(_visualRoot, prefabDb, null, hierarchy);
-
-            int missed = 0;
-            foreach (TileData tile in _model.TilesSnapshot)
-            {
-                TileView view = _factory.SpawnTile(tile, cs);
-                if (view == null)
-                {
-                    missed++;
-                    Debug.LogWarning(
-                        $"[BakeIdPlayground] Prefab missing for '{tile.identity.PrefabId}' at {tile.identity.GridPos}");
-                }
-            }
-
-            if (missed > 0)
-                Debug.LogError($"[BakeIdPlayground] {missed} tiles failed to spawn");
-
-            if (showIdLabels)
-                SpawnFloorIdLabels(cs, hierarchy);
+            SpawnFloorIdLabels(cs);
         }
 
-        void SpawnFloorIdLabels(float cs, BuildingViewHierarchy hierarchy)
+        void SpawnFloorIdLabels(float cs)
         {
             if (_hub == null)
                 return;
+
+            EnsureLabelsRoot();
 
             foreach (var (x, cellY, z) in _hub.Topology.Index.EnumerateWalkableFloorCells())
             {
@@ -976,13 +1191,10 @@ namespace IsoTilemap
                 }
 
                 Vector3 world = TileWorldPointUtil.GetRepresentativeWorldPoint(face.identity, cs);
-                world.y += 0.55f * cs;
+                world.y += IdLabelYOffsetCells * cs;
 
                 var labelGo = new GameObject($"id_{cell}");
-                Transform labelParent = hierarchy != null
-                    ? hierarchy.ResolveParent(buildingId)
-                    : _visualRoot;
-                labelGo.transform.SetParent(labelParent, worldPositionStays: true);
+                labelGo.transform.SetParent(_labelsRoot, worldPositionStays: true);
                 labelGo.transform.position = world;
 
                 var tm = labelGo.AddComponent<TextMesh>();
@@ -995,6 +1207,49 @@ namespace IsoTilemap
                     ? new Color(0.4f, 0.85f, 1f)
                     : Color.white;
             }
+        }
+
+        void SyncAuthoringViewForEditAdd(in TileData tile)
+        {
+#if UNITY_EDITOR
+            using (SuspendAuthoringLiveSync())
+            {
+#endif
+                float cs = Mathf.Max(1e-4f, cellSize);
+                TrySpawnAuthoringView(tile, cs);
+#if UNITY_EDITOR
+                RebuildAuthoringSnapshotFromScene();
+            }
+#endif
+        }
+
+        void SyncAuthoringViewForEditRemove(in TileData tile)
+        {
+            if (!BakeIdSimTileEntry.TryFromTileData(tile, out BakeIdSimTileEntry entry))
+                return;
+
+#if UNITY_EDITOR
+            using (SuspendAuthoringLiveSync())
+            {
+#endif
+                TileView[] views = CollectAuthoringTileViews();
+                for (int i = views.Length - 1; i >= 0; i--)
+                {
+                    TileView view = views[i];
+                    if (view == null)
+                        continue;
+                    if (!TryResolveAuthoringEntry(view, out BakeIdSimTileEntry got, out _))
+                        continue;
+                    if (!BakeIdSimTileEntry.EntriesEqual(got, entry))
+                        continue;
+                    DestroyImmediateSafe(view.gameObject);
+                    break;
+                }
+
+#if UNITY_EDITOR
+                RebuildAuthoringSnapshotFromScene();
+            }
+#endif
         }
 
         bool TryFindRemovableAtA(out TileData tile, out int simIndex)
@@ -1176,7 +1431,7 @@ namespace IsoTilemap
             EnsureRuntime();
             if (_builder != null)
                 _builder.RebakeAllBuildingPartitions();
-            RefreshVisuals();
+            RefreshBakeIdDisplay();
         }
 
         public void NotifyAuthoringViewDestroyed(TileView view)
@@ -1184,6 +1439,9 @@ namespace IsoTilemap
 #if UNITY_EDITOR
             if (!authoringLiveSync || view == null || Application.isPlaying || _authoringSyncSuspendDepth > 0)
                 return;
+
+            if (view.TryGetComponent(out BakeIdAuthoringViewLink dyingLink))
+                RemoveProbeOwnedByAuthoringLink(dyingLink, logReason: "Authoring destroy", onlyIfBoundToThisCell: true);
 
             int id = view.GetInstanceID();
             if (!_authoringSnapshot.TryGetValue(id, out BakeIdSimTileEntry entry) &&
@@ -1229,10 +1487,9 @@ namespace IsoTilemap
                 return false;
             }
 
-            if (view.TryGetComponent(out BakeIdAuthoringViewLink link))
-                return link.TryResolveSimEntry(out entry, out error);
-
-            link = BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
+            // Always Ensure: duplicated / domain-reload links keep the component but lose
+            // non-serialized _host/_view until Configure runs.
+            BakeIdAuthoringViewLink link = BakeIdAuthoringViewLink.Ensure(view, this, cellSize);
             return link != null && link.TryResolveSimEntry(out entry, out error);
         }
 

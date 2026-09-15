@@ -51,5 +51,11 @@ namespace IsoTilemap
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _hub.TryGetEdgeBetween(cellA, cellB, out edgeWall);
+
+        public bool TryGetEdgeSealingLateral(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
+            _hub.Topology.Index.TryGetEdgeSealingLateral(cellA, cellB, out edgeWall);
+
+        public bool EdgeBlocksPassage(Vector3Int cellA, Vector3Int cellB) =>
+            _hub.Topology.Index.EdgeBlocksPassage(cellA, cellB);
     }
 }

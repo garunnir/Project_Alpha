@@ -103,8 +103,7 @@ namespace IsoTilemap
             if (query.CellHasSolidWall(to.x, to.z, to.y))
                 return true;
 
-            return query.TryGetEdgeBetween(from, to, out var edge) &&
-                   TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
+            return query.EdgeBlocksPassage(from, to);
         }
     }
 }

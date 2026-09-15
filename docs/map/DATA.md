@@ -24,6 +24,7 @@ Unity 비의존 순수 구조체. 시스템 전체에서 공유.
 | **walkable 셀** | Floor `CellAbove` (`ProvidesLogicalFloor` 바닥 **위** 점유셀). **통행 가능 타일과 다름** |
 | **막힘** | `BlocksOccupiedCells` / `BlocksEdge` 등 `collisionFlags` |
 | Floor `GridPos` | 저장 앵커 = `CellBelow`. 게임플레이·가시성 좌표는 점유 인덱스 셀 |
+| VerticalFace `size.y` | **배치** 키 = `GridPos.y` (`TryGetEdgeBetween`). **측면 BFS/통과** = `GridPos.y .. +size.y-1` (`TryGetEdgeSealingLateral` / `EdgeBlocksPassage`) |
 
 ### 캐릭터 grid footprint
 

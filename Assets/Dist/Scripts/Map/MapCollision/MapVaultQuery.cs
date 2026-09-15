@@ -306,7 +306,7 @@ namespace IsoTilemap
             out VaultCandidate candidate)
         {
             candidate = default;
-            if (!query.TryGetEdgeBetween(feetCell, ahead, out TileData edge) ||
+            if (!query.TryGetEdgeSealingLateral(feetCell, ahead, out TileData edge) ||
                 !TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
                 return false;
 

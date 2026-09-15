@@ -78,8 +78,7 @@ namespace IsoTilemap
                 return;
             }
 
-            if (query.TryGetEdgeBetween(cell, east, out TileData edge) &&
-                TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
+            if (query.EdgeBlocksPassage(cell, east))
             {
                 MergeMin(
                     ref maxX,
@@ -101,8 +100,7 @@ namespace IsoTilemap
                 return;
             }
 
-            if (query.TryGetEdgeBetween(west, cell, out TileData edge) &&
-                TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
+            if (query.EdgeBlocksPassage(west, cell))
             {
                 MergeMax(
                     ref minX,
@@ -124,8 +122,7 @@ namespace IsoTilemap
                 return;
             }
 
-            if (query.TryGetEdgeBetween(cell, north, out TileData edge) &&
-                TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
+            if (query.EdgeBlocksPassage(cell, north))
             {
                 MergeMin(
                     ref maxZ,
@@ -147,8 +144,7 @@ namespace IsoTilemap
                 return;
             }
 
-            if (query.TryGetEdgeBetween(south, cell, out TileData edge) &&
-                TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
+            if (query.EdgeBlocksPassage(south, cell))
             {
                 MergeMax(
                     ref minZ,

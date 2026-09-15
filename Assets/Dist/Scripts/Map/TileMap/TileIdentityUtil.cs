@@ -59,6 +59,17 @@ namespace IsoTilemap
         public static bool IsStructural(in TileIdentity id) =>
             IsFloorTile(id) || IsWallLike(id);
 
+        /// <summary>
+        /// Building component / shell flood가 영역을 밀어 쓰는 체적 구조 (OccupiedCell box).
+        /// HorizontalFace·VerticalFace incident는 조회·면 연결용 — lot 확장 노드 아님.
+        /// </summary>
+        public static bool IsVolumeStructural(in TileIdentity id) =>
+            IsOccupiedCell(id) && IsStructural(id);
+
+        /// <summary>얇은 면(Floor·SlimWall) — 점유 등록은 조회용, building flood 확장 아님.</summary>
+        public static bool IsThinFaceStructure(in TileIdentity id) =>
+            IsHorizontalFace(id) || IsVerticalFace(id);
+
         public static void CollectAffectedCells(in TileIdentity id, HashSet<Vector3Int> cells)
         {
             switch (GetPlacementSlot(id))

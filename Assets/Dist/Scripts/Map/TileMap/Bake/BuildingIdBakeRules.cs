@@ -49,6 +49,12 @@ namespace IsoTilemap
             return false;
         }
 
+        /// <summary>
+        /// OccupiedCell만 shell flood lot 확장. Floor·VerticalFace는 incident 조회·patch만.
+        /// </summary>
+        public static bool ExpandsBuildingFloodThroughIdentity(in TileIdentity id) =>
+            TileIdentityUtil.IsVolumeStructural(id);
+
         /// <summary>outdoor(-1) 타일·칸은 building component 시드·흡수 대상이 아님. 불변.</summary>
         public static bool IsImmutableOutdoorBuildingId(int buildingId) =>
             buildingId == TileIdentity.BuildingIdOutdoor;

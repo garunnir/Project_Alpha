@@ -411,12 +411,61 @@ namespace IsoTilemap
             return true;
         }
 
+        /// <summary>
+        /// 배치 SSOT — 셀 Y와 동일한 <see cref="WallEdgeKey"/>만 조회. size.y 확장은 포함하지 않음.
+        /// </summary>
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall)
         {
             edgeWall = default;
             return WallEdgeKey.TryBetween(cellA, cellB, out var edgeKey) &&
                    _edges.TryGetValue(edgeKey, out edgeWall);
         }
+
+        /// <summary>
+        /// 측면 통과/BFS용 — 배치 Y 엣지이거나, 같은 XZ 면 벽이
+        /// <c>GridPos.y .. +size.y-1</c>로 이 cellY를 덮으면 히트
+        /// (<see cref="RebuildOccupancy"/>가 size만큼 <c>_wallKeysAtCell</c>에 등록).
+        /// </summary>
+        public bool TryGetEdgeSealingLateral(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall)
+        {
+            edgeWall = default;
+            if (cellA.y != cellB.y)
+                return false;
+
+            if (!WallEdgeKey.TryBetween(cellA, cellB, out var queryKey))
+                return false;
+
+            if (_edges.TryGetValue(queryKey, out edgeWall))
+                return true;
+
+            return TryGetSealingEdgeFromIncidentKeys(cellA, queryKey, out edgeWall) ||
+                   TryGetSealingEdgeFromIncidentKeys(cellB, queryKey, out edgeWall);
+        }
+
+        bool TryGetSealingEdgeFromIncidentKeys(
+            Vector3Int cell,
+            in WallEdgeKey queryKey,
+            out TileData edgeWall)
+        {
+            edgeWall = default;
+            if (!_wallKeysAtCell.TryGetValue(cell, out var keys) || keys == null)
+                return false;
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                WallEdgeKey key = keys[i];
+                if (!SameHorizontalEdgeFace(key, queryKey))
+                    continue;
+                if (!_edges.TryGetValue(key, out edgeWall))
+                    continue;
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool SameHorizontalEdgeFace(in WallEdgeKey a, in WallEdgeKey b) =>
+            a.Face == b.Face && a.Anchor.x == b.Anchor.x && a.Anchor.z == b.Anchor.z;
 
         public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face)
         {
@@ -487,7 +536,7 @@ namespace IsoTilemap
 
         public bool EdgeBlocksPassage(Vector3Int cellA, Vector3Int cellB)
         {
-            if (!TryGetEdgeBetween(cellA, cellB, out var edge))
+            if (!TryGetEdgeSealingLateral(cellA, cellB, out var edge))
                 return false;
 
             return TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
@@ -495,7 +544,7 @@ namespace IsoTilemap
 
         public bool EdgeSeparatesRoom(Vector3Int cellA, Vector3Int cellB)
         {
-            if (!TryGetEdgeBetween(cellA, cellB, out var edge))
+            if (!TryGetEdgeSealingLateral(cellA, cellB, out var edge))
                 return false;
 
             return TileCollisionFlagsUtil.EdgeSeparatesRoom(edge);

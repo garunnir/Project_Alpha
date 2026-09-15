@@ -61,8 +61,15 @@ namespace IsoTilemap
             rules.Add(BakeIdSimRule.Differ(
                 "Bridge_B1", "Bridge_B2", BakeIdSimIdField.BuildingId));
 
-            // AABB volume Space: stacked floors share SpaceId within building AABB
-            rules.Add(BakeIdSimRule.SameIds("Column_HFloor_Lower", "Column_HFloor_Upper"));
+            // ThinWall outer incident must not merge a one-cell floor gap into the same building
+            rules.Add(BakeIdSimRule.Differ(
+                "indoor", "outsideTile", BakeIdSimIdField.BuildingId));
+
+            // Stacked floors only: no volume → different buildingId; floor face blocks volume → different SpaceId
+            rules.Add(BakeIdSimRule.Differ(
+                "Column_HFloor_Lower", "Column_HFloor_Upper", BakeIdSimIdField.BuildingId));
+            rules.Add(BakeIdSimRule.Differ(
+                "Column_HFloor_Lower", "Column_HFloor_Upper", BakeIdSimIdField.SpaceId));
         }
     }
 }

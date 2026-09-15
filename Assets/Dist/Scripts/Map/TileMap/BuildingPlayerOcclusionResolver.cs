@@ -207,7 +207,7 @@ namespace IsoTilemap
             for (int i = 0; i < CardinalNeighbors.Length; i++)
             {
                 Vector3Int neighbor = cell + CardinalNeighbors[i];
-                if (_hub.TryGetEdgeBetween(cell, neighbor, out TileData edge))
+                if (_hub.TryGetEdgeSealingLateral(cell, neighbor, out TileData edge))
                     appendTo.Add(edge);
             }
         }

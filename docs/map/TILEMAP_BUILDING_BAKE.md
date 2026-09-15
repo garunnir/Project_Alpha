@@ -99,11 +99,22 @@
 
 ### Structural 연결
 
-`IsStructural` 타일(HorizontalFace·VerticalFace·ThickWall 등)이 **점유셀 그래프**로 맞닿으면 동일 building.
+**체적(`OccupiedCell` / ThickWall 등 `IsVolumeStructural`)** 만 점유셀 flood로 building 영역을 민다.
 
-- 점유셀 6방향 인접
-- `CollectAffectedCells` footprint로 영향 셀 공유
+- 점유셀 6방향 인접 — **volume 칸만** traverse·tag·`CollectAffectedCells` 확장
 - outdoor 레이어 칸·`-1` 타일은 **union 후보에서 제외**
+
+**얇은 면(HorizontalFace Floor · VerticalFace SlimWall) incident 점유는 building lot 확장 노드가 아니다.**  
+위·아래/양옆 칸 등록은 통과·occlusion·조회용. face incident로 빈 칸·한 칸 갭 Floor를 삼키면 안 된다.
+
+| 얇은 면 연결 (명시 규칙) | |
+|--------------------------|--|
+| Floor horizontal | 같은 slice cardinal walkable (기존) |
+| ThinWall | 아래 ThinWall face/코너 규칙 |
+| Floor↔체적 | volume flood가 walkable 칸에 닿을 때 bridge |
+
+같은 `(x,z)` 기둥의 Floor만으로는 building을 합치지 않는다. 복층 Same building은 **OccupiedCell 체적**이 층을 이을 때만.  
+Floor buildingId stamp는 **walkable 칸에서만** — CellBelow 공유로 위층 Face가 아래 id를 받지 않음.
 
 ### ThinWall 연결
 
@@ -115,7 +126,8 @@ ThinWall은 다음 중 하나면 **같은 building으로 connect**:
 | **same face Y±** | 같은 face·XZ에서 위/아래 층 ThinWall |
 | **shared occupied cell (corner)** | 모서리에서 **같은 점유셀을 공유**하면 코너로 연결 |
 
-ThinWall이 양옆 walkable/구조 셀을 가르더라도 **buildingId는 합쳐질 수 있고**, **roomId는 SeparatesRoom으로 갈라질 수 있다** (room ≠ building).
+ThinWall이 양옆 walkable/구조 셀을 가르더라도 **buildingId는 합쳐질 수 있고**, **roomId는 SeparatesRoom으로 갈라질 수 있다** (room ≠ building).  
+단, **incident 칸 flood-bridge로 떨어진 Floor를 합치지 않음.**
 
 ### 비인접
 
@@ -152,14 +164,16 @@ flowchart TD
 ### 규칙
 
 1. **야외맵 칸**은 space 재분할 **하지 않음**.
-2. building마다 **AABB(min/max)** 안에서만 **전방향** volume flood — floor 시드에 막혀 빈 칸을 빼지 않음. 같은 방의 빈 칸도 동일 `SpaceId` 가능.
-3. flood 경계: building 구조(벽·천장·AABB 밖)·outdoor 레이어·다른 building.
+2. building마다 **AABB(min/max)** 안에서만 **전방향** volume flood — 같은 층 빈 칸도 동일 `SpaceId` 가능. **논리 floor face는 수직(±Y) 통과를 막음** (아래 칸↔위 walkable 사이 슬래브).
+3. flood 경계: building 구조(벽)·**logical floor(천장/층간 슬래브)**·AABB 밖·outdoor 레이어·다른 building.
 4. leak → `isOutdoor=true` (개방 shed·뚫린 지붕 등). topology 기준; **`collisionFlags` 금지**.
+   - **천장 leak**: space floor 셀에서 **위로 volume 통과**가 `MaxStructuralY` 너머로 열려 있으면 outdoor. 막힘 = 위 칸 logical Floor 면(y↔y+1) 또는 OccupiedCell structural (`SpaceFloodFill3D` 수직과 동일).  
+   - **측면 leak**: AABB 밖 이웃으로 structural edge/solid 없이 열림.
 5. `isOutdoor=false` = 미감지 → 실내 파이프라인 (≠ 밀폐 증명).
 
 ### §building face vs space leak
 
-- **building 연결**에서 HorizontalFace·VerticalFace는 structural로 **같이** 묶일 수 있다.
+- **building 연결**: **OccupiedCell 체적**만 점유 flood. Floor·VerticalFace는 얇은 면 — horizontal / ThinWall 엣지 규칙. incident·기둥 Y만으로 lot 합침 금지.
 - **space leak**은 별도 — outdoor/AABB/개방 topology. collisionFlags·`EdgeSeparatesRoom`으로 outdoor를 **단정하지 않음**.
 
 ---

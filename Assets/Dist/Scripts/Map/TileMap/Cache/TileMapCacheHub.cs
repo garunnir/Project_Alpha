@@ -61,6 +61,9 @@ namespace IsoTilemap
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _index.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
+        public bool TryGetEdgeSealingLateral(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
+            _index.TryGetEdgeSealingLateral(cellA, cellB, out edgeWall);
+
         public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face) =>
             _index.TryGetHorizontalFaceBetween(cellBelow, cellAbove, out face);
 
@@ -401,6 +404,9 @@ namespace IsoTilemap
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             Topology.TryGetEdgeBetween(cellA, cellB, out edgeWall);
+
+        public bool TryGetEdgeSealingLateral(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
+            Topology.TryGetEdgeSealingLateral(cellA, cellB, out edgeWall);
 
         public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face) =>
             Topology.TryGetHorizontalFaceBetween(cellBelow, cellAbove, out face);

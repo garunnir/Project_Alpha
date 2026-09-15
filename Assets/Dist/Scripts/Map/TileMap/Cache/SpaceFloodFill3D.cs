@@ -182,19 +182,29 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 측면은 structural thin wall만 차단. 수직은 floor face로 막지 않음(다층 동일 volume 허용).
+        /// 측면은 structural thin wall. 수직(±Y)은 두 셀 사이 logical floor face가 있으면 차단.
+        /// walkable Y의 floor = CellBelow↔CellAbove 면 → 아래 칸에서 위 칸으로의 volume 통과를 막음.
         /// </summary>
         static bool IsPassageBlocked(FloorMapIndex index, Vector3Int from, Vector3Int to)
         {
             if (from.y == to.y)
                 return LateralStructuralEdgeSeals(index, from, to);
 
+            if (from.x != to.x || from.z != to.z)
+                return false;
+
+            int dy = to.y - from.y;
+            if (dy == 1)
+                return index.CellHasFloor(to.x, to.y, to.z);
+            if (dy == -1)
+                return index.CellHasFloor(from.x, from.y, from.z);
+
             return false;
         }
 
         static bool LateralStructuralEdgeSeals(FloorMapIndex index, Vector3Int cellA, Vector3Int cellB)
         {
-            if (!index.TryGetEdgeBetween(cellA, cellB, out var edge))
+            if (!index.TryGetEdgeSealingLateral(cellA, cellB, out var edge))
                 return false;
 
             return TileIdentityUtil.IsStructural(edge.identity);

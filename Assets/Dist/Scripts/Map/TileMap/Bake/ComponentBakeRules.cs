@@ -25,6 +25,13 @@ namespace IsoTilemap
         public static bool ShouldBlockComponentFloodFromIncidentTile(in TileIdentity id) =>
             BuildingIdBakeRules.IsImmutableOutdoorBuildingId(id.buildingId) ||
             BuildingIdBakeRules.IsHardPartitionBuildingId(id.buildingId);
+
+        /// <summary>
+        /// OccupiedCell(체적)만 component flood로 lot을 민다.
+        /// Floor·SlimWall 면 연결은 horizontal / stacked / <see cref="ThinWallBuildingConnect"/>.
+        /// </summary>
+        public static bool ExpandsComponentThroughIdentity(in TileIdentity id) =>
+            TileIdentityUtil.IsVolumeStructural(id);
     }
 }
 

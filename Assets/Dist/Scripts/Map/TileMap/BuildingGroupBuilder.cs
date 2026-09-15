@@ -241,5 +241,23 @@ namespace IsoTilemap
 
             return false;
         }
+
+        /// <summary>
+        /// 현재 scratch에 OccupiedCell 체적 구조가 있는지.
+        /// Floor·SlimWall face-only 칸은 building lot 확장 노드가 아님.
+        /// </summary>
+        bool CollectedCellHasVolumeStructural()
+        {
+            for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
+            {
+                if (TileIdentityUtil.IsVolumeStructural(_occupiedCellCollectScratch[i].identity))
+                    return true;
+            }
+
+            return false;
+        }
+
+        bool CellHasWalkableFloorForComponentTraverse(Vector3Int cell) =>
+            _topology.Index.CellHasFloor(cell.x, cell.y, cell.z);
     }
 }

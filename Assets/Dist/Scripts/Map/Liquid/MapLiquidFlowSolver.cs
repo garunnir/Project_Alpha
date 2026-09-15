@@ -194,8 +194,7 @@ namespace IsoTilemap
             if (_hub.CellHasSolidWall(to.x, to.z, to.y))
                 return true;
 
-            return _hub.TryGetEdgeBetween(from, to, out TileData edge)
-                && TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
+            return _hub.Topology.Index.EdgeBlocksPassage(from, to);
         }
 
         /// <summary>(하단, upper) 경계가 열려 있는지 — upper 셀에 바닥이 없으면 개방.</summary>
