@@ -12,7 +12,8 @@ using UnityEngine;
 
 /// <summary>
 /// CombatLeafUtil.All(Leaf) / ArmImpactKind 기준으로 Catalog 행만 Ensure한다.
-/// 슬롯 .anim 복제 없음 — thin(Hold/Aim/Attack)·Impact thin·Hurt만 유지.
+/// 슬롯 .anim 복제 없음 — thin(Hold/Aim/Attack)·Impact thin·Hurt만 유지 (Animancer clip SSOT keys).
+/// Mecanim SM 재생성 없음 — Rebuild Arm Overlay는 S7 obsolete.
 /// </summary>
 public static class ArmAnimSlotCatalogBaker
 {

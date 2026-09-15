@@ -77,6 +77,27 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
+  - leaf: 9
+    hold:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aim:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attack:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
   - leaf: 5
     hold:
       leftBase: {fileID: 0}

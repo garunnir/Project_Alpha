@@ -222,7 +222,6 @@ evaluate는 `TileMapModel`, emit은 applier entry. 동작은 맞춰졌으나 저
 
 | 항목 | 이유 | 재개 조건 |
 |------|------|-----------|
-| Animancer 몸 경로 | 구매 대기. 지금은 Mecanim | 구매 후. TimeScale 채널 틱·thin 클립 SSOT 유지 |
 | BN `gun.modes` JSON bake | 컨버터 미반입. Dist는 Presentation Leaf로 대체 | Dist가 mode id → Leaf 마스크를 수동 Ensure 없이 매핑할 때 |
 | Gunmod 블록 bake | Dist 장착/슬롯 소비처 없음 | 설치·슬롯 소비처가 생긴 뒤 |
 | ProPixelizer Dist RG 포크 | 벤더 원본 인플레이스 금지 | 공식 v2(RenderGraph)로 `Assets/ProPixelizer` 교체 후 Dist 포크 폴더 삭제 |

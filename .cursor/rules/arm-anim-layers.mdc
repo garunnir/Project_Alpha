@@ -1,38 +1,39 @@
 ---
-description: 팔 애니 — 컨트롤러는 동작 모름. 동작 줄=무기×Leaf(Hold/Aim/Attack/Recoil/Blocked). Catalog=폴백
+description: 팔 애니 — thin/Catalog/Animancer 슬롯 ≠ 동작 이름. 동작 줄=무기×Leaf. Override=배속만
 globs: Assets/Dist/Visual/Anim/CharacterAnimator/**/*,Assets/Dist/Scripts/Entity/Combat/**/*,Assets/Dist/Scripts/Entity/Character/CharacterLocomotionAnim.cs,Assets/Dist/Scripts/Editor/Anim/**/*,docs/locomotion/**/*,docs/equipment/GEAR.md,docs/equipment/WEAPON_VISUAL.md
 alwaysApply: false
 ---
 
-# Arm Anim Layers (컨트롤러 ≠ 동작)
+# Arm Anim Layers (재생 칸 ≠ 동작)
 
 ## When
-캐릭터 팔 AnimatorController · Weapon Override · ArmAnimSlotCatalog · resolve · Rebuild Arm Overlay.
+캐릭터 Animancer 팔/Impact/Hurt 레이어 · thin 슬롯 · Weapon Override(배속) · ArmAnimSlotCatalog · resolve · Ensure Arm Anim Pipeline.
 
 ## Invariant (풀어서)
-1. **컨트롤러**는 재생 칸만 안다: `Hold_*` / `Aim_*` / `Attack_*` / Impact thin / Flinch thin / Hurt thin. 동작 이름을 상태·레이어·파라미터에 넣지 않는다.
+1. **재생 칸(thin / Animancer layers)** 만 안다: `Hold_*` / `Aim_*` / `Attack_*` / Impact thin / Flinch thin / Hurt thin. 동작 이름을 상태·레이어·파라미터·Animancer debug name에 넣지 않는다.
 2. **기본 동사 폴백**은 `ArmAnimSlotCatalog`에 **Leaf마다 행** (Swing/Thrust/Semi/Burst/Auto/Raise). 폴백 줄이 없는 Leaf 금지.
 3. **표시**는 Melee/Trigger 묶음(에디터·UI). 취급은 Leaf 실체.
-4. **무기 동작 줄** = 그 무기 그 Leaf Hold/Aim/Attack/**기습 Attack**/Recoil/Blocked 클립. 비면 Catalog (Action은 같은 Leaf, Impact는 Recoil/Blocked 행). 기습 Attack은 Melee Entry만 — 컨트롤러 Surprise 상태 없음.
-5. **무기 Override**는 클립 배속 테이블. 연출 클립으로 모든 동작을 덮지 않는다.
+4. **무기 동작 줄** = 그 무기 그 Leaf Hold/Aim/Attack/**기습 Attack**/Recoil/Blocked 클립. 비면 Catalog (Action은 같은 Leaf, Impact는 Recoil/Blocked 행). 기습 Attack은 Melee Entry만 — Surprise 전용 상태 없음.
+5. **무기 Override**는 클립 배속 테이블 호스트 (`WeaponAnimClipSpeeds`). 연출 클립으로 모든 동작을 덮지 않는다. 라이브 재생 SSOT는 Animancer layers (`CharacterLocomotionAnim`).
 
 ## MUST
 - 수정 전 `docs/locomotion/LOCOMOTION.md` · `docs/equipment/GEAR.md` Action layers
 - Override Inspector는 배속 테이블만 (`WeaponAnimOverrideEditor`)
-- Rebuild 후 컨트롤러에 동작 이름·`LibraryKeys` 있으면 실패
-- Catalog Ensure는 `WeaponActionUtil.All` (Leaf 전부)
-- Hurt(`Flinch Layer` Additive Head+Body, `Hurt Layer` Override, `HitFlinch`/`HitStagger`/`IsPainShocked`, `Hit*_Slot`)는 Catalog·무기 동작 줄 밖. **Rebuild가 Flinch+Hurt를 재생성**해야 함 (레이어 1+ wipe 후 팔+Impact+Flinch+Hurt)
+- Catalog Ensure는 `WeaponActionUtil.All` / `CombatLeafUtil.All` (Leaf 전부) — `Dist/MCP/Ensure Arm Anim Pipeline`
+- Hurt(Flinch Additive HeadTorso, Hurt Override Stagger/PainDown/Dead, `Hit*_Slot`)는 Catalog·무기 동작 줄 밖. thin은 Ensure Pipeline이 유지
+- `CharacterAnimController` SM / Hybrid Controller는 라이브 재생 SSOT 아님 (S7)
 
 ## MUST NOT
-- `LibraryKeys` 또는 동작 이름 상태를 `CharacterAnimController`에 추가
+- `LibraryKeys` 또는 동작 이름 상태를 `CharacterAnimController`·Animancer 슬롯에 추가
 - “Override에 키가 안 보이니까 컨트롤러에 키 심기”
 - Override를 동작별 슬롯장으로 설계 (동작별 클립은 동작 줄)
 - Hold/Aim/Attack/Recoil/Blocked Override로 Catalog 폴백을 가로채기
 - Semi/Burst/Auto Catalog 행을 빼고 Trigger로만 접어 폴백 없애기
 - Hurt 클립을 `ArmAnimSlotCatalog` / 무기 Recoil·Blocked 줄에 넣기
+- `Dist/MCP/Rebuild Arm Overlay Animator`로 Mecanim arm SM을 라이브 SSOT로 재생성 (obsolete)
 
 ## 작업 전 질문 (Yes면 중단)
-이 변경이 컨트롤러에 동작 이름 또는 `LibraryKeys`를 넣는가?
+이 변경이 재생 칸/컨트롤러에 동작 이름 또는 `LibraryKeys`를 넣는가?
 
 ## See also
 `inspector-exposure.mdc` · `docs/locomotion/LOCOMOTION.md` · `docs/equipment/GEAR.md`

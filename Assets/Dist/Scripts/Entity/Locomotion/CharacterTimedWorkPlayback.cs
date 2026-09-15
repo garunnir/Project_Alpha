@@ -6,7 +6,7 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Farm/Fish 셀 Work 대기. Animator·WorkLayerIndex는
+/// Farm/Fish 셀 Work 대기. Animator·WorkLayerIndex(S6: Animancer Work layer)는
 /// <see cref="CharacterLocomotionAnim"/> 바인드 후 <see cref="Bind"/>로 주입.
 /// </summary>
 public sealed class CharacterTimedWorkPlayback

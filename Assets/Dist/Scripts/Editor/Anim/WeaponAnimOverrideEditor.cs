@@ -21,8 +21,9 @@ public sealed class WeaponAnimOverrideEditor : Editor
         }
 
         EditorGUILayout.HelpBox(
-            "Hold/Aim/Attack/Recoil/Blocked와 Speed는 무기 동작 줄(또는 Catalog 폴백 행).\n" +
-            "이 에셋의 Clip Speeds는 같은 표입니다.",
+            "Animancer 재생 경로: Hold/Aim/Attack/Recoil/Blocked 클립은 무기 동작 줄(또는 Catalog 폴백).\n" +
+            "이 Override는 동작 슬롯장이 아니라 Clip Speeds(배속) 호스트입니다. " +
+            "연출 클립으로 모든 동작을 덮지 마세요.",
             MessageType.Info);
 
         WeaponAnimClipSpeeds speeds = FindClipSpeeds(ovr);

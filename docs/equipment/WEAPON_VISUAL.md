@@ -56,7 +56,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | `spawn_projectile` | Attack.`ProjectilePrefab` 있으면 비행(pierce 0). 없으면 cue 히트스캔. `tracerVfx`는 히트스캔 연출 |
 | NPC 이동 프로파일 | Data Definitions → **Locomotion/** · `SOData/Locomotion/` |
 | thin·Catalog 행 Ensure | `Dist/MCP/Ensure Arm Anim Pipeline` (Leaf 행 + thin/Impact/Hurt 슬롯 15개만 유지) |
-| Animator 레이어 재구성 | `Dist/MCP/Rebuild Arm Overlay Animator` |
+| Animator SM Rebuild | **obsolete (S7)** — `Rebuild Arm Overlay Animator`는 Mecanim SM을 라이브 SSOT로 재생성하지 않음. 재생 = Animancer layers |
 
 Catalog `Resolve` = 베이스(아이템 > `gun.skill` > `weapon_category` > Unarmed) 후 **By Quality Id**로 없는 Leaf만 합산(런타임 캐시, bake 없음). 상세: [`COMBAT_PIPELINE.md`](COMBAT_PIPELINE.md) §4. BN 총은 보통 category 없이 `gun.skill`로 묶는다.
 

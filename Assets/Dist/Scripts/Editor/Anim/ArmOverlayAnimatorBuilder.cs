@@ -22,7 +22,10 @@ public static class ArmOverlayAnimatorBuilder
     [MenuItem("Dist/MCP/Ensure Work Layer (Vault/Farm/Fish)")]
     public static void EnsureWorkLayerOnly() => EnsureDefaultControllerWorkLayer(log: true);
 
-    /// <summary>카탈로그·컨트롤러 Work Layer 동기화 SSOT. Postprocessor·Rebuild에서 호출.</summary>
+    /// <summary>
+    /// Legacy Mecanim Work Layer sync on CharacterAnimController (non-SSOT remnant).
+    /// Live Work playback is Animancer Layers[Work] — prefer Ensure Arm Anim Pipeline for Catalog/thin.
+    /// </summary>
     public static void EnsureDefaultControllerWorkLayer(bool log = false)
     {
         var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
@@ -36,11 +39,31 @@ public static class ArmOverlayAnimatorBuilder
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
         if (log)
-            Debug.Log("[ArmOverlayAnimatorBuilder] Work Layer ensured (IK Pass on, catalog clip states).");
+            Debug.Log(
+                "[ArmOverlayAnimatorBuilder] Work Layer ensured on remnant CharacterAnimController " +
+                "(non-SSOT). Live Work = Animancer Play(clip).");
     }
 
+    /// <summary>
+    /// Obsolete S7: must not regenerate Mecanim arm SM as live playback SSOT.
+    /// Use Dist/MCP/Ensure Arm Anim Pipeline for Leaf Catalog + thin slots.
+    /// </summary>
+    [System.Obsolete(
+        "S7: Mecanim arm SM is not live playback SSOT. Use Dist/MCP/Ensure Arm Anim Pipeline.")]
     [MenuItem("Dist/MCP/Rebuild Arm Overlay Animator")]
     public static void Rebuild()
+    {
+        Debug.LogWarning(
+            "[ArmOverlayAnimatorBuilder] Rebuild Arm Overlay Animator is obsolete (S7). " +
+            "Live playback is Animancer layers — CharacterAnimController SM was NOT regenerated. " +
+            "Use Dist/MCP/Ensure Arm Anim Pipeline for Leaf Catalog + thin/Impact/Hurt slots.");
+    }
+
+    /// <summary>
+    /// Editor-only: refresh thin Hurt clips + parameters without wiping/rebuilding SM layers.
+    /// Does not regenerate arm/Impact/Flinch/Hurt/Work state machines.
+    /// </summary>
+    public static void EnsureThinSlotsAndParameters(bool log = false)
     {
         var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null)
@@ -51,20 +74,12 @@ public static class ArmOverlayAnimatorBuilder
 
         EnsureHurtThinClips();
         EnsureParameters(controller);
-        RebuildLayers(controller);
-        RemoveLibraryKeyLayer(controller);
-        if (!AssertControllerHasNoAnimVerb(controller))
-        {
-            Debug.LogError(
-                "[ArmOverlayAnimatorBuilder] FAIL: controller still encodes AnimVerb " +
-                "(Swing/Thrust/Trigger/Raise or LibraryKeys). Fix before shipping.");
-            return;
-        }
-
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log(
-            "[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Flinch + Hurt + Work Layer (no AnimVerb on controller).");
+        if (log)
+            Debug.Log(
+                "[ArmOverlayAnimatorBuilder] Thin Hurt clips + remnant controller params ensured " +
+                "(no SM Rebuild).");
     }
 
     static void EnsureParameters(AnimatorController controller)

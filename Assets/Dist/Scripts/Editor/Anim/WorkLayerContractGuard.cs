@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEngine;
 
 /// <summary>
-/// Work 클립 카탈로그 변경 시 컨트롤러 Work Layer 상태를 자동 동기화한다.
+/// Work 클립 카탈로그 변경 알림. S6: Mecanim Work Layer 상태 자동 동기화는 재생 계약이 아님
+/// (Animancer Play(clip)). Rebuild/Ensure Work Layer는 S7 전 remnant 유지용으로 수동·MCP만.
 /// </summary>
 public sealed class WorkLayerCatalogPostprocessor : AssetPostprocessor
 {
@@ -25,7 +25,8 @@ public sealed class WorkLayerCatalogPostprocessor : AssetPostprocessor
         if (!ShouldRefresh(importedAssets) && !ShouldRefresh(movedAssets))
             return;
 
-        ArmOverlayAnimatorBuilder.EnsureDefaultControllerWorkLayer();
+        // S6: playback no longer requires controller states named after clips.
+        // Remnant Ensure stays available via Dist/MCP/Ensure Work Layer until S7.
     }
 
     static bool ShouldRefresh(string[] paths)
@@ -51,7 +52,8 @@ public sealed class WorkLayerCatalogPostprocessor : AssetPostprocessor
 }
 
 /// <summary>
-/// Play 진입 전 기본 컨트롤러 Work Layer 계약 검사.
+/// Play 진입 전 Work 계약 검사 — S6: Animancer Work 능력(카탈로그 에셋 존재).
+/// Mecanim Work Layer state machine / clip.name 상태 일치는 재생 필수 조건이 아니다.
 /// </summary>
 [InitializeOnLoad]
 static class WorkLayerPlayModeContractGuard
@@ -64,101 +66,35 @@ static class WorkLayerPlayModeContractGuard
         if (change != PlayModeStateChange.ExitingEditMode)
             return;
 
-        ValidateDefaultController();
+        ValidateAnimancerWorkContract();
     }
 
-    static void ValidateDefaultController()
+    static void ValidateAnimancerWorkContract()
     {
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(
-            CharacterWorkLayerAnim.DefaultControllerPath);
-        if (controller == null)
-        {
-            Debug.LogError(
-                "[WorkLayerContract] CharacterAnimController missing at " +
-                CharacterWorkLayerAnim.DefaultControllerPath);
-            return;
-        }
-
-        int layerIndex = -1;
-        AnimatorControllerLayer[] layers = controller.layers;
-        for (int i = 0; i < layers.Length; i++)
-        {
-            if (layers[i].name == CharacterWorkLayerAnim.LayerName)
-            {
-                layerIndex = i;
-                break;
-            }
-        }
-
-        if (layerIndex < 0)
-        {
-            Debug.LogError(
-                "[WorkLayerContract] Default controller has no Work Layer. " +
-                "Run Dist/MCP/Rebuild Arm Overlay Animator.");
-            return;
-        }
-
-        if (!layers[layerIndex].iKPass)
-        {
-            Debug.LogWarning(
-                "[WorkLayerContract] Work Layer IK Pass is off (vault Mantle IK needs it). " +
-                "Run Dist/MCP/Ensure Work Layer.");
-        }
-
-        HashSet<string> stateNames = CollectStateNames(layers[layerIndex].stateMachine);
         List<string> missing = new();
-        AppendMissingClipStates(
-            AssetDatabase.LoadAssetAtPath<VaultClipCatalog>(VaultClipCatalog.DefaultAssetPath),
-            stateNames,
-            missing);
-        AppendMissingClipStates(
-            AssetDatabase.LoadAssetAtPath<FarmWorkClipCatalog>(FarmWorkClipCatalog.DefaultAssetPath),
-            stateNames,
-            missing);
-        AppendMissingClipStates(
-            AssetDatabase.LoadAssetAtPath<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath),
-            stateNames,
-            missing);
+        RequireCatalog<VaultClipCatalog>(VaultClipCatalog.DefaultAssetPath, "VaultClipCatalog", missing);
+        RequireCatalog<FarmWorkClipCatalog>(FarmWorkClipCatalog.DefaultAssetPath, "FarmWorkClipCatalog", missing);
+        RequireCatalog<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath, "FishWorkClipCatalog", missing);
 
-        if (missing.Count == 0)
-            return;
-
-        Debug.LogError(
-            "[WorkLayerContract] Work Layer missing states for catalog clips: " +
-            string.Join(", ", missing) +
-            ". Run Dist/MCP/Ensure Work Layer (Vault/Farm/Fish).");
-    }
-
-    static HashSet<string> CollectStateNames(AnimatorStateMachine sm)
-    {
-        var names = new HashSet<string>();
-        ChildAnimatorState[] states = sm.states;
-        for (int i = 0; i < states.Length; i++)
-            names.Add(states[i].state.name);
-        return names;
-    }
-
-    static void AppendMissingClipStates(
-        ScriptableObject catalog,
-        HashSet<string> stateNames,
-        List<string> missing)
-    {
-        if (catalog == null)
-            return;
-
-        SerializedObject so = new SerializedObject(catalog);
-        SerializedProperty prop = so.GetIterator();
-        while (prop.NextVisible(true))
+        if (missing.Count > 0)
         {
-            if (prop.propertyType != SerializedPropertyType.ObjectReference)
-                continue;
-            if (prop.objectReferenceValue is not AnimationClip clip || clip == null)
-                continue;
-            if (stateNames.Contains(clip.name))
-                continue;
-            if (!missing.Contains(clip.name))
-                missing.Add(clip.name);
+            Debug.LogError(
+                "[WorkLayerContract] Work catalog asset(s) missing (Animancer Play needs clip catalogs): " +
+                string.Join(", ", missing));
+            return;
         }
+
+        // Replacement of Mecanim-only Work Layer SM checks:
+        // Playback = CharacterWorkLayerAnim → Hybrid Layers[Work] Play(clip).
+        // Controller Work Layer states / IK Pass / Ensure Work Layer are remnant until S7 —
+        // not required for TryPlay when Hybrid + AnimationClip are wired.
+    }
+
+    static void RequireCatalog<T>(string path, string label, List<string> missing)
+        where T : ScriptableObject
+    {
+        if (AssetDatabase.LoadAssetAtPath<T>(path) == null)
+            missing.Add($"{label} @ {path}");
     }
 }
 #endif

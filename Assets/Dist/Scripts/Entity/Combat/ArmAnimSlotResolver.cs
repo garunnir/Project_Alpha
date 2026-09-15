@@ -7,14 +7,46 @@ using UnityEngine;
 /// <summary>
 /// AnimVerb 클립은 무기 Entry(동작 줄) 또는 Pipeline(Catalog)에 있다. SM thin에 투영한다.
 /// Recoil/Blocked도 동작 줄 → Catalog Impact. 무기 Override 클립 맵은 쓰지 않는다.
+/// Animator-독립 재생은 <see cref="ResolvePoseClip"/> 결과 클립 +
+/// <see cref="WeaponAnimClipSpeeds.GetSpeed"/> 배속을 쓰면 된다.
 /// </summary>
 public static class ArmAnimSlotResolver
 {
-    enum PoseKind
+    public enum PoseKind
     {
         Hold = 0,
         Aim = 1,
         Attack = 2
+    }
+
+    /// <summary>
+    /// Entry → Catalog Leaf → thin (PoseClip과 동일 순서). Animator 불필요.
+    /// 배속은 <see cref="WeaponAnimClipSpeeds.GetSpeed"/>(clip).
+    /// </summary>
+    public static AnimationClip ResolvePoseClip(
+        ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentation,
+        CombatLeaf action,
+        WieldHand hand,
+        PoseKind pose,
+        bool useSurpriseAttack = false)
+    {
+        if (catalog == null)
+            return null;
+
+        ArmAnimSlotCatalog.HandClips thin = ThinForPose(catalog, pose);
+        ArmAnimSlotCatalog.HandClips poseFallback =
+            pose == PoseKind.Hold ? null : catalog.HoldThin;
+        AnimationClip thinClip = LibHand(thin, hand);
+        return PoseClip(
+            presentation,
+            CombatLeafUtil.Normalize(action),
+            catalog,
+            pose,
+            hand,
+            poseFallback,
+            thinClip,
+            useSurpriseAttack);
     }
 
     public static AnimatorOverrideController BuildResolvedOverride(
@@ -94,7 +126,6 @@ public static class ArmAnimSlotResolver
         ProjectPose(
             resolved,
             catalog,
-            catalog.HoldThin,
             presentationL,
             presentationR,
             presentation2H,
@@ -102,14 +133,12 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Hold,
-            null,
             false,
             false,
             false);
         ProjectPose(
             resolved,
             catalog,
-            catalog.AimThin,
             presentationL,
             presentationR,
             presentation2H,
@@ -117,14 +146,12 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Aim,
-            catalog.HoldThin,
             false,
             false,
             false);
         ProjectPose(
             resolved,
             catalog,
-            catalog.AttackThin,
             presentationL,
             presentationR,
             presentation2H,
@@ -132,7 +159,6 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Attack,
-            catalog.HoldThin,
             surpriseAttackL,
             surpriseAttackR,
             surpriseAttack2H);
@@ -141,7 +167,6 @@ public static class ArmAnimSlotResolver
     static void ProjectPose(
         AnimatorOverrideController resolved,
         ArmAnimSlotCatalog catalog,
-        ArmAnimSlotCatalog.HandClips thin,
         WeaponPresentation presentationL,
         WeaponPresentation presentationR,
         WeaponPresentation presentation2H,
@@ -149,44 +174,49 @@ public static class ArmAnimSlotResolver
         CombatLeaf actionR,
         CombatLeaf action2H,
         PoseKind pose,
-        ArmAnimSlotCatalog.HandClips poseFallback,
         bool surpriseAttackL,
         bool surpriseAttackR,
         bool surpriseAttack2H)
     {
+        ArmAnimSlotCatalog.HandClips thin = ThinForPose(catalog, pose);
         if (thin == null)
             return;
 
         if (thin.leftBase != null)
-            resolved[thin.leftBase] = PoseClip(
+            resolved[thin.leftBase] = ResolvePoseClip(
+                catalog,
                 presentationL,
                 actionL,
-                catalog,
-                pose,
                 WieldHand.Left,
-                poseFallback,
-                thin.leftBase,
+                pose,
                 surpriseAttackL);
         if (thin.rightBase != null)
-            resolved[thin.rightBase] = PoseClip(
+            resolved[thin.rightBase] = ResolvePoseClip(
+                catalog,
                 presentationR,
                 actionR,
-                catalog,
-                pose,
                 WieldHand.Right,
-                poseFallback,
-                thin.rightBase,
+                pose,
                 surpriseAttackR);
         if (thin.twoHandBase != null)
-            resolved[thin.twoHandBase] = PoseClip(
+            resolved[thin.twoHandBase] = ResolvePoseClip(
+                catalog,
                 presentation2H,
                 action2H,
-                catalog,
-                pose,
                 WieldHand.TwoHand,
-                poseFallback,
-                thin.twoHandBase,
+                pose,
                 surpriseAttack2H);
+    }
+
+    static ArmAnimSlotCatalog.HandClips ThinForPose(ArmAnimSlotCatalog catalog, PoseKind pose)
+    {
+        if (catalog == null)
+            return null;
+        if (pose == PoseKind.Hold)
+            return catalog.HoldThin;
+        if (pose == PoseKind.Aim)
+            return catalog.AimThin;
+        return catalog.AttackThin;
     }
 
     static AnimationClip PoseClip(
@@ -279,19 +309,12 @@ public static class ArmAnimSlotResolver
         CombatLeaf action,
         WieldHand hand)
     {
-        if (catalog == null)
-            return null;
-
-        ArmAnimSlotCatalog.HandClips attackThin = catalog.AttackThin;
-        AnimationClip thinClip = LibHand(attackThin, hand);
-        return PoseClip(
-            presentation,
-            CombatLeafUtil.Normalize(action),
+        return ResolvePoseClip(
             catalog,
-            PoseKind.Attack,
+            presentation,
+            action,
             hand,
-            catalog.HoldThin,
-            thinClip,
+            PoseKind.Attack,
             useSurpriseAttack: false);
     }
 }

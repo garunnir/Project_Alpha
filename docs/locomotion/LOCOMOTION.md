@@ -183,7 +183,55 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 | Flinch Layer | `HeadTorso.mask` (Body+Head) | Additive. Flinch 재생 중 → 1, 평시 0. **피해자** 상체 충격. Catalog remap 없음 |
 | Hurt Layer | none | Override. Stagger/PainDown 중 → 1, 평시 0. **피해자**. Catalog remap 없음 |
 
-**Pending (몸 경로):** Animancer 구매 후 적용 (할인 대기·지금은 Mecanim 유지). 계약 후보: Dynamic Layers(정지=전신·이동=상체) — playtest상 Mecanim Full은 Idle 발이 어색해 미채택. 이주 시 TimeScale 채널 틱·thin 클립 SSOT 유지.
+### Animancer 몸 경로 (끝 상태 — S7)
+
+패키지: `Packages/com.kybernetik.animancer` (Pro v8.4.0). **기본 재생 경로 = Animancer layers.** Mecanim `CharacterAnimController` SM은 라이브 재생 SSOT가 아니다.
+
+**끝 상태:**
+- 몸 재생 호스트 = Hybrid/Animancer graph + Animancer layers (Move/Arm/Impact/Hurt/Work). Hybrid `Controller`는 비움 — `CharacterAnimController` SM 불필요. Layers[7] remnant weight 0 (non-SSOT).
+- **유지 SSOT (불변):** `ArmAnimSlotCatalog` / thin 슬롯 키 / `TimeScaleService` 채널 틱. 재생 칸·thin만 안다 — 동작 이름·`LibraryKeys` 금지 (`arm-anim-layers.mdc`).
+- **Dynamic Layers:** 정지=전신 Move base, 이동=Work layer에 `UpperBody.mask` (발은 Animancer Move).
+- **TwoHand** = `UpperBody.mask`.
+
+**단계 (완료):**
+
+| Slice | 범위 |
+|-------|------|
+| S1 | Resolve API (`ResolvePoseClip` / `ResolveImpactClip`) |
+| S2 | Host tick (`CharacterLocomotionAnim` → Animancer Evaluate) |
+| S3 | Move = Animancer DirectionalMixer |
+| S4 | Arm / Impact = Animancer clip layers |
+| S5 | Hurt / Flinch = Animancer |
+| S6 | Work = Animancer Play(clip) |
+| S7 | Mecanim 재생 경로 폐기 + 문서/룰 (`WEAPON_VISUAL`·`arm-anim-layers`) |
+
+**시간:** `Animator.enabled == false` + Animancer `Graph.PauseGraph()`. 시간 소스 = `CharacterLocomotionAnim` → `HybridAnimancerComponent.Update(channelDelta)`(= `Evaluate`). `_poseRate` 플립북 양자화 (`0`=연속). 채널 pause(`delta<=0`)면 틱 스킵.
+
+**재생 ownership:**
+- **Move** `Layers[0]` DirectionalMixer (`CharacterLocomotionMoveSet`)
+- **Arm + Impact** `Layers[1..4]` via `ResolvePoseClip` / `ResolveImpactClip`
+- **Flinch + Hurt** `Layers[5..6]` (`CharacterLocomotionHurtAnimancer`; `CharacterHitReact` → CLA)
+- **Work** `Layers[8]` Play(clip) (`CharacterLocomotionWorkAnimancer` / `CharacterWorkLayerAnim`)
+- Layers[7] unused remnant @0 (non-SSOT). clip.name↔controller state **not required**
+
+**클립 배속:** Animancer `state.Speed` (`WeaponAnimClipSpeeds` on Presentation / Override host). Override = 배속 테이블이지 동작 슬롯장이 아님.
+
+**에디터:** `Dist/MCP/Ensure Arm Anim Pipeline` = Leaf Catalog + thin. `Rebuild Arm Overlay Animator` = **obsolete** (SM 재생성 금지).
+
+**패리티 인벤토리 (회귀 체크):**
+
+| # | 항목 | 앵커 |
+|---|------|------|
+| 1 | MoveXZ | Animancer DirectionalMixer (`CharacterLocomotionMoveSet`) |
+| 2 | arm overlay weights | Animancer RightArm/LeftArm/TwoHand |
+| 3 | Attack cue | Attack `NormalizedTime` |
+| 4 | Impact | Animancer Impact · `ResolveImpactClip` |
+| 5 | Hurt | Animancer Flinch + Hurt Override |
+| 6 | Work | Animancer Work Play(clip) |
+| 7 | TimeScale | `TimeScaleChannel` 수동 틱 |
+| 8 | resolve | Entry→Catalog→thin; 로드아웃 Presentation만 풀 Rebind |
+
+아래 thin 키·Action/Reaction/Hit/Hurt 구분·파라미터 표는 **계약 참고**(레거시 Mecanim 표기 포함). 라이브 재생은 위 Animancer ownership.
 
 **Action vs Reaction vs Hit vs Hurt:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer) — **공격자** 반응. Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`. 자상(`cut` 조직)이면 피 오버레이, 절단이면 더 큰 피 오버레이(일반 hitVfx와 별도). Hurt = **피해자** Flinch/Stagger/PainDown (`CharacterHitReact` 큐, `CharacterLocomotionAnim` weight). Flinch는 Additive `Flinch Layer`(Head+Body), Stagger/PainDown은 Override `Hurt Layer`. Impact Recoil/Blocked와 Hurt를 섞지 않는다. `ArmAnimSlotCatalog`에 피해자 클립을 넣지 않는다.  
 **근접 판정:** `melee_hit`는 `AttackResolved`로 스윙을 올리고, cue에서 `MeleeHitbox` 겹침만 확정 히트. 타깃 없음·사거리 밖이어도 모션은 재생. [`GEAR.md`](../equipment/GEAR.md) Melee connect.  
@@ -193,8 +241,8 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.  
 `Entry.useHold=false`면 비조준·비Attack일 때 해당 손 arm overlay weight 0 (몸 Locomotion Idle). Aim/Attack 중에는 overlay 유지.  
 Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlocked` trigger) → ExitTime → Empty.  
-Flinch SM: **Empty** → **Flinch** (`HitFlinch`) → ExitTime → Empty. Additive + `HeadTorso.mask`.  
-Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **PainDown**은 `IsPainShocked` 루프 (살아 있는 쇼크만). **Dead**는 `IsDefeated` (사망 클립, 루프 없음). 다운·사망 중 Flinch/Stagger 생략. 자빠짐 애니만 큐; 능동 이속은 `CombatImbalance` 배율 SSOT. 실클립은 thin(`HitFlinch_Slot` / `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot`).
+Flinch SM (Mecanim remnant, weight 0 while S5 owned): **Empty** → **Flinch** (`HitFlinch`) → ExitTime → Empty. **S5 play path:** Animancer Additive + `HeadTorso.mask`.  
+Hurt SM (Mecanim remnant, weight 0 while S5 owned): **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **PainDown**은 `IsPainShocked` 루프 (살아 있는 쇼크만). **Dead**는 `IsDefeated` (사망 클립, 루프 없음). **S5 play path:** Animancer Override via `CharacterHitReact` → CLA. 다운·사망 중 Flinch/Stagger 생략. 자빠짐 애니만 큐; 능동 이속은 `CombatImbalance` 배율 SSOT. 실클립은 thin(`HitFlinch_Slot` / `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot`).
 
 | Param | Type | Source |
 |-------|------|--------|
@@ -210,12 +258,12 @@ Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **Pain
 | `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | Entry 클립→없으면 Catalog Leaf→Action thin. Recoil/Blocked: Entry→Catalog Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
-Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
+Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우. **S3:** 재생은 Animancer DirectionalMixer가 소유 — Walk ring 임계 **0.1**(컨트롤러 child 위치 매칭). speedNorm 걷기 ≈**0.26**은 MoveXZ 파라미터 크기(문서 관측). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
 
-**Thin 키 (Action SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — 컨트롤러가 아는 전부(동작 이름 없음).  
-**Thin 키 (Impact SM):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
-**Thin 키 (Hurt SM):** `HitFlinch_Slot` (Flinch Layer), `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot` (Hurt Layer) — Catalog·무기 Override 밖. Rebuild가 재생성.  
-**Pipeline 라이브러리 (컨트롤러 밖):** `Hold|Aim|Attack{Leaf}_{Hand}_Slot` — Catalog Leaf 행. SM에 동작 이름/LibraryKeys 없음.
+**Thin 키 (Action):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — thin/Catalog 키 (동작 이름 없음).  
+**Thin 키 (Impact):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
+**Thin 키 (Hurt):** `HitFlinch_Slot` / `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot` — Catalog·무기 Override 밖. Ensure Arm Anim Pipeline이 thin 유지.  
+**Pipeline 라이브러리:** `Hold|Aim|Attack{Leaf}_{Hand}_Slot` — Catalog Leaf 행. 동작 이름/LibraryKeys 금지.
 
 `CombatLeaf` **Leaf** → Entry 클립, 비면 Catalog **같은 Leaf** 행을 thin에 리맵. Recoil/Blocked → Entry, 비면 Catalog Impact 행. Action 전환·듀얼 활성 손 교체는 **Rebind 없이** thin 키만 갱신. **슬롯 로드아웃**(빈 손↔스택, 든 아이템 교체) Presentation 교체에만 풀 resolve + Rebind. 듀얼 시전 `SetWieldedItem`은 로드아웃 변경이 아님.
 
@@ -231,7 +279,9 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 
 **액션 확장 (Leaf):** `CombatLeafUtil.All` + Ensure Pipeline → Catalog 행·슬롯. **컨트롤러 슬롯 증설 없음.**  
 **Impact Kind 확장:** `ArmImpactKind` (Reaction: Recoil/Blocked) + Impact SM 상태·trigger·행.  
-**Hurt:** 컨트롤러 Flinch Layer(Additive) + Hurt Layer(Override). Catalog 행 추가 아님.
+**Hurt:** Animancer Flinch (Additive HeadTorso) + Hurt Override (`CharacterLocomotionHurtAnimancer`). Catalog 행 추가 아님. CharacterAnimController Flinch/Hurt SM은 remnant(non-SSOT, weight 0).
+
+**Work:** Animancer `Layers[8]` Play(clip) (`CharacterLocomotionWorkAnimancer`). Layers[7] remnant @0 (non-SSOT). clip.name↔controller state 재생 계약 없음.
 
 **Pending:** BN `modes` JSON bake → Leaf 마스크 자동 매핑 ([`BN_BAKE.md`](../equipment/BN_BAKE.md)).
 
@@ -257,8 +307,8 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 - 플레이어 동사는 `CombatLeaf` 유지. `TriggerPistol` 동명 액션 금지.
 - 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
 - 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
-- 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` 수동 틱).
-- Play 중 `Animator.enabled == false`는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
+- 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` → Animancer Evaluate; Animator auto-update 아님).
+- Play 중 `Animator.enabled == false` + Hybrid graph Pause는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
 - Locomotion/Arm 클립은 FBX `loopTime` 필요.
 - 장애물 판정은 `AttackPerformResult.Obstructed` (Miss와 구분) → Impact `Blocked`.
 

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91a44cc68d8b14a499f31ad02647f97e, type: 3}
+  m_Name: CharacterLocomotionMoveSet
+  m_EditorClassIdentifier: DistScript::CharacterLocomotionMoveSet
+  _idle: {fileID: 7400000, guid: 49b4ff2bdb23a9e419adae33282213bf, type: 2}
+  _walkForward: {fileID: 7400000, guid: 4d8b89966b9f7cd4495537ee107fe36b, type: 2}
+  _walkBack: {fileID: 7400000, guid: a0dd92910af143b49bb366f4cd1e9cb7, type: 2}
+  _walkLeft: {fileID: 7400000, guid: 7ff7c05487727f04f91a2a0d64930c8c, type: 2}
+  _walkRight: {fileID: 7400000, guid: 2ebbd22f7a546cf4aba479d20ec3b745, type: 2}
+  _runForward: {fileID: 7400000, guid: 83d504025053e864fa8af1ddd7f9cead, type: 2}
+  _runBack: {fileID: 7400000, guid: f6bf9a6cb2ed1364689edcf4dcaf78ab, type: 2}
+  _runLeft: {fileID: 7400000, guid: 342e433dd3380884eb35e3136cd3f284, type: 2}
+  _runRight: {fileID: 7400000, guid: 641a651276001dd4aa7659897303f0e8, type: 2}
+  _walkRing: 0.1
+  _runRing: 1
+  _fadeDuration: 0.25

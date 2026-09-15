@@ -378,8 +378,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterLocomotionAnim
   _timeChannel: 1
   _animator: {fileID: 293100225542826288}
+  _hybrid: {fileID: 3384167925000119489}
   _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
   _armSlotCatalog: {fileID: 11400000, guid: 05420430cc89c3d44bdb6b6edb99740c, type: 2}
+  _moveSet: {fileID: 11400000, guid: 076e68d8e43ebfd4d8b33f51d6e62007, type: 2}
+  _moveUpperBodyMask: {fileID: 31900000, guid: ec235f49cd34db74ea947eca1c78e7bb, type: 2}
+  _rightArmMask: {fileID: 31900000, guid: 136ac5b5332f04a4b93b3f5fea4c9d88, type: 2}
+  _leftArmMask: {fileID: 31900000, guid: a7fad9b0635a01741ac33d388bb06a70, type: 2}
+  _headTorsoMask: {fileID: 31900000, guid: 7c4e9a1b2d8f4e6a9b0c1d2e3f4a5b6c, type: 2}
+  _hitFlinchClip: {fileID: 7400000, guid: 66b0c5978cd44f54c8eb3ffe5fdc3316, type: 2}
+  _hitStaggerClip: {fileID: 7400000, guid: ac1d27723b1cd054594dfff8391b3541, type: 2}
+  _hitPainDownClip: {fileID: 7400000, guid: 5a4c964a96606a2438d5dd2e9eacf639, type: 2}
+  _hitDeadClip: {fileID: 7400000, guid: e9e72bf45a1ff464d886ff3c822e83b9, type: 2}
   _paramSpeed: Speed
   _paramMoveX: MoveX
   _paramMoveZ: MoveZ
@@ -774,6 +784,16 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 187824029237937622, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.106112346
+      objectReference: {fileID: 0}
+    - target: {fileID: 187824029237937622, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.007855862
+      objectReference: {fileID: 0}
     - target: {fileID: 218699411771891848, guid: af0c8e385ddbcff46b27e6ce116e272c,
         type: 3}
       propertyPath: m_Layer
@@ -874,6 +894,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 1200993785243476283, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1726768577020944234, guid: af0c8e385ddbcff46b27e6ce116e272c,
         type: 3}
       propertyPath: m_Layer
@@ -918,6 +943,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726273577790689497, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.064288385
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726273577790689497, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.041278843
       objectReference: {fileID: 0}
     - target: {fileID: 2969142999367103013, guid: af0c8e385ddbcff46b27e6ce116e272c,
         type: 3}
@@ -1142,6 +1177,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 4186926946024941364}
+    - targetCorrespondingSourceObject: {fileID: 1872650286197928443, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3384167925000119489}
   m_SourcePrefab: {fileID: 100100000, guid: af0c8e385ddbcff46b27e6ce116e272c, type: 3}
 --- !u!95 &293100225542826288 stripped
 Animator:
@@ -1167,6 +1206,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71fcfdfdd77910241b84ea89c66ce988, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterVaultIkHost
+--- !u!114 &3384167925000119489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956867471781853680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ad7b53f86f9da4da426b673c422513, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Kybernetik.Animancer::Animancer.HybridAnimancerComponent
+  _Animator: {fileID: 293100225542826288}
+  _Transitions: {fileID: 0}
+  _ActionOnDisable: 0
+  _PlayAutomatically: 0
+  _Names: []
+  _Animations: []
+  _Controller:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Controller: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
+    _ParameterBindings:
+      _Mode: 0
+      _Bindings: []
+    _ActionsOnStop: 
+  references:
+    version: 2
+    RefIds: []
 --- !u!4 &1262594646898817497 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 377782585016988114, guid: af0c8e385ddbcff46b27e6ce116e272c,

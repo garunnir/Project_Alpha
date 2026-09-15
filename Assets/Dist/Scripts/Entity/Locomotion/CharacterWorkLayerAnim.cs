@@ -2,11 +2,13 @@
 // CharacterWorkLayerAnim — Work Layer 이름·재생·계약 검증 SSOT
 // ============================================================
 
+using Animancer;
 using UnityEngine;
 
 /// <summary>
-/// 농사·낚시·vault 공용 Work Layer. 컨트롤러 레이어·상태(클립 이름)는
-/// <c>ArmOverlayAnimatorBuilder</c>가 카탈로그와 동기화한다.
+/// 농사·낚시·vault 공용 Work Layer.
+/// S6: 재생 ownership = Animancer <c>Layers[Work]</c> Play(clip). Mecanim Work weight = 0.
+/// 컨트롤러 상태 이름 = clip.name 계약은 재생에 더 이상 필요하지 않다.
 /// </summary>
 public static class CharacterWorkLayerAnim
 {
@@ -20,6 +22,13 @@ public static class CharacterWorkLayerAnim
         if (animator == null)
             return -1;
 
+        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
+        if (hybrid != null)
+        {
+            EnsureAnimancerWorkReady(hybrid, animator);
+            return CharacterLocomotionWorkAnimancer.LayerWork;
+        }
+
         return animator.GetLayerIndex(LayerName);
     }
 
@@ -30,8 +39,23 @@ public static class CharacterWorkLayerAnim
         if (animator == null || clip == null)
             return false;
 
+        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
+        if (hybrid != null)
+        {
+            EnsureAnimancerWorkReady(hybrid, animator);
+            layerIndex = CharacterLocomotionWorkAnimancer.LayerWork;
+            ForceMecanimWorkWeightZero(hybrid, animator);
+
+            AnimancerLayer layer = hybrid.Layers[layerIndex];
+            AnimancerState state = layer.Play(clip);
+            state.Time = 0f;
+            state.Speed = 1f;
+            layer.Weight = 1f;
+            return true;
+        }
+
         if (layerIndex < 0)
-            layerIndex = ResolveLayerIndex(animator);
+            layerIndex = animator.GetLayerIndex(LayerName);
 
         if (layerIndex < 0)
         {
@@ -52,17 +76,46 @@ public static class CharacterWorkLayerAnim
 
     public static void Stop(Animator animator, int layerIndex)
     {
-        if (animator == null || layerIndex < 0)
+        if (animator == null)
+            return;
+
+        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
+        if (hybrid != null)
+        {
+            EnsureAnimancerWorkReady(hybrid, animator);
+            int index = layerIndex >= 0 ? layerIndex : CharacterLocomotionWorkAnimancer.LayerWork;
+            if (hybrid.IsGraphInitialized)
+                hybrid.Layers[index].Weight = 0f;
+            ForceMecanimWorkWeightZero(hybrid, animator);
+            return;
+        }
+
+        if (layerIndex < 0)
             return;
 
         animator.SetLayerWeight(layerIndex, 0f);
     }
 
-    /// <summary>맵 바인드·LocomotionAnim 바인드 후 — 레이어 없으면 LogError.</summary>
+    /// <summary>맵 바인드·LocomotionAnim 바인드 후 — Animancer Work(또는 Mecanim 폴백) 불가 시 LogError.</summary>
     public static bool ValidateOrLog(Animator animator, Object context = null)
     {
         if (animator == null)
             return false;
+
+        HybridAnimancerComponent hybrid = ResolveHybrid(animator);
+        if (hybrid != null)
+        {
+            EnsureAnimancerWorkReady(hybrid, animator);
+            if (hybrid.IsGraphInitialized || hybrid.Animator != null)
+                return true;
+
+            Object ctx = context != null ? context : animator;
+            Debug.LogError(
+                $"[CharacterWorkLayerAnim] Hybrid Animancer Work layer '{LayerName}' not ready. " +
+                "Vault/Farm/Fish work clips will not play. Prefab-wire HybridAnimancerComponent.",
+                ctx);
+            return false;
+        }
 
         if (HasLayer(animator))
             return true;
@@ -71,15 +124,65 @@ public static class CharacterWorkLayerAnim
         return false;
     }
 
+    static HybridAnimancerComponent ResolveHybrid(Animator animator)
+    {
+        if (animator == null)
+            return null;
+
+        if (animator.TryGetComponent(out HybridAnimancerComponent onSelf))
+            return onSelf;
+
+        HybridAnimancerComponent inChildren =
+            animator.GetComponentInChildren<HybridAnimancerComponent>(true);
+        if (inChildren != null)
+            return inChildren;
+
+        return animator.GetComponentInParent<HybridAnimancerComponent>();
+    }
+
+    static void EnsureAnimancerWorkReady(HybridAnimancerComponent hybrid, Animator animator)
+    {
+        if (hybrid == null)
+            return;
+
+        if (hybrid.Animator == null && animator != null)
+            hybrid.Animator = animator;
+
+        if (!hybrid.IsGraphInitialized)
+            hybrid.PlayController();
+
+        if (hybrid.IsGraphInitialized)
+            hybrid.Graph.PauseGraph();
+
+        CharacterLocomotionWorkAnimancer.ConfigureLayer(hybrid);
+    }
+
+    static void ForceMecanimWorkWeightZero(HybridAnimancerComponent hybrid, Animator animator)
+    {
+        if (hybrid != null && hybrid.Controller.IsValid)
+        {
+            int mecanimIndex = hybrid.GetLayerIndex(LayerName);
+            if (mecanimIndex >= 0 && !Mathf.Approximately(hybrid.GetLayerWeight(mecanimIndex), 0f))
+                hybrid.SetLayerWeight(mecanimIndex, 0f);
+            return;
+        }
+
+        if (animator == null)
+            return;
+
+        int index = animator.GetLayerIndex(LayerName);
+        if (index >= 0 && !Mathf.Approximately(animator.GetLayerWeight(index), 0f))
+            animator.SetLayerWeight(index, 0f);
+    }
+
     static void LogMissingLayer(Animator animator, Object context = null)
     {
         Object ctx = context != null ? context : animator;
         Debug.LogError(
-            $"[CharacterWorkLayerAnim] Animator controller is missing layer '{LayerName}'. " +
+            $"[CharacterWorkLayerAnim] Animator / Hybrid missing Work capability '{LayerName}'. " +
             "Vault/Farm/Fish work clips will not play. " +
-            "Fix: Unity menu Dist/MCP/Rebuild Arm Overlay Animator " +
-            "(or Dist/MCP/Ensure Work Layer). " +
-            $"Controller SSOT: {DefaultControllerPath}",
+            "S6: Animancer Play(clip) on Work layer — wire HybridAnimancerComponent on prefab. " +
+            $"Legacy controller path (remnant until S7): {DefaultControllerPath}",
             ctx);
     }
 }

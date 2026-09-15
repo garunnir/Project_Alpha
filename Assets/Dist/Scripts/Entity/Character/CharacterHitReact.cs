@@ -2,6 +2,7 @@
 // CharacterHitReact — 피격 밀침·Flinch·Stagger·PainDown·사망 Dead 애니 큐 (ApplyHit 미구독)
 // ============================================================
 
+using Animancer;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
@@ -36,6 +37,8 @@ public sealed class CharacterHitReact
     ICharacterBody _subscribedBody;
     CharacterImbalanceHost _imbalance;
     Animator _animator;
+    HybridAnimancerComponent _hybrid;
+    CharacterLocomotionAnim _loco;
     int _hashFlinch;
     int _hashStagger;
     int _hashPainShocked;
@@ -65,6 +68,16 @@ public sealed class CharacterHitReact
             _skillsHost = refs.SkillsHost;
             _imbalance = refs.ImbalanceHost;
             _animator = CharacterBodyResolve.GetInBody<Animator>(refs);
+            _hybrid = CharacterBodyResolve.GetInBody<HybridAnimancerComponent>(refs);
+            _loco = refs.LocomotionAnim;
+            if (_hybrid != null && _hybrid.Animator == null && _animator != null)
+                _hybrid.Animator = _animator;
+        }
+        else
+        {
+            _animator = null;
+            _hybrid = null;
+            _loco = null;
         }
 
         if (_animator == null && refs != null)
@@ -87,6 +100,8 @@ public sealed class CharacterHitReact
             _pain = _refs.PainHost;
         if (_imbalance == null && _refs != null)
             _imbalance = _refs.ImbalanceHost;
+        if (_loco == null && _refs != null)
+            _loco = _refs.LocomotionAnim;
 
         if (_eventsBound)
         {
@@ -131,6 +146,18 @@ public sealed class CharacterHitReact
     /// <summary>무기 Override·컨트롤러 교체 후 Hurt 파라미터 캐시·bool 재동기화.</summary>
     public void RefreshAnimatorHurtBinding()
     {
+        if (_refs != null)
+        {
+            if (_hybrid == null)
+            {
+                _hybrid = CharacterBodyResolve.GetInBody<HybridAnimancerComponent>(_refs);
+                if (_hybrid != null && _hybrid.Animator == null && _animator != null)
+                    _hybrid.Animator = _animator;
+            }
+
+            _loco = _refs.LocomotionAnim;
+        }
+
         CacheHurtParams();
         if (_eventsBound)
             SyncHurtBools();
@@ -151,12 +178,21 @@ public sealed class CharacterHitReact
         _hashStagger = Animator.StringToHash(ParamStagger);
         _hashPainShocked = Animator.StringToHash(ParamPainShocked);
         _hashDefeated = Animator.StringToHash(ParamDefeated);
-        _hurtLayerIndex = _animator.GetLayerIndex(HurtLayerName);
-        _flinchLayerIndex = _animator.GetLayerIndex(FlinchLayerName);
 
-        for (int i = 0; i < _animator.parameterCount; i++)
+        // S7+: Hybrid Controller often cleared — Mecanim Hurt layers/params unavailable.
+        // Animancer path uses CLA TryPlay*/TrySync* (indices/_has* unused).
+        if (UsesAnimancerHurt || (_hybrid != null && !HasHybridControllerPlayable()))
+            return;
+
+        _hurtLayerIndex = AnimGetLayerIndex(HurtLayerName);
+        _flinchLayerIndex = AnimGetLayerIndex(FlinchLayerName);
+
+        if (!TryGetHurtParameters(out AnimatorControllerParameter[] parameters))
+            return;
+
+        for (int i = 0; i < parameters.Length; i++)
         {
-            AnimatorControllerParameter p = _animator.parameters[i];
+            AnimatorControllerParameter p = parameters[i];
             if (p.nameHash == _hashFlinch && p.type == AnimatorControllerParameterType.Trigger)
                 _hasFlinch = true;
             else if (p.nameHash == _hashStagger && p.type == AnimatorControllerParameterType.Trigger)
@@ -166,6 +202,33 @@ public sealed class CharacterHitReact
             else if (p.nameHash == _hashDefeated && p.type == AnimatorControllerParameterType.Bool)
                 _hasDefeated = true;
         }
+    }
+
+    bool HasHybridControllerPlayable() =>
+        _hybrid != null
+        && _hybrid.Controller.IsValid
+        && _hybrid.Controller.State != null;
+
+    bool TryGetHurtParameters(out AnimatorControllerParameter[] parameters)
+    {
+        parameters = null;
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (_hybrid.Controller.IsValid && _hybrid.Controller.State != null)
+            {
+                parameters = _hybrid.parameters;
+                return parameters != null;
+            }
+
+            return false;
+        }
+
+        if (_animator == null)
+            return false;
+
+        parameters = _animator.parameters;
+        return parameters != null;
     }
 
     void OnPainChanged() => SyncPainBool();
@@ -215,22 +278,36 @@ public sealed class CharacterHitReact
         (_pain != null && _pain.IsPainShocked) ||
         (_defeat != null && _defeat.IsDefeated);
 
+    bool UsesAnimancerHurt =>
+        _loco != null && _loco.OwnsAnimancerHurt;
+
     void SyncPainBool()
     {
+        bool shocked = _pain != null && _pain.IsPainShocked;
+        if (_loco != null && _loco.TrySyncHitPainShocked(shocked))
+            return;
+
         if (!_hasPainShocked || _animator == null)
             return;
-        bool shocked = _pain != null && _pain.IsPainShocked;
-        _animator.SetBool(_hashPainShocked, shocked);
+        AnimSetBool(_hashPainShocked, shocked);
         if (shocked)
             LiftHurtLayer();
     }
 
     void SyncDeadBool()
     {
+        // Defeat SSOT = ICharacterDefeat.IsDefeated (not body.IsDeadState).
+        bool dead = _defeat != null && _defeat.IsDefeated;
+        if (_loco != null && _loco.TrySyncHitDefeated(dead))
+        {
+            if (!dead)
+                SyncPainBool();
+            return;
+        }
+
         if (!_hasDefeated || _animator == null)
             return;
-        bool dead = _defeat != null && _defeat.IsDefeated;
-        _animator.SetBool(_hashDefeated, dead);
+        AnimSetBool(_hashDefeated, dead);
         if (dead)
             LiftHurtLayer();
     }
@@ -286,33 +363,136 @@ public sealed class CharacterHitReact
 
     void PlayFlinch()
     {
+        if (_loco != null && _loco.TryPlayHitFlinch())
+            return;
+
         if (!_hasFlinch || _animator == null)
             return;
-        _animator.ResetTrigger(_hashFlinch);
-        _animator.SetTrigger(_hashFlinch);
+        AnimResetTrigger(_hashFlinch);
+        AnimSetTrigger(_hashFlinch);
         LiftFlinchLayer();
     }
 
     void PlayStagger()
     {
+        if (_loco != null && _loco.TryPlayHitStagger())
+            return;
+
         if (!_hasStagger || _animator == null)
             return;
-        _animator.ResetTrigger(_hashStagger);
-        _animator.SetTrigger(_hashStagger);
+        AnimResetTrigger(_hashStagger);
+        AnimSetTrigger(_hashStagger);
         LiftHurtLayer();
     }
 
     void LiftFlinchLayer()
     {
+        if (UsesAnimancerHurt)
+            return;
         if (_flinchLayerIndex < 0 || _animator == null)
             return;
-        _animator.SetLayerWeight(_flinchLayerIndex, 1f);
+        AnimSetLayerWeight(_flinchLayerIndex, 1f);
     }
 
     void LiftHurtLayer()
     {
+        if (UsesAnimancerHurt)
+            return;
         if (_hurtLayerIndex < 0 || _animator == null)
             return;
-        _animator.SetLayerWeight(_hurtLayerIndex, 1f);
+        AnimSetLayerWeight(_hurtLayerIndex, 1f);
+    }
+
+    void EnsureHybridReady()
+    {
+        if (_hybrid == null)
+            return;
+
+        if (_hybrid.Animator == null && _animator != null)
+            _hybrid.Animator = _animator;
+
+        // CLA owns Animancer layer layout when S5 Hurt path is active — do not PlayController.
+        if (_loco != null && _loco.OwnsAnimancerHurt)
+        {
+            if (_hybrid.IsGraphInitialized)
+                _hybrid.Graph.PauseGraph();
+            return;
+        }
+
+        _hybrid.PlayController();
+        if (_hybrid.IsGraphInitialized)
+            _hybrid.Graph.PauseGraph();
+    }
+
+    void AnimSetBool(int id, bool value)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetBool(id, value);
+            return;
+        }
+
+        _animator.SetBool(id, value);
+    }
+
+    void AnimSetTrigger(int id)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetTrigger(id);
+            return;
+        }
+
+        _animator.SetTrigger(id);
+    }
+
+    void AnimResetTrigger(int id)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.ResetTrigger(id);
+            return;
+        }
+
+        _animator.ResetTrigger(id);
+    }
+
+    void AnimSetLayerWeight(int layerIndex, float weight)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetLayerWeight(layerIndex, weight);
+            return;
+        }
+
+        _animator.SetLayerWeight(layerIndex, weight);
+    }
+
+    int AnimGetLayerIndex(string layerName)
+    {
+        if (string.IsNullOrEmpty(layerName))
+            return -1;
+
+        if (_hybrid != null)
+        {
+            EnsureHybridReady();
+            if (!HasHybridControllerPlayable())
+                return -1;
+            return _hybrid.GetLayerIndex(layerName);
+        }
+
+        return _animator != null ? _animator.GetLayerIndex(layerName) : -1;
     }
 }

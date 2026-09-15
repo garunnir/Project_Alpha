@@ -1,33 +1,42 @@
 // ============================================================
-// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + Impact + Hurt weight + thin remap
+// CharacterLocomotionAnim — MoveXZ (Animancer DirectionalMixer) + L/R/2H overlays + Impact + Hurt
 // ============================================================
+using Animancer;
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact + Hurt.
-/// TwoHand Attack stays UpperBody-masked (full-body replace looked unnatural on Idle).
-/// CombatLeaf selects Entry clips then Catalog Leaf, projected onto thin keys via
-/// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
-/// Hurt clips are controller thin only (no Catalog remap).
-/// Animation time advances via <see cref="TimeScaleService"/> only.
+/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact + Hurt + Work.
+/// S7 end state: live playback = Animancer layers only. Hybrid may host the graph but
+/// <c>CharacterAnimController</c> SM is not required (Controller cleared / Layers[7] weight 0, non-SSOT).
+/// Dynamic Layers: Move base always full-body (feet); while moving, Work layer uses UpperBody.mask.
+/// CombatLeaf → Entry→Catalog via <see cref="ArmAnimSlotResolver.ResolvePoseClip"/> /
+/// <see cref="ArmImpactSlotResolver.ResolveImpactClip"/> (thin remap = clip swap).
+/// Animation time advances via <see cref="TimeScaleService"/> → Animancer Evaluate only.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
 public class CharacterLocomotionAnim : MonoBehaviour
 {
     const string ManualTickHelp =
-        "Play 시 Animator 컴포넌트를 끕니다(TimeScale 채널 수동 틱). " +
-        "Inspector에서 Animator.enabled가 꺼져 보이는 것은 정상입니다. " +
-        "재생은 이 스크립트의 Update → Animator.Update(TimeScaleService.Delta)로만 진행됩니다.";
+        "Play: Animator stays enabled (Evaluate writes bones only when enabled) + Animancer Graph PauseGraph. " +
+        "Time source is CharacterLocomotionAnim → AnimancerComponent.Update(channelDelta)(=Evaluate), " +
+        "not PlayableGraph auto-play. Graph paused in Inspector/runtime is expected.";
 
     const string DefaultRightArmLayer = "RightArm Layer";
     const string DefaultLeftArmLayer = "LeftArm Layer";
     const string DefaultTwoHandLayer = "TwoHand Layer";
+    const string MecanimMoveLayerName = "Move Layer";
     const float DefaultPoseRate = 10f;
     const float DefaultLayerBlendSpeed = 10f;
     const int MaxPoseStepsPerFrame = 8;
     const float MoveDirEpsilonSqr = 1e-6f;
+    /// <summary>Approximately stopped MoveXZ magnitude (Animancer Move full-body mask).</summary>
+    const float MoveStoppedEpsilonSqr = 1e-4f;
+    /// <summary>Animancer layer: Directional Move mixer (base locomotion).</summary>
+    const int AnimancerMoveLayerIndex = 0;
+    /// <summary>Legacy slot index when Arm/Impact not yet configured (unused in S7 Animancer path).</summary>
+    const int AnimancerHybridLayerIndexLegacy = 1;
     const string AttackOverlayStateName = "Attack";
     const string HoldOverlayStateName = "Hold";
     const string AimOverlayStateName = "Aim";
@@ -41,11 +50,35 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.Player;
 
-    [Header("Animator (TimeScale manual tick)")]
+    [Header("Animator (TimeScale manual tick via Animancer)")]
     [Tooltip(ManualTickHelp)]
     [SerializeField] Animator _animator;
+    [Tooltip("Same Animator host. Prefab-wired Hybrid/Animancer graph host. Controller cleared when Animancer owns Move (S7).")]
+    [SerializeField] HybridAnimancerComponent _hybrid;
+    [Tooltip("Legacy CharacterAnimController / Override root identity only — not live playback SSOT when Animancer owns Move.")]
     [SerializeField] RuntimeAnimatorController _defaultController;
     [SerializeField] ArmAnimSlotCatalog _armSlotCatalog;
+    [Header("Animancer Move (S3)")]
+    [Tooltip("Idle + Walk/Run directional clips + walk/run ring thresholds (SSOT).")]
+    [SerializeField] CharacterLocomotionMoveSet _moveSet;
+    [Tooltip("UpperBody.mask — TwoHand arm layer + Dynamic Layers on Work Animancer layer while moving.")]
+    [SerializeField] AvatarMask _moveUpperBodyMask;
+    [Header("Animancer Arm / Impact (S4)")]
+    [Tooltip("RightArm.mask — Animancer RightArm pose layer.")]
+    [SerializeField] AvatarMask _rightArmMask;
+    [Tooltip("LeftArm.mask — Animancer LeftArm pose layer.")]
+    [SerializeField] AvatarMask _leftArmMask;
+    [Header("Animancer Hurt / Flinch (S5)")]
+    [Tooltip("HeadTorso.mask — Additive Flinch layer.")]
+    [SerializeField] AvatarMask _headTorsoMask;
+    [Tooltip("HitFlinch_Slot thin clip (not ArmAnimSlotCatalog).")]
+    [SerializeField] AnimationClip _hitFlinchClip;
+    [Tooltip("HitStagger_Slot thin clip.")]
+    [SerializeField] AnimationClip _hitStaggerClip;
+    [Tooltip("HitPainDown_Slot thin clip (loop).")]
+    [SerializeField] AnimationClip _hitPainDownClip;
+    [Tooltip("HitDead_Slot thin clip (one-shot).")]
+    [SerializeField] AnimationClip _hitDeadClip;
     [SerializeField] string _paramSpeed = "Speed";
     [SerializeField] string _paramMoveX = "MoveX";
     [SerializeField] string _paramMoveZ = "MoveZ";
@@ -62,8 +95,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
 
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
-    [LabelText("Manual tick active (Animator.enabled forced off)")]
-    bool ManualTickActive => _manualControl && _animator != null && !_animator.enabled;
+    [LabelText("Manual tick active (graph paused, Animator on)")]
+    bool ManualTickActive =>
+        _manualControl
+        && _animator != null
+        && _animator.enabled
+        && _hybrid != null
+        && _hybrid.IsGraphInitialized
+        && !_hybrid.Graph.IsGraphPlaying;
 
     CharacterState _characterState;
     CharacterAttacker _attacker;
@@ -143,6 +182,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
     float _speedAimL = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedAttackL = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedHold2H = WeaponAnimClipSpeeds.DefaultSpeed;
+    MixerTransition2D _moveMixerTransition;
+    Vector2MixerState _moveMixerState;
+    bool _animancerMoveReady;
+    bool _ensuringAnimancerGraph;
+    bool _moveLayerUsesUpperMask;
+    float _animancerMoveWeightTarget = 1f;
+    readonly CharacterLocomotionArmImpactAnimancer _armImpactAnimancer = new CharacterLocomotionArmImpactAnimancer();
+    readonly CharacterLocomotionHurtAnimancer _hurtAnimancer = new CharacterLocomotionHurtAnimancer();
+    readonly CharacterLocomotionWorkAnimancer _workAnimancer = new CharacterLocomotionWorkAnimancer();
+    int _mecanimWorkLayerIndex = -1;
+    bool _pendingAnimancerAttackR;
+    bool _pendingAnimancerAttackL;
+    bool _pendingAnimancerAttack2H;
     float _speedAim2H = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedAttack2H = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedImpactRecoil = WeaponAnimClipSpeeds.DefaultSpeed;
@@ -166,13 +218,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _attackQueueHead;
     int _attackQueueCount;
 
-    /// <summary>useHold=false일 때 Attack 큐→재생 동안 overlay 유지. 0=off 1=armed 2=playing.</summary>
+    /// <summary>useHold=false????Attack ?�→?�생 ?�안 overlay ?��?. 0=off 1=armed 2=playing.</summary>
     readonly byte[] _attackOverlayLatch = new byte[3];
     const byte AttackLatchOff = 0;
     const byte AttackLatchArmed = 1;
     const byte AttackLatchPlaying = 2;
 
     public Animator Animator => _animator;
+    /// <summary>S6: Animancer Work layer index when owned; else Mecanim Work Layer index.</summary>
     public int WorkLayerIndex { get; private set; } = -1;
     public ArmAnimSlotCatalog ArmSlotCatalog => _armSlotCatalog;
 
@@ -183,16 +236,23 @@ public class CharacterLocomotionAnim : MonoBehaviour
         return _animator != null && WorkLayerIndex >= 0;
     }
 
+    /// <summary>S6: Animancer Work layer index for binders (same as <see cref="WorkLayerIndex"/> when owned).</summary>
+    public bool TryGetWorkLayer(out int workLayerIndex)
+    {
+        workLayerIndex = WorkLayerIndex;
+        return WorkLayerIndex >= 0;
+    }
+
     void Awake()
     {
         ResolveBodyRefs();
         _hitStop = CharacterHitStopState.Find(this);
 
-        if (_animator == null)
-            _animator = GetComponentInChildren<Animator>();
+        ResolveAnimatorAndHybrid();
+        ConfigureHybridControllerPolicy();
 
-        if (_defaultController == null && _animator != null)
-            _defaultController = ResolveBaseController(_animator.runtimeAnimatorController);
+        if (_defaultController == null)
+            _defaultController = ResolveBaseController(ActiveController);
 
         ApplyWeaponAnimOverride(forceRebind: false);
         CacheAnimatorParameters();
@@ -244,8 +304,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void Reset()
     {
-        if (_animator == null)
-            _animator = GetComponentInChildren<Animator>();
+        ResolveAnimatorAndHybrid();
     }
 
     void OnValidate()
@@ -260,9 +319,91 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _armSlotCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(
                 "Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset");
         }
+
+        if (_moveSet == null)
+        {
+            _moveSet = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterLocomotionMoveSet>(
+                "Assets/Dist/SOData/Locomotion/CharacterLocomotionMoveSet.asset");
+        }
+
+        if (_moveUpperBodyMask == null)
+        {
+            _moveUpperBodyMask = UnityEditor.AssetDatabase.LoadAssetAtPath<AvatarMask>(
+                "Assets/Dist/Visual/Anim/CharacterAnimator/UpperBody.mask");
+        }
+
+        if (_rightArmMask == null)
+        {
+            _rightArmMask = UnityEditor.AssetDatabase.LoadAssetAtPath<AvatarMask>(
+                "Assets/Dist/Visual/Anim/CharacterAnimator/RightArm.mask");
+        }
+
+        if (_leftArmMask == null)
+        {
+            _leftArmMask = UnityEditor.AssetDatabase.LoadAssetAtPath<AvatarMask>(
+                "Assets/Dist/Visual/Anim/CharacterAnimator/LeftArm.mask");
+        }
 #endif
+        ResolveAnimatorAndHybrid();
         if (_animator != null)
             CacheAnimatorParameters();
+    }
+
+    void ResolveAnimatorAndHybrid()
+    {
+        if (_animator == null)
+            _animator = GetComponentInChildren<Animator>();
+        if (_hybrid == null)
+            _hybrid = GetComponentInChildren<HybridAnimancerComponent>();
+        if (_hybrid != null && _hybrid.Animator == null && _animator != null)
+            _hybrid.Animator = _animator;
+    }
+
+    /// <summary>
+    /// S7: when Animancer owns Move, clear Hybrid Controller so CharacterAnimController SM is not required.
+    /// Legacy fallback only assigns controller when MoveSet is not configured.
+    /// </summary>
+    void ConfigureHybridControllerPolicy()
+    {
+        if (_hybrid == null || _animator == null)
+            return;
+
+        if (_animator.runtimeAnimatorController != null)
+            _animator.runtimeAnimatorController = null;
+
+        // Keep a valid Controller asset on Hybrid for OnEnable/fallback.
+        // Animancer Move plays on Layers[0] and replaces that state's output when ready.
+        if (!_hybrid.Controller.IsValid && _defaultController != null)
+            _hybrid.Controller = _defaultController;
+    }
+
+    void ClearHybridController()
+    {
+        // Intentionally empty: clearing Controller left the graph with no Mecanim fallback.
+        // Move mixer ownership still replaces Layer 0 via Play(mixer); do not null the asset.
+    }
+
+    RuntimeAnimatorController ActiveController
+    {
+        get
+        {
+            if (_hybrid != null && _hybrid.Controller.IsValid)
+                return _hybrid.runtimeAnimatorController;
+            return _animator != null ? _animator.runtimeAnimatorController : null;
+        }
+        set
+        {
+            if (_hybrid != null)
+            {
+                _hybrid.runtimeAnimatorController = value;
+                if (_animator != null && _animator.runtimeAnimatorController != null)
+                    _animator.runtimeAnimatorController = null;
+                return;
+            }
+
+            if (_animator != null)
+                _animator.runtimeAnimatorController = value;
+        }
     }
 
     void Update()
@@ -283,26 +424,40 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         float speedNorm = ResolveNormalizedSpeed();
         if (_hasSpeed)
-            _animator.SetFloat(_hashSpeed, speedNorm);
+            AnimSetFloat(_hashSpeed, speedNorm);
 
         ResolveFacingMoveXZ(speedNorm, out float moveX, out float moveZ);
-        if (_hasMoveX)
-            _animator.SetFloat(_hashMoveX, moveX);
-        if (_hasMoveZ)
-            _animator.SetFloat(_hashMoveZ, moveZ);
+        if (OwnsAnimancerMove)
+        {
+            try
+            {
+                SyncAnimancerMove(moveX, moveZ, rebound ? 0f : TimeScaleService.Delta(_timeChannel));
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogException(ex, this);
+            }
+        }
+        else
+        {
+            if (_hasMoveX)
+                AnimSetFloat(_hashMoveX, moveX);
+            if (_hasMoveZ)
+                AnimSetFloat(_hashMoveZ, moveZ);
+        }
 
         bool isAiming = _characterState != null && _characterState.IsAiming;
         if (_hasAiming)
-            _animator.SetBool(_hashAiming, isAiming);
+            AnimSetBool(_hashAiming, isAiming);
 
         bool isStealth = _characterState != null && _characterState.IsStealth;
         if (_hasStealth)
-            _animator.SetBool(_hashStealth, isStealth);
+            AnimSetBool(_hashStealth, isStealth);
 
         bool isSwimming = _characterState != null
             && (_characterState.IsSwimming || _characterState.IsDiving);
         if (_hasSwimming)
-            _animator.SetBool(_hashSwimming, isSwimming);
+            AnimSetBool(_hashSwimming, isSwimming);
 
         ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H);
         ResolveHandPresentations(
@@ -341,8 +496,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
                     surpriseR: false,
                     surprise2H: surpriseAttack);
                 ArmAttackOverlay(attackHand);
-                if (_hasAttack2H)
-                    _animator.SetTrigger(_hashAttack2H);
+                if (OwnsAnimancerArmImpact)
+                    _pendingAnimancerAttack2H = true;
+                else if (_hasAttack2H)
+                    AnimSetTrigger(_hashAttack2H);
             }
             else if (attackHand == WieldHand.Left)
             {
@@ -357,8 +514,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
                     surpriseR: false,
                     surprise2H: false);
                 ArmAttackOverlay(attackHand);
-                if (_hasAttackL)
-                    _animator.SetTrigger(_hashAttackL);
+                if (OwnsAnimancerArmImpact)
+                    _pendingAnimancerAttackL = true;
+                else if (_hasAttackL)
+                    AnimSetTrigger(_hashAttackL);
             }
             else
             {
@@ -373,8 +532,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
                     surpriseR: surpriseAttack,
                     surprise2H: false);
                 ArmAttackOverlay(attackHand);
-                if (_hasAttackR)
-                    _animator.SetTrigger(_hashAttackR);
+                if (OwnsAnimancerArmImpact)
+                    _pendingAnimancerAttackR = true;
+                else if (_hasAttackR)
+                    AnimSetTrigger(_hashAttackR);
             }
         }
 
@@ -382,15 +543,23 @@ public class CharacterLocomotionAnim : MonoBehaviour
         UpdateFlinchWeightTarget();
         UpdateHurtWeightTarget();
         SyncVaultLayerWeights(rebound ? 0f : channelDelta);
+        if (OwnsAnimancerMove)
+            EnsureHybridPlayableReady();
+        // Pose before weight: arm layers use Body+Head masks — weight>0 with no clip = T-pose upper body.
+        if (OwnsAnimancerArmImpact)
+            SyncAnimancerArmPoses(presentationL, presentationR, presentation2H, actionL, actionR, action2H);
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
         SyncFlinchLayerWeight(rebound ? 0f : channelDelta);
         SyncHurtLayerWeight(rebound ? 0f : channelDelta);
+        if (OwnsAnimancerMove)
+            SyncHybridOverlayLayerWeightAfterArms();
         ApplyClipSpeedParams();
         AdvanceAnimator(channelDelta);
         TickAttackOverlayLatches();
         TickAttackCues();
         TickImpactEmpty();
+        TickHurtEmpty();
     }
 
     void SyncThinActionRemap(
@@ -404,7 +573,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         bool surpriseR = false,
         bool surprise2H = false)
     {
-        if (_resolvedOverride == null || _armSlotCatalog == null)
+        if (_armSlotCatalog == null)
+            return;
+        if (!OwnsAnimancerArmImpact && _resolvedOverride == null)
             return;
 
         if (actionL == _mappedActionL &&
@@ -418,18 +589,24 @@ public class CharacterLocomotionAnim : MonoBehaviour
             ReferenceEquals(presentation2H, _mappedPresentation2H))
             return;
 
-        ArmAnimSlotResolver.RemapThinKeys(
-            _resolvedOverride,
-            _armSlotCatalog,
-            presentationL,
-            presentationR,
-            presentation2H,
-            actionL,
-            actionR,
-            action2H,
-            surpriseL,
-            surpriseR,
-            surprise2H);
+        // S4 Animancer arm: ResolvePoseClip clip swap only (no Mecanim thin Remap / Rebind).
+        // Mecanim path still remaps thin keys onto Override.
+        if (!OwnsAnimancerArmImpact)
+        {
+            ArmAnimSlotResolver.RemapThinKeys(
+                _resolvedOverride,
+                _armSlotCatalog,
+                presentationL,
+                presentationR,
+                presentation2H,
+                actionL,
+                actionR,
+                action2H,
+                surpriseL,
+                surpriseR,
+                surprise2H);
+        }
+
         _mappedActionL = actionL;
         _mappedActionR = actionR;
         _mappedAction2H = action2H;
@@ -477,15 +654,37 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void PlayImpact(ArmImpactKind kind, WieldHand hand, CombatLeaf action)
     {
-        if (_animator == null || _armSlotCatalog == null || _resolvedOverride == null)
-            return;
-        if (_impactLayerIndex < 0)
+        if (_animator == null || _armSlotCatalog == null)
             return;
 
         CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
         WeaponPresentationCatalog presentationCatalog = gear?.PresentationCatalog
             ?? (_attacker != null ? _attacker.Catalog : null);
         WeaponPresentation presentation = PresentationForHand(gear, presentationCatalog, hand);
+
+        if (OwnsAnimancerArmImpact)
+        {
+            AnimationClip clip = ArmImpactSlotResolver.ResolveImpactClip(
+                _armSlotCatalog,
+                presentation,
+                action,
+                kind,
+                hand);
+            if (clip == null)
+                return;
+            float speed = SpeedOfClip(clip, presentation);
+            if (kind == ArmImpactKind.Blocked)
+                _speedImpactBlocked = speed;
+            else
+                _speedImpactRecoil = speed;
+            _armImpactAnimancer.PlayImpact(_hybrid, clip, speed);
+            _impactWeightTarget = 1f;
+            return;
+        }
+
+        if (_resolvedOverride == null || _impactLayerIndex < 0)
+            return;
+
         ArmImpactSlotResolver.ProjectImpact(
             _resolvedOverride,
             _armSlotCatalog,
@@ -495,49 +694,84 @@ public class CharacterLocomotionAnim : MonoBehaviour
             hand);
         RefreshImpactClipSpeeds();
         _impactWeightTarget = 1f;
-        _animator.SetLayerWeight(_impactLayerIndex, 1f);
+        AnimSetLayerWeight(_impactLayerIndex, 1f);
 
         if (kind == ArmImpactKind.Blocked)
         {
             if (_hasImpactBlocked)
-                _animator.SetTrigger(_hashImpactBlocked);
+                AnimSetTrigger(_hashImpactBlocked);
         }
         else if (_hasImpactRecoil)
         {
-            _animator.SetTrigger(_hashImpactRecoil);
+            AnimSetTrigger(_hashImpactRecoil);
         }
     }
 
     void SyncImpactLayerWeight(float channelDelta)
     {
+        if (OwnsAnimancerArmImpact)
+        {
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerImpact,
+                _impactWeightTarget,
+                channelDelta);
+            return;
+        }
+
         SetLayerWeightToward(_impactLayerIndex, _impactWeightTarget, channelDelta);
     }
 
     void SyncFlinchLayerWeight(float channelDelta)
     {
+        if (OwnsAnimancerHurt)
+        {
+            SetAnimancerHurtLayerWeightToward(
+                CharacterLocomotionHurtAnimancer.LayerFlinch,
+                _flinchWeightTarget,
+                channelDelta);
+            ForceMecanimFlinchHurtLayerWeightsZero();
+            return;
+        }
+
         SetLayerWeightToward(_flinchLayerIndex, _flinchWeightTarget, channelDelta);
     }
 
     void SyncHurtLayerWeight(float channelDelta)
     {
+        if (OwnsAnimancerHurt)
+        {
+            SetAnimancerHurtLayerWeightToward(
+                CharacterLocomotionHurtAnimancer.LayerHurt,
+                _hurtWeightTarget,
+                channelDelta);
+            ForceMecanimFlinchHurtLayerWeightsZero();
+            return;
+        }
+
         SetLayerWeightToward(_hurtLayerIndex, _hurtWeightTarget, channelDelta);
     }
 
     void UpdateFlinchWeightTarget()
     {
+        if (OwnsAnimancerHurt)
+        {
+            _flinchWeightTarget = _hurtAnimancer.IsFlinchPlaying() ? 1f : 0f;
+            return;
+        }
+
         if (_flinchLayerIndex < 0 || _animator == null)
             return;
 
         bool flinch = false;
-        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_flinchLayerIndex);
+        AnimatorStateInfo current = AnimGetCurrentAnimatorStateInfo(_flinchLayerIndex);
         flinch = current.shortNameHash == _hashHurtFlinchState;
-        if (!flinch && _animator.IsInTransition(_flinchLayerIndex))
+        if (!flinch && AnimIsInTransition(_flinchLayerIndex))
         {
-            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_flinchLayerIndex);
+            AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(_flinchLayerIndex);
             flinch = next.shortNameHash == _hashHurtFlinchState;
         }
 
-        if (!flinch && _hasHitFlinch && _animator.GetBool(_hashHurtFlinch))
+        if (!flinch && _hasHitFlinch && AnimGetBool(_hashHurtFlinch))
             flinch = true;
 
         _flinchWeightTarget = flinch ? 1f : 0f;
@@ -545,26 +779,31 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void UpdateHurtWeightTarget()
     {
-        // 할당 없음. 상태 해시 + 대기 트리거만.
+        if (OwnsAnimancerHurt)
+        {
+            _hurtWeightTarget = _hurtAnimancer.IsHurtWeightActive() ? 1f : 0f;
+            return;
+        }
+
         if (_hurtLayerIndex < 0 || _animator == null)
             return;
 
         bool hurt = false;
-        if (_hasDefeated && _animator.GetBool(_hashHurtDefeated))
+        if (_hasDefeated && AnimGetBool(_hashHurtDefeated))
             hurt = true;
-        else if (_hasPainShocked && _animator.GetBool(_hashHurtPainShocked))
+        else if (_hasPainShocked && AnimGetBool(_hashHurtPainShocked))
             hurt = true;
         else
         {
-            AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_hurtLayerIndex);
+            AnimatorStateInfo current = AnimGetCurrentAnimatorStateInfo(_hurtLayerIndex);
             hurt = IsHurtPlayingState(current.shortNameHash);
-            if (!hurt && _animator.IsInTransition(_hurtLayerIndex))
+            if (!hurt && AnimIsInTransition(_hurtLayerIndex))
             {
-                AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_hurtLayerIndex);
+                AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(_hurtLayerIndex);
                 hurt = IsHurtPlayingState(next.shortNameHash);
             }
 
-            if (!hurt && _hasHitStagger && _animator.GetBool(_hashHurtStagger))
+            if (!hurt && _hasHitStagger && AnimGetBool(_hashHurtStagger))
                 hurt = true;
         }
 
@@ -578,16 +817,26 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void TickImpactEmpty()
     {
-        if (_impactLayerIndex < 0 || _animator == null || _impactWeightTarget <= 0f)
+        if (_impactWeightTarget <= 0f)
             return;
 
-        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_impactLayerIndex);
+        if (OwnsAnimancerArmImpact)
+        {
+            if (!_armImpactAnimancer.IsImpactPlaying())
+                _impactWeightTarget = 0f;
+            return;
+        }
+
+        if (_impactLayerIndex < 0 || _animator == null)
+            return;
+
+        AnimatorStateInfo current = AnimGetCurrentAnimatorStateInfo(_impactLayerIndex);
         bool inImpact =
             current.shortNameHash == _hashImpactRecoilState ||
             current.shortNameHash == _hashImpactBlockedState;
-        if (_animator.IsInTransition(_impactLayerIndex))
+        if (AnimIsInTransition(_impactLayerIndex))
         {
-            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_impactLayerIndex);
+            AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(_impactLayerIndex);
             if (next.shortNameHash == _hashImpactRecoilState ||
                 next.shortNameHash == _hashImpactBlockedState)
                 inImpact = true;
@@ -597,10 +846,104 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _impactWeightTarget = 0f;
     }
 
+    void TickHurtEmpty()
+    {
+        if (!OwnsAnimancerHurt)
+            return;
+        _hurtAnimancer.TickEmptyWeights(_hybrid);
+        _flinchWeightTarget = _hurtAnimancer.IsFlinchPlaying() ? 1f : 0f;
+        _hurtWeightTarget = _hurtAnimancer.IsHurtWeightActive() ? 1f : 0f;
+    }
+
+    void SetAnimancerHurtLayerWeightToward(int animancerLayerIndex, float target, float channelDelta)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        float current = _hurtAnimancer.GetLayerWeight(_hybrid, animancerLayerIndex);
+        if (_layerBlendSpeed <= 0f || channelDelta <= 0f)
+        {
+            if (!Mathf.Approximately(current, target))
+                _hurtAnimancer.SetLayerWeight(_hybrid, animancerLayerIndex, target);
+            return;
+        }
+
+        float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
+        if (!Mathf.Approximately(current, next))
+            _hurtAnimancer.SetLayerWeight(_hybrid, animancerLayerIndex, next);
+    }
+
+    /// <summary>HitReact bridge: play Additive Flinch on Animancer when S5 owned.</summary>
+    public bool TryPlayHitFlinch()
+    {
+        if (!OwnsAnimancerHurt)
+            return false;
+        EnsureHybridPlayableReady();
+        _hurtAnimancer.PlayFlinch(_hybrid, _hitFlinchClip);
+        _flinchWeightTarget = 1f;
+        ForceMecanimFlinchHurtLayerWeightsZero();
+        return true;
+    }
+
+    /// <summary>HitReact bridge: play Override Stagger on Animancer when S5 owned.</summary>
+    public bool TryPlayHitStagger()
+    {
+        if (!OwnsAnimancerHurt)
+            return false;
+        EnsureHybridPlayableReady();
+        _hurtAnimancer.PlayStagger(_hybrid, _hitStaggerClip);
+        _hurtWeightTarget = 1f;
+        ForceMecanimFlinchHurtLayerWeightsZero();
+        return true;
+    }
+
+    /// <summary>HitReact bridge: PainDown loop while shocked (ICharacterDefeat path separate).</summary>
+    public bool TrySyncHitPainShocked(bool shocked)
+    {
+        if (!OwnsAnimancerHurt)
+            return false;
+        EnsureHybridPlayableReady();
+        if (shocked)
+        {
+            _hurtAnimancer.PlayPainDown(_hybrid, _hitPainDownClip);
+            _hurtWeightTarget = 1f;
+        }
+        else
+        {
+            _hurtAnimancer.ClearHurtIfMode(_hybrid, clearPain: true, clearDead: false);
+            _hurtWeightTarget = _hurtAnimancer.IsHurtWeightActive() ? 1f : 0f;
+        }
+
+        ForceMecanimFlinchHurtLayerWeightsZero();
+        return true;
+    }
+
+    /// <summary>HitReact bridge: Dead one-shot from ICharacterDefeat.IsDefeated (not body.IsDeadState).</summary>
+    public bool TrySyncHitDefeated(bool defeated)
+    {
+        if (!OwnsAnimancerHurt)
+            return false;
+        EnsureHybridPlayableReady();
+        if (defeated)
+        {
+            _hurtAnimancer.PlayDead(_hybrid, _hitDeadClip);
+            _hurtWeightTarget = 1f;
+        }
+        else
+        {
+            _hurtAnimancer.ClearHurtIfMode(_hybrid, clearPain: false, clearDead: true);
+            _hurtWeightTarget = _hurtAnimancer.IsHurtWeightActive() ? 1f : 0f;
+        }
+
+        ForceMecanimFlinchHurtLayerWeightsZero();
+        return true;
+    }
+
     void OnPresentationChanged()
     {
-        // Dual hand swap only changes CharacterAttacker.Presentation.
-        // Full rebind pops Attack overlay; thin remap from gear slots is enough.
+        // Dual hand swap: same AnimatorOverride source → ApplyWeaponAnimOverride early-outs;
+        // mapped invalidation drives ResolvePoseClip / thin remap without Rebind.
+        // Loadout Presentation with a new Override source → full BuildResolvedOverride + Rebind.
         _mappedActionL = (CombatLeaf)(-1);
         _mappedActionR = (CombatLeaf)(-1);
         _mappedAction2H = (CombatLeaf)(-1);
@@ -610,6 +953,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedPresentationL = null;
         _mappedPresentationR = null;
         _mappedPresentation2H = null;
+        ApplyWeaponAnimOverride(forceRebind: false);
     }
 
     void ApplyWeaponAnimOverride(bool forceRebind)
@@ -625,6 +969,48 @@ public class CharacterLocomotionAnim : MonoBehaviour
             source = _attacker.Presentation.AnimatorOverride;
         }
 
+        // Animancer path: Presentation/Catalog clip speeds only — no Mecanim Override remapping onto Hybrid.
+        if (OwnsAnimancerMove && _armSlotCatalog != null)
+        {
+            if (!forceRebind && ReferenceEquals(source, _weaponSourceController))
+            {
+                RefreshActionClipSpeeds();
+                RefreshImpactClipSpeeds();
+                return;
+            }
+
+            if (_resolvedOverride != null)
+            {
+                if (ReferenceEquals(ActiveController, _resolvedOverride))
+                    ActiveController = null;
+                Destroy(_resolvedOverride);
+                _resolvedOverride = null;
+            }
+
+            _weaponSourceController = source;
+            _mappedActionL = (CombatLeaf)(-1);
+            _mappedActionR = (CombatLeaf)(-1);
+            _mappedAction2H = (CombatLeaf)(-1);
+            _mappedSurpriseL = false;
+            _mappedSurpriseR = false;
+            _mappedSurprise2H = false;
+            _mappedPresentationL = null;
+            _mappedPresentationR = null;
+            _mappedPresentation2H = null;
+            RefreshActionClipSpeeds();
+            RefreshImpactClipSpeeds();
+            CacheAnimatorParameters();
+            RefreshWorkLayerIndex();
+            this.GetBodyRefs()?.HitReact?.RefreshAnimatorHurtBinding();
+            if (forceRebind || _manualControl)
+            {
+                _manualControl = false;
+                _pendingBind = true;
+            }
+
+            return;
+        }
+
         if (source == null)
             return;
 
@@ -633,8 +1019,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (_resolvedOverride != null)
         {
-            if (ReferenceEquals(_animator.runtimeAnimatorController, _resolvedOverride))
-                _animator.runtimeAnimatorController = null;
+            if (ReferenceEquals(ActiveController, _resolvedOverride))
+                ActiveController = null;
             Destroy(_resolvedOverride);
             _resolvedOverride = null;
         }
@@ -680,8 +1066,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
             ? (RuntimeAnimatorController)_resolvedOverride
             : source;
 
-        if (!ReferenceEquals(_animator.runtimeAnimatorController, next))
-            _animator.runtimeAnimatorController = next;
+        if (!ReferenceEquals(ActiveController, next))
+            ActiveController = next;
 
         CacheAnimatorParameters();
         RefreshWorkLayerIndex();
@@ -698,8 +1084,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (_resolvedOverride == null)
             return;
-        if (_animator != null && ReferenceEquals(_animator.runtimeAnimatorController, _resolvedOverride))
-            _animator.runtimeAnimatorController = _defaultController;
+        if (ReferenceEquals(ActiveController, _resolvedOverride))
+            ActiveController = _defaultController;
         Destroy(_resolvedOverride);
         _resolvedOverride = null;
     }
@@ -717,9 +1103,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void RefreshWorkLayerIndex()
     {
-        WorkLayerIndex = _animator != null
-            ? CharacterWorkLayerAnim.ResolveLayerIndex(_animator)
-            : -1;
+        _mecanimWorkLayerIndex = AnimGetLayerIndex(CharacterWorkLayerAnim.LayerName);
+        if (OwnsAnimancerWork || WantsAnimancerWork)
+            WorkLayerIndex = CharacterLocomotionWorkAnimancer.LayerWork;
+        else
+            WorkLayerIndex = _mecanimWorkLayerIndex;
     }
 
     void TickAttackCues()
@@ -737,18 +1125,30 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (!_attacker.HasPendingFor(hand))
             return;
 
+        if (OwnsAnimancerArmImpact)
+        {
+            if (_armImpactAnimancer.TryGetAttackNormalizedTime(hand, out float animancerNt))
+            {
+                _attacker.NotifyAttackOverlayTick(hand, inAttack: true, animancerNt);
+                return;
+            }
+
+            _attacker.NotifyAttackOverlayTick(hand, inAttack: false, normalizedTime: 0f);
+            return;
+        }
+
         if (layerIndex < 0)
         {
             _attacker.NotifyAttackCueForHand(hand);
             return;
         }
 
-        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(layerIndex);
+        AnimatorStateInfo current = AnimGetCurrentAnimatorStateInfo(layerIndex);
         bool inAttack = current.shortNameHash == _hashAttackState;
         float normalizedTime = current.normalizedTime;
-        if (_animator.IsInTransition(layerIndex))
+        if (AnimIsInTransition(layerIndex))
         {
-            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+            AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(layerIndex);
             if (next.shortNameHash == _hashAttackState)
             {
                 inAttack = true;
@@ -759,35 +1159,35 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attacker.NotifyAttackOverlayTick(hand, inAttack, normalizedTime);
     }
 
-    // Update: SetFloat only. No alloc. Clip table lookup is cached on remap/Impact.
+    // Update: SetFloat only on Mecanim path. Animancer arm/impact use state.Speed in SyncAnimancerArmPoses / PlayImpact.
     void ApplyClipSpeedParams()
     {
-        if (_animator == null)
+        if (_animator == null || OwnsAnimancerArmImpact)
             return;
         if (_hasArmSpeedR)
-            _animator.SetFloat(
+            AnimSetFloat(
                 _hashArmSpeedR,
                 SpeedForArmLayer(_rightArmLayerIndex, _speedHoldR, _speedAimR, _speedAttackR));
         if (_hasArmSpeedL)
-            _animator.SetFloat(
+            AnimSetFloat(
                 _hashArmSpeedL,
                 SpeedForArmLayer(_leftArmLayerIndex, _speedHoldL, _speedAimL, _speedAttackL));
         if (_hasArmSpeed2H)
-            _animator.SetFloat(
+            AnimSetFloat(
                 _hashArmSpeed2H,
                 SpeedForArmLayer(_twoHandLayerIndex, _speedHold2H, _speedAim2H, _speedAttack2H));
         if (_hasImpactSpeed)
-            _animator.SetFloat(_hashImpactSpeed, SpeedForImpactLayer());
+            AnimSetFloat(_hashImpactSpeed, SpeedForImpactLayer());
     }
 
     float SpeedForArmLayer(int layerIndex, float hold, float aim, float attack)
     {
         if (layerIndex < 0)
             return WeaponAnimClipSpeeds.DefaultSpeed;
-        AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(layerIndex);
-        if (_animator.IsInTransition(layerIndex))
+        AnimatorStateInfo info = AnimGetCurrentAnimatorStateInfo(layerIndex);
+        if (AnimIsInTransition(layerIndex))
         {
-            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+            AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(layerIndex);
             int nextHash = next.shortNameHash;
             if (nextHash == _hashAttackState ||
                 nextHash == _hashAimState ||
@@ -806,10 +1206,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (_impactLayerIndex < 0)
             return WeaponAnimClipSpeeds.DefaultSpeed;
-        AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(_impactLayerIndex);
-        if (_animator.IsInTransition(_impactLayerIndex))
+        AnimatorStateInfo info = AnimGetCurrentAnimatorStateInfo(_impactLayerIndex);
+        if (AnimIsInTransition(_impactLayerIndex))
         {
-            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_impactLayerIndex);
+            AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(_impactLayerIndex);
             int nextHash = next.shortNameHash;
             if (nextHash == _hashImpactRecoilState || nextHash == _hashImpactBlockedState)
                 info = next;
@@ -824,13 +1224,68 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void RefreshActionClipSpeeds()
     {
-        ArmAnimSlotCatalog.HandClips hold = _armSlotCatalog != null ? _armSlotCatalog.HoldThin : null;
-        ArmAnimSlotCatalog.HandClips aim = _armSlotCatalog != null ? _armSlotCatalog.AimThin : null;
-        ArmAnimSlotCatalog.HandClips attack = _armSlotCatalog != null ? _armSlotCatalog.AttackThin : null;
         ResolveHandPresentations(
             out WeaponPresentation presentationL,
             out WeaponPresentation presentationR,
             out WeaponPresentation presentation2H);
+        ResolveHandActions(out CombatLeaf actionL, out CombatLeaf actionR, out CombatLeaf action2H);
+
+        if (OwnsAnimancerArmImpact || _armSlotCatalog != null)
+        {
+            _speedHoldR = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationR, actionR, WieldHand.Right,
+                    ArmAnimSlotResolver.PoseKind.Hold),
+                presentationR);
+            _speedAimR = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationR, actionR, WieldHand.Right,
+                    ArmAnimSlotResolver.PoseKind.Aim),
+                presentationR);
+            _speedAttackR = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationR, actionR, WieldHand.Right,
+                    ArmAnimSlotResolver.PoseKind.Attack,
+                    _mappedSurpriseR),
+                presentationR);
+            _speedHoldL = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationL, actionL, WieldHand.Left,
+                    ArmAnimSlotResolver.PoseKind.Hold),
+                presentationL);
+            _speedAimL = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationL, actionL, WieldHand.Left,
+                    ArmAnimSlotResolver.PoseKind.Aim),
+                presentationL);
+            _speedAttackL = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentationL, actionL, WieldHand.Left,
+                    ArmAnimSlotResolver.PoseKind.Attack,
+                    _mappedSurpriseL),
+                presentationL);
+            _speedHold2H = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentation2H, action2H, WieldHand.TwoHand,
+                    ArmAnimSlotResolver.PoseKind.Hold),
+                presentation2H);
+            _speedAim2H = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentation2H, action2H, WieldHand.TwoHand,
+                    ArmAnimSlotResolver.PoseKind.Aim),
+                presentation2H);
+            _speedAttack2H = SpeedOfClip(
+                ArmAnimSlotResolver.ResolvePoseClip(
+                    _armSlotCatalog, presentation2H, action2H, WieldHand.TwoHand,
+                    ArmAnimSlotResolver.PoseKind.Attack,
+                    _mappedSurprise2H),
+                presentation2H);
+            return;
+        }
+
+        ArmAnimSlotCatalog.HandClips hold = _armSlotCatalog != null ? _armSlotCatalog.HoldThin : null;
+        ArmAnimSlotCatalog.HandClips aim = _armSlotCatalog != null ? _armSlotCatalog.AimThin : null;
+        ArmAnimSlotCatalog.HandClips attack = _armSlotCatalog != null ? _armSlotCatalog.AttackThin : null;
         _speedHoldR = SpeedOfThin(hold != null ? hold.rightBase : null, presentationR);
         _speedAimR = SpeedOfThin(aim != null ? aim.rightBase : null, presentationR);
         _speedAttackR = SpeedOfThin(attack != null ? attack.rightBase : null, presentationR);
@@ -849,6 +1304,21 @@ public class CharacterLocomotionAnim : MonoBehaviour
         {
             _speedImpactRecoil = WeaponAnimClipSpeeds.DefaultSpeed;
             _speedImpactBlocked = WeaponAnimClipSpeeds.DefaultSpeed;
+            return;
+        }
+
+        if (OwnsAnimancerArmImpact)
+        {
+            CombatLeaf action = _attacker != null ? _attacker.SelectedLeaf : CombatLeaf.Strike;
+            WieldHand hand = _attacker != null ? _attacker.ActiveWieldHand : WieldHand.Right;
+            _speedImpactRecoil = SpeedOfClip(
+                ArmImpactSlotResolver.ResolveImpactClip(
+                    _armSlotCatalog, presentation, action, ArmImpactKind.Recoil, hand),
+                presentation);
+            _speedImpactBlocked = SpeedOfClip(
+                ArmImpactSlotResolver.ResolveImpactClip(
+                    _armSlotCatalog, presentation, action, ArmImpactKind.Blocked, hand),
+                presentation);
             return;
         }
 
@@ -884,7 +1354,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (_poseRate <= 0f)
         {
-            _animator.Update(channelDelta);
+            AdvanceAnimGraph(channelDelta);
             return;
         }
 
@@ -894,13 +1364,573 @@ public class CharacterLocomotionAnim : MonoBehaviour
         while (_poseAccum >= step && steps < MaxPoseStepsPerFrame)
         {
             _poseAccum -= step;
-            _animator.Update(step);
+            AdvanceAnimGraph(step);
             steps++;
         }
 
         if (steps >= MaxPoseStepsPerFrame && _poseAccum >= step)
             _poseAccum %= step;
     }
+
+    void AdvanceAnimGraph(float deltaTime)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            _hybrid.Update(deltaTime);
+            return;
+        }
+
+        _animator.Update(deltaTime);
+    }
+
+    bool OwnsAnimancerMove =>
+        _hybrid != null && _moveSet != null && _moveSet.IsConfigured;
+
+    /// <summary>Work Animancer layer 8; Layers[7] Hybrid remnant stays weight 0 (non-SSOT, S7).</summary>
+    bool WantsAnimancerArmImpact =>
+        OwnsAnimancerMove
+        && _armSlotCatalog != null
+        && _rightArmMask != null
+        && _leftArmMask != null
+        && _moveUpperBodyMask != null;
+
+    bool OwnsAnimancerArmImpact =>
+        WantsAnimancerArmImpact && _armImpactAnimancer.IsReady;
+
+    bool WantsAnimancerHurt =>
+        WantsAnimancerArmImpact
+        && _headTorsoMask != null
+        && _hitFlinchClip != null
+        && _hitStaggerClip != null
+        && _hitPainDownClip != null
+        && _hitDeadClip != null;
+
+    /// <summary>Flinch/Hurt Animancer ownership.</summary>
+    public bool OwnsAnimancerHurt =>
+        WantsAnimancerHurt && _hurtAnimancer.IsReady;
+
+    /// <summary>Work Animancer when Move graph is owned (same Animancer Evaluate path).</summary>
+    bool WantsAnimancerWork => OwnsAnimancerMove;
+
+    /// <summary>Work Animancer ownership.</summary>
+    public bool OwnsAnimancerWork =>
+        WantsAnimancerWork && _workAnimancer.IsReady;
+
+    int AnimancerHybridLayerIndex =>
+        WantsAnimancerArmImpact
+            ? CharacterLocomotionArmImpactAnimancer.LayerHybrid
+            : AnimancerHybridLayerIndexLegacy;
+
+    /// <summary>Dynamic UpperBody mask targets Work layer when owned; else unused remnant slot.</summary>
+    int AnimancerDynamicMaskLayerIndex =>
+        WantsAnimancerWork
+            ? CharacterLocomotionWorkAnimancer.LayerWork
+            : AnimancerHybridLayerIndex;
+
+    void EnsureHybridPlayableReady()
+    {
+        if (_hybrid == null || _ensuringAnimancerGraph)
+            return;
+
+        if (_hybrid.Animator == null && _animator != null)
+            _hybrid.Animator = _animator;
+
+        _ensuringAnimancerGraph = true;
+        try
+        {
+            if (OwnsAnimancerMove)
+            {
+                EnsureAnimancerMoveGraph();
+                if (!_animancerMoveReady)
+                {
+                    // Move mixer failed — fall back to Mecanim so we never stick in bind/T-pose.
+                    if (!_hybrid.Controller.IsValid && _defaultController != null)
+                        _hybrid.Controller = _defaultController;
+                    if (_hybrid.Controller.IsValid)
+                        _hybrid.PlayController();
+                }
+            }
+            else
+            {
+                if (!_hybrid.Controller.IsValid && _defaultController != null)
+                    _hybrid.Controller = _defaultController;
+                _armImpactAnimancer.Invalidate();
+                _hurtAnimancer.Invalidate();
+                _workAnimancer.Invalidate();
+                _hybrid.PlayController();
+            }
+
+            if (_hybrid.IsGraphInitialized && _hybrid.Graph.IsGraphPlaying)
+                _hybrid.Graph.PauseGraph();
+        }
+        finally
+        {
+            _ensuringAnimancerGraph = false;
+        }
+    }
+
+    void EnsureAnimancerMoveGraph()
+    {
+        if (_hybrid == null || !OwnsAnimancerMove)
+            return;
+
+        if (_moveMixerTransition == null)
+            _moveMixerTransition = new MixerTransition2D();
+
+        if (!_moveSet.TryConfigureMixer(_moveMixerTransition))
+        {
+            _animancerMoveReady = false;
+            _armImpactAnimancer.Invalidate();
+            _hurtAnimancer.Invalidate();
+            _workAnimancer.Invalidate();
+            Debug.LogError(
+                $"[CharacterLocomotionAnim] MoveSet not configured on '{name}'. Falling back to Mecanim.",
+                this);
+            return;
+        }
+
+        AnimancerLayer moveLayer = _hybrid.Layers[AnimancerMoveLayerIndex];
+        moveLayer.SetDebugName("Animancer Move");
+
+        if (_moveMixerState == null || !_moveMixerState.IsValid() || _moveMixerState.Layer != moveLayer)
+            _moveMixerState = (Vector2MixerState)moveLayer.Play(_moveMixerTransition);
+        else if (moveLayer.CurrentState != _moveMixerState)
+            moveLayer.Play(_moveMixerState);
+
+        moveLayer.Weight = 1f;
+
+        bool wantArmImpact = WantsAnimancerArmImpact;
+        bool hurtWasReady = _hurtAnimancer.IsReady;
+
+        if (wantArmImpact)
+        {
+            _armImpactAnimancer.Ensure(_hybrid, _rightArmMask, _leftArmMask, _moveUpperBodyMask);
+            if (WantsAnimancerHurt)
+                _hurtAnimancer.Ensure(_hybrid, _headTorsoMask);
+            else
+                _hurtAnimancer.Invalidate();
+        }
+        else
+        {
+            _armImpactAnimancer.Invalidate();
+            _hurtAnimancer.Invalidate();
+            KeepHybridRemnantInert();
+        }
+
+        if (WantsAnimancerWork)
+            _workAnimancer.Ensure(_hybrid);
+        else
+            _workAnimancer.Invalidate();
+
+        _animancerMoveReady = _moveMixerState != null && _moveMixerState.IsValid();
+        if (!_animancerMoveReady)
+        {
+            Debug.LogError(
+                $"[CharacterLocomotionAnim] Animancer Move Play failed on '{name}'. Falling back to Mecanim.",
+                this);
+            return;
+        }
+
+        ApplyAnimancerMoveWeightImmediate(Mathf.Max(_animancerMoveWeightTarget, 1f));
+        ForceMecanimMoveLayerWeightZero();
+        if (OwnsAnimancerArmImpact)
+            ForceMecanimArmImpactLayerWeightsZero();
+        if (OwnsAnimancerHurt)
+        {
+            ForceMecanimFlinchHurtLayerWeightsZero();
+            if (!hurtWasReady)
+                this.GetBodyRefs()?.HitReact?.RefreshAnimatorHurtBinding();
+        }
+        if (OwnsAnimancerWork)
+        {
+            ForceMecanimWorkLayerWeightZero();
+            RefreshWorkLayerIndex();
+        }
+
+        KeepHybridRemnantInert();
+    }
+
+    void SyncAnimancerMove(float moveX, float moveZ, float channelDelta)
+    {
+        EnsureHybridPlayableReady();
+        if (!_animancerMoveReady || _moveMixerState == null)
+            return;
+
+        ForceMecanimMoveLayerWeightZero();
+        if (OwnsAnimancerArmImpact)
+            ForceMecanimArmImpactLayerWeightsZero();
+        if (OwnsAnimancerHurt)
+            ForceMecanimFlinchHurtLayerWeightsZero();
+        if (OwnsAnimancerWork)
+            ForceMecanimWorkLayerWeightZero();
+        _moveMixerState.Parameter = new Vector2(moveX, moveZ);
+
+        bool stopped = (moveX * moveX) + (moveZ * moveZ) <= MoveStoppedEpsilonSqr;
+        // Dynamic Layers: Move base stays full-body (feet). Overlay host uses UpperBody while moving.
+        ApplyAnimancerMoveDynamicMask(stopped);
+
+        bool vaultBusy = _vaultHost != null && _vaultHost.IsBusy;
+        _animancerMoveWeightTarget = vaultBusy ? 0f : 1f;
+        SetAnimancerMoveWeightToward(_animancerMoveWeightTarget, channelDelta);
+    }
+
+    void SyncHybridOverlayLayerWeightAfterArms()
+    {
+        if (!_animancerMoveReady)
+            return;
+
+        float moveX = _moveMixerState != null ? _moveMixerState.Parameter.x : 0f;
+        float moveZ = _moveMixerState != null ? _moveMixerState.Parameter.y : 0f;
+        bool stopped = (moveX * moveX) + (moveZ * moveZ) <= MoveStoppedEpsilonSqr;
+        ApplyAnimancerMoveDynamicMask(stopped);
+        SyncHybridOverlayLayerWeight(stopped);
+    }
+
+    void ApplyAnimancerMoveDynamicMask(bool stopped)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        // Never assign Mask=null — Animancer default-mask path can throw ArgumentNullException
+        // and abort Update before Evaluate → permanent T-pose.
+        // Moving: UpperBody on Work/overlay host. Idle: leave mask as-is (host weight usually 0).
+        AnimancerLayer maskLayer = _hybrid.Layers[AnimancerDynamicMaskLayerIndex];
+        bool wantUpper = !stopped && _moveUpperBodyMask != null;
+        bool fullBodyOverride = _hurtWeightTarget > 0.01f || _impactWeightTarget > 0.01f;
+        if (fullBodyOverride)
+            wantUpper = false;
+
+        if (!wantUpper)
+        {
+            _moveLayerUsesUpperMask = false;
+            return;
+        }
+
+        if (_moveLayerUsesUpperMask && maskLayer.Mask == _moveUpperBodyMask)
+            return;
+
+        maskLayer.Mask = _moveUpperBodyMask;
+        _moveLayerUsesUpperMask = true;
+    }
+
+    void SyncHybridOverlayLayerWeight(bool _)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        // S7: live playback is Animancer layers only. Layers[7] remnant stays inert (non-SSOT).
+        if (OwnsAnimancerMove)
+        {
+            KeepHybridRemnantInert();
+            if (OwnsAnimancerWork)
+                ForceMecanimWorkLayerWeightZero();
+            return;
+        }
+
+        AnimancerLayer overlayLayer = _hybrid.Layers[AnimancerHybridLayerIndex];
+
+        float remnant = 0f;
+        if (_rightArmLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_rightArmLayerIndex));
+        if (_leftArmLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_leftArmLayerIndex));
+        if (_twoHandLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_twoHandLayerIndex));
+        if (_impactLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_impactLayerIndex));
+        if (_flinchLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_flinchLayerIndex));
+        if (_hurtLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_hurtLayerIndex));
+        if (_mecanimWorkLayerIndex >= 0)
+            remnant = Mathf.Max(remnant, AnimGetLayerWeight(_mecanimWorkLayerIndex));
+
+        float target = remnant > 0.01f
+            || _hurtWeightTarget > 0.01f
+            || _impactWeightTarget > 0.01f
+            || _flinchWeightTarget > 0.01f
+            ? 1f
+            : 0f;
+        if (!Mathf.Approximately(overlayLayer.Weight, target))
+            overlayLayer.Weight = target;
+
+        if (_hybrid.Controller.IsValid
+            && (_hybrid.Controller.State == null || _hybrid.Controller.State.Layer != overlayLayer))
+            overlayLayer.Play(_hybrid.Controller);
+    }
+
+    /// <summary>Layers[7] unused Hybrid remnant — weight 0, no Controller play (S7 non-SSOT).</summary>
+    void KeepHybridRemnantInert()
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        AnimancerLayer remnant = _hybrid.Layers[AnimancerHybridLayerIndex];
+        remnant.SetDebugName("Unused Hybrid remnant (non-SSOT)");
+        if (!Mathf.Approximately(remnant.Weight, 0f))
+            remnant.Weight = 0f;
+    }
+
+    void ForceMecanimMoveLayerWeightZero()
+    {
+        // Controller cleared under Animancer Move — no Mecanim layers to zero.
+        if (OwnsAnimancerMove || !HasHybridControllerPlayable())
+        {
+            _moveLayerIndex = -1;
+            return;
+        }
+
+        if (_moveLayerIndex < 0)
+            return;
+
+        if (!Mathf.Approximately(AnimGetLayerWeight(_moveLayerIndex), 0f))
+            AnimSetLayerWeight(_moveLayerIndex, 0f);
+    }
+
+    void ForceMecanimArmImpactLayerWeightsZero()
+    {
+        if (OwnsAnimancerMove || !HasHybridControllerPlayable())
+        {
+            _rightArmLayerIndex = -1;
+            _leftArmLayerIndex = -1;
+            _twoHandLayerIndex = -1;
+            _impactLayerIndex = -1;
+            return;
+        }
+
+        if (_rightArmLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_rightArmLayerIndex), 0f))
+            AnimSetLayerWeight(_rightArmLayerIndex, 0f);
+        if (_leftArmLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_leftArmLayerIndex), 0f))
+            AnimSetLayerWeight(_leftArmLayerIndex, 0f);
+        if (_twoHandLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_twoHandLayerIndex), 0f))
+            AnimSetLayerWeight(_twoHandLayerIndex, 0f);
+        if (_impactLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_impactLayerIndex), 0f))
+            AnimSetLayerWeight(_impactLayerIndex, 0f);
+    }
+
+    void ForceMecanimFlinchHurtLayerWeightsZero()
+    {
+        if (OwnsAnimancerMove || !HasHybridControllerPlayable())
+        {
+            _flinchLayerIndex = -1;
+            _hurtLayerIndex = -1;
+            return;
+        }
+
+        if (_flinchLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_flinchLayerIndex), 0f))
+            AnimSetLayerWeight(_flinchLayerIndex, 0f);
+        if (_hurtLayerIndex >= 0 && !Mathf.Approximately(AnimGetLayerWeight(_hurtLayerIndex), 0f))
+            AnimSetLayerWeight(_hurtLayerIndex, 0f);
+    }
+
+    void ForceMecanimWorkLayerWeightZero()
+    {
+        if (OwnsAnimancerMove || !HasHybridControllerPlayable())
+        {
+            _mecanimWorkLayerIndex = -1;
+            return;
+        }
+
+        if (_mecanimWorkLayerIndex < 0)
+            _mecanimWorkLayerIndex = AnimGetLayerIndex(CharacterWorkLayerAnim.LayerName);
+        if (_mecanimWorkLayerIndex < 0)
+            return;
+
+        if (!Mathf.Approximately(AnimGetLayerWeight(_mecanimWorkLayerIndex), 0f))
+            AnimSetLayerWeight(_mecanimWorkLayerIndex, 0f);
+    }
+
+    void SetAnimancerMoveWeightToward(float target, float channelDelta)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        AnimancerLayer moveLayer = _hybrid.Layers[AnimancerMoveLayerIndex];
+        float current = moveLayer.Weight;
+        if (_layerBlendSpeed <= 0f || channelDelta <= 0f)
+        {
+            if (!Mathf.Approximately(current, target))
+                ApplyAnimancerMoveWeightImmediate(target);
+            return;
+        }
+
+        float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
+        if (!Mathf.Approximately(current, next))
+            ApplyAnimancerMoveWeightImmediate(next);
+    }
+
+    void ApplyAnimancerMoveWeightImmediate(float weight)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        AnimancerLayer moveLayer = _hybrid.Layers[AnimancerMoveLayerIndex];
+        moveLayer.Weight = weight;
+    }
+
+    void AnimSetFloat(int id, float value)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetFloat(id, value);
+            return;
+        }
+
+        _animator.SetFloat(id, value);
+    }
+
+    void AnimSetBool(int id, bool value)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetBool(id, value);
+            return;
+        }
+
+        _animator.SetBool(id, value);
+    }
+
+    void AnimSetTrigger(int id)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetTrigger(id);
+            return;
+        }
+
+        _animator.SetTrigger(id);
+    }
+
+    void AnimSetLayerWeight(int layerIndex, float weight)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return;
+            _hybrid.SetLayerWeight(layerIndex, weight);
+            return;
+        }
+
+        _animator.SetLayerWeight(layerIndex, weight);
+    }
+
+    float AnimGetLayerWeight(int layerIndex)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return 0f;
+            return _hybrid.GetLayerWeight(layerIndex);
+        }
+
+        return _animator.GetLayerWeight(layerIndex);
+    }
+
+    AnimatorStateInfo AnimGetCurrentAnimatorStateInfo(int layerIndex)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return default;
+            return _hybrid.GetCurrentAnimatorStateInfo(layerIndex);
+        }
+
+        return _animator.GetCurrentAnimatorStateInfo(layerIndex);
+    }
+
+    AnimatorStateInfo AnimGetNextAnimatorStateInfo(int layerIndex)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return default;
+            return _hybrid.GetNextAnimatorStateInfo(layerIndex);
+        }
+
+        return _animator.GetNextAnimatorStateInfo(layerIndex);
+    }
+
+    bool AnimIsInTransition(int layerIndex)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return false;
+            return _hybrid.IsInTransition(layerIndex);
+        }
+
+        return _animator.IsInTransition(layerIndex);
+    }
+
+    bool AnimGetBool(int id)
+    {
+        if (_hybrid != null)
+        {
+            EnsureHybridPlayableReady();
+            if (!HasHybridControllerPlayable())
+                return false;
+            return _hybrid.GetBool(id);
+        }
+
+        return _animator.GetBool(id);
+    }
+
+    int AnimGetLayerIndex(string layerName)
+    {
+        if (string.IsNullOrEmpty(layerName))
+            return -1;
+
+        // Animancer Move clears Hybrid Controller — Mecanim layer names are not addressable.
+        if (OwnsAnimancerMove)
+            return -1;
+
+        if (_hybrid != null)
+        {
+            if (!Application.isPlaying)
+            {
+#if UNITY_EDITOR
+                RuntimeAnimatorController c = ActiveController;
+                if (c is AnimatorOverrideController o)
+                    c = o.runtimeAnimatorController;
+                if (c is UnityEditor.Animations.AnimatorController ac)
+                {
+                    for (int i = 0; i < ac.layers.Length; i++)
+                    {
+                        if (ac.layers[i].name == layerName)
+                            return i;
+                    }
+                }
+#endif
+                return -1;
+            }
+
+            if (!HasHybridControllerPlayable())
+                return -1;
+            return _hybrid.GetLayerIndex(layerName);
+        }
+
+        return _animator != null ? _animator.GetLayerIndex(layerName) : -1;
+    }
+
+    bool HasHybridControllerPlayable() =>
+        _hybrid != null
+        && _hybrid.Controller.IsValid
+        && _hybrid.Controller.State != null;
 
     void CacheAnimatorParameters()
     {
@@ -950,7 +1980,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashHurtPainDownState = Hash(CharacterHitReact.StatePainDown);
         _hashHurtDeadState = Hash(CharacterHitReact.StateDead);
 
-        if (_animator == null || _animator.runtimeAnimatorController == null)
+        if (_animator == null || ActiveController == null)
             return;
 
         _hashSpeed = Hash(_paramSpeed);
@@ -963,7 +1993,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashAttackL = Hash(_paramAttackL);
         _hashAttack2H = Hash(_paramAttack2H);
 
-        AnimatorControllerParameter[] parameters = _animator.parameters;
+        if (!TryGetAnimatorParameters(out AnimatorControllerParameter[] parameters))
+            return;
+
         for (int i = 0; i < parameters.Length; i++)
         {
             int nameHash = parameters[i].nameHash;
@@ -989,15 +2021,61 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         if (!string.IsNullOrEmpty(_rightArmLayerName))
-            _rightArmLayerIndex = _animator.GetLayerIndex(_rightArmLayerName);
+            _rightArmLayerIndex = AnimGetLayerIndex(_rightArmLayerName);
         if (!string.IsNullOrEmpty(_leftArmLayerName))
-            _leftArmLayerIndex = _animator.GetLayerIndex(_leftArmLayerName);
+            _leftArmLayerIndex = AnimGetLayerIndex(_leftArmLayerName);
         if (!string.IsNullOrEmpty(_twoHandLayerName))
-            _twoHandLayerIndex = _animator.GetLayerIndex(_twoHandLayerName);
-        _impactLayerIndex = _animator.GetLayerIndex(ImpactLayerName);
-        _flinchLayerIndex = _animator.GetLayerIndex(CharacterHitReact.FlinchLayerName);
-        _hurtLayerIndex = _animator.GetLayerIndex(CharacterHitReact.HurtLayerName);
-        _moveLayerIndex = _animator.GetLayerIndex("Move Layer");
+            _twoHandLayerIndex = AnimGetLayerIndex(_twoHandLayerName);
+        _impactLayerIndex = AnimGetLayerIndex(ImpactLayerName);
+        _flinchLayerIndex = AnimGetLayerIndex(CharacterHitReact.FlinchLayerName);
+        _hurtLayerIndex = AnimGetLayerIndex(CharacterHitReact.HurtLayerName);
+        _moveLayerIndex = AnimGetLayerIndex(MecanimMoveLayerName);
+    }
+
+    bool TryGetAnimatorParameters(out AnimatorControllerParameter[] parameters)
+    {
+        parameters = null;
+
+        if (_hybrid != null && _hybrid.Controller.IsValid)
+        {
+            if (Application.isPlaying)
+            {
+                EnsureHybridPlayableReady();
+                if (_hybrid.Controller.State != null)
+                {
+                    parameters = _hybrid.parameters;
+                    return parameters != null;
+                }
+            }
+#if UNITY_EDITOR
+            RuntimeAnimatorController c = _hybrid.Controller.Controller;
+            if (c is AnimatorOverrideController o)
+                c = o.runtimeAnimatorController;
+            if (c is UnityEditor.Animations.AnimatorController ac)
+            {
+                parameters = ac.parameters;
+                return true;
+            }
+#endif
+        }
+
+        if (_animator != null && _animator.runtimeAnimatorController != null)
+        {
+            parameters = _animator.parameters;
+            return true;
+        }
+
+#if UNITY_EDITOR
+        RuntimeAnimatorController active = ActiveController;
+        if (active is AnimatorOverrideController overrideController)
+            active = overrideController.runtimeAnimatorController;
+        if (active is UnityEditor.Animations.AnimatorController editorController)
+        {
+            parameters = editorController.parameters;
+            return true;
+        }
+#endif
+        return false;
     }
 
     static int Hash(string name) =>
@@ -1016,7 +2094,23 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void SuppressLocomotionLayers(float channelDelta)
     {
+        _animancerMoveWeightTarget = 0f;
+        SetAnimancerMoveWeightToward(0f, channelDelta);
         SetLayerWeightToward(_moveLayerIndex, 0f, channelDelta);
+        if (OwnsAnimancerArmImpact)
+        {
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerRightArm, 0f, channelDelta);
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerLeftArm, 0f, channelDelta);
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerTwoHand, 0f, channelDelta);
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerImpact, 0f, channelDelta);
+            ForceMecanimArmImpactLayerWeightsZero();
+            return;
+        }
+
         SetLayerWeightToward(_rightArmLayerIndex, 0f, channelDelta);
         SetLayerWeightToward(_leftArmLayerIndex, 0f, channelDelta);
         SetLayerWeightToward(_twoHandLayerIndex, 0f, channelDelta);
@@ -1038,13 +2132,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
             twoHand = gear.Wield.IsTwoHand;
             leftArmed = !twoHand && gear.Wield.Left != null;
             rightArmed = !twoHand && gear.Wield.Right != null;
-            // 양손 비움 = 비무장 Presentation. 아이템 유무로 끄면 Attack overlay가 안 보인다.
+            // Empty both hands = unarmed Presentation. ActiveWieldHand still drives Attack overlay.
             if (!twoHand && !leftArmed && !rightArmed)
                 ApplyActiveWieldHandFlags(ref twoHand, ref leftArmed, ref rightArmed);
         }
         else if (_attacker != null)
         {
-            // ItemId 유무와 무관 — 비무장(빈 id)도 ActiveWieldHand overlay 사용.
             ApplyActiveWieldHandFlags(ref twoHand, ref leftArmed, ref rightArmed);
         }
 
@@ -1076,9 +2169,120 @@ public class CharacterLocomotionAnim : MonoBehaviour
             action2H,
             isAiming);
 
+        if (OwnsAnimancerArmImpact)
+        {
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerRightArm, rightTarget, channelDelta);
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerLeftArm, leftTarget, channelDelta);
+            SetAnimancerArmLayerWeightToward(
+                CharacterLocomotionArmImpactAnimancer.LayerTwoHand, twoHandTarget, channelDelta);
+            ForceMecanimArmImpactLayerWeightsZero();
+            return;
+        }
+
         SetLayerWeightToward(_rightArmLayerIndex, rightTarget, channelDelta);
         SetLayerWeightToward(_leftArmLayerIndex, leftTarget, channelDelta);
         SetLayerWeightToward(_twoHandLayerIndex, twoHandTarget, channelDelta);
+    }
+
+    void SetAnimancerArmLayerWeightToward(int animancerLayerIndex, float target, float channelDelta)
+    {
+        if (_hybrid == null || !_hybrid.IsGraphInitialized)
+            return;
+
+        float current = _hybrid.Layers[animancerLayerIndex].Weight;
+        if (_layerBlendSpeed <= 0f || channelDelta <= 0f)
+        {
+            if (!Mathf.Approximately(current, target))
+                _hybrid.Layers[animancerLayerIndex].Weight = target;
+            return;
+        }
+
+        float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
+        if (!Mathf.Approximately(current, next))
+            _hybrid.Layers[animancerLayerIndex].Weight = next;
+    }
+
+    void SyncAnimancerArmPoses(
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
+        CombatLeaf actionL,
+        CombatLeaf actionR,
+        CombatLeaf action2H)
+    {
+        if (!OwnsAnimancerArmImpact)
+            return;
+
+        bool isAiming = _characterState != null && _characterState.IsAiming;
+        SyncOneAnimancerArmPose(
+            WieldHand.Right, presentationR, actionR, isAiming, _mappedSurpriseR, ref _pendingAnimancerAttackR,
+            _speedHoldR, _speedAimR, _speedAttackR);
+        SyncOneAnimancerArmPose(
+            WieldHand.Left, presentationL, actionL, isAiming, _mappedSurpriseL, ref _pendingAnimancerAttackL,
+            _speedHoldL, _speedAimL, _speedAttackL);
+        SyncOneAnimancerArmPose(
+            WieldHand.TwoHand, presentation2H, action2H, isAiming, _mappedSurprise2H, ref _pendingAnimancerAttack2H,
+            _speedHold2H, _speedAim2H, _speedAttack2H);
+        _armImpactAnimancer.TickAttackExits();
+    }
+
+    void SyncOneAnimancerArmPose(
+        WieldHand hand,
+        WeaponPresentation presentation,
+        CombatLeaf action,
+        bool isAiming,
+        bool surprise,
+        ref bool pendingAttackRestart,
+        float speedHold,
+        float speedAim,
+        float speedAttack)
+    {
+        bool restart = pendingAttackRestart;
+        pendingAttackRestart = false;
+
+        bool wantAttack = restart
+            || HasAttackOverlayLatch(hand)
+            || HasQueuedAttack(hand)
+            || _armImpactAnimancer.IsInAttack(hand);
+
+        ArmAnimSlotResolver.PoseKind pose;
+        float speed;
+        if (wantAttack)
+        {
+            pose = ArmAnimSlotResolver.PoseKind.Attack;
+            speed = speedAttack;
+        }
+        else if (isAiming)
+        {
+            pose = ArmAnimSlotResolver.PoseKind.Aim;
+            speed = speedAim;
+        }
+        else
+        {
+            pose = ArmAnimSlotResolver.PoseKind.Hold;
+            speed = speedHold;
+        }
+
+        // useHold gate: weight already 0 from SyncArmLayerWeights; still keep a Hold clip ready.
+        AnimationClip clip = ArmAnimSlotResolver.ResolvePoseClip(
+            _armSlotCatalog,
+            presentation,
+            action,
+            hand,
+            pose,
+            useSurpriseAttack: pose == ArmAnimSlotResolver.PoseKind.Attack && surprise);
+        if (clip == null)
+            return;
+
+        _armImpactAnimancer.SyncPose(
+            _hybrid,
+            hand,
+            clip,
+            speed,
+            pose,
+            restartAttack: restart);
     }
 
     float ArmOverlayWeight(
@@ -1096,6 +2300,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return 1f;
         if (presentation != null && !presentation.UsesHold(action))
             return 0f;
+
+        // Animancer: never raise mask weight without a resolvable clip (empty layer → bind/T-pose).
+        if (OwnsAnimancerArmImpact
+            && _armSlotCatalog != null
+            && ArmAnimSlotResolver.ResolvePoseClip(
+                _armSlotCatalog, presentation, action, hand, ArmAnimSlotResolver.PoseKind.Hold) == null)
+            return 0f;
+
         return 1f;
     }
 
@@ -1143,6 +2355,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     bool IsInAttackOverlay(WieldHand hand)
     {
+        if (OwnsAnimancerArmImpact)
+            return _armImpactAnimancer.IsInAttack(hand);
+
         int layerIndex = hand == WieldHand.Left
             ? _leftArmLayerIndex
             : hand == WieldHand.TwoHand
@@ -1151,12 +2366,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (layerIndex < 0 || _animator == null)
             return false;
 
-        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(layerIndex);
+        AnimatorStateInfo current = AnimGetCurrentAnimatorStateInfo(layerIndex);
         if (current.shortNameHash == _hashAttackState)
             return true;
-        if (!_animator.IsInTransition(layerIndex))
+        if (!AnimIsInTransition(layerIndex))
             return false;
-        AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+        AnimatorStateInfo next = AnimGetNextAnimatorStateInfo(layerIndex);
         return next.shortNameHash == _hashAttackState;
     }
 
@@ -1209,17 +2424,17 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (layerIndex < 0)
             return;
 
-        float current = _animator.GetLayerWeight(layerIndex);
+        float current = AnimGetLayerWeight(layerIndex);
         if (_layerBlendSpeed <= 0f || channelDelta <= 0f)
         {
             if (!Mathf.Approximately(current, target))
-                _animator.SetLayerWeight(layerIndex, target);
+                AnimSetLayerWeight(layerIndex, target);
             return;
         }
 
         float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
         if (!Mathf.Approximately(current, next))
-            _animator.SetLayerWeight(layerIndex, next);
+            AnimSetLayerWeight(layerIndex, next);
     }
 
     void ResolveHandPresentations(
@@ -1286,11 +2501,36 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
 
         _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-        _animator.enabled = true;
-        _animator.Update(0f);
-        _animator.enabled = false;
-        _animator.Rebind();
-        _animator.Update(0f);
+
+        if (_hybrid != null)
+        {
+            // Evaluate only writes humanoid bones while Animator.enabled=true (verified Play).
+            // Keep Animator on; PauseGraph in EnsureHybridPlayableReady blocks PlayableGraph auto-tick.
+            // Do not Rebind after Hybrid.OnEnable — that unbinds AnimationPlayableOutput (T-pose).
+            _animator.enabled = true;
+            if (!_hybrid.IsGraphInitialized)
+                _animator.Rebind();
+
+            EnsureHybridPlayableReady();
+            if (_animancerMoveReady && _hybrid.IsGraphInitialized)
+            {
+                AnimancerLayer moveLayer = _hybrid.Layers[AnimancerMoveLayerIndex];
+                if (moveLayer.Weight < 1f)
+                    moveLayer.Weight = 1f;
+            }
+
+            _hybrid.Update(0f);
+        }
+        else
+        {
+            // Mecanim-only: disable auto-update and drive via Animator.Update(channelDelta).
+            _animator.enabled = true;
+            _animator.Update(0f);
+            _animator.enabled = false;
+            _animator.Rebind();
+            _animator.Update(0f);
+        }
+
         _manualControl = true;
     }
 
