@@ -249,6 +249,7 @@ GameObject:
   - component: {fileID: 8745123698745123699}
   - component: {fileID: 5511223344556677890}
   - component: {fileID: 7824647900994034261}
+  - component: {fileID: 2390056496668472584}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -502,6 +503,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4db6e8b6226d9ed458a9f843c42772f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterSwimHost
+--- !u!114 &2390056496668472584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 857a427b57381624197ac3b269be74e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterLocomotionFacing
+  _state: {fileID: 8587219361330171216}
+  _motor: {fileID: 626806252378597420}
+  _bodyTurnDegPerSec: 270
 --- !u!1 &5242222357955435916
 GameObject:
   m_ObjectHideFlags: 0
@@ -1181,6 +1197,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 3384167925000119489}
+    - targetCorrespondingSourceObject: {fileID: 1872650286197928443, guid: af0c8e385ddbcff46b27e6ce116e272c,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7603433353265118033}
   m_SourcePrefab: {fileID: 100100000, guid: af0c8e385ddbcff46b27e6ce116e272c, type: 3}
 --- !u!95 &293100225542826288 stripped
 Animator:
@@ -1221,6 +1241,22 @@ MonoBehaviour:
   _Animator: {fileID: 293100225542826288}
   _Transitions: {fileID: 0}
   _ActionOnDisable: 1
+--- !u!114 &7603433353265118033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956867471781853680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af67b2736d1fd3146b6b74339ac94567, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterLocomotionFootIk
+  _maxFootLift: 0.35
+  _maxPelvisOffset: 0.2
+  _footIkWeight: 1
+  _pelvisWeight: 1
 --- !u!4 &1262594646898817497 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 377782585016988114, guid: af0c8e385ddbcff46b27e6ce116e272c,

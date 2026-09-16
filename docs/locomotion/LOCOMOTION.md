@@ -166,8 +166,31 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 
 컨트롤러: `Assets/Dist/Visual/Anim/CharacterAnimator/CharacterAnimController.controller`  
 드라이버: `CharacterLocomotionAnim` · 클립+VFX SSOT: `ArmAnimSlotCatalog` (Pipeline) + `ArmAnimSlotResolver` / `ArmImpactSlotResolver`  
-루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
+루트 회전: `CharacterFacingRotator` → `CharacterLocomotionFacing.BodyFacingDir` (호스트 없으면 `CharacterState.GetFacingDir()` 폴백)  
 스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
+
+### Facing SSOT (`CharacterLocomotionFacing`)
+
+경로: `Assets/Dist/Scripts/Entity/Character/CharacterLocomotionFacing.cs`  
+몸 yaw 추격의 **단일 SSOT**. wish는 `CharacterState.GetFacingDir()` (비조준).
+
+| 채널 | Inspector 기본 | 역할 |
+|------|----------------|------|
+| `BodyFacingDir` | `_bodyTurnDegPerSec` 270°/s | 몸 yaw chase. **루트·MoveXZ 소비** |
+
+- **조준 예외:** `IsAiming`이면 Body를 `SightDir`로 **즉시 snap** (추격 없음). 조준 중 루트=`Sight` 패리티 유지.
+- **소비처:** `CharacterLocomotionAnim` MoveXZ 로컬화 · `CharacterFacingRotator` 루트 회전.
+- **시간:** possessed → `TimeScaleChannel.Player`, 아니면 `World`.
+- **상체 lead 없음:** Chest/Spine bone yaw 오프셋은 쓰지 않음 (선회 중 떨림). 발 선행 체감은 MoveXZ DirectionalMixer에만 의존.
+
+### Foot plant IK (`CharacterLocomotionFootIk`)
+
+경로: `Assets/Dist/Scripts/Entity/Locomotion/CharacterLocomotionFootIk.cs`  
+Animator GO에 부착. **비주얼 only** — 모터·logical floor 물리 SSOT를 바꾸지 않는다.
+
+- **높이 SSOT = logical Floor:** `IMapTopologyQuery.CellHasFloor` + `MapCollisionGrid.GridYToSurfaceY`. 발 XZ는 IK 본, Y 밴드는 `CharacterState.GridPos.y` ±1. **Physics raycast를 floor SSOT로 쓰지 않는다.**
+- **바인드:** `BindMapCollision(MapCollisionServices)` (모터/Vault와 동일 Query). 미바인드 시 씬 `TileMapManager` 폴백 1회.
+- **Vault 공존:** `CharacterVaultHost.IsBusy` → foot IK weight 0 (`ClearFootIk`). 손 IK는 `CharacterVaultIkHost` 유지 — 발만 끔 ([`VAULT.md`](VAULT.md)).
 
 **몸 애니만** Hold/Aim/Attack thin 슬롯과 Impact thin을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
 
@@ -246,7 +269,7 @@ Hurt SM (Mecanim remnant, weight 0 while S5 owned): **Empty** → **Stagger** (`
 
 | Param | Type | Source |
 |-------|------|--------|
-| `MoveX` / `MoveZ` | float | facing 로컬 `MoveDir` × (`CurrentSpeed / AnimSpeedReference`); 정지·속도 0이면 `(0,0)` → Idle |
+| `MoveX` / `MoveZ` | float | `BodyFacingDir`(없으면 `GetFacingDir`) 로컬 `MoveDir` × (`CurrentSpeed / AnimSpeedReference`); 정지·속도 0이면 `(0,0)` → Idle |
 | `Speed` | float | 동일 정규화 속도 (디버그·호환; Move 블렌드는 MoveXZ) |
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
@@ -258,7 +281,7 @@ Hurt SM (Mecanim remnant, weight 0 while S5 owned): **Empty** → **Stagger** (`
 | `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | Entry 클립→없으면 Catalog Leaf→Action thin. Recoil/Blocked: Entry→Catalog Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
-Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우. **S3:** 재생은 Animancer DirectionalMixer가 소유 — Walk ring 임계 **0.1**(컨트롤러 child 위치 매칭). speedNorm 걷기 ≈**0.26**은 MoveXZ 파라미터 크기(문서 관측). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
+Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우. **S3:** 재생은 Animancer DirectionalMixer가 소유 — Walk ring 임계 **0.1**(컨트롤러 child 위치 매칭). speedNorm 걷기 ≈**0.26**은 MoveXZ 파라미터 크기(문서 관측). 조준 중 루트는 `SightDir`(Facing snap) 유지, **발만** `BodyFacingDir` 대비 상대 방향.
 
 **Thin 키 (Action):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — thin/Catalog 키 (동작 이름 없음).  
 **Thin 키 (Impact):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
@@ -306,7 +329,7 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 
 - 플레이어 동사는 `CombatLeaf` 유지. `TriggerPistol` 동명 액션 금지.
 - 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
-- 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
+- 조준 중 루트는 에임(`SightDir` — Facing aim snap). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ, BodyFacing 로컬)** 만.
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` → Animancer Evaluate; Animator auto-update 아님).
 - Play 중 `Animator.enabled == true` + Animancer `Graph.PauseGraph`는 **정상** (Evaluate가 본에 쓰려면 Animator on). `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
 - Locomotion/Arm 클립은 FBX `loopTime` 필요.

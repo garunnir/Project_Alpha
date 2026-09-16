@@ -19,6 +19,7 @@ public static class PlayerSightVisionBinder
     static float s_lastInnerAngle = -1f;
     static CharacterState s_boundState;
     static CharacterVision s_boundVision;
+    static CharacterLocomotionFacing s_boundFacing;
 
     public static float SpotAngleDegrees
     {
@@ -84,11 +85,15 @@ public static class PlayerSightVisionBinder
         {
             s_boundState = null;
             s_boundVision = null;
+            s_boundFacing = null;
             return;
         }
 
         s_boundState = state;
         s_boundVision = ResolveVision(state);
+        s_boundFacing = state != null
+            ? CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(state)
+            : null;
 
         s_lastRange = -1f;
         s_lastSpotAngle = -1f;
@@ -101,6 +106,7 @@ public static class PlayerSightVisionBinder
     {
         s_boundState = null;
         s_boundVision = null;
+        s_boundFacing = null;
         s_lastRange = -1f;
         s_lastSpotAngle = -1f;
         s_lastInnerAngle = -1f;
@@ -135,7 +141,7 @@ public static class PlayerSightVisionBinder
         if (!EnsureResolved() || s_root == null || state == null)
             return;
 
-        Vector3 dir = state.GetFacingDir();
+        Vector3 dir = ResolvePossessedFacingDir(state);
         dir.y = 0f;
         // 정지·MoveDir=0이면 루트 yaw 유지 (페이드/Spot 전방 SSOT)
         if (dir.sqrMagnitude < 1e-6f)
@@ -143,6 +149,31 @@ public static class PlayerSightVisionBinder
 
         dir.Normalize();
         s_root.rotation = Quaternion.LookRotation(dir, Vector3.up);
+    }
+
+    /// <summary>
+    /// Possessed Sight yaw policy: aiming → Sight; else BodyFacing when Facing host present.
+    /// </summary>
+    static Vector3 ResolvePossessedFacingDir(CharacterState state)
+    {
+        if (state.IsAiming)
+            return state.GetFacingDir();
+
+        CharacterLocomotionFacing facing = s_boundFacing;
+        if (facing == null && ReferenceEquals(s_boundState, state))
+        {
+            facing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(state);
+            s_boundFacing = facing;
+        }
+        else if (facing == null)
+        {
+            facing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(state);
+        }
+
+        if (facing != null)
+            return facing.BodyFacingDir;
+
+        return state.GetFacingDir();
     }
 
     static void SyncLightFromVision(PlayerPossessedInputHost host)

@@ -27,6 +27,8 @@ public class CharacterFacingRotator : MonoBehaviour
 
     private Quaternion _lastAppliedRotation;
     private bool _hasLastAppliedRotation;
+    private CharacterLocomotionFacing _locomotionFacing;
+    private bool _facingResolved;
 
     public CharacterState BoundState => _state;
 
@@ -35,6 +37,8 @@ public class CharacterFacingRotator : MonoBehaviour
     {
         _state = state;
         _hasLastAppliedRotation = false;
+        _facingResolved = false;
+        _locomotionFacing = null;
     }
 
     void LateUpdate()
@@ -42,7 +46,7 @@ public class CharacterFacingRotator : MonoBehaviour
         if (_state == null) return;
         if (_rotationAxes == RotationAxes.None) return;
 
-        Vector3 dir = _state.GetFacingDir();
+        Vector3 dir = ResolveFacingDir();
         if (dir.sqrMagnitude < 1e-4f) return;
 
         float baseAngle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
@@ -60,5 +64,25 @@ public class CharacterFacingRotator : MonoBehaviour
         transform.localRotation = targetRotation;
         _lastAppliedRotation = targetRotation;
         _hasLastAppliedRotation = true;
+    }
+
+    Vector3 ResolveFacingDir()
+    {
+        CharacterLocomotionFacing facing = ResolveLocomotionFacing();
+        if (facing != null)
+            return facing.BodyFacingDir;
+        return _state.GetFacingDir();
+    }
+
+    CharacterLocomotionFacing ResolveLocomotionFacing()
+    {
+        if (_facingResolved)
+            return _locomotionFacing;
+
+        _facingResolved = true;
+        _locomotionFacing = _state != null
+            ? CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(_state)
+            : CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(this);
+        return _locomotionFacing;
     }
 }

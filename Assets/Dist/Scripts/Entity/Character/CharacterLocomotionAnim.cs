@@ -105,6 +105,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         && !_animancer.Graph.IsGraphPlaying;
 
     CharacterState _characterState;
+    CharacterLocomotionFacing _locomotionFacing;
     CharacterAttacker _attacker;
     PlayerGearHost _gearHost;
     CharacterSkillsHost _skillsHost;
@@ -269,6 +270,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _skillsHost = refs.SkillsHost;
             _locomotion = refs.Motor;
             _vaultHost = refs.VaultHost;
+            _locomotionFacing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(this);
             return;
         }
 
@@ -278,6 +280,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _skillsHost = CharacterBodyResolve.GetModule<CharacterSkillsHost>(this);
         _locomotion = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         _vaultHost = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
+        _locomotionFacing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(this);
     }
 
     void OnEnable()
@@ -2394,7 +2397,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (wish.sqrMagnitude <= MoveDirEpsilonSqr)
             return;
 
-        Vector3 facing = _characterState.GetFacingDir();
+        Vector3 facing = _locomotionFacing != null
+            ? _locomotionFacing.BodyFacingDir
+            : _characterState.GetFacingDir();
         facing.y = 0f;
         if (facing.sqrMagnitude <= MoveDirEpsilonSqr)
             return;
