@@ -6,16 +6,15 @@ using UnityEngine;
 
 /// <summary>
 /// Clip table + ring thresholds for Animancer <see cref="MixerTransition2D"/> Move ownership (S3).
-/// Walk ring matches <c>CharacterAnimController</c> Locomotion blend tree positions (0.1);
-/// docs speedNorm at walk is often ~0.26 — that is parameter magnitude, not tree child radius.
+/// Walk ring uses the default walk/run speed ratio (3/12); tune with character movement speeds.
 /// </summary>
 [CreateAssetMenu(
     fileName = "CharacterLocomotionMoveSet",
     menuName = "Dist/Locomotion/Move Mixer Set")]
 public sealed class CharacterLocomotionMoveSet : ScriptableObject
 {
-    /// <summary>Walk child radius in MoveX/MoveZ space (controller-matched).</summary>
-    public const float DefaultWalkRing = 0.1f;
+    /// <summary>Walk child radius in MoveX/MoveZ space.</summary>
+    public const float DefaultWalkRing = 0.25f;
 
     /// <summary>Run child radius in MoveX/MoveZ space (controller-matched).</summary>
     public const float DefaultRunRing = 1f;
@@ -32,6 +31,53 @@ public sealed class CharacterLocomotionMoveSet : ScriptableObject
     [SerializeField, Min(0f)] float _walkRing = DefaultWalkRing;
     [SerializeField, Min(0f)] float _runRing = DefaultRunRing;
     [SerializeField, Min(0f)] float _fadeDuration = 0.25f;
+
+    [System.Serializable]
+    public sealed class MotionSegment
+    {
+        public AnimationClip Clip;
+        [Min(0f)] public float StartTime;
+        [Min(0f)] public float EndTime;
+        [Min(0.01f)] public float Speed = 1f;
+        public AnimationCurve TurnProgress = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+        public AnimationClip MirroredClip;
+        [HideInInspector] public bool HasPoseCalibration;
+        [HideInInspector] public Vector2 EntryFootOffset;
+        [HideInInspector] public float ExitPhase;
+        [HideInInspector] public float MirroredExitPhase;
+
+        public float End => Clip == null ? 0f : Mathf.Min(EndTime > 0f ? EndTime : Clip.length, Clip.length);
+        public bool IsValid => Clip != null && StartTime >= 0f && End > StartTime && Speed > 0f;
+    }
+
+    [Header("Interruptible movement transitions (seconds in source clip)")]
+    [SerializeField] MotionSegment _walkStart = new MotionSegment();
+    [SerializeField] MotionSegment _walkStop = new MotionSegment();
+    [SerializeField] MotionSegment _runStart = new MotionSegment();
+    [SerializeField] MotionSegment _runStop = new MotionSegment();
+    [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_walkTurn")]
+    MotionSegment _walkTurnRight = new MotionSegment();
+    [SerializeField] MotionSegment _walkTurnLeft = new MotionSegment();
+    [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_runTurn")]
+    MotionSegment _runTurnRight = new MotionSegment();
+    [SerializeField] MotionSegment _runTurnLeft = new MotionSegment();
+    [SerializeField, Min(0.01f)] float _transitionFade = 0.12f;
+    [SerializeField, Range(90f, 180f)] float _pivotAngle = 140f;
+    [SerializeField, Min(0f)] float _pivotCooldown = 0.4f;
+    [SerializeField, Min(0f)] float _parameterSmoothTime = 0.08f;
+
+    public MotionSegment WalkStart => _walkStart;
+    public MotionSegment WalkStop => _walkStop;
+    public MotionSegment RunStart => _runStart;
+    public MotionSegment RunStop => _runStop;
+    public MotionSegment WalkTurnRight => _walkTurnRight;
+    public MotionSegment WalkTurnLeft => _walkTurnLeft;
+    public MotionSegment RunTurnRight => _runTurnRight;
+    public MotionSegment RunTurnLeft => _runTurnLeft;
+    public float TransitionFade => Mathf.Max(0.01f, _transitionFade);
+    public float PivotAngle => _pivotAngle;
+    public float PivotCooldown => _pivotCooldown;
+    public float ParameterSmoothTime => _parameterSmoothTime;
 
     public float WalkRing => _walkRing;
     public float RunRing => _runRing;
@@ -82,6 +128,8 @@ public sealed class CharacterLocomotionMoveSet : ScriptableObject
             new Vector2(-run, 0f),
             new Vector2(run, 0f),
         };
+        // Idle has no gait phase and must not slow the synchronized walking/running cycle.
+        mixer.SynchronizeChildren = new[] { false, true, true, true, true, true, true, true, true };
         return true;
     }
 }

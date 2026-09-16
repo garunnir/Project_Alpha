@@ -30,6 +30,7 @@ namespace IsoTilemap
         Differ = 1,
         SameBuilding = 2,
         IsOutdoor = 3,
+        SameSpaceIds=4,
     }
 
     public enum BakeIdSimStepKind : byte
@@ -199,6 +200,13 @@ namespace IsoTilemap
                 kind = BakeIdSimRuleKind.IsOutdoor,
                 probeA = probe,
                 outdoorExpected = expected,
+            };
+        public static BakeIdSimRule SameSpace(string a, string b) =>
+            new()
+            {
+                kind = BakeIdSimRuleKind.SameSpaceIds,
+                probeA = a,
+                probeB = b
             };
     }
 

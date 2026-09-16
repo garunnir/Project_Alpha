@@ -37,6 +37,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     MapCollisionServices _pendingMapCollision;
     ICharacterMotorDrive _drive;
     CharacterHitStopState _hitStop;
+    CharacterLocomotionAnim _animation;
     bool _possessed;
     int _scriptedLocomotionDepth;
     bool _hasTravelLimit;
@@ -140,6 +141,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         _locomotion.BindMapCollision(_pendingMapCollision);
         _possessed = false;
         _hitStop = CharacterHitStopState.Find(this);
+        _animation = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
     }
 
     void FixedUpdate()
@@ -161,17 +163,17 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         }
         else if (_possessed && _drive != null && !IsScriptedLocomotion)
         {
-            desiredMove = _drive.CalcDesiredMove(_mover, deltaTime)
+            desiredMove = ConstrainPivotTravel(_drive.CalcDesiredMove(_mover, deltaTime))
                 + _knockbackVelocity * deltaTime;
         }
         else
         {
-            desiredMove = _mover.CalcConstantSpeedMove(
+            desiredMove = ConstrainPivotTravel(_mover.CalcConstantSpeedMove(
                 EffectiveMoveSpeed
                     * _envSpeedMultiplier
                     * _imbalanceSpeedMultiplier
                     * _swimSpeedMultiplier,
-                deltaTime)
+                deltaTime))
                 + _knockbackVelocity * deltaTime;
             if (_hasTravelLimit &&
                 desiredMove.sqrMagnitude >
@@ -197,6 +199,12 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     }
 
     public void BindDrive(ICharacterMotorDrive drive) => _drive = drive;
+
+    // Keep input/drive velocity intact so pivot playback cannot cancel itself at zero travel.
+    // Collision resolution still owns position; external knockback is added after this gate.
+    internal Vector3 ConstrainPivotTravel(Vector3 desiredMove) =>
+        IsScriptedLocomotion || _animation == null || _mover == null
+            ? desiredMove : desiredMove * _animation.GetPivotMovementScale(_mover.WorldMoveDir);
 
     public void ConfigureDriveMover(float acceleration, float inertia)
     {

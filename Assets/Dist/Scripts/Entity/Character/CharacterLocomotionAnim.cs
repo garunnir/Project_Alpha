@@ -27,7 +27,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     const string DefaultLeftArmLayer = "LeftArm Layer";
     const string DefaultTwoHandLayer = "TwoHand Layer";
     const string MecanimMoveLayerName = "Move Layer";
-    const float DefaultPoseRate = 10f;
+    const float DefaultPoseRate = 0f;
     const float DefaultLayerBlendSpeed = 10f;
     const int MaxPoseStepsPerFrame = 8;
     const float MoveDirEpsilonSqr = 1e-6f;
@@ -93,6 +93,17 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField] string _twoHandLayerName = DefaultTwoHandLayer;
     [SerializeField, Min(0f)] float _layerBlendSpeed = DefaultLayerBlendSpeed;
     [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
+    [Header("Free movement turn lean")]
+    [SerializeField, Range(0f, 15f)] float _maxTurnLean = 7f;
+    [SerializeField, Min(0.01f)] float _turnLeanSmoothTime = 0.12f;
+    Transform _leftFoot;
+    Transform _rightFoot;
+    Transform _leanSpine;
+    Quaternion _spineBeforeLean;
+    Quaternion _spineAfterLean;
+    float _turnLean;
+    bool _leanApplied;
+    bool _allowLocomotionLean;
 
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
     [LabelText("Manual tick active (graph paused, Animator on)")]
@@ -185,6 +196,18 @@ public class CharacterLocomotionAnim : MonoBehaviour
     float _speedHold2H = WeaponAnimClipSpeeds.DefaultSpeed;
     MixerTransition2D _moveMixerTransition;
     Vector2MixerState _moveMixerState;
+    readonly CharacterLocomotionTransitions _moveTransitions = new CharacterLocomotionTransitions();
+    public CharacterLocomotionTransitions.Motion MovementMotion => _moveTransitions.Current;
+    internal float GetPivotMovementScale(Vector3 input)
+    {
+        if (!isActiveAndEnabled || _animator == null || !_animator.enabled || !OwnsAnimancerMove
+            || _characterState == null || _characterState.IsAiming || _characterState.IsStealth
+            || _characterState.IsSwimming || _characterState.IsDiving
+            || (_vaultHost != null && _vaultHost.IsBusy) || _hurtWeightTarget > 0.01f
+            || _workAnimancer.IsWeightActive(_animancer))
+            return 1f;
+        return _moveTransitions.GetMovementScale(input);
+    }
     bool _animancerMoveReady;
     bool _ensuringAnimancerGraph;
     bool _moveLayerUsesUpperMask;
@@ -296,6 +319,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void OnDisable()
     {
+        RestoreTurnLean();
+        _moveTransitions.Reset(_locomotionFacing);
         if (_attacker != null)
         {
             _attacker.PresentationChanged -= OnPresentationChanged;
@@ -360,6 +385,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _animancer = GetComponentInChildren<AnimancerComponent>();
         if (_animancer != null && _animancer.Animator == null && _animator != null)
             _animancer.Animator = _animator;
+        if (_animator != null && _animator.isHuman && _animator.avatar != null && _animator.avatar.isValid)
+        {
+            _leftFoot = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            _rightFoot = _animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            _leanSpine = _animator.GetBoneTransform(HumanBodyBones.Spine);
+        }
     }
 
     /// <summary>
@@ -369,6 +400,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (_animator == null)
             return;
+
+        // CharacterMotor owns translation; source transition clips contain root travel/yaw.
+        _animator.applyRootMotion = false;
 
         if (_animator.runtimeAnimatorController != null)
             _animator.runtimeAnimatorController = null;
@@ -385,6 +419,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
     }
 
     void Update()
+        => TickAnimation(TimeScaleService.Delta(_timeChannel));
+
+    /// <summary>One channel-time tick; also used by deterministic Play-mode checks.</summary>
+    internal void TickAnimation(float channelDelta)
     {
         if (_animator == null)
             return;
@@ -400,6 +438,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_hitStop != null && _hitStop.IsFrozen)
             return;
 
+        if (channelDelta > 0f)
+            RestoreTurnLean();
+
         float speedNorm = ResolveNormalizedSpeed();
         if (_hasSpeed)
             AnimSetFloat(_hashSpeed, speedNorm);
@@ -409,7 +450,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         {
             try
             {
-                SyncAnimancerMove(moveX, moveZ, rebound ? 0f : TimeScaleService.Delta(_timeChannel));
+                SyncAnimancerMove(moveX, moveZ, rebound ? 0f : channelDelta);
             }
             catch (System.Exception ex)
             {
@@ -418,6 +459,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
         else
         {
+            _locomotionFacing?.TickFacing(channelDelta);
             if (_hasMoveX)
                 AnimSetFloat(_hashMoveX, moveX);
             if (_hasMoveZ)
@@ -517,7 +559,6 @@ public class CharacterLocomotionAnim : MonoBehaviour
             }
         }
 
-        float channelDelta = TimeScaleService.Delta(_timeChannel);
         UpdateFlinchWeightTarget();
         UpdateHurtWeightTarget();
         SyncVaultLayerWeights(rebound ? 0f : channelDelta);
@@ -534,6 +575,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
             SyncOverlayLayerWeightAfterArms();
         ApplyClipSpeedParams();
         AdvanceAnimator(channelDelta);
+        if (channelDelta > 0f)
+            ApplyTurnLean(channelDelta);
         TickAttackOverlayLatches();
         TickAttackCues();
         TickImpactEmpty();
@@ -1456,7 +1499,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (_moveMixerState == null || !_moveMixerState.IsValid() || _moveMixerState.Layer != moveLayer)
             _moveMixerState = (Vector2MixerState)moveLayer.Play(_moveMixerTransition);
-        else if (moveLayer.CurrentState != _moveMixerState)
+        else if (!_moveTransitions.IsActive && moveLayer.CurrentState != _moveMixerState)
             moveLayer.Play(_moveMixerState);
 
         moveLayer.Weight = 1f;
@@ -1525,7 +1568,26 @@ public class CharacterLocomotionAnim : MonoBehaviour
             ForceMecanimFlinchHurtLayerWeightsZero();
         if (OwnsAnimancerWork)
             ForceMecanimWorkLayerWeightZero();
-        _moveMixerState.Parameter = new Vector2(moveX, moveZ);
+        CharacterMotor motor = _locomotion as CharacterMotor;
+        bool allowTransitions = _characterState != null && motor != null
+            && !_characterState.IsAiming && !_characterState.IsStealth
+            && !_characterState.IsSwimming && !_characterState.IsDiving
+            && !motor.IsMoveInhibited && !motor.IsStuck
+            && (_vaultHost == null || !_vaultHost.IsBusy)
+            && _hurtWeightTarget <= 0.01f
+            && !_workAnimancer.IsWeightActive(_animancer);
+        _moveTransitions.Tick(_animancer.Layers[AnimancerMoveLayerIndex], _moveMixerState,
+            _moveSet, _locomotionFacing, motor != null && motor.Mover != null ? motor.Mover.WorldMoveDir : Vector3.zero,
+            motor != null && motor.IsSprinting, allowTransitions, channelDelta,
+            GetFootOffset(), _leftFoot != null && _rightFoot != null);
+        _allowLocomotionLean = allowTransitions && !_moveTransitions.IsActive;
+
+        _locomotionFacing?.TickFacing(channelDelta);
+        ResolveFacingMoveXZ(ResolveNormalizedSpeed(), out moveX, out moveZ);
+        Vector2 targetMove = new Vector2(moveX, moveZ);
+        _moveMixerState.Parameter = channelDelta <= 0f || _moveSet.ParameterSmoothTime <= 0f
+            ? targetMove : Vector2.Lerp(_moveMixerState.Parameter, targetMove,
+                1f - Mathf.Exp(-channelDelta / _moveSet.ParameterSmoothTime));
 
         bool stopped = (moveX * moveX) + (moveZ * moveZ) <= MoveStoppedEpsilonSqr;
         // Dynamic Layers: Move base stays full-body (feet). Overlay host uses UpperBody while moving.
@@ -2384,6 +2446,40 @@ public class CharacterLocomotionAnim : MonoBehaviour
         return Mathf.Clamp01(_locomotion.CurrentSpeed / max);
     }
 
+    Vector2 GetFootOffset()
+    {
+        if (_leftFoot == null || _rightFoot == null || _animator == null) return Vector2.zero;
+        Vector3 difference = _animator.transform.InverseTransformVector(_leftFoot.position - _rightFoot.position);
+        return new Vector2(difference.z, difference.y);
+    }
+
+    void RestoreTurnLean()
+    {
+        if (_leanApplied && _leanSpine != null
+            && Mathf.Abs(Quaternion.Dot(_leanSpine.localRotation, _spineAfterLean)) > 0.99999f)
+            _leanSpine.localRotation = _spineBeforeLean;
+        _leanApplied = false;
+    }
+
+    void ApplyTurnLean(float delta)
+    {
+        if (_leanSpine == null || _locomotionFacing == null) return;
+        if (!_allowLocomotionLean)
+        {
+            _turnLean = 0f;
+            return;
+        }
+
+        float target = -Mathf.Clamp(_locomotionFacing.AngularVelocity / 360f, -1f, 1f)
+            * _maxTurnLean * Mathf.Clamp01(ResolveNormalizedSpeed() * 2f);
+        _turnLean = Mathf.Lerp(_turnLean, target, 1f - Mathf.Exp(-delta / _turnLeanSmoothTime));
+        _spineBeforeLean = _leanSpine.localRotation;
+        // Only lateral spine lean; no extra root rotation or chest yaw competing with aim.
+        _leanSpine.rotation = Quaternion.AngleAxis(_turnLean, _animator.transform.forward) * _leanSpine.rotation;
+        _spineAfterLean = _leanSpine.localRotation;
+        _leanApplied = true;
+    }
+
     void ResolveFacingMoveXZ(float speedNorm, out float moveX, out float moveZ)
     {
         moveX = 0f;
@@ -2391,6 +2487,13 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (speedNorm <= 1e-4f || _characterState == null)
             return;
+
+        // Free locomotion turns the body and keeps a forward gait. Strafing belongs to aim mode.
+        if (!_characterState.IsAiming && !_characterState.IsSwimming && !_characterState.IsDiving)
+        {
+            moveZ = speedNorm;
+            return;
+        }
 
         Vector3 wish = _characterState.MoveDir;
         wish.y = 0f;

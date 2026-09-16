@@ -404,7 +404,9 @@ MonoBehaviour:
   _leftArmLayerName: LeftArm Layer
   _twoHandLayerName: TwoHand Layer
   _layerBlendSpeed: 10
-  _poseRate: 10
+  _poseRate: 0
+  _maxTurnLean: 7
+  _turnLeanSmoothTime: 0.12
 --- !u!114 &5011223344556677889
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -517,7 +519,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterLocomotionFacing
   _state: {fileID: 8587219361330171216}
   _motor: {fileID: 626806252378597420}
-  _bodyTurnDegPerSec: 270
+  _bodyTurnDegPerSec: 720
+  _minimumTurnDegPerSec: 180
+  _turnAccelerationDegPerSec2: 1800
 --- !u!1 &5242222357955435916
 GameObject:
   m_ObjectHideFlags: 0

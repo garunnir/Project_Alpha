@@ -15,7 +15,7 @@ using UnityEngine;
 class SourceRefFbxImportRules : AssetPostprocessor
 {
     const string SourceRefRoot = "Assets/Dist/Visual/Anim/SourceRef/";
-    const string ReferenceAvatarFbx = SourceRefRoot + "X Bot Referance T-pose.fbx";
+    const string ReferenceAvatarFbx = SourceRefRoot + "X Bot Referance T-poseAvatar.asset";
     const string LocomotionSegment = "/Locomotion/";
 
     static readonly HashSet<string> PendingDelete = new();
@@ -66,7 +66,7 @@ class SourceRefFbxImportRules : AssetPostprocessor
             clips[i].name = i == 0 ? stem : stem + " (" + i + ")";
             clips[i].keepOriginalOrientation = true;
             clips[i].keepOriginalPositionY = true;
-            clips[i].keepOriginalPositionXZ = true;
+            clips[i].keepOriginalPositionXZ = true; 
             clips[i].loopTime = loop;
         }
 
@@ -98,6 +98,8 @@ class SourceRefFbxImportRules : AssetPostprocessor
         bool loop = IsLocomotionPath(fbxPath);
         string directory = Path.GetDirectoryName(fbxPath)?.Replace('\\', '/');
         string stem = Path.GetFileNameWithoutExtension(fbxPath);
+        stem = stem.Replace("X Bot@","");
+
         if (string.IsNullOrEmpty(directory))
             return;
 
@@ -123,7 +125,7 @@ class SourceRefFbxImportRules : AssetPostprocessor
 
             var clip = Object.Instantiate(sourceClip);
             clip.name = Path.GetFileNameWithoutExtension(destPath);
-            ApplyClipSettings(clip, loop);
+            //ApplyClipSettings(clip, loop);
             AssetDatabase.CreateAsset(clip, destPath);
             extracted++;
             clipIndex++;

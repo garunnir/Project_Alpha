@@ -73,9 +73,9 @@ MonoBehaviour:
   _cellPixels: 16
   _sourceMaterial: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
   _bakedAtlas: {fileID: -5434639353781203700}
-  _bakedMaterial: {fileID: 4421258306345384345}
-  _bakedFromSourceId: 72366
---- !u!21 &4421258306345384345
+  _bakedMaterial: {fileID: 5870676359658116179}
+  _bakedFromSourceId: 73040
+--- !u!21 &5870676359658116179
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0

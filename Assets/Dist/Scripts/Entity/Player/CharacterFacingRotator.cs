@@ -32,6 +32,21 @@ public class CharacterFacingRotator : MonoBehaviour
 
     public CharacterState BoundState => _state;
 
+    void Awake() => ResolveBodyBinding();
+
+    void OnEnable() => ResolveBodyBinding();
+
+    void ResolveBodyBinding()
+    {
+        // A prefab-local render pivot owns its body's state. System rigs still use BindState.
+        if (_state == null)
+            _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _locomotionFacing = _state != null
+            ? CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(_state) : null;
+        _facingResolved = true;
+        _hasLastAppliedRotation = false;
+    }
+
     /// <summary>시스템 리그(PlayerSight 등)가 possess 시 CharacterState를 주입합니다.</summary>
     public void BindState(CharacterState state)
     {
@@ -42,12 +57,19 @@ public class CharacterFacingRotator : MonoBehaviour
     }
 
     void LateUpdate()
+        => ApplyFacing();
+
+    internal void ApplyFacing()
     {
         if (_state == null) return;
         if (_rotationAxes == RotationAxes.None) return;
 
         Vector3 dir = ResolveFacingDir();
         if (dir.sqrMagnitude < 1e-4f) return;
+
+        // BodyFacing is world-space; spawned/rotated parents must not add their yaw twice.
+        if (_rotationAxes == RotationAxes.Y && transform.parent != null)
+            dir = transform.parent.InverseTransformDirection(dir);
 
         float baseAngle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
         float targetAngle = ((int)_rotationDirection * -baseAngle) + _rotationOffset;

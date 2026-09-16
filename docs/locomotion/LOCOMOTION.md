@@ -281,7 +281,36 @@ Hurt SM (Mecanim remnant, weight 0 while S5 owned): **Empty** → **Stagger** (`
 | `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | Entry 클립→없으면 Catalog Leaf→Action thin. Recoil/Blocked: Entry→Catalog Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
-Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우. **S3:** 재생은 Animancer DirectionalMixer가 소유 — Walk ring 임계 **0.1**(컨트롤러 child 위치 매칭). speedNorm 걷기 ≈**0.26**은 MoveXZ 파라미터 크기(문서 관측). 조준 중 루트는 `SightDir`(Facing snap) 유지, **발만** `BodyFacingDir` 대비 상대 방향.
+Move Layer `Locomotion` (레거시 Mecanim 표기): **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우. 재생은 Animancer DirectionalMixer가 소유. Walk ring 기본 **0.25**(기본 걷기 3 / 달리기 기준 12), Run ring 1. 캐릭터 이동 속도를 바꾸면 함께 조정한다. Idle은 보행 주기 동기화에서 제외한다. MoveXZ 파라미터는 기본 0.08초 지수 평활화. 조준 중 루트는 `SightDir`(Facing snap) 유지, **발만** `BodyFacingDir` 대비 상대 방향.
+
+### 출발·정지·급반전 구간 재생
+
+`CharacterLocomotionTransitions`가 Move layer 0에서 반복 믹서와 일회성 클립을 교차 재생한다. `CharacterLocomotionMoveSet.MotionSegment`의 StartTime/EndTime은 **원본 클립의 초 단위 구간**이며 원본 `.anim`은 수정하거나 잘라내지 않는다.
+
+| 상태 | NewLocomotionPack 원본 | 재생 구간(초) |
+|---|---|---|
+| 걷기 출발 | Female Start Walking | 0–1.5 |
+| 걷기 정지 | Female Stop And Start Walking | 0.9–2.1 |
+| 달리기 출발 | Idle To Sprint | 0–0.8 |
+| 달리기 정지 | Run To Stop | 0–0.9 |
+| 걷기 급반전 | Walking Turn 180 | 0–1 |
+| 달리기 급반전 | Running Turn 180 | 0–0.666667 |
+
+- 정지 모션 중 재입력 → 출발, 출발 중 입력 해제 → 정지. 입력 처리를 모션 끝까지 잠그지 않는다.
+- 입력 방향 변화 140° 이상이면 급반전 후보. 오른쪽 원본과 Humanoid mirror로 만든 왼쪽 클립을 signed shortest arc에 따라 선택하고, 추출한 RootQ yaw 진행 곡선으로 `CharacterLocomotionFacing`을 구동한다. 반전 도중 목표가 60° 이상 바뀌면 취소한다. 발별 정지는 아직 구현하지 않았다.
+- 일반 선회는 고정 270°/s가 아니다. 각도에 따라 180–720°/s 목표 속도를 만들고 1800°/s²로 가속·제동한다. 작은 보정은 부드럽게 끝나고 큰 방향 변경은 빠르게 반응한다.
+- 조준·은신·수영·잠수·이동 억제·막힘·담넘기·Hurt·Work 중에는 전환 재생을 취소하고 기존 믹서로 복귀한다. 히트스톱·채널 일시정지는 재생 시간을 진행하지 않는다.
+- 위치는 `CharacterMotor`, 회전은 Facing이 소유한다. `ConfigureAnimancerHost`에서 `applyRootMotion=false`로 원본의 이동/회전이 캐릭터에 중복 적용되지 않도록 한다.
+- 급반전 중에는 `CharacterMotor.ConstrainPivotTravel`이 자발적 이동량을 제한한다. 모션 앞 65%는 제자리 회전, 뒤 35%는 SmoothStep으로 정상 이동량까지 회복한다(기본 달리기 약 0.43초, 걷기 약 0.65초 정지). 입력과 drive 속도는 유지해 정지 때문에 반전 자체가 취소되지 않게 한다. 입력 해제·60도 초과 재지정·애니메이션 비활성화·조준 등에서는 제약을 해제한다. 스크립트 이동은 제외하고 넉백은 제약 이후 더한다. 해당 제약과 회복 검사를 추가해 총 33개 동작 검사를 통과했다.
+- 원본 반복 이동 클립은 기존 `SourceRef/Locomotion` 세트를 유지한다. 새 전환과의 자세/보폭 일치는 추가 시각 튜닝 대상이다. 인플레이스 원본의 averageSpeed가 거의 0이므로 원본 메타데이터만으로 정확한 보폭 보정값을 산출하지 않는다.
+
+`CharacterFacingRotator`는 Awake/OnEnable에서 같은 몸의 State/Facing을 연결한다. 외부 BindState 호출이 없던 모델도 실제 렌더 피벗이 회전하며, 부모 회전을 고려해 월드 방향을 로컬 yaw로 변환한다. Facing은 애니메이션 전환 선택 뒤에 갱신한다. 비조준 지상 이동은 전진 보행을 사용하고, 조준 시에는 방향별 스트레이프를 유지한다. 일반 회전에는 최대 7도 상체 기울기를 적용하며 전환·조준·행동 중에는 제외한다.
+
+급반전은 입력 방향의 큰 변화에 반응하고, 원본 회전 곡선을 좌우에 적용한다. outgoing fade가 끝날 때까지 회전 소유권을 유지한다. `LocomotionPoseCalibration.Bake()`는 Edit 모드의 임시 PreviewScene에서 실제 아바타의 발·무릎 자세를 샘플링한다. 정지는 앞발에 맞는 원본/미러 클립을 고르고, 출발·반전의 종료는 가까운 보행 위상으로 연결한다. 클립이나 구간을 변경하면 다시 보정해야 한다.
+
+검증: Play 상태에서 MCP `Unity_RunCommand`로 `LocomotionTransitionChecks.Run()` 호출. Editor에서만 컴파일되며 메뉴를 추가하지 않는다. 출발/정지 완료, 재입력, 중단 게이트, 좌우 급반전·취소, pause, 실제 렌더 피벗의 ±45/90/120도 방향 및 반전 종료, 정지 앞발 선택, 조준 스트레이프, 그래프 소유권과 루트 위치 보존 등 29개 체크를 통과했다. 테스트 시간은 고정 delta를 사용해 MCP 명령 지연을 배제한다. `LocomotionVisualReview.Capture()`는 좌우 90/170도 회전의 캡처와 재생 시간·발 좌표를 `Temp/LocomotionReview`에 저장한다. 발 자세와 재생 시간이 변화함을 확인했지만 단일 명령 안의 캡처는 실시간 플레이의 접지·전체 자연스러움을 보장하지 않는다. Play 종료 시 별도 UIInventoryController의 DragGhost 서비스 누락 오류가 기록되었다.
+
+변경 파일: `CharacterLocomotionAnim.cs`, `CharacterLocomotionFacing.cs`, `CharacterLocomotionMoveSet.cs`, 신규 `CharacterLocomotionTransitions.cs` 및 `.meta`, 신규 Editor 전용 `LocomotionTransitionChecks.cs` 및 `.meta` (모두 `Scripts/Entity/Character/`), `SOData/Locomotion/CharacterLocomotionMoveSet.asset`, `Visual/Prefabs/3D/NpcSample.prefab`, 이 문서. 카메라·이동 물리·FBX 임포터는 변경하지 않는다.
 
 **Thin 키 (Action):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — thin/Catalog 키 (동작 이름 없음).  
 **Thin 키 (Impact):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
@@ -331,7 +360,7 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 - 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
 - 조준 중 루트는 에임(`SightDir` — Facing aim snap). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ, BodyFacing 로컬)** 만.
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` → Animancer Evaluate; Animator auto-update 아님).
-- Play 중 `Animator.enabled == true` + Animancer `Graph.PauseGraph`는 **정상** (Evaluate가 본에 쓰려면 Animator on). `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
+- Play 중 `Animator.enabled == true` + Animancer `Graph.PauseGraph`는 **정상** (Evaluate가 본에 쓰려면 Animator on). `_poseRate` 기본값과 NpcSample 프리팹은 **0**(연속 틱). 양수로 설정하면 해당 주파수로 포즈를 양자화한다.
 - Locomotion/Arm 클립은 FBX `loopTime` 필요.
 - 장애물 판정은 `AttackPerformResult.Obstructed` (Miss와 구분) → Impact `Blocked`.
 

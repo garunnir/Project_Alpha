@@ -161,50 +161,50 @@ namespace IsoTilemap
                     return true;
 
                 case BakeIdSimStepKind.RemoveFloorAtProbe:
-                {
-                    if (!TryFindFloorAt(model, a, out TileData floor))
                     {
-                        error = $"Step RemoveFloorAtProbe: no floor at {a}";
-                        return false;
-                    }
+                        if (!TryFindFloorAt(model, a, out TileData floor))
+                        {
+                            error = $"Step RemoveFloorAtProbe: no floor at {a}";
+                            return false;
+                        }
 
-                    model.RemoveTile(floor);
-                    return true;
-                }
+                        model.RemoveTile(floor);
+                        return true;
+                    }
 
                 case BakeIdSimStepKind.RemoveThinWallBetweenProbes:
-                {
-                    if (!TryResolveProbe(probes, step.probeB, out Vector3Int b))
                     {
-                        error = $"Step RemoveThinWallBetweenProbes: probeB '{step.probeB}' not found";
-                        return false;
-                    }
+                        if (!TryResolveProbe(probes, step.probeB, out Vector3Int b))
+                        {
+                            error = $"Step RemoveThinWallBetweenProbes: probeB '{step.probeB}' not found";
+                            return false;
+                        }
 
-                    if (!TryFindThinWallBetween(model, a, b, out TileData wall))
-                    {
-                        error = $"Step RemoveThinWallBetweenProbes: no wall between {a} and {b}";
-                        return false;
-                    }
+                        if (!TryFindThinWallBetween(model, a, b, out TileData wall))
+                        {
+                            error = $"Step RemoveThinWallBetweenProbes: no wall between {a} and {b}";
+                            return false;
+                        }
 
-                    model.RemoveTile(wall);
-                    return true;
-                }
+                        model.RemoveTile(wall);
+                        return true;
+                    }
 
                 case BakeIdSimStepKind.AddCubeAtProbe:
                     model.SetTile(BakeIdSyntheticTiles.Cube(a));
                     return true;
 
                 case BakeIdSimStepKind.RemoveCubeAtProbe:
-                {
-                    if (!TryFindCubeAt(model, a, out TileData cube))
                     {
-                        error = $"Step RemoveCubeAtProbe: no cube at {a}";
-                        return false;
-                    }
+                        if (!TryFindCubeAt(model, a, out TileData cube))
+                        {
+                            error = $"Step RemoveCubeAtProbe: no cube at {a}";
+                            return false;
+                        }
 
-                    model.RemoveTile(cube);
-                    return true;
-                }
+                        model.RemoveTile(cube);
+                        return true;
+                    }
 
                 default:
                     error = $"Unknown step kind {step.kind}";
@@ -291,96 +291,115 @@ namespace IsoTilemap
             switch (rule.kind)
             {
                 case BakeIdSimRuleKind.SameIds:
-                {
-                    if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
-                        return;
-                    if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
                     {
-                        failures.Add($"SameIds: missing floor at {a} or {b}");
+                        if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
+                            return;
+                        if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
+                        {
+                            failures.Add($"SameIds: missing floor at {a} or {b}");
+                            return;
+                        }
+
+                        if (ia.BuildingId != ib.BuildingId ||
+                            ia.RoomId != ib.RoomId ||
+                            ia.SpaceId != ib.SpaceId ||
+                            ia.IsOutdoor != ib.IsOutdoor)
+                        {
+                            failures.Add(
+                                $"SameIds '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib})");
+                        }
+
                         return;
                     }
-
-                    if (ia.BuildingId != ib.BuildingId ||
-                        ia.RoomId != ib.RoomId ||
-                        ia.SpaceId != ib.SpaceId ||
-                        ia.IsOutdoor != ib.IsOutdoor)
-                    {
-                        failures.Add(
-                            $"SameIds '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib})");
-                    }
-
-                    return;
-                }
 
                 case BakeIdSimRuleKind.Differ:
-                {
-                    if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
-                        return;
-                    if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
                     {
-                        failures.Add($"Differ: missing floor at {a} or {b}");
+                        if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
+                            return;
+                        if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
+                        {
+                            failures.Add($"Differ: missing floor at {a} or {b}");
+                            return;
+                        }
+
+                        if (FieldEquals(ia, ib, rule.differField))
+                        {
+                            failures.Add(
+                                $"Differ({rule.differField}) '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib}) — expected different");
+                        }
+
                         return;
                     }
-
-                    if (FieldEquals(ia, ib, rule.differField))
-                    {
-                        failures.Add(
-                            $"Differ({rule.differField}) '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib}) — expected different");
-                    }
-
-                    return;
-                }
 
                 case BakeIdSimRuleKind.SameBuilding:
-                {
-                    if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
-                        return;
-                    if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
                     {
-                        failures.Add($"SameBuilding: missing floor at {a} or {b}");
+                        if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
+                            return;
+                        if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
+                        {
+                            failures.Add($"SameBuilding: missing floor at {a} or {b}");
+                            return;
+                        }
+
+                        if (ia.BuildingId != ib.BuildingId)
+                        {
+                            failures.Add(
+                                $"SameBuilding '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib})");
+                        }
+
                         return;
                     }
-
-                    if (ia.BuildingId != ib.BuildingId)
-                    {
-                        failures.Add(
-                            $"SameBuilding '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib})");
-                    }
-
-                    return;
-                }
 
                 case BakeIdSimRuleKind.IsOutdoor:
-                {
-                    if (!probes.TryGetValue(rule.probeA, out Vector3Int cell))
                     {
-                        failures.Add($"IsOutdoor: probe '{rule.probeA}' not found");
+                        if (!probes.TryGetValue(rule.probeA, out Vector3Int cell))
+                        {
+                            failures.Add($"IsOutdoor: probe '{rule.probeA}' not found");
+                            return;
+                        }
+
+                        // Floor 있으면 bake Space/plaza; 없으면 IsOutdoorEvaluation 선택 A (empty→true).
+                        bool gotOutdoor;
+                        string detail;
+                        if (TryRead(hub, cell, out FloorIds ids))
+                        {
+                            gotOutdoor = ids.IsOutdoor;
+                            detail = ids.ToString();
+                        }
+                        else
+                        {
+                            gotOutdoor = hub.IsOutdoorEvaluation(cell.y, cell.x, cell.z);
+                            detail = "empty/no-floor IsOutdoorEvaluation";
+                        }
+
+                        if (gotOutdoor != rule.outdoorExpected)
+                        {
+                            failures.Add(
+                                $"IsOutdoor '{rule.probeA}'@{cell} got={gotOutdoor} expected={rule.outdoorExpected} ({detail})");
+                        }
+
                         return;
                     }
+                case BakeIdSimRuleKind.SameSpaceIds:
+                    {
+                        if (!RequirePair(probes, rule, failures, out Vector3Int a, out Vector3Int b))
+                            return;
+                        if (!TryRead(hub, a, out FloorIds ia) || !TryRead(hub, b, out FloorIds ib))
+                        {
+                            failures.Add($"SameSpaceIds: missing floor at {a} or {b}");
+                            return;
+                        }
 
-                    // Floor 있으면 bake Space/plaza; 없으면 IsOutdoorEvaluation 선택 A (empty→true).
-                    bool gotOutdoor;
-                    string detail;
-                    if (TryRead(hub, cell, out FloorIds ids))
-                    {
-                        gotOutdoor = ids.IsOutdoor;
-                        detail = ids.ToString();
-                    }
-                    else
-                    {
-                        gotOutdoor = hub.IsOutdoorEvaluation(cell.y, cell.x, cell.z);
-                        detail = "empty/no-floor IsOutdoorEvaluation";
-                    }
+                        if (ia.SpaceId != ib.SpaceId)
+                        {
+                            failures.Add(
+                                $"SameSpaceId '{rule.probeA}'@{a} ({ia}) vs '{rule.probeB}'@{b} ({ib})");
+                            return;
+                        }
 
-                    if (gotOutdoor != rule.outdoorExpected)
-                    {
-                        failures.Add(
-                            $"IsOutdoor '{rule.probeA}'@{cell} got={gotOutdoor} expected={rule.outdoorExpected} ({detail})");
                     }
 
                     return;
-                }
-
                 default:
                     failures.Add($"Unknown rule kind {rule.kind}");
                     break;
