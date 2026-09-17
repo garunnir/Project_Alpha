@@ -352,6 +352,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a7ae3bd875f9fb44b8938e477a2a9d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterMotor
+  _turnBraking: 28
+  _airAcceleration: 3
   _moveSpeed: 3
   _runMaxSpeedMeters: 12
   _activeStyle: {fileID: 0}

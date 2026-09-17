@@ -11,7 +11,12 @@
       "Bash(ls:*)",
       "WebSearch",
       "mcp__unityMCP__read_console",
-      "mcp__unityMCP__refresh_unity"
+      "mcp__unityMCP__refresh_unity",
+      "WebFetch(domain:marketplace.visualstudio.com)",
+      "Bash(ls -la \"/z/Work/Project/vscode-llm-usage-bar\" 2>&1 || echo \"NOT_EXIST\")",
+      "Read(//z/Work/Project/**)",
+      "Bash(npm --version)",
+      "Bash(mkdir -p /z/Work/Project/vscode-llm-usage-bar/.vscode /z/Work/Project/vscode-llm-usage-bar/src/util /z/Work/Project/vscode-llm-usage-bar/src/providers /z/Work/Project/vscode-llm-usage-bar/src/ui /z/Work/Project/vscode-llm-usage-bar/src/commands /z/Work/Project/vscode-llm-usage-bar/bridge /z/Work/Project/vscode-llm-usage-bar/scripts /z/Work/Project/vscode-llm-usage-bar/resources)"
     ]
   }
 }

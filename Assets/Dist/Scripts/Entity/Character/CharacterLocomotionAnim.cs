@@ -1572,7 +1572,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         bool allowTransitions = _characterState != null && motor != null
             && !_characterState.IsAiming && !_characterState.IsStealth
             && !_characterState.IsSwimming && !_characterState.IsDiving
-            && !motor.IsMoveInhibited && !motor.IsStuck
+            && !motor.IsMoveInhibited && !motor.IsStuck && !motor.IsAirborne
             && (_vaultHost == null || !_vaultHost.IsBusy)
             && _hurtWeightTarget <= 0.01f
             && !_workAnimancer.IsWeightActive(_animancer);

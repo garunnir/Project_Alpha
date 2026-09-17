@@ -80,6 +80,7 @@ public sealed class CharacterLocomotion
     MapCollisionServices _mapCollision;
     MapTopologyDepenetration.Tracker _gridStuckTracker;
     float _verticalVelocity;
+    internal bool IsAirborne => _mapCollision != null && Mathf.Abs(_verticalVelocity) > 0.0001f;
     CharacterSwimHost _swimHost;
 
     public int LastHitCount { get; private set; }

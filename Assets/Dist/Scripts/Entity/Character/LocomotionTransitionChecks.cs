@@ -11,6 +11,39 @@ using UnityEngine;
 /// <summary>Invoke Run in Play mode. No menu or scene setup; restores the selected Move layer.</summary>
 public static class LocomotionTransitionChecks
 {
+    public static string CheckMomentum()
+    {
+        var mover = new KinematicMover();
+        mover.SetWorldDirection(Vector3.back);
+        Vector3 initial = Vector3.forward * 12f;
+        Vector3 Tick(Vector3 previous, bool air, float scale = 1f, float dt = 0.02f)
+        {
+            mover.CalcConstantSpeedMove(12f, dt);
+            mover.ApplyTurnMomentum(previous, dt, air, scale, 3f, 28f, 3f);
+            return mover.Velocity;
+        }
+        var ground = Tick(initial, false, 0f);
+        if (ground.z <= 0f || ground.z >= initial.z) throw new InvalidOperationException("Ground reversal lost braking momentum.");
+        var air = Tick(initial, true);
+        if (air.z <= ground.z || air.z >= initial.z) throw new InvalidOperationException("Air steering is not weaker than ground braking.");
+        mover.SetWorldDirection(Vector3.zero);
+        if ((Tick(initial, true) - initial).sqrMagnitude > 0.000001f) throw new InvalidOperationException("Air release removed momentum.");
+        mover.SetWorldDirection(Vector3.back);
+        if ((Tick(initial, true, dt: 0f) - initial).sqrMagnitude > 0.000001f) throw new InvalidOperationException("Pause changed momentum.");
+        var landed = Tick(air, false);
+        if (landed.z <= 0f || landed.z >= air.z) throw new InvalidOperationException("Landing did not brake residual velocity.");
+        var velocity = initial;
+        for (int i = 0; i < 40; i++) velocity = Tick(velocity, false, 0f);
+        if (velocity.sqrMagnitude > 0.000001f) throw new InvalidOperationException("Pivot braking failed to stop.");
+        velocity = Tick(velocity, false);
+        if (velocity.z >= 0f) throw new InvalidOperationException("Travel failed to resume after pivot.");
+        var fine = initial;
+        var coarse = initial;
+        for (int i = 0; i < 10; i++) fine = Tick(fine, true, dt: 0.01f);
+        for (int i = 0; i < 5; i++) coarse = Tick(coarse, true, dt: 0.02f);
+        if ((fine - coarse).magnitude > 0.001f) throw new InvalidOperationException("Air steering depends on tick frequency.");
+        return "PASS 8 momentum checks: ground braking, weak air steering, air release, pause, landing, plant stop, resume, timestep consistency.";
+    }
     public static string Run()
     {
         if (!Application.isPlaying) throw new InvalidOperationException("Play mode required.");
@@ -21,6 +54,8 @@ public static class LocomotionTransitionChecks
         Vector2MixerState loop = null;
         foreach (var candidate in UnityEngine.Object.FindObjectsByType<CharacterLocomotionAnim>(FindObjectsSortMode.None))
         {
+            var candidateMotor = CharacterBodyResolve.GetInBody<CharacterMotor>(candidate);
+            if (candidateMotor == null || candidateMotor.IsAirborne) continue;
             var component = candidate.GetComponentInChildren<AnimancerComponent>();
             if (component == null || !component.IsGraphInitialized) continue;
             if (component.Layers[0].CurrentState is not Vector2MixerState mixer) continue;
@@ -29,7 +64,7 @@ public static class LocomotionTransitionChecks
             loop = mixer;
             break;
         }
-        if (owner == null) throw new InvalidOperationException("No live character in locomotion loop.");
+        if (owner == null) throw new InvalidOperationException("No grounded character in locomotion loop. Wait for spawn landing before running ground checks.");
         var layer = host.Layers[0];
         var facing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(owner);
         var characterState = CharacterBodyResolve.GetInBody<CharacterState>(owner);
@@ -199,16 +234,15 @@ public static class LocomotionTransitionChecks
                 for (int i = 0; i < 120; i++) owner.TickAnimation(0.016f);
                 motor.SetDesiredWorldDir(Vector3.back);
                 owner.TickAnimation(0.016f);
-                Vector3 stride = Vector3.back * 0.12f;
                 if (owner.MovementMotion != CharacterLocomotionTransitions.Motion.Turn
-                    || motor.ConstrainPivotTravel(stride).sqrMagnitude > 0.000001f)
-                    throw new InvalidOperationException("Live motor slides during pivot plant.");
+                    || owner.GetPivotMovementScale(motor.Mover.WorldMoveDir) > 0.000001f)
+                    throw new InvalidOperationException("Pivot target travel must be zero during plant.");
                 bool sawPartialTravel = false;
                 float previousScale = 0f;
                 for (int i = 0; i < 70; i++)
                 {
                     owner.TickAnimation(0.016f);
-                    float scale = motor.ConstrainPivotTravel(stride).magnitude / stride.magnitude;
+                    float scale = owner.GetPivotMovementScale(motor.Mover.WorldMoveDir);
                     if (scale + 0.0001f < previousScale || scale > 1.0001f)
                         throw new InvalidOperationException("Pivot travel must recover monotonically.");
                     sawPartialTravel |= scale > 0f && scale < 1f;
@@ -217,7 +251,7 @@ public static class LocomotionTransitionChecks
                 if (!sawPartialTravel || Mathf.Abs(previousScale - 1f) > 0.0001f)
                     throw new InvalidOperationException("Pivot travel did not recover smoothly.");
                 assertions += 2;
-                report.AppendLine("PASS live motor pivot holds then smoothly restores travel");
+                report.AppendLine("PASS live animation pivot target holds then smoothly restores travel");
             }
             finally
             {

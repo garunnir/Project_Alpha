@@ -21,6 +21,36 @@ public class KinematicMover
 
     Vector3 _moveDir;
     Vector3 _currentVelocity;
+    internal Vector3 Velocity => _currentVelocity;
+    bool _brakingTurn;
+
+    // Called after the drive proposes a velocity, before collision and separate vertical gravity.
+    internal Vector3 ApplyTurnMomentum(Vector3 previousVelocity, float dt, bool airborne,
+        float pivotScale, float walkSpeed, float braking, float airAcceleration)
+    {
+        if (dt <= 0f) { _currentVelocity = previousVelocity; return Vector3.zero; }
+        Vector3 target = _currentVelocity * Mathf.Clamp01(pivotScale);
+        if (airborne)
+        {
+            _brakingTurn = false;
+            _currentVelocity = _moveDir.sqrMagnitude <= 0.0001f ? previousVelocity
+                : Vector3.MoveTowards(previousVelocity, target, Mathf.Max(0f, airAcceleration) * dt);
+        }
+        else
+        {
+            bool opposed = _moveDir.sqrMagnitude > 0.0001f
+                && Vector3.Dot(previousVelocity.normalized, _moveDir.normalized) < -0.5f;
+            _brakingTurn = opposed && (_brakingTurn || previousVelocity.magnitude > walkSpeed + 0.1f);
+            if (_brakingTurn || pivotScale < 0.999f)
+            {
+                _currentVelocity = Vector3.MoveTowards(previousVelocity,
+                    _brakingTurn ? Vector3.zero : target, Mathf.Max(0.01f, braking) * dt);
+                if (_currentVelocity.sqrMagnitude < 0.0001f) _brakingTurn = false;
+            }
+        }
+        IsInertiaActive = _currentVelocity.magnitude > walkSpeed;
+        return _currentVelocity * dt;
+    }
     bool _isSprinting;
 
     public void SetInput(Vector2 input, Camera camera)

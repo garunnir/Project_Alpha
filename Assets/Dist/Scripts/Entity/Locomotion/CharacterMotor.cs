@@ -18,6 +18,8 @@ public interface ICharacterMotorDrive
 public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 {
     [Header("Movement")]
+    [SerializeField, Min(0.01f)] float _turnBraking = 28f;
+    [SerializeField, Min(0f)] float _airAcceleration = 3f;
     [SerializeField, Min(0f)] float _moveSpeed = CharacterLocomotionDefaults.DefaultWalkSpeedMeters;
     [SerializeField, Min(0f)] float _runMaxSpeedMeters = CharacterLocomotionDefaults.DefaultRunMaxSpeedMeters;
     [SerializeField] MovementStyle _activeStyle;
@@ -52,6 +54,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     bool _moveLocked;
 
     public bool IsStaggered => _staggerRemaining > 0f;
+    internal bool IsAirborne => _locomotion != null && _locomotion.IsAirborne;
     public bool IsMoveLocked => _moveLocked;
     public bool IsMoveInhibited => _moveLocked || _staggerRemaining > 0f;
     public Vector3 KnockbackVelocity => _knockbackVelocity;
@@ -155,6 +158,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             return;
 
         TickKnockback(deltaTime);
+        Vector3 previousVelocity = _mover.Velocity;
 
         Vector3 desiredMove;
         if (IsMoveInhibited)
@@ -163,17 +167,17 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         }
         else if (_possessed && _drive != null && !IsScriptedLocomotion)
         {
-            desiredMove = ConstrainPivotTravel(_drive.CalcDesiredMove(_mover, deltaTime))
+            desiredMove = ApplyTurnMomentum(_drive.CalcDesiredMove(_mover, deltaTime), previousVelocity, deltaTime)
                 + _knockbackVelocity * deltaTime;
         }
         else
         {
-            desiredMove = ConstrainPivotTravel(_mover.CalcConstantSpeedMove(
+            desiredMove = ApplyTurnMomentum(_mover.CalcConstantSpeedMove(
                 EffectiveMoveSpeed
                     * _envSpeedMultiplier
                     * _imbalanceSpeedMultiplier
                     * _swimSpeedMultiplier,
-                deltaTime))
+                deltaTime), previousVelocity, deltaTime)
                 + _knockbackVelocity * deltaTime;
             if (_hasTravelLimit &&
                 desiredMove.sqrMagnitude >
@@ -200,11 +204,15 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
     public void BindDrive(ICharacterMotorDrive drive) => _drive = drive;
 
-    // Keep input/drive velocity intact so pivot playback cannot cancel itself at zero travel.
-    // Collision resolution still owns position; external knockback is added after this gate.
-    internal Vector3 ConstrainPivotTravel(Vector3 desiredMove) =>
-        IsScriptedLocomotion || _animation == null || _mover == null
-            ? desiredMove : desiredMove * _animation.GetPivotMovementScale(_mover.WorldMoveDir);
+    Vector3 ApplyTurnMomentum(Vector3 proposed, Vector3 previousVelocity, float deltaTime)
+    {
+        if (IsScriptedLocomotion || _characterState.IsSwimming || _characterState.IsDiving)
+            return proposed;
+        float pivotScale = IsAirborne || _animation == null ? 1f
+            : _animation.GetPivotMovementScale(_mover.WorldMoveDir);
+        return _mover.ApplyTurnMomentum(previousVelocity, deltaTime, IsAirborne,
+            pivotScale, EffectiveMoveSpeed, _turnBraking, _airAcceleration);
+    }
 
     public void ConfigureDriveMover(float acceleration, float inertia)
     {
