@@ -76,8 +76,13 @@ namespace IsoTilemap
         public Vector3Int ResolveFloorBfsStart(int cellY, int startX, int startZ) =>
             _index.ResolveFloorBfsStart(cellY, startX, startZ);
 
-        public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells) =>
-            _index.SyncOccupancyFromChangedCells(changedCells);
+        public void ApplyTileChanges(TileTopologyChange change)
+        {
+            foreach (var tile in change.RemovedTiles)
+                _index.OnTileRemoved(tile);
+            foreach (var tile in change.AddedTiles)
+                _index.OnTileAdded(tile);
+        }
 
         public void RebuildOccupancy() => _index.RebuildOccupancy();
     }
@@ -489,83 +494,46 @@ namespace IsoTilemap
             Rooms.InvalidateRooms(keys, CellYGeometry);
 
         public void NotifyTopologyChanged(
-            IReadOnlyCollection<Vector3Int> changedCells,
+            TileTopologyChange change,
             BuildingGroupBuilder builder,
-            bool isRemoval = false,
-            TileData removedTile = default,
             bool immediate = false)
         {
+            // Occupancy follows the model synchronously; only the expensive bake is deferred.
+            Topology.ApplyTileChanges(change);
             if (!immediate && MapTopologyBakeDeferral.ShouldDefer)
             {
-                MapTopologyBakeDeferral.Enqueue(changedCells, isRemoval, in removedTile);
+                MapTopologyBakeDeferral.Enqueue(this, change);
                 return;
             }
 
-            ApplyTopologyChangedImmediate(changedCells, builder, isRemoval, removedTile);
+            // An immediate bulk edit must consume earlier deferred edits in the same bake.
+            if (MapTopologyBakeDeferral.TryTakePending(this, out var pending))
+            {
+                pending.Merge(change);
+                change = pending;
+            }
+            BakeTopologyChange(change, builder);
         }
 
         public void FlushDeferredTopologyBakes(BuildingGroupBuilder builder)
         {
-            if (!MapTopologyBakeDeferral.TryTakePending(
-                    out HashSet<Vector3Int> changedCells,
-                    out List<TileData> removals))
-            {
+            if (!MapTopologyBakeDeferral.TryTakePending(this, out var change))
                 return;
-            }
+            BakeTopologyChange(change, builder);
+        }
 
-            if (changedCells != null && changedCells.Count > 0)
-                Topology.SyncOccupancyFromChangedCells(changedCells);
-
+        void BakeTopologyChange(TileTopologyChange change, BuildingGroupBuilder builder)
+        {
             if (builder != null)
             {
-                builder.HandleCoalescedTopologyChange(changedCells, removals);
+                builder.HandleCoalescedTopologyChange(
+                    change.ChangedCells, new List<TileData>(change.RemovedTiles));
                 return;
             }
 
             InvalidateAll();
         }
 
-        void ApplyTopologyChangedImmediate(
-            IReadOnlyCollection<Vector3Int> changedCells,
-            BuildingGroupBuilder builder,
-            bool isRemoval,
-            TileData removedTile)
-        {
-            if (changedCells != null && changedCells.Count > 0)
-                Topology.SyncOccupancyFromChangedCells(changedCells);
-
-            if (builder != null)
-            {
-                if (isRemoval)
-                {
-                    builder.HandleCoalescedTopologyChange(
-                        ToMutableHashSet(changedCells),
-                        new List<TileData> { removedTile });
-                }
-                else
-                {
-                    builder.HandleSetOrApply(changedCells);
-                }
-
-                return;
-            }
-
-            InvalidateAll();
-        }
-
-        static HashSet<Vector3Int> ToMutableHashSet(IReadOnlyCollection<Vector3Int> cells)
-        {
-            if (cells is HashSet<Vector3Int> set)
-                return set;
-
-            var result = new HashSet<Vector3Int>();
-            if (cells == null)
-                return result;
-
-            foreach (var c in cells)
-                result.Add(c);
-            return result;
-        }
     }
 
 }

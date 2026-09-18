@@ -65,6 +65,21 @@ public sealed class CharacterLocomotionMoveSet : ScriptableObject
     [SerializeField, Range(90f, 180f)] float _pivotAngle = 140f;
     [SerializeField, Min(0f)] float _pivotCooldown = 0.4f;
     [SerializeField, Min(0f)] float _parameterSmoothTime = 0.08f;
+    [Header("Air and landing")]
+    [SerializeField] AnimationClip _fallLoop;
+    [SerializeField] MotionSegment _softLanding = new MotionSegment();
+    [SerializeField] MotionSegment _hardLanding = new MotionSegment();
+    [SerializeField] MotionSegment _rollLanding = new MotionSegment();
+    [SerializeField, Min(0f)] float _minimumLandingAirTime = 0.12f;
+    [SerializeField, Min(0f)] float _hardLandingSpeed = 7f;
+    [SerializeField, Min(0f)] float _rollLandingSpeed = 4.5f;
+    internal AnimationClip FallLoop => _fallLoop;
+    internal MotionSegment SoftLanding => _softLanding;
+    internal MotionSegment HardLanding => _hardLanding;
+    internal MotionSegment RollLanding => _rollLanding;
+    internal float MinimumLandingAirTime => _minimumLandingAirTime;
+    internal float HardLandingSpeed => _hardLandingSpeed;
+    internal float RollLandingSpeed => _rollLandingSpeed;
 
     public MotionSegment WalkStart => _walkStart;
     public MotionSegment WalkStop => _walkStop;

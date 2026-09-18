@@ -41,7 +41,7 @@ public class TileMapController : MonoBehaviour
 
     /// <summary>
     /// Walkable cell floor-material layer: same HorizontalFace key replaces previous
-    /// (TileMapModel.SetFloorFaceTile). Returns false if definition missing or build fails.
+    /// (TileMapModel.SetTile). Returns false if definition missing or build fails.
     /// </summary>
     public bool TryReplaceFloorMaterial(Vector3Int walkableCell, TileDefinition floorDef)
     {

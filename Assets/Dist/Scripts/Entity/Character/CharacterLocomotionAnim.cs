@@ -198,10 +198,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
     Vector2MixerState _moveMixerState;
     readonly CharacterLocomotionTransitions _moveTransitions = new CharacterLocomotionTransitions();
     public CharacterLocomotionTransitions.Motion MovementMotion => _moveTransitions.Current;
+    internal Vector3 CommittedLandingDirection => isActiveAndEnabled && _animator != null && _animator.enabled
+        && _characterState != null && !_characterState.IsSwimming && !_characterState.IsDiving
+        && (_vaultHost == null || !_vaultHost.IsBusy) && _hurtWeightTarget <= 0.01f
+        && !_workAnimancer.IsWeightActive(_animancer) ? _moveTransitions.CommittedLandingDirection : Vector3.zero;
     internal float GetPivotMovementScale(Vector3 input)
     {
         if (!isActiveAndEnabled || _animator == null || !_animator.enabled || !OwnsAnimancerMove
-            || _characterState == null || _characterState.IsAiming || _characterState.IsStealth
+            || _characterState == null || (!_moveTransitions.IsLanding && (_characterState.IsAiming || _characterState.IsStealth))
             || _characterState.IsSwimming || _characterState.IsDiving
             || (_vaultHost != null && _vaultHost.IsBusy) || _hurtWeightTarget > 0.01f
             || _workAnimancer.IsWeightActive(_animancer))
@@ -1569,17 +1573,22 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (OwnsAnimancerWork)
             ForceMecanimWorkLayerWeightZero();
         CharacterMotor motor = _locomotion as CharacterMotor;
-        bool allowTransitions = _characterState != null && motor != null
-            && !_characterState.IsAiming && !_characterState.IsStealth
+        bool allowAir = _characterState != null && motor != null
             && !_characterState.IsSwimming && !_characterState.IsDiving
-            && !motor.IsMoveInhibited && !motor.IsStuck && !motor.IsAirborne
+            && !motor.IsMoveInhibited && !motor.IsScriptedLocomotion
+            && (_moveTransitions.Current != CharacterLocomotionTransitions.Motion.LandRoll || !motor.IsStuck)
             && (_vaultHost == null || !_vaultHost.IsBusy)
             && _hurtWeightTarget <= 0.01f
             && !_workAnimancer.IsWeightActive(_animancer);
+        bool allowTransitions = allowAir && !_characterState.IsAiming && !_characterState.IsStealth
+            && !motor.IsStuck && !motor.IsAirborne;
         _moveTransitions.Tick(_animancer.Layers[AnimancerMoveLayerIndex], _moveMixerState,
             _moveSet, _locomotionFacing, motor != null && motor.Mover != null ? motor.Mover.WorldMoveDir : Vector3.zero,
             motor != null && motor.IsSprinting, allowTransitions, channelDelta,
-            GetFootOffset(), _leftFoot != null && _rightFoot != null);
+            GetFootOffset(), _leftFoot != null && _rightFoot != null,
+            motor != null && motor.IsAirborne, motor != null ? motor.LandingSequence : 0,
+            motor != null ? motor.LandingSpeed : 0f, motor != null ? motor.LandingAirTime : 0f,
+            motor != null ? motor.LandingVelocity : Vector3.zero, allowAir);
         _allowLocomotionLean = allowTransitions && !_moveTransitions.IsActive;
 
         _locomotionFacing?.TickFacing(channelDelta);

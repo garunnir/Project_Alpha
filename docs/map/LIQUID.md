@@ -107,8 +107,8 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 | 해동 | 상 교차 시 자신·이웃을 flow dirty로 넣어 흐름이 자동 재개된다 (반응형 솔버라 명시적 wake-up이 필요하다) |
 
 **얼음 지지를 `FloorMapIndex`에 넣지 말 것.** 그쪽 `CellHasFloor`는 building·space bake와 가려짐의 입력이라
-얼음을 주입하면 방 판정·구조물 숨김까지 오염되고, `SyncOccupancyForCell`은 실제로 전체 리빌드라 상변화마다
-호출할 수 없다. 합성 지점은 이동·지각 seam인 `IMapTopologyQuery` **한 곳**이다.
+얼음을 주입하면 방 판정·구조물 숨김까지 오염된다. 타일 편집의 증분 occupancy 갱신과 별개로,
+얼음 지지의 합성 지점은 이동·지각 seam인 `IMapTopologyQuery` **한 곳**이다.
 
 **advection 없음(문서화된 한계):** 액체가 이동해도 온도는 따라가지 않는다. 이동 후 relax로 수렴하므로
 정지 상태의 결과는 같고 과도 구간만 다르다.

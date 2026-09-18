@@ -17,6 +17,8 @@ public sealed class CharacterLocomotionFootIk : MonoBehaviour
     [SerializeField] float _pelvisWeight = 1f;
 
     Animator _animator;
+    CharacterMotor _motor;
+    CharacterLocomotionAnim _animation;
     CharacterVaultHost _vaultHost;
     CharacterState _characterState;
     IMapTopologyQuery _query;
@@ -41,6 +43,8 @@ public sealed class CharacterLocomotionFootIk : MonoBehaviour
     void Awake()
     {
         _animator = GetComponent<Animator>();
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
+        _animation = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
         ResolveBodyRefs();
     }
 
@@ -82,7 +86,8 @@ public sealed class CharacterLocomotionFootIk : MonoBehaviour
             ResolveBodyRefs();
 
         // Vault busy: zero foot IK only — CharacterVaultIkHost keeps hand IK.
-        if (_vaultHost != null && _vaultHost.IsBusy)
+        if ((_vaultHost != null && _vaultHost.IsBusy) || (_motor != null && _motor.IsAirborne)
+            || (_animation != null && _animation.MovementMotion == CharacterLocomotionTransitions.Motion.LandRoll))
         {
             ClearFootIk();
             return;

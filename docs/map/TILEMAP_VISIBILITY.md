@@ -515,7 +515,7 @@ player space band는 `FloorVisibilityContext`, tile structural band·space 접�
 | 드라이버 | `SightLineProximityBlendDriver.cs`, `PlayerFloorVisibilityDriver.cs`, `CharacterVisibilityBroadcaster.cs` |
 | evaluate 기준점 | `PlayerVisibilityWorldResolve.cs`, `CharacterState.ResolveVisibilityWorldPoint` |
 | slice Y | `TileVisibilityCellUtil.cs` |
-| bake | `BuildingGroupBuilder.cs`, `BuildingGroupRegistry.cs` |
+| bake | `BuildingGroupBuilder.cs`, `BuildingGroupRegistry.cs`, `SpaceLeakEvaluator.cs`, `FloorMapIndex.cs`(컬럼 seal 캐시) |
 
 ---
 

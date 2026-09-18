@@ -17,8 +17,6 @@ namespace IsoTilemap
             Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
         };
 
-        const int CeilingProbeMaxSteps = 64;
-
         public static bool Evaluate(
             IReadOnlyCollection<Vector3Int> floorCells,
             int buildingId,
@@ -68,16 +66,22 @@ namespace IsoTilemap
             FloorMapIndex index)
         {
             BuildColumnMaxY(floorCells, out var columnMaxY);
-            int capY = extent.MaxStructuralY;
 
             foreach (var kv in columnMaxY)
             {
-                if (ColumnHasCeilingLeak(index, kv.Key.x, kv.Key.z, kv.Value, capY))
+                if (ColumnHasCeilingLeak(index, kv.Key.x, kv.Key.z, kv.Value))
                     return true;
             }
 
             return false;
         }
+
+        /// <summary>
+        /// 이 컬럼(x,z)에서 floorY보다 높은 곳에 seal(walkable floor 또는 structural OccupiedCell)이
+        /// 하나도 없으면 leak. <see cref="FloorMapIndex.TryGetColumnSealTopY"/> O(1) 조회 — buildingId 무관.
+        /// </summary>
+        static bool ColumnHasCeilingLeak(FloorMapIndex index, int x, int z, int floorY) =>
+            !index.TryGetColumnSealTopY(x, z, out int topY) || topY <= floorY;
 
         static bool EvaluateLateralLeak(
             IReadOnlyCollection<Vector3Int> floorCells,
@@ -110,42 +114,6 @@ namespace IsoTilemap
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// walkable floor 셀 <paramref name="floorY"/>에서 위로 한 칸씩 통과 시도.
-        /// 위 칸으로의 이동이 Floor 면·OccupiedCell structural로 막히면 밀폐.
-        /// <paramref name="capY"/>를 넘는 칸으로 나가면 천장 leak.
-        /// </summary>
-        static bool ColumnHasCeilingLeak(FloorMapIndex index, int x, int z, int floorY, int capY)
-        {
-            int y = floorY;
-            for (int step = 0; step < CeilingProbeMaxSteps; step++)
-            {
-                int above = y + 1;
-                if (above > capY)
-                    return true;
-
-                if (VerticalUpPassageBlocked(index, x, y, z))
-                    return false;
-
-                y = above;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// (x,y,z) → (x,y+1,z) volume 통과 차단.
-        /// walkable Floor at y+1 = 면 y↔y+1 (<see cref="SpaceFloodFill3D"/>와 동일).
-        /// </summary>
-        static bool VerticalUpPassageBlocked(FloorMapIndex index, int x, int y, int z)
-        {
-            int above = y + 1;
-            if (index.CellHasFloor(x, above, z))
-                return true;
-
-            return OccupiedCellHasStructural(index, x, above, z);
         }
 
         static bool LateralEdgeSeals(FloorMapIndex index, Vector3Int cellA, Vector3Int cellB)
@@ -227,7 +195,7 @@ namespace IsoTilemap
             }
         }
 
-        /// <summary>디버그: 천장 leak 발생 column (x,z), 탈출 probeY, 사유. 없으면 빈 목록.</summary>
+        /// <summary>디버그: 천장 leak 발생 column (x,z), floorY, 사유. 없으면 빈 목록.</summary>
         public static void DiagnoseCeilingLeaks(
             IReadOnlyCollection<Vector3Int> floorCells,
             int buildingId,
@@ -240,28 +208,21 @@ namespace IsoTilemap
                 return;
 
             BuildColumnMaxY(floorCells, out var columnMaxY);
-            int capY = extent.MaxStructuralY;
 
             foreach (var kv in columnMaxY)
             {
                 int x = kv.Key.x;
                 int z = kv.Key.z;
-                int y = kv.Value;
+                int floorY = kv.Value;
 
-                for (int step = 0; step < CeilingProbeMaxSteps; step++)
+                if (!index.TryGetColumnSealTopY(x, z, out int topY))
                 {
-                    int above = y + 1;
-                    if (above > capY)
-                    {
-                        into.Add((x, z, above, $"upTo={above}>maxStructuralY={capY}"));
-                        break;
-                    }
-
-                    if (VerticalUpPassageBlocked(index, x, y, z))
-                        break;
-
-                    y = above;
+                    into.Add((x, z, floorY, "no seal anywhere in column"));
+                    continue;
                 }
+
+                if (topY <= floorY)
+                    into.Add((x, z, floorY, $"topSealY={topY}<=floorY={floorY}"));
             }
         }
 

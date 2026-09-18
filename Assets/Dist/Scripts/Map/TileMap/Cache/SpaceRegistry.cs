@@ -108,6 +108,55 @@ namespace IsoTilemap
                 result.IsOutdoor = isOutdoor;
         }
 
+        /// <summary>
+        /// (buildingId, cellY) slice와 겹치는 space만 제거 — 나머지는 그대로 둔다.
+        /// scoped bake(<see cref="BuildingGroupBuilder.BakeSpacesForSlices"/>) 전용, 전체 <see cref="Clear"/> 대체.
+        /// MinFloorY..MaxFloorY band로 후보를 거르므로 오탐(불필요한 재flood) 가능 — 정확도 문제는 아님.
+        /// </summary>
+        public void RemoveSpacesInSlices(IReadOnlyCollection<(int buildingId, int cellY)> slices)
+        {
+            if (slices == null || slices.Count == 0)
+                return;
+
+            List<int> toRemove = null;
+            foreach (var kv in _spacesById)
+            {
+                SpaceBakeResult space = kv.Value;
+                if (space == null || !space.HasFloorBounds)
+                    continue;
+
+                foreach (var slice in slices)
+                {
+                    if (space.BuildingId != slice.buildingId)
+                        continue;
+                    if (slice.cellY < space.MinFloorY || slice.cellY > space.MaxFloorY)
+                        continue;
+
+                    (toRemove ??= new List<int>()).Add(kv.Key);
+                    break;
+                }
+            }
+
+            if (toRemove == null)
+                return;
+
+            for (int i = 0; i < toRemove.Count; i++)
+                RemoveSpace(toRemove[i]);
+        }
+
+        void RemoveSpace(int spaceId)
+        {
+            if (_volumeCellsBySpaceId.TryGetValue(spaceId, out var volumeSet))
+            {
+                foreach (var cell in volumeSet)
+                    _cellToSpaceId.Remove(cell);
+                _volumeCellsBySpaceId.Remove(spaceId);
+            }
+
+            _floorCellsBySpaceId.Remove(spaceId);
+            _spacesById.Remove(spaceId);
+        }
+
         void AbsorbInto(
             int spaceId,
             SpaceBakeResult result,

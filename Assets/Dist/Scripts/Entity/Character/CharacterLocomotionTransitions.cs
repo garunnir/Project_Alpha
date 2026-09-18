@@ -7,13 +7,26 @@ using UnityEngine;
 /// <summary>Interruptible motion segments; pivots also constrain voluntary motor travel.</summary>
 public sealed class CharacterLocomotionTransitions
 {
-    public enum Motion { Loop, Start, Stop, Turn }
+    public enum Motion { Loop, Start, Stop, Turn, Fall, LandSoft, LandHard, LandRoll }
     public Motion Current { get; private set; }
     public bool IsActive => Current != Motion.Loop;
     const float PivotTravelResume = 0.65f;
+    uint _landingSequence;
+    bool _airInitialized;
+    float _airDelay;
+    internal bool IsLanding => Current == Motion.LandSoft || Current == Motion.LandHard || Current == Motion.LandRoll;
+    internal Vector3 CommittedLandingDirection => Current == Motion.LandRoll && !_fadingOut ? _segmentDirection : Vector3.zero;
 
     internal float GetMovementScale(Vector3 input)
     {
+        if (IsLanding && _segment != null)
+        {
+            float elapsed = (_sourceTime - _segment.StartTime) / _segment.Speed;
+            if (Current == Motion.LandSoft) return Mathf.SmoothStep(0.4f, 1f, elapsed / 0.25f);
+            if (Current == Motion.LandHard) return Mathf.SmoothStep(0f, 1f,
+                Mathf.InverseLerp(0.45f, 0.85f, Mathf.InverseLerp(_segment.StartTime, _segment.End, _sourceTime)));
+            return 1f;
+        }
         if (Current != Motion.Turn || _segment == null || _state == null || !_state.IsValid()
             || input.sqrMagnitude <= 0.0001f || Vector3.Angle(input, _turnTo) > 60f)
             return 1f;
@@ -43,18 +56,32 @@ public sealed class CharacterLocomotionTransitions
         _initialized = false;
         _cooldown = 0f;
         _fadingOut = false;
+        _airInitialized = false;
+        _airDelay = 0f;
         facing?.EndAnimationTurn();
     }
 
     public void Tick(AnimancerLayer layer, Vector2MixerState loop,
         CharacterLocomotionMoveSet set, CharacterLocomotionFacing facing,
         Vector3 direction, bool running, bool allowed, float delta,
-        Vector2 footOffset = default, bool hasFootPose = false)
+        Vector2 footOffset = default, bool hasFootPose = false,
+        bool airborne = false, uint landingSequence = 0, float landingSpeed = 0f,
+        float landingAirTime = 0f, Vector3 velocity = default, bool airAllowed = false)
     {
         if (delta <= 0f) return;
         bool moving = direction.sqrMagnitude > 0.0001f;
         direction = moving ? direction.normalized : Vector3.zero;
         _cooldown = Mathf.Max(0f, _cooldown - delta);
+
+        if (TickAir(layer, loop, set, facing, airborne, landingSequence, landingSpeed,
+            landingAirTime, velocity, direction, airAllowed, delta))
+        {
+            _initialized = true;
+            _wasMoving = moving;
+            _wasRunning = running;
+            _lastDirection = direction;
+            return;
+        }
 
         if (!_initialized)
         {
@@ -163,6 +190,66 @@ public sealed class CharacterLocomotionTransitions
         _fadingOut = false;
         _mirrored = mirrored;
         Current = motion;
+        return true;
+    }
+
+    bool TickAir(AnimancerLayer layer, Vector2MixerState loop, CharacterLocomotionMoveSet set,
+        CharacterLocomotionFacing facing, bool airborne, uint sequence, float impact,
+        float airTime, Vector3 velocity, Vector3 input, bool allowed, float delta)
+    {
+        bool landed = _airInitialized && sequence != _landingSequence;
+        _airInitialized = true;
+        _landingSequence = sequence; // Consume even while hurt/swimming/vaulting to avoid stale landings.
+        if (!allowed || set.FallLoop == null)
+        {
+            _airDelay = 0f;
+            if (Current == Motion.Fall || IsLanding) ReturnToLoop(layer, loop, set, facing);
+            return false;
+        }
+        if (airborne)
+        {
+            _airDelay += delta;
+            if (Current != Motion.Fall || _state == null || !_state.IsValid() || layer.CurrentState != _state)
+            {
+                ReturnToLoop(layer, loop, set, facing);
+                if (_airDelay < 0.06f) return true;
+                _state = layer.Play(set.FallLoop, set.TransitionFade);
+                _state.Time = 0f;
+                _state.Speed = 1f;
+                Current = Motion.Fall;
+            }
+            return true;
+        }
+        _airDelay = 0f;
+        if (landed && airTime >= set.MinimumLandingAirTime)
+        {
+            ReturnToLoop(layer, loop, set, facing);
+            bool hard = impact >= set.HardLandingSpeed;
+            bool roll = hard && velocity.magnitude >= set.RollLandingSpeed
+                && input.sqrMagnitude > 0.0001f && Vector3.Angle(input, velocity) < 60f
+                && set.RollLanding != null && set.RollLanding.IsValid;
+            var segment = roll ? set.RollLanding : hard ? set.HardLanding : set.SoftLanding;
+            if (!Play(layer, set, segment, roll ? Motion.LandRoll : hard ? Motion.LandHard : Motion.LandSoft))
+                return false;
+            _segmentDirection = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : input;
+        }
+        else if (Current == Motion.Fall) ReturnToLoop(layer, loop, set, facing);
+        if (!IsLanding) return false;
+        if (_state == null || !_state.IsValid()
+            || (layer.CurrentState != _state && !(_fadingOut && layer.CurrentState == loop)))
+        { ReturnToLoop(layer, loop, set, facing); return false; }
+        _sourceTime = Mathf.Min(_segment.End, _sourceTime + delta * _segment.Speed);
+        if (Current == Motion.LandRoll && !_fadingOut) facing?.SetAnimationTurn(_segmentDirection);
+        float elapsed = (_sourceTime - _segment.StartTime) / _segment.Speed;
+        bool resumeSoft = Current == Motion.LandSoft && elapsed >= 0.25f && input.sqrMagnitude > 0.0001f;
+        if (!_fadingOut && (resumeSoft || _sourceTime >= _segment.End - set.TransitionFade * _segment.Speed))
+        {
+            layer.Play(loop, set.TransitionFade);
+            _fadingOut = true;
+            if (resumeSoft) _sourceTime = Mathf.Max(_sourceTime, _segment.End - set.TransitionFade * _segment.Speed);
+            facing?.EndAnimationTurn();
+        }
+        if (_sourceTime >= _segment.End) ReturnToLoop(layer, loop, set, facing);
         return true;
     }
 

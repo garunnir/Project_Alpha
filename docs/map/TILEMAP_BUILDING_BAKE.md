@@ -167,7 +167,7 @@ flowchart TD
 2. building마다 **AABB(min/max)** 안에서만 **전방향** volume flood — 같은 층 빈 칸도 동일 `SpaceId` 가능. **논리 floor face는 수직(±Y) 통과를 막음** (아래 칸↔위 walkable 사이 슬래브).
 3. flood 경계: building 구조(벽)·**logical floor(천장/층간 슬래브)**·AABB 밖·outdoor 레이어·다른 building.
 4. leak → `isOutdoor=true` (개방 shed·뚫린 지붕 등). topology 기준; **`collisionFlags` 금지**.
-   - **천장 leak**: space floor 셀에서 **위로 volume 통과**가 `MaxStructuralY` 너머로 열려 있으면 outdoor. 막힘 = 위 칸 logical Floor 면(y↔y+1) 또는 OccupiedCell structural (`SpaceFloodFill3D` 수직과 동일).  
+   - **천장 leak**: space floor 셀 컬럼 `(x,z)`에서, floor 셀보다 높은 곳에 seal(logical Floor 면 y↔y+1 또는 OccupiedCell structural — `SpaceFloodFill3D` 수직 판정과 동일)이 **하나도 없으면** outdoor. `FloorMapIndex`가 bake마다 전역 `(x,z)` 컬럼별 최고 seal cellY를 캐시(`TryGetColumnSealTopY`)해 O(1) 조회 — **seal 타일의 buildingId는 보지 않는다** (다른 building 소속 지붕이라도 같은 컬럼을 막으면 seal, [§대전제 1](#대전제-합의재논의-금지)). 자기 building의 `MaxStructuralY`로 캡을 걸던 구버전은 벽과 분리된(다른 buildingId) 지붕을 못 봐서 조기에 leak으로 오판하는 버그가 있어 폐기.  
    - **측면 leak**: AABB 밖 이웃으로 structural edge/solid 없이 열림.
 5. `isOutdoor=false` = 미감지 → 실내 파이프라인 (≠ 밀폐 증명).
 
@@ -238,12 +238,24 @@ wall tag·인덱스 재구축 **이후**, `buildingId > 0`에서 building별 공
 
 ## incremental (편집)
 
+편집 입력은 `TileTopologyChange` 하나로 전달한다: **변경 전 제거 타일 · 최종 추가 타일 · 양쪽 점유 범위의 변경 셀**.
+`TileMapModel.SetTile`/`RemoveTile`/`ApplyTiles`가 원본 저장소를 갱신하면서 이 정보를 기록한다. 같은 ID의 이동·크기 변경과 같은 면의 다른 타일 교체도 제거+추가이며, 잘못된 입력은 기존 타일을 제거하기 전에 거부한다.
+
+`TileMapCacheHub`는 변경을 받으면 `FloorMapIndex.OnTileRemoved`/`OnTileAdded`로 **점유 캐시를 즉시 갱신**한다. 프레임 말까지 지연하는 것은 **building·room·space bake만**이다. `MapTopologyBakeDeferral`은 맵별로 변경 묶음을 병합하며, 즉시 `ApplyTiles`는 같은 맵의 대기 bake도 함께 소비한다. load 시 해당 맵의 대기 변경을 버린다.
+
+점유 갱신은 해당 타일의 `sizeUnit` box 또는 face incident 셀에 한정한다. OccupiedCell 참조는 원본 리스트의 **tile ID**를 검증하므로 다른 타일 삭제로 리스트 인덱스가 밀려도 최신 building/room 정보를 읽는다. walkable 높이는 기여 타일 수를 세어 겹침을 보존하며, seal은 컬럼별 정렬된 높이 집합으로 최상단 제거를 처리한다. seal 판정은 기존 `CellHasFloor`/structural·점유 조건을 그대로 쓰고 buildingId 동일성은 사용하지 않는다. `RebuildOccupancy`는 초기화·load·전체 bake 경로에만 남긴다.
+
+타일 배치가 같은 metadata 편집은 기존 뷰를 refresh하며 제거/추가 이벤트를 내지 않는다. 실제 이동·교체의 이벤트는 occupancy 갱신 후 전달해 chunk membership과 조회 결과를 일치시킨다.
+
+검증 기록 (2026-09-18): `FloorMapIndexIncrementalTests` 9개 통과 (무작위 편집 120회 전체 rebuild 대조 포함). 현재 BakeIdPlayground의 `Is Indoor_0/1/2` 통과. 씬의 SameBuilding 2건·SameSpaceId 1건 실패는 증분 갱신 없이 150개 타일을 적재한 뒤 Full Rebake만 실행해도 재현되며, 두 경로의 probe 11개 값은 모두 동일하다. SeedDefaults는 정의되지 않은 `indoor`/`outsideTile` probe를 참조하는 규칙이 있어 전체 통과 상태는 아니다. 이 규칙·씬 데이터는 occupancy 리팩터에서 수정하지 않았다.
+
 타일 추가/제거/**파기·메우기**는 **같은 증분 경로** (`ApplyIncrementalTopologyChange`).  
 변경 셀 근처에서만 building 연결을 갱신한다 (0 흡수 · 맞닿은 양수 merge · 고립 0에 새 id).  
 **전맵 `ResetIndoorBuildingIds` 금지** — 로드된 하드 파티션을 dig/편집 한 번에 붕괴시키지 않음.  
 room/shell/space는 **양수 building slice가 있을 때만** (`RebuildRooms`). outdoor-only 변경은 notify만.  
 outdoor 레이어는 building union에 **섞지 않음**.  
-뷰 부모 sync는 **변경 셀 batch만** (`NotifyCellsChanged`) — 전맵 refresh 금지.
+뷰 부모 sync는 **변경 셀 batch만** (`NotifyCellsChanged`) — 전맵 refresh 금지.  
+**space bake도 slice 스코프.** `RebuildRooms`가 계산한 `(buildingId, cellY)` slice 집합을 `BuildingGroupBuilder.BakeSpacesForSlices`에 그대로 넘긴다 — 그 slice와 겹치는 space만 `SpaceRegistry.RemoveSpacesInSlices`로 지우고 그 slice의 room만 flood 시드로 재사용, 새로 만들어지거나 흡수된 space만 `SpaceLeakEvaluator` 재평가. 손 안 댄 space는 `SpaceId`가 그대로 유지된다(전맵 rebuild였던 과거엔 편집마다 전부 새 id로 바뀜). `AssignAll`/`RebakeAllBuildingPartitions`(load·Full Rebake)만 `BakeSpacesForSlices(null)`로 전맵 스코프 유지.
 
 ---
 
@@ -279,9 +291,9 @@ outdoor 레이어는 building union에 **섞지 않음**.
 | 건물 프리팹 펼침 | `BuildingPrefabRoot` + `BuildingPrefabUnpack` → 타일만 (청크) |
 | room·perimeter | `BakeAllRooms`, `TagPerimeterForSlice` |
 | extent | `BuildingGroupRegistry` / `BuildingExtent` |
-| space | AABB-clipped volume flood + leak → `SpaceRegistry` |
+| space | AABB-clipped volume flood + leak → `SpaceRegistry`. leak 판정: `SpaceLeakEvaluator`(천장: `FloorMapIndex.TryGetColumnSealTopY` O(1) 전역 컬럼 캐시, 측면: AABB 밖 이웃). bake 진입: `BuildingGroupBuilder.BakeSpacesForSlices` — `null`(전맵, load·Full Rebake) 또는 `RebuildRooms`가 넘긴 slice 집합(증분, `SpaceRegistry.RemoveSpacesInSlices`로 국소 제거) |
 | outdoor 판정 | `TileMapCacheHub.IsOutdoorEvaluation` — empty → **true** |
-| incremental | `ApplyIncrementalTopologyChange` — 추가/제거/dig **동일**. 국소 0흡수·양수 merge. indoor slice 없으면 room/shell 스킵 |
+| incremental | `ApplyIncrementalTopologyChange` — 추가/제거/dig **동일**. 국소 0흡수·양수 merge. indoor slice 없으면 room/shell 스킵. room이 있으면 그 slice만 `BakeSpacesForSlices`로 space도 국소 재bake |
 
 레거시 명칭(`MergeBuildingsOnFloorAdjacency`, minCellY plaza BFS 단독 outdoor 등)은 이행 완료 후 제거·비활성.
 

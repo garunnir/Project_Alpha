@@ -78,17 +78,18 @@ public sealed class CharacterLocomotionFacing : MonoBehaviour
         if (dt <= 0f || (_hitStop != null && _hitStop.IsFrozen))
             return;
 
+        // Committed roll faces its travel direction until the animation releases ownership.
+        if (_animationTurn)
+        {
+            UpdateAngularVelocity(dt);
+            return;
+        }
+
         if (_state.IsAiming)
         {
             SnapToSight();
             AngularVelocity = 0f;
             _lastTickFacing = _bodyFacingDir;
-            return;
-        }
-
-        if (_animationTurn)
-        {
-            UpdateAngularVelocity(dt);
             return;
         }
 

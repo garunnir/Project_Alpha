@@ -30,7 +30,6 @@ namespace IsoTilemap
         private readonly List<(Guid tileId, float occlusion01)> _occlusionDeltaApply = new List<(Guid, float)>();
         private readonly List<Guid> _occlusionDeltaClear = new List<Guid>();
         private readonly List<OcclusionWallEntry> _occlusionWallEntries = new List<OcclusionWallEntry>();
-        private readonly HashSet<Vector3Int> _changedCellsBuffer = new HashSet<Vector3Int>();
         private readonly List<TileData> _forEachRuntimeScratch = new List<TileData>();
         private readonly List<Vector3Int> _playerOccupiedCellsBuffer = new List<Vector3Int>();
 
@@ -137,89 +136,75 @@ namespace IsoTilemap
                 IdentityEquals(existing.identity, tileData.identity))
                 return;
 
-            if (TryFindTileById(tileData.tileDefId, out existing))
-                RemoveFromStoreOnly(existing);
-
-            var changedCells = new HashSet<Vector3Int>();
-
-            switch (TileIdentityUtil.GetPlacementSlot(tileData.identity))
-            {
-                case TilePlacementSlot.VerticalFace:
-                    SetWallFaceTile(tileData);
-                    break;
-                case TilePlacementSlot.HorizontalFace:
-                    SetFloorFaceTile(tileData);
-                    break;
-                default:
-                    SetCellTile(tileData);
-                    break;
-            }
-
-            TileIdentityUtil.CollectAffectedCells(tileData.identity, changedCells);
-
+            var change = new TileTopologyChange();
+            if (!StoreTile(tileData, change))
+                return;
             InvalidateOcclusionPlayerTracking();
-            NotifyBuildingTopologyChanged(changedCells);
+            NotifyBuildingTopologyChanged(change);
+            NotifyRuntimeTileChanges(change);
+            foreach (var cell in change.ChangedCells)
+                NotifyCell(cell);
         }
 
         public void RemoveTile(TileData tileData)
         {
-            var changedCells = new HashSet<Vector3Int>();
-            bool removed = false;
-
-            if (TryFindTileById(tileData.tileDefId, out var existingTile))
-            {
-                switch (TileIdentityUtil.GetPlacementSlot(existingTile.identity))
-                {
-                    case TilePlacementSlot.VerticalFace:
-                        if (_faceBinder.TryRemoveWall(
-                                WallEdgeKey.FromWallTileIdentity(existingTile.identity),
-                                out var removedWall))
-                        {
-                            removed = true;
-                            tileData = removedWall;
-                            TileIdentityUtil.CollectAffectedCells(tileData.identity, changedCells);
-                        }
-                        break;
-                    case TilePlacementSlot.HorizontalFace:
-                        if (_faceBinder.TryRemoveFloor(
-                                FloorFaceKey.FromFloorTileIdentity(existingTile.identity),
-                                out var removedFloor))
-                        {
-                            removed = true;
-                            tileData = removedFloor;
-                            TileIdentityUtil.CollectAffectedCells(tileData.identity, changedCells);
-                        }
-                        break;
-                    default:
-                        RemoveOccupiedCellTile(ref tileData, ref removed, changedCells);
-                        break;
-                }
-            }
-            else
-            {
-                if (_faceBinder.TryRemove(tileData.tileDefId, out var removedFace))
-                {
-                    removed = true;
-                    tileData = removedFace;
-                    TileIdentityUtil.CollectAffectedCells(tileData.identity, changedCells);
-                }
-                else
-                {
-                    RemoveOccupiedCellTile(ref tileData, ref removed, changedCells);
-                }
-            }
-
-            if (!removed)
+            if (!TryFindTileById(tileData.tileDefId, out tileData))
                 return;
 
-            _tilesById.Remove(tileData.tileDefId);
-            _isDirty = true;
+            var change = new TileTopologyChange();
+            change.Remove(tileData);
+            RemoveFromStoreOnly(tileData);
             InvalidateOcclusionPlayerTracking();
-            NotifyBuildingTopologyChanged(changedCells, isRemoval: true, removedTile: tileData);
+            NotifyBuildingTopologyChanged(change);
             OnRuntimeTileRemoved?.Invoke(tileData);
 
-            foreach (var cell in changedCells)
+            foreach (var cell in change.ChangedCells)
                 NotifyCell(cell);
+        }
+
+        // All editing entry points share replacement and displacement handling.
+        // Validate first, then record old data before changing either store.
+        bool StoreTile(in TileData tile, TileTopologyChange change)
+        {
+            if (TileIdentityUtil.IsHorizontalFace(tile.identity) &&
+                !TileIdentityUtil.IsValidHorizontalFaceIdentity(tile.identity))
+            {
+                Debug.LogError($"[TileMapModel] Invalid HorizontalFace '{tile.identity.PrefabId}'. Skipped.");
+                return false;
+            }
+
+            if (TryFindTileById(tile.tileDefId, out var previous))
+            {
+                change.Remove(previous);
+                RemoveFromStoreOnly(previous);
+            }
+
+            bool displaced = TileIdentityUtil.GetPlacementSlot(tile.identity) switch
+            {
+                TilePlacementSlot.VerticalFace => _faceBinder.TryGetWallFace(
+                    WallEdgeKey.FromWallTileIdentity(tile.identity), out previous),
+                TilePlacementSlot.HorizontalFace => _faceBinder.TryGetFloorFace(
+                    FloorFaceKey.FromFloorTileIdentity(tile.identity), out previous),
+                _ => false,
+            };
+            if (displaced)
+            {
+                change.Remove(previous);
+                RemoveFromStoreOnly(previous);
+            }
+
+            if (TileIdentityUtil.IsFaceSlot(tile.identity))
+                _faceBinder.Register(tile);
+            else
+            {
+                if (!tiles.TryGetValue(tile.identity.GridPos, out var list))
+                    tiles.Add(tile.identity.GridPos, list = new List<TileData>());
+                list.Add(tile);
+            }
+            IndexTile(tile);
+            _isDirty = true;
+            change.Add(tile);
+            return true;
         }
 
         void RemoveFromStoreOnly(in TileData tile)
@@ -254,28 +239,6 @@ namespace IsoTilemap
 
             _tilesById.Remove(tile.tileDefId);
             _isDirty = true;
-        }
-
-        void RemoveOccupiedCellTile(ref TileData tileData, ref bool removed, HashSet<Vector3Int> changedCells)
-        {
-            Vector3Int pos = tileData.identity.GridPos;
-            if (!tiles.TryGetValue(pos, out var list))
-                return;
-
-            for (int i = list.Count - 1; i >= 0; i--)
-            {
-                if (list[i].tileDefId != tileData.tileDefId)
-                    continue;
-
-                tileData = list[i];
-                list.RemoveAt(i);
-                removed = true;
-                changedCells.Add(pos);
-                break;
-            }
-
-            if (list.Count == 0)
-                tiles.Remove(pos);
         }
 
         public bool TryGetTileById(Guid tileId, out TileData tileData) => TryFindTileById(tileId, out tileData);
@@ -398,85 +361,10 @@ namespace IsoTilemap
                 collisionFlags = id.collisionFlags,
             };
 
-        private void SetFloorFaceTile(TileData tileData)
-        {
-            if (!TileIdentityUtil.IsValidHorizontalFaceIdentity(tileData.identity))
-            {
-                Debug.LogError(
-                    $"[TileMapModel] HorizontalFace tile '{tileData.identity.PrefabId}' requires floorFace=PosY and walkable GridPos. Skipped.");
-                return;
-            }
-
-            if (_faceBinder.TryGetFloorFace(FloorFaceKey.FromFloorTileIdentity(tileData.identity), out var previous))
-            {
-                OnRuntimeTileRemoved?.Invoke(previous);
-                _tilesById.Remove(previous.tileDefId);
-            }
-
-            _faceBinder.Register(tileData);
-            IndexTile(tileData);
-            _isDirty = true;
-            OnRuntimeTileAdded?.Invoke(tileData);
-
-            _changedCellsBuffer.Clear();
-            TileIdentityUtil.CollectAffectedCells(tileData.identity, _changedCellsBuffer);
-            foreach (var cell in _changedCellsBuffer)
-                NotifyCell(cell);
-        }
-
-        private void SetWallFaceTile(TileData tileData)
-        {
-            if (_faceBinder.TryGetWallFace(WallEdgeKey.FromWallTileIdentity(tileData.identity), out var previous))
-            {
-                OnRuntimeTileRemoved?.Invoke(previous);
-                _tilesById.Remove(previous.tileDefId);
-            }
-
-            _faceBinder.Register(tileData);
-            IndexTile(tileData);
-            _isDirty = true;
-            OnRuntimeTileAdded?.Invoke(tileData);
-
-            _changedCellsBuffer.Clear();
-            TileIdentityUtil.CollectAffectedCells(tileData.identity, _changedCellsBuffer);
-            foreach (var cell in _changedCellsBuffer)
-                NotifyCell(cell);
-        }
-
-        private void SetCellTile(TileData tileData)
-        {
-            Vector3Int pos = tileData.identity.GridPos;
-            if (!tiles.TryGetValue(pos, out var list))
-            {
-                tiles[pos] = new List<TileData> { tileData };
-                IndexTile(tileData);
-                _isDirty = true;
-                OnRuntimeTileAdded?.Invoke(tileData);
-                NotifyCell(pos);
-                return;
-            }
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].tileDefId != tileData.tileDefId)
-                    continue;
-
-                list[i] = tileData;
-                IndexTile(tileData);
-                _isDirty = true;
-                NotifyCell(pos);
-                return;
-            }
-
-            list.Add(tileData);
-            IndexTile(tileData);
-            _isDirty = true;
-            OnRuntimeTileAdded?.Invoke(tileData);
-            NotifyCell(pos);
-        }
-
         public void Initialize(MapModelDTO prepared)
         {
+            if (_mapCacheHub != null)
+                MapTopologyBakeDeferral.Clear(_mapCacheHub);
             tiles.Clear();
             _faceBinder.Clear();
             _tilesById.Clear();
@@ -668,28 +556,22 @@ namespace IsoTilemap
         }
 
         private void NotifyBuildingTopologyChanged(
-            HashSet<Vector3Int> changedCells,
-            bool isRemoval = false,
-            TileData removedTile = default,
+            TileTopologyChange change,
             bool immediateTopologyBake = false)
         {
             if (_mapCacheHub != null)
             {
                 _mapCacheHub.NotifyTopologyChanged(
-                    changedCells,
+                    change,
                     _buildingGroupBuilder,
-                    isRemoval,
-                    removedTile,
                     immediateTopologyBake);
                 return;
             }
 
             if (_buildingGroupBuilder != null)
             {
-                if (isRemoval)
-                    _buildingGroupBuilder.HandleRemoveTile(removedTile, changedCells);
-                else
-                    _buildingGroupBuilder.HandleSetOrApply(changedCells);
+                _buildingGroupBuilder.HandleCoalescedTopologyChange(
+                    change.ChangedCells, new List<TileData>(change.RemovedTiles));
             }
         }
 
@@ -713,69 +595,46 @@ namespace IsoTilemap
             if (tileList == null || tileList.Count == 0)
                 return;
 
-            if (!MergeTilesIntoRuntime(tileList, _changedCellsBuffer))
-                return;
-
-            _isDirty = true;
-            NotifyBuildingTopologyChanged(_changedCellsBuffer, immediateTopologyBake: true);
-            OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
-        }
-
-        /// <summary>런타임 딕셔너리에 타일을 반영하고 변경된 셀을 수집합니다.</summary>
-        private bool MergeTilesIntoRuntime(IReadOnlyList<TileData> tileList, HashSet<Vector3Int> changedCells)
-        {
-            changedCells.Clear();
-
+            var change = new TileTopologyChange();
             for (int t = 0; t < tileList.Count; t++)
             {
                 TileData tile = tileList[t];
-
-                if (TileIdentityUtil.IsFaceSlot(tile.identity))
-                {
-                    if (TileIdentityUtil.IsHorizontalFace(tile.identity) &&
-                        !TileIdentityUtil.IsValidHorizontalFaceIdentity(tile.identity))
-                    {
-                        Debug.LogError(
-                            $"[TileMapModel] Invalid HorizontalFace '{tile.identity.PrefabId}' during replace. Skipped.");
-                        continue;
-                    }
-
-                    if (!_faceBinder.TryReplaceTileData(tile))
-                        continue;
-
-                    IndexTile(tile);
-                    TileIdentityUtil.CollectAffectedCells(tile.identity, changedCells);
-                    continue;
-                }
-
-                Vector3Int pos = tile.identity.GridPos;
-
-                if (!tiles.TryGetValue(pos, out var existingList))
-                    continue;
-
-                for (int i = 0; i < existingList.Count; i++)
-                {
-                    if (existingList[i].tileDefId != tile.tileDefId)
-                        continue;
-
-                    existingList[i] = tile;
-                    IndexTile(tile);
-                    break;
-                }
-
-                changedCells.Add(pos);
+                // ApplyTiles updates existing tiles; it does not create unknown IDs.
+                if (TryFindTileById(tile.tileDefId, out _))
+                    StoreTile(tile, change);
             }
-
-            return changedCells.Count > 0;
+            if (change.ChangedCells.Count == 0)
+                return;
+            InvalidateOcclusionPlayerTracking();
+            NotifyBuildingTopologyChanged(change, immediateTopologyBake: true);
+            NotifyRuntimeTileChanges(change);
+            OnRuntimeBatchChanged?.Invoke(change.ChangedCells);
         }
 
-        private static bool IdentityEquals(in TileIdentity a, in TileIdentity b) =>
+        void NotifyRuntimeTileChanges(TileTopologyChange change)
+        {
+            // Metadata edits refresh existing views; placement changes update chunk membership.
+            foreach (var removed in change.RemovedTiles)
+                if (!TryFindTileById(removed.tileDefId, out var current) ||
+                    !PlacementEquals(removed.identity, current.identity))
+                    OnRuntimeTileRemoved?.Invoke(removed);
+            foreach (var added in change.AddedTiles)
+                if ((!change.TryGetRemovedTile(added.tileDefId, out var previous) ||
+                     !PlacementEquals(previous.identity, added.identity)) &&
+                    TryFindTileById(added.tileDefId, out var current))
+                    OnRuntimeTileAdded?.Invoke(current);
+        }
+
+        private static bool PlacementEquals(in TileIdentity a, in TileIdentity b) =>
             a.PrefabId == b.PrefabId &&
             a.GridPos == b.GridPos &&
             a.sizeUnit == b.sizeUnit &&
             a.placementSlot == b.placementSlot &&
             a.wallFace == b.wallFace &&
-            a.floorFace == b.floorFace &&
+            a.floorFace == b.floorFace;
+
+        private static bool IdentityEquals(in TileIdentity a, in TileIdentity b) =>
+            PlacementEquals(a, b) &&
             a.buildingId == b.buildingId &&
             a.roomId == b.roomId &&
             a.collisionFlags == b.collisionFlags;

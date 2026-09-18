@@ -13,15 +13,10 @@ namespace IsoTilemap
     /// </summary>
     public static class MapTopologyBakeDeferral
     {
-        sealed class PendingBatch
-        {
-            public readonly HashSet<Vector3Int> ChangedCells = new();
-            public readonly List<TileData> Removals = new();
-        }
+        // Separate maps (including simulations) must never consume each other's edits.
+        static readonly Dictionary<TileMapCacheHub, TileTopologyChange> Pending = new();
 
-        static PendingBatch _pending;
-
-        public static bool HasPending => _pending != null && _pending.ChangedCells.Count > 0;
+        public static bool HasPending => Pending.Count > 0;
 
         public static bool ShouldDefer =>
             Application.isPlaying && !SuppressDefer;
@@ -30,39 +25,27 @@ namespace IsoTilemap
         public static bool SuppressDefer { get; set; }
 
         public static void Enqueue(
-            IReadOnlyCollection<Vector3Int> changedCells,
-            bool isRemoval,
-            in TileData removedTile)
+            TileMapCacheHub owner,
+            TileTopologyChange change)
         {
-            if (changedCells == null || changedCells.Count == 0)
+            if (change.ChangedCells.Count == 0)
                 return;
 
-            _pending ??= new PendingBatch();
-            foreach (Vector3Int cell in changedCells)
-                _pending.ChangedCells.Add(cell);
-
-            if (isRemoval)
-                _pending.Removals.Add(removedTile);
+            if (!Pending.TryGetValue(owner, out var batch))
+                Pending.Add(owner, batch = new TileTopologyChange());
+            batch.Merge(change);
         }
 
-        public static bool TryTakePending(out HashSet<Vector3Int> changedCells, out List<TileData> removals)
+        public static bool TryTakePending(TileMapCacheHub owner, out TileTopologyChange change)
         {
-            if (_pending == null || _pending.ChangedCells.Count == 0)
-            {
-                changedCells = null;
-                removals = null;
+            if (!Pending.TryGetValue(owner, out change))
                 return false;
-            }
-
-            changedCells = _pending.ChangedCells;
-            removals = _pending.Removals;
-            _pending = null;
+            Pending.Remove(owner);
             return true;
         }
 
-        public static void Clear()
-        {
-            _pending = null;
-        }
+        public static void Clear(TileMapCacheHub owner) => Pending.Remove(owner);
+
+        public static void Clear() => Pending.Clear();
     }
 }

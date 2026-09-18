@@ -55,6 +55,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
     public bool IsStaggered => _staggerRemaining > 0f;
     internal bool IsAirborne => _locomotion != null && _locomotion.IsAirborne;
+    internal uint LandingSequence => _locomotion != null ? _locomotion.LandingSequence : 0;
+    internal float LandingSpeed => _locomotion != null ? _locomotion.LandingSpeed : 0f;
+    internal float LandingAirTime => _locomotion != null ? _locomotion.LandingAirTime : 0f;
+    internal Vector3 LandingVelocity { get; private set; }
     public bool IsMoveLocked => _moveLocked;
     public bool IsMoveInhibited => _moveLocked || _staggerRemaining > 0f;
     public Vector3 KnockbackVelocity => _knockbackVelocity;
@@ -187,7 +191,9 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             }
         }
 
+        uint landingBefore = LandingSequence;
         LastAppliedDelta = _locomotion.Move(desiredMove, deltaTime);
+        if (LandingSequence != landingBefore) LandingVelocity = _mover.Velocity;
 
         if ((!_possessed || IsScriptedLocomotion) && _hasTravelLimit)
         {
@@ -208,6 +214,9 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     {
         if (IsScriptedLocomotion || _characterState.IsSwimming || _characterState.IsDiving)
             return proposed;
+        Vector3 rollDirection = _animation != null ? _animation.CommittedLandingDirection : Vector3.zero;
+        if (!IsAirborne && !IsStuck && rollDirection.sqrMagnitude > 0.0001f)
+            return _mover.ApplyLandingRoll(previousVelocity, rollDirection, deltaTime);
         float pivotScale = IsAirborne || _animation == null ? 1f
             : _animation.GetPivotMovementScale(_mover.WorldMoveDir);
         return _mover.ApplyTurnMomentum(previousVelocity, deltaTime, IsAirborne,

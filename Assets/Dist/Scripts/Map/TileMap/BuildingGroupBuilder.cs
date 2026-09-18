@@ -81,7 +81,7 @@ namespace IsoTilemap
             TagAllWallsFromFloorAdjacency(new HashSet<(int buildingId, int cellY)> { (buildingId, cellY) });
             _model.ReindexTilesByIdFromRuntime();
             RebuildRegistryIndices();
-            BakeAllSpaces();
+            BakeSpacesForSlices(new HashSet<(int buildingId, int cellY)> { (buildingId, cellY) });
             _model.MarkTilesDirty();
             return true;
         }
@@ -209,7 +209,7 @@ namespace IsoTilemap
             TagAllWallsFromFloorAdjacency(slices);
             _model.ReindexTilesByIdFromRuntime();
             RebuildRegistryIndices();
-            BakeAllSpaces();
+            BakeSpacesForSlices(slices);
             _model.MarkTilesDirty();
         }
 

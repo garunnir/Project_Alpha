@@ -22,6 +22,13 @@ public class KinematicMover
     Vector3 _moveDir;
     Vector3 _currentVelocity;
     internal Vector3 Velocity => _currentVelocity;
+    internal Vector3 ApplyLandingRoll(Vector3 previous, Vector3 direction, float dt)
+    {
+        _currentVelocity = direction.normalized * Mathf.MoveTowards(previous.magnitude, 0f, 2f * dt);
+        _brakingTurn = false;
+        IsInertiaActive = _currentVelocity.sqrMagnitude > 0.0001f;
+        return _currentVelocity * dt;
+    }
     bool _brakingTurn;
 
     // Called after the drive proposes a velocity, before collision and separate vertical gravity.

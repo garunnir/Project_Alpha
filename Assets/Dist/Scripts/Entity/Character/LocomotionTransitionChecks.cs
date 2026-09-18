@@ -11,6 +11,112 @@ using UnityEngine;
 /// <summary>Invoke Run in Play mode. No menu or scene setup; restores the selected Move layer.</summary>
 public static class LocomotionTransitionChecks
 {
+    public static string CheckAir()
+    {
+        if (!Application.isPlaying) throw new InvalidOperationException("Play mode required.");
+        var set = AssetDatabase.LoadAssetAtPath<CharacterLocomotionMoveSet>("Assets/Dist/SOData/Locomotion/CharacterLocomotionMoveSet.asset");
+        var owner = UnityEngine.Object.FindFirstObjectByType<CharacterLocomotionAnim>();
+        if (owner == null) throw new InvalidOperationException("No live character; run in the gameplay scene.");
+        var host = owner.GetComponentInChildren<AnimancerComponent>();
+        var layer = host.Layers[0];
+        var mixer = new MixerTransition2D();
+        set.TryConfigureMixer(mixer);
+        var loop = (Vector2MixerState)layer.Play(mixer);
+        var facing = CharacterBodyResolve.GetInBody<CharacterLocomotionFacing>(owner);
+        var driver = new CharacterLocomotionTransitions();
+        int count = 0;
+        void Assert(bool condition, string label) { if (!condition) throw new InvalidOperationException(label); count++; }
+        void Tick(bool air, uint sequence, float impact = 4f, float duration = 0.5f,
+            Vector3 velocity = default, Vector3 input = default, bool enabled = true, float delta = 0.02f)
+        {
+            driver.Tick(layer, loop, set, facing, input, false, !air && enabled, delta,
+                airborne: air, landingSequence: sequence, landingSpeed: impact,
+                landingAirTime: duration, velocity: velocity, airAllowed: enabled);
+            host.Evaluate(delta);
+        }
+        try
+        {
+            Tick(false, 0);
+            Tick(true, 0); Tick(true, 0); Tick(true, 0); Tick(true, 0);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Fall && layer.CurrentState.Clip.isLooping, "Fall must loop");
+            Tick(true, 0, input: Vector3.back);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Fall, "Air reversal must not pivot");
+            Tick(false, 1);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.LandSoft, "Soft landing selection");
+            float pausedTime = layer.CurrentState.Time;
+            Tick(false, 1, delta: 0f);
+            Assert(Mathf.Abs(layer.CurrentState.Time - pausedTime) < 0.001f, "Pause must hold landing");
+            for (int i = 0; i < 45; i++) Tick(false, 1, input: Vector3.forward);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Loop, "Moving soft landing must recover");
+            Tick(false, 2, impact: 9f);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.LandHard && driver.GetMovementScale(Vector3.forward) == 0f, "Hard landing plant");
+            for (int i = 0; i < 100; i++) Tick(false, 2);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Loop, "Hard landing completes");
+            Tick(false, 3, impact: 9f, velocity: Vector3.forward * 6f, input: Vector3.forward);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.LandRoll, "Fast forward landing rolls");
+            Tick(false, 3, input: Vector3.back);
+            Assert(Vector3.Dot(driver.CommittedLandingDirection, Vector3.forward) > 0.99f, "Roll must keep momentum direction");
+            Tick(true, 3);
+            Assert(driver.CommittedLandingDirection == Vector3.zero, "Leaving edge releases roll commitment");
+            Tick(false, 4, impact: 9f, velocity: Vector3.forward * 6f, input: Vector3.back);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.LandHard, "Opposed input must brace instead of roll");
+            Tick(false, 5, enabled: false);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Loop, "Work/hurt/swim cancellation");
+            Tick(false, 5);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Loop, "Suppressed landing must not replay");
+            Tick(false, 6, duration: 0.04f);
+            Assert(driver.Current == CharacterLocomotionTransitions.Motion.Loop, "Tiny step must not land");
+            var mover = new KinematicMover();
+            mover.SetWorldDirection(Vector3.back);
+            var move = mover.ApplyLandingRoll(Vector3.forward * 6f, Vector3.forward, 0.02f);
+            Assert(move.z > 0f && mover.Velocity.z < 6f, "Roll motor retains and reduces forward momentum");
+            return "PASS " + count + " airborne/landing checks";
+        }
+        finally { driver.Reset(facing); layer.Play(loop, 0.12f); }
+    }
+
+    static CharacterMotor _dropMotor;
+    static CharacterLocomotionAnim _dropAnimation;
+    static Vector3 _dropPosition;
+    static uint _dropSequence;
+    static double _dropDeadline;
+    static bool _sawFall, _sawLanding;
+    static CharacterLocomotionTransitions.Motion _observedLanding;
+    static string _dropReport;
+    public static string BeginDrop(float height)
+    {
+        if (!Application.isPlaying || _dropMotor != null) throw new InvalidOperationException("Requires idle Play session.");
+        foreach (var motor in UnityEngine.Object.FindObjectsByType<CharacterMotor>(FindObjectsSortMode.None))
+            if (motor.IsPossessed) { _dropMotor = motor; break; }
+        if (_dropMotor == null) throw new InvalidOperationException("No possessed motor.");
+        _dropAnimation = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(_dropMotor);
+        _dropPosition = _dropMotor.GetComponent<Rigidbody>().position;
+        _dropSequence = _dropMotor.LandingSequence;
+        _sawFall = _sawLanding = false;
+        _dropReport = "Running";
+        _dropDeadline = EditorApplication.timeSinceStartup + 20;
+        _dropMotor.GetComponent<Rigidbody>().position = _dropPosition + Vector3.up * height;
+        EditorApplication.update += ObserveDrop;
+        return "Drop started at " + height + "m; use DropReport after settling.";
+    }
+    public static string DropReport() => _dropReport;
+    static void ObserveDrop()
+    {
+        if (!Application.isPlaying || _dropMotor == null || _dropAnimation == null) { EditorApplication.update -= ObserveDrop; _dropMotor = null; return; }
+        var motion = _dropAnimation.MovementMotion;
+        _sawFall |= motion == CharacterLocomotionTransitions.Motion.Fall;
+        _sawLanding |= motion == CharacterLocomotionTransitions.Motion.LandSoft || motion == CharacterLocomotionTransitions.Motion.LandHard;
+        if (motion == CharacterLocomotionTransitions.Motion.LandSoft || motion == CharacterLocomotionTransitions.Motion.LandHard) _observedLanding = motion;
+        bool complete = _sawLanding && motion == CharacterLocomotionTransitions.Motion.Loop;
+        if (!complete && EditorApplication.timeSinceStartup < _dropDeadline) return;
+        _dropReport = (complete && _sawFall && _dropMotor.LandingSequence != _dropSequence ? "PASS" : "FAIL")
+            + " live drop: fall=" + _sawFall + " landing=" + _sawLanding
+            + " motion=" + _observedLanding + " impact=" + _dropMotor.LandingSpeed + " airTime=" + _dropMotor.LandingAirTime;
+        _dropMotor.GetComponent<Rigidbody>().position = _dropPosition;
+        EditorApplication.update -= ObserveDrop;
+        _dropMotor = null;
+    }
+
     public static string CheckMomentum()
     {
         var mover = new KinematicMover();

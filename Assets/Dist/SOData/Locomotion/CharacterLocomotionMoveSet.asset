@@ -1704,3 +1704,109 @@ MonoBehaviour:
   _pivotAngle: 140
   _pivotCooldown: 0.4
   _parameterSmoothTime: 0.08
+  _fallLoop: {fileID: 7400000, guid: 17912d654f338a3428d90031ee359f10, type: 2}
+  _softLanding:
+    Clip: {fileID: 7400000, guid: 61d1f1f862ced0941909876074139491, type: 2}
+    StartTime: 0.26666668
+    EndTime: 0.96666664
+    Speed: 1.2
+    TurnProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MirroredClip: {fileID: 0}
+    HasPoseCalibration: 0
+    EntryFootOffset: {x: 0, y: 0}
+    ExitPhase: 0
+    MirroredExitPhase: 0
+  _hardLanding:
+    Clip: {fileID: 7400000, guid: 941e7805358b21c449a753db5b13d0cf, type: 2}
+    StartTime: 0.13333334
+    EndTime: 1.7333333
+    Speed: 1.35
+    TurnProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MirroredClip: {fileID: 0}
+    HasPoseCalibration: 0
+    EntryFootOffset: {x: 0, y: 0}
+    ExitPhase: 0
+    MirroredExitPhase: 0
+  _rollLanding:
+    Clip: {fileID: 7400000, guid: 05645fa8e51991d4a88bdb88610457b7, type: 2}
+    StartTime: 0.5
+    EndTime: 1.8333334
+    Speed: 1.15
+    TurnProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MirroredClip: {fileID: 0}
+    HasPoseCalibration: 0
+    EntryFootOffset: {x: 0, y: 0}
+    ExitPhase: 0
+    MirroredExitPhase: 0
+  _minimumLandingAirTime: 0.12
+  _hardLandingSpeed: 7
+  _rollLandingSpeed: 4.5

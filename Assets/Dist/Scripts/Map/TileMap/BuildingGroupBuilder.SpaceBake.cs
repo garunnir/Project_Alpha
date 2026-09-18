@@ -8,11 +8,26 @@ namespace IsoTilemap
 {
     public sealed partial class BuildingGroupBuilder
     {
-        void BakeAllSpaces()
+        /// <summary>전체 맵 space bake (load·Full Rebake 전용). 증분 편집은 <see cref="BakeSpacesForSlices"/>.</summary>
+        void BakeAllSpaces() => BakeSpacesForSlices(null);
+
+        /// <summary>
+        /// <paramref name="slices"/> == null이면 전체 맵(<see cref="SpaceRegistry.Clear"/>).
+        /// 아니면 그 (buildingId, cellY) slice와 겹치는 space만 지우고(<see cref="SpaceRegistry.RemoveSpacesInSlices"/>),
+        /// 그 slice의 room만 시드로 재flood — 나머지 space는 그대로 둔다.
+        /// 새/재flood된 space만 leak 재평가(<see cref="SpaceLeakEvaluator"/>) — 손 안 댄 space는 스킵.
+        /// </summary>
+        void BakeSpacesForSlices(HashSet<(int buildingId, int cellY)> slices)
         {
             var registry = _hub.Spaces.Registry;
-            registry.Clear();
             var index = _topology.Index;
+
+            if (slices == null)
+                registry.Clear();
+            else
+                registry.RemoveSpacesInSlices(slices);
+
+            var touchedSpaceIds = slices != null ? new HashSet<int>() : null;
 
             _roomKeyScratch.Clear();
             _hub.Rooms.CollectRoomKeys(FloorRoomBfsProfile.Occlusion, _roomKeyScratch);
@@ -21,6 +36,9 @@ namespace IsoTilemap
             foreach (var roomKey in _roomKeyScratch)
             {
                 if (!BuildingIdBakeRules.CanPropagateBuildingIdFrom(roomKey.BuildingId))
+                    continue;
+
+                if (slices != null && !slices.Contains((roomKey.BuildingId, roomKey.CellY)))
                     continue;
 
                 if (!_hub.Rooms.TryGet(roomKey, FloorRoomBfsProfile.Occlusion, out var occlusion) ||
@@ -45,6 +63,7 @@ namespace IsoTilemap
                     if (flood.VisitedCells.Count == 0)
                         continue;
 
+                    int touchedId;
                     if (flood.BoundarySpaceIds.Count > 0)
                     {
                         int canonical = int.MaxValue;
@@ -55,16 +74,21 @@ namespace IsoTilemap
                         }
 
                         registry.Absorb(canonical, flood.VisitedCells, index);
+                        touchedId = canonical;
                     }
                     else
                     {
                         int spaceId = registry.AllocateSpaceId();
                         registry.AssignNew(spaceId, roomKey.BuildingId, roomKey, flood.VisitedCells, index);
+                        touchedId = spaceId;
                     }
+
+                    touchedSpaceIds?.Add(touchedId);
                 }
             }
 
-            foreach (int spaceId in registry.SpaceIds)
+            IEnumerable<int> idsToEvaluate = slices == null ? registry.SpaceIds : touchedSpaceIds;
+            foreach (int spaceId in idsToEvaluate)
             {
                 if (!registry.TryGetSpace(spaceId, out var space))
                     continue;

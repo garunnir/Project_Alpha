@@ -21,7 +21,7 @@ namespace IsoTilemap
         readonly IReadOnlyDictionary<FloorFaceKey, TileData> _faces;
 
         /// <summary>
-        /// 점유 셀 → (원본 List, 인덱스)들의 목록.
+        /// 점유 셀 → (원본 List, 안정적인 tile ID)들의 목록.
         /// TileData는 struct이므로, 점유 셀 조회 시 매번 원본을 읽어 최신 buildingId 값을 반영합니다.
         /// </summary>
         Dictionary<Vector3Int, OccupiedCellEntry> _occupiedEntries = new();
@@ -31,17 +31,48 @@ namespace IsoTilemap
         readonly Dictionary<Vector3Int, List<FloorFaceKey>> _floorKeysAtCell = new();
         /// <summary>(x,z) 컬럼 → walkable floor cellY 오름차순. 파티클 착지 조회용.</summary>
         readonly Dictionary<(int x, int z), List<int>> _walkableFloorYsByColumn = new();
+        readonly Dictionary<Vector3Int, int> _walkableFloorContributors = new();
+        readonly Dictionary<(int x, int z), SortedSet<int>> _columnSealYs = new();
+        readonly HashSet<Vector3Int> _editCells = new();
         readonly HashSet<System.Guid> _collectDedupeScratch = new();
 
-        readonly struct TileRef
+        /// <summary>
+        /// (x,z) 컬럼 → 그 컬럼에서 가장 높은 "seal" cellY (walkable floor 또는 structural OccupiedCell).
+        /// <see cref="SpaceLeakEvaluator"/> 천장 leak O(1) 조회용 — buildingId 무관 전역 인덱스.
+        /// </summary>
+        readonly Dictionary<(int x, int z), int> _columnSealTopY = new();
+
+        sealed class TileRef
         {
             public readonly List<TileData> OwnerList;
-            public readonly int OwnerIndex;
+            public readonly System.Guid TileId;
+            int _ownerIndex;
 
             public TileRef(List<TileData> ownerList, int ownerIndex)
             {
                 OwnerList = ownerList;
-                OwnerIndex = ownerIndex;
+                TileId = ownerList[ownerIndex].tileDefId;
+                _ownerIndex = ownerIndex;
+            }
+
+            public bool TryRead(out TileData tile)
+            {
+                if (_ownerIndex < OwnerList.Count && OwnerList[_ownerIndex].tileDefId == TileId)
+                {
+                    tile = OwnerList[_ownerIndex];
+                    return true;
+                }
+                // Removing a sibling only shifts this anchor's small list, not the map.
+                for (int i = 0; i < OwnerList.Count; i++)
+                {
+                    if (OwnerList[i].tileDefId != TileId)
+                        continue;
+                    _ownerIndex = i;
+                    tile = OwnerList[i];
+                    return true;
+                }
+                tile = default;
+                return false;
             }
         }
 
@@ -69,10 +100,97 @@ namespace IsoTilemap
 
         public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() => _anyTileAt;
 
-        /// <summary>런타임 topology 변경 후 (x,z,y) 점유 집합을 <see cref="_tiles"/>와 맞춥니다.</summary>
-        public void SyncOccupancyForCell(int x, int z, int y) => RebuildOccupancy();
+        /// <summary>Store mutation must precede this call. Only this tile's footprint is updated.</summary>
+        public void OnTileAdded(TileData tile) => UpdateTile(tile, adding: true);
 
-        public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells) => RebuildOccupancy();
+        public void OnTileRemoved(TileData tile) => UpdateTile(tile, adding: false);
+
+        void UpdateTile(TileData tile, bool adding)
+        {
+            _editCells.Clear();
+            TileIdentityUtil.CollectAffectedCells(tile.identity, _editCells);
+            TileRef tileRef = null;
+            if (adding && TileIdentityUtil.IsOccupiedCell(tile.identity) &&
+                _tiles.TryGetValue(tile.identity.GridPos, out var owner))
+            {
+                for (int i = 0; i < owner.Count; i++)
+                    if (owner[i].tileDefId == tile.tileDefId)
+                    {
+                        tileRef = new TileRef(owner, i);
+                        break;
+                    }
+            }
+
+            foreach (var cell in _editCells)
+            {
+                switch (TileIdentityUtil.GetPlacementSlot(tile.identity))
+                {
+                    case TilePlacementSlot.VerticalFace:
+                        var wallKey = WallEdgeKey.FromWallTileIdentity(tile.identity);
+                        if (adding) RegisterWallIncident(cell, wallKey);
+                        else RemoveIncident(_wallKeysAtCell, cell, wallKey);
+                        break;
+                    case TilePlacementSlot.HorizontalFace:
+                        var floorKey = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                        if (adding) RegisterFloorIncident(cell, floorKey);
+                        else RemoveIncident(_floorKeysAtCell, cell, floorKey);
+                        break;
+                    default:
+                        if (adding && tileRef != null)
+                        {
+                            if (!_occupiedEntries.TryGetValue(cell, out var entry))
+                                _occupiedEntries.Add(cell, entry = new OccupiedCellEntry());
+                            entry.Refs.Add(tileRef);
+                        }
+                        else if (_occupiedEntries.TryGetValue(cell, out var entry))
+                        {
+                            for (int i = entry.Refs.Count - 1; i >= 0; i--)
+                                if (entry.Refs[i].TileId == tile.tileDefId)
+                                    entry.Refs.RemoveAt(i);
+                            if (entry.Refs.Count == 0)
+                                _occupiedEntries.Remove(cell);
+                        }
+                        break;
+                }
+                var key = (cell.x, cell.z, cell.y);
+                if (_occupiedEntries.ContainsKey(cell) || _wallKeysAtCell.ContainsKey(cell) ||
+                    _floorKeysAtCell.ContainsKey(cell))
+                    _anyTileAt.Add(key);
+                else
+                    _anyTileAt.Remove(key);
+            }
+
+            int delta = adding ? 1 : -1;
+            if (TileIdentityUtil.IsHorizontalFace(tile.identity) &&
+                TileCollisionFlagsUtil.Has(tile.identity.collisionFlags, TileCollisionFlags.ProvidesLogicalFloor))
+            {
+                var above = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove;
+                for (int dy = 0; dy < Mathf.Max(1, tile.identity.sizeUnit.y); dy++)
+                    UpdateWalkableFloorColumn(above.x, above.z, above.y + dy, delta);
+            }
+            else if (IsWalkableStratum(tile))
+            {
+                var anchor = tile.identity.GridPos;
+                UpdateWalkableFloorColumn(anchor.x, anchor.z,
+                    MapDigTerrainUtil.WalkableCellYFromSupportAnchor(anchor.y, tile.identity.sizeUnit.y), delta);
+            }
+
+            foreach (var cell in _editCells)
+            {
+                RefreshColumnSeal(cell);
+                // CellHasFloor also depends on a stratum support in the cell below.
+                RefreshColumnSeal(cell + Vector3Int.up);
+            }
+        }
+
+        static void RemoveIncident<TKey>(Dictionary<Vector3Int, List<TKey>> index, Vector3Int cell, TKey key)
+        {
+            if (!index.TryGetValue(cell, out var keys))
+                return;
+            keys.Remove(key);
+            if (keys.Count == 0)
+                index.Remove(cell);
+        }
 
         public void RebuildOccupancy()
         {
@@ -81,6 +199,9 @@ namespace IsoTilemap
             _wallKeysAtCell.Clear();
             _floorKeysAtCell.Clear();
             _walkableFloorYsByColumn.Clear();
+            _walkableFloorContributors.Clear();
+            _columnSealTopY.Clear();
+            _columnSealYs.Clear();
 
             foreach (var kv in _tiles)
             {
@@ -103,6 +224,7 @@ namespace IsoTilemap
                     if (sz < 1) sz = 1;
 
                     Vector3Int basePos = tile.identity.GridPos;
+                    var tileRef = new TileRef(list, i);
                     for (int dx = 0; dx < sx; dx++)
                     {
                         for (int dy = 0; dy < sy; dy++)
@@ -116,7 +238,7 @@ namespace IsoTilemap
                                     _occupiedEntries[cell] = entry;
                                 }
 
-                                entry.Refs.Add(new TileRef(list, i));
+                                entry.Refs.Add(tileRef);
                             }
                         }
                     }
@@ -176,7 +298,65 @@ namespace IsoTilemap
 
             foreach (var kv in _walkableFloorYsByColumn)
                 kv.Value.Sort();
+
+            RebuildColumnSealHeights();
         }
+
+        /// <summary>
+        /// 전역 (x,z) 컬럼별 최고 seal cellY — walkable floor(<see cref="CellHasFloor"/>) 또는
+        /// structural OccupiedCell(벽·큐브). buildingId는 보지 않는다 — 다른 building 소속 지붕이라도
+        /// 같은 컬럼을 막으면 seal (§대전제 buildingId 동일성 미사용, TILEMAP_BUILDING_BAKE.md).
+        /// </summary>
+        void RebuildColumnSealHeights()
+        {
+            foreach (var (x, z, y) in _anyTileAt)
+                RefreshColumnSeal(new Vector3Int(x, y, z));
+        }
+
+        void RefreshColumnSeal(Vector3Int cell)
+        {
+            var key = (cell.x, cell.z);
+            if (HasAnyTile(cell.x, cell.z, cell.y) &&
+                (CellHasFloor(cell.x, cell.y, cell.z) || CellHasStructuralOccupancy(cell.x, cell.y, cell.z)))
+            {
+                if (!_columnSealYs.TryGetValue(key, out var ys))
+                    _columnSealYs.Add(key, ys = new SortedSet<int>());
+                ys.Add(cell.y);
+                _columnSealTopY[key] = ys.Max;
+            }
+            else if (_columnSealYs.TryGetValue(key, out var ys))
+            {
+                ys.Remove(cell.y);
+                if (ys.Count == 0)
+                {
+                    _columnSealYs.Remove(key);
+                    _columnSealTopY.Remove(key);
+                }
+                else
+                    _columnSealTopY[key] = ys.Max;
+            }
+        }
+
+        bool CellHasStructuralOccupancy(int x, int y, int z)
+        {
+            if (!TryGetCellTiles(x, z, y, out var list) || list == null)
+                return false;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (TileIdentityUtil.IsStructural(list[i].identity))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// (x,z) 컬럼의 최고 seal cellY 조회 — 없으면 false.
+        /// <see cref="SpaceLeakEvaluator"/> 천장 leak: <c>topY &gt; floorY</c>면 밀폐.
+        /// </summary>
+        public bool TryGetColumnSealTopY(int x, int z, out int topY) =>
+            _columnSealTopY.TryGetValue((x, z), out topY);
 
         /// <summary>
         /// (x,z) 컬럼에서 <paramref name="maxCellY"/> 이하 최상단 walkable floor cellY.
@@ -271,22 +451,41 @@ namespace IsoTilemap
 
         readonly List<TileData> _stratumSupportScratch = new();
 
-        void RegisterWalkableFloorColumn(int x, int z, int cellY)
+        static bool IsWalkableStratum(in TileData tile) =>
+            MapDigTerrainUtil.IsWalkableSupportBlock(tile.identity) &&
+            TilePrefabDB.TryResolveDefinition(tile.identity.PrefabId, out TileDefinition def) &&
+            MapDigTerrainUtil.IsWalkableStratumBlock(def);
+
+        void RegisterWalkableFloorColumn(int x, int z, int cellY) =>
+            UpdateWalkableFloorColumn(x, z, cellY, 1);
+
+        void UpdateWalkableFloorColumn(int x, int z, int cellY, int delta)
         {
+            var cell = new Vector3Int(x, cellY, z);
+            _walkableFloorContributors.TryGetValue(cell, out int count);
+            count += delta;
             var key = (x, z);
+            if (count <= 0)
+            {
+                _walkableFloorContributors.Remove(cell);
+                if (_walkableFloorYsByColumn.TryGetValue(key, out var existing))
+                {
+                    existing.Remove(cellY);
+                    if (existing.Count == 0)
+                        _walkableFloorYsByColumn.Remove(key);
+                }
+                return;
+            }
+            _walkableFloorContributors[cell] = count;
             if (!_walkableFloorYsByColumn.TryGetValue(key, out var list))
             {
                 list = new List<int>(2);
                 _walkableFloorYsByColumn[key] = list;
             }
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i] == cellY)
-                    return;
-            }
-
-            list.Add(cellY);
+            int index = list.BinarySearch(cellY);
+            if (index < 0)
+                list.Insert(~index, cellY);
         }
 
         /// <summary>
@@ -374,7 +573,8 @@ namespace IsoTilemap
             for (int i = 0; i < entry.Refs.Count; i++)
             {
                 var tr = entry.Refs[i];
-                AppendUniqueTile(into, tr.OwnerList[tr.OwnerIndex], dedupe);
+                if (tr.TryRead(out var tile))
+                    AppendUniqueTile(into, tile, dedupe);
             }
         }
 
@@ -404,7 +604,8 @@ namespace IsoTilemap
             for (int i = 0; i < entry.Refs.Count; i++)
             {
                 var tr = entry.Refs[i];
-                entry.Scratch.Add(tr.OwnerList[tr.OwnerIndex]);
+                if (tr.TryRead(out var tile))
+                    entry.Scratch.Add(tile);
             }
 
             list = entry.Scratch;

@@ -81,6 +81,10 @@ public sealed class CharacterLocomotion
     MapTopologyDepenetration.Tracker _gridStuckTracker;
     float _verticalVelocity;
     internal bool IsAirborne => _mapCollision != null && Mathf.Abs(_verticalVelocity) > 0.0001f;
+    internal uint LandingSequence { get; private set; }
+    internal float LandingSpeed { get; private set; }
+    internal float LandingAirTime { get; private set; }
+    float _airTime;
     CharacterSwimHost _swimHost;
 
     public int LastHitCount { get; private set; }
@@ -285,6 +289,8 @@ public sealed class CharacterLocomotion
             return;
         }
 
+        float impactSpeed = Mathf.Max(0f, -(_verticalVelocity + _logicalGravity * deltaTime));
+        bool wasAirborne = IsAirborne;
         _mapCollision.FloorSupport.ApplyVertical(
             ref worldPosition,
             ref _verticalVelocity,
@@ -294,6 +300,18 @@ public sealed class CharacterLocomotion
             ref _gridStuckTracker,
             footprint,
             _logicalGravity);
+        if (IsAirborne)
+            _airTime += deltaTime;
+        else
+        {
+            if (wasAirborne)
+            {
+                LandingSpeed = impactSpeed;
+                LandingAirTime = _airTime;
+                unchecked { LandingSequence++; }
+            }
+            _airTime = 0f;
+        }
     }
 
     void ApplySwimVertical(
@@ -320,6 +338,7 @@ public sealed class CharacterLocomotion
         float nextFeetY = feetCell.FeetY + vertical * MapSwimConsts.DiveVerticalSpeed * deltaTime;
         nextFeetY = Mathf.Clamp(nextFeetY, bottomY, surfaceY);
         _verticalVelocity = 0f;
+        _airTime = 0f;
         worldPosition.y = nextFeetY + feetOffset;
         feetCell = MapCollisionGrid.WithFeetY(feetCell, nextFeetY, cellSize);
     }
