@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.Debug — bake 디버그 로그·진단
 // ============================================================
 using System;
@@ -61,7 +61,7 @@ namespace IsoTilemap
 
             int faceCount = 0;
             int bakedAboveMin = 0;
-            int outdoorMin = 0;
+            int terrainMin = 0;
             foreach (var tile in _model.TilesSnapshot)
             {
                 if (!TileIdentityUtil.IsFloorTile(tile.identity))
@@ -70,15 +70,15 @@ namespace IsoTilemap
                 faceCount++;
                 int walkY = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y;
                 int bid = tile.identity.buildingId;
-                if (walkY == _minCellY && bid == TileIdentity.BuildingIdOutdoor)
-                    outdoorMin++;
+                if (walkY == _minCellY && bid == TileIdentity.BuildingIdTerrain)
+                    terrainMin++;
                 else if (walkY > _minCellY && BuildingIdBakeRules.CanPropagateBuildingIdFrom(bid))
                     bakedAboveMin++;
             }
 
             Debug.Log(
                 $"[BuildingGroupBuilder] bake: minCellY={_minCellY}, floorFaces={faceCount}, " +
-                $"outdoor@min={outdoorMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}, " +
+                $"terrain@min={terrainMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}, " +
                 $"componentRounds={_lastComponentBakeRoundCount}, componentUnions={_lastComponentUnionCount}, " +
                 $"componentStructuralUnions={_lastStructuralUnionCount}, initFootprints={_initFootprintCount}, " +
                 $"componentNewFloors={_lastComponentNewFloorTags}");

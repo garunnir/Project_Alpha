@@ -5,7 +5,7 @@ namespace IsoTilemap
     using UnityEngine;
 
     // ============================================================
-    // TileObjFactory — 타일 프리팹 스폰·디스폰 + Building/Outdoor 부모
+    // TileObjFactory — 타일 프리팹 스폰·디스폰 + Building/Terrain 부모
     // ============================================================
     public class TileObjFactory
     {
@@ -58,7 +58,7 @@ namespace IsoTilemap
             return view;
         }
 
-        /// <summary>rebake/merge 후 buildingId 변경 시 Outdoor/Building 재부모.</summary>
+        /// <summary>rebake/merge 후 buildingId 변경 시 Terrain/Building 재부모.</summary>
         public void SyncTileParent(TileView view, in TileData tileData)
         {
             _hierarchy?.AttachTile(view, tileData);

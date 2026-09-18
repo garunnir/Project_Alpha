@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingIdBakeRules — buildingId bake 값·전파 원점 규칙 (SSOT)
 // ============================================================
 namespace IsoTilemap
@@ -22,11 +22,11 @@ namespace IsoTilemap
             TileIdentityUtil.IsStructural(id);
 
         /// <summary>
-        /// outdoor(-1)·다른 하드 파티션(양수 id)은 merge·flood·증분이 덮어쓰지 않음.
+        /// terrain(-1)·다른 하드 파티션(양수 id)은 merge·flood·증분이 덮어쓰지 않음.
         /// </summary>
         public static bool ShouldOverwriteBuildingIdForPropagation(int existing, int targetBuildingId)
         {
-            if (IsImmutableOutdoorBuildingId(existing) || IsImmutableOutdoorBuildingId(targetBuildingId))
+            if (IsImmutableTerrainBuildingId(existing) || IsImmutableTerrainBuildingId(targetBuildingId))
                 return false;
 
             // 이미 파티션된 양수 id는 다른 id로 덮지 않음 (같은 id 재스탬프만 허용).
@@ -39,8 +39,8 @@ namespace IsoTilemap
         /// <summary>incident 타일 buildingId 기준 structural flood traverse 차단 (walkable 조회 없음).</summary>
         public static bool ShouldBlockBuildingFloodFromIncidentTile(in TileIdentity id, int propagatingBuildingId)
         {
-            if (IsImmutableOutdoorBuildingId(id.buildingId) ||
-                IsImmutableOutdoorBuildingId(propagatingBuildingId))
+            if (IsImmutableTerrainBuildingId(id.buildingId) ||
+                IsImmutableTerrainBuildingId(propagatingBuildingId))
                 return true;
 
             if (IsConflictingPropagableBuildingId(id.buildingId, propagatingBuildingId))
@@ -55,17 +55,17 @@ namespace IsoTilemap
         public static bool ExpandsBuildingFloodThroughIdentity(in TileIdentity id) =>
             TileIdentityUtil.IsVolumeStructural(id);
 
-        /// <summary>outdoor(-1) 타일·칸은 building component 시드·흡수 대상이 아님. 불변.</summary>
-        public static bool IsImmutableOutdoorBuildingId(int buildingId) =>
-            buildingId == TileIdentity.BuildingIdOutdoor;
+        /// <summary>terrain(-1) 타일·칸은 building component 시드·흡수 대상이 아님. 불변.</summary>
+        public static bool IsImmutableTerrainBuildingId(int buildingId) =>
+            buildingId == TileIdentity.BuildingIdTerrain;
 
         /// <summary>
-        /// 하드 파티션(양수)·outdoor는 같은 id끼리만 union.
+        /// 하드 파티션(양수)·terrain은 같은 id끼리만 union.
         /// 0↔양수 합치면 다른 파티션이 미할당 복도로 간접 병합됨.
         /// </summary>
         public static bool BlocksComponentUnion(int buildingIdA, int buildingIdB)
         {
-            if (IsImmutableOutdoorBuildingId(buildingIdA) || IsImmutableOutdoorBuildingId(buildingIdB))
+            if (IsImmutableTerrainBuildingId(buildingIdA) || IsImmutableTerrainBuildingId(buildingIdB))
                 return true;
 
             if (IsHardPartitionBuildingId(buildingIdA) || IsHardPartitionBuildingId(buildingIdB))

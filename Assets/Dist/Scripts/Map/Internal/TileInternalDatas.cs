@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -51,7 +51,7 @@ namespace IsoTilemap
         public byte floorFace{init; get;}
 
         /// <summary>
-        /// bake: <see cref="BuildingIdUnassigned"/> 미할당(수신만), <see cref="BuildingIdOutdoor"/> plaza(확장 원점 아님), &gt;0 건물(전파·merge 시드).
+        /// bake: <see cref="BuildingIdUnassigned"/> 미할당(수신만), <see cref="BuildingIdTerrain"/> plaza(확장 원점 아님), &gt;0 건물(전파·merge 시드).
         /// 전파 원점 규칙: <c>BuildingGroupBuilder.CanPropagateBuildingIdFrom</c>. 런타임 야외 분기는 <c>IsOutdoorEvaluation</c>.
         /// </summary>
         public int buildingId { init; get; }
@@ -60,7 +60,7 @@ namespace IsoTilemap
         public const int BuildingIdUnassigned = 0;
 
         /// <summary>MinCellY 광장 Floor (야외 BFS 확정 후).</summary>
-        public const int BuildingIdOutdoor = -1;
+        public const int BuildingIdTerrain = -1;
 
         /// <summary>0=room 미할당; 같은 buildingId·cellY 내 방 번호.</summary>
         public int roomId { init; get; }

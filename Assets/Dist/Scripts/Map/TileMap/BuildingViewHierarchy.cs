@@ -1,7 +1,7 @@
+﻿// ============================================================
+// BuildingViewHierarchy — Terrain/ + Buildings/Building_{id} 타일 뷰 부모
 // ============================================================
-// BuildingViewHierarchy — Outdoor/ + Buildings/Building_{id} 타일 뷰 부모
-// ============================================================
-// 청크는 load-set만. 타일 부모는 Building/Outdoor. 런타임 좌표는 월드
+// 청크는 load-set만. 타일 부모는 Building/Terrain. 런타임 좌표는 월드
 // (SetParent worldPositionStays=true). Building 루트 피벗 = min xyz * cellSize.
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,11 +9,11 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 타일 컨테이너 아래 <c>Outdoor/</c>·<c>Buildings/Building_{id}</c> 뷰 하이어라키.
+    /// 타일 컨테이너 아래 <c>Terrain/</c>·<c>Buildings/Building_{id}</c> 뷰 하이어라키.
     /// </summary>
     public sealed class BuildingViewHierarchy
     {
-        public const string OutdoorName = "Outdoor";
+        public const string TerrainName = "Terrain";
         public const string BuildingsName = "Buildings";
         public const string BuildingNamePrefix = "Building_";
 
@@ -22,13 +22,13 @@ namespace IsoTilemap
         readonly List<Vector3> _pivotChildPosScratch = new();
         readonly List<Quaternion> _pivotChildRotScratch = new();
 
-        Transform _outdoor;
+        Transform _terrain;
         Transform _buildings;
         BuildingGroupRegistry _registry;
         float _cellSize;
 
         public Transform TileContainer => _tileContainer;
-        public Transform OutdoorRoot => _outdoor;
+        public Transform TerrainRoot => _terrain;
         public Transform BuildingsRoot => _buildings;
 
         BuildingViewHierarchy(Transform tileContainer, float cellSize)
@@ -38,7 +38,7 @@ namespace IsoTilemap
             EnsureScaffold();
         }
 
-        /// <summary>컨테이너에 Outdoor/Buildings 스캐폴드를 보장하고 반환합니다.</summary>
+        /// <summary>컨테이너에 Terrain/Buildings 스캐폴드를 보장하고 반환합니다.</summary>
         public static BuildingViewHierarchy EnsureUnder(Transform tileContainer, float cellSize)
         {
             if (tileContainer == null)
@@ -53,13 +53,13 @@ namespace IsoTilemap
         public void BindRegistry(BuildingGroupRegistry registry) =>
             _registry = registry;
 
-        /// <summary>부모 체인이 Outdoor 루트 아래이면 true.</summary>
-        public static bool IsUnderOutdoorRoot(Transform tileParent)
+        /// <summary>부모 체인이 Terrain 루트 아래이면 true.</summary>
+        public static bool IsUnderTerrainRoot(Transform tileParent)
         {
             Transform t = tileParent;
             while (t != null)
             {
-                if (t.name == OutdoorName)
+                if (t.name == TerrainName)
                     return true;
                 if (t.name == BuildingsName)
                     return false;
@@ -81,7 +81,7 @@ namespace IsoTilemap
                     int.TryParse(name.Substring(BuildingNamePrefix.Length), out buildingId) &&
                     buildingId > 0)
                     return true;
-                if (t.name == OutdoorName || t.name == BuildingsName)
+                if (t.name == TerrainName || t.name == BuildingsName)
                     return false;
                 t = t.parent;
             }
@@ -89,9 +89,9 @@ namespace IsoTilemap
             return false;
         }
 
-        /// <summary><see cref="TileIdentity.BuildingIdOutdoor"/> (−1) → Outdoor/, 그 외 → Building_{id}.</summary>
-        public static bool BelongsUnderOutdoor(int buildingId) =>
-            buildingId == TileIdentity.BuildingIdOutdoor;
+        /// <summary><see cref="TileIdentity.BuildingIdTerrain"/> (−1) → Terrain/, 그 외 → Building_{id}.</summary>
+        public static bool BelongsUnderTerrain(int buildingId) =>
+            buildingId == TileIdentity.BuildingIdTerrain;
 
         public static string BuildingRootName(int buildingId) =>
             BuildingNamePrefix + buildingId;
@@ -109,7 +109,7 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 타일을 올바른 Outdoor/Building 부모에 붙입니다. 월드 좌표 유지.
+        /// 타일을 올바른 Terrain/Building 부모에 붙입니다. 월드 좌표 유지.
         /// </summary>
         public void AttachTile(TileView view, in TileData tileData)
         {
@@ -142,8 +142,8 @@ namespace IsoTilemap
         public Transform ResolveParent(int buildingId)
         {
             EnsureScaffold();
-            if (BelongsUnderOutdoor(buildingId))
-                return _outdoor;
+            if (BelongsUnderTerrain(buildingId))
+                return _terrain;
 
             return GetOrCreateBuildingRoot(buildingId);
         }
@@ -212,8 +212,8 @@ namespace IsoTilemap
 
         void EnsureScaffold()
         {
-            if (_outdoor == null)
-                _outdoor = GetOrCreateChild(_tileContainer, OutdoorName);
+            if (_terrain == null)
+                _terrain = GetOrCreateChild(_tileContainer, TerrainName);
 
             if (_buildings == null)
                 _buildings = GetOrCreateChild(_tileContainer, BuildingsName);

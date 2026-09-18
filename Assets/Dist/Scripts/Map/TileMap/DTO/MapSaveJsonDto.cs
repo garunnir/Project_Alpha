@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace IsoTilemap
@@ -8,7 +8,7 @@ namespace IsoTilemap
     {
         /// <summary>
         /// 1 = placementSlot v1. 2 = floorFaces walkable coords.
-        /// 5 = outdoorFloorFaces + buildings[]. 0·누락 = 레거시 tiles[].tileType.
+        /// 5 = terrainFloorFaces + buildings[]. 0·누락 = 레거시 tiles[].tileType.
         /// </summary>
         public int schemaVersion;
 
@@ -36,29 +36,29 @@ namespace IsoTilemap
 
         /// <summary>
         /// schema &lt; V5 flat 바닥(월드). schema ≥ V5 신규 저장은 비움 —
-        /// 야외는 <see cref="outdoorFloorFaces"/>, 구조는 <see cref="buildings"/>.
+        /// 야외는 <see cref="terrainFloorFaces"/>, 구조는 <see cref="buildings"/>.
         /// </summary>
         public List<FloorFaceSaveData> floorFaces = new List<FloorFaceSaveData>();
 
         /// <summary>
-        /// schema ≥ <see cref="MapSaveSchema.OutdoorStructureLayersV5"/> 야외 바닥 (월드 walkable 좌표).
-        /// 뷰 <c>Outdoor/</c> 아래 타일 + <c>buildingId==-1</c>.
+        /// schema ≥ <see cref="MapSaveSchema.TerrainStructureLayersV5"/> 야외 바닥 (월드 walkable 좌표).
+        /// 뷰 <c>Terrain/</c> 아래 타일 + <c>buildingId==-1</c>.
         /// </summary>
-        public List<FloorFaceSaveData> outdoorFloorFaces = new List<FloorFaceSaveData>();
+        public List<FloorFaceSaveData> terrainFloorFaces = new List<FloorFaceSaveData>();
 
         /// <summary>
-        /// 야외 벽 (월드 앵커). <c>Outdoor/</c> 아래 VerticalFace. 구 JSON 누락 = empty.
+        /// 야외 벽 (월드 앵커). <c>Terrain/</c> 아래 VerticalFace. 구 JSON 누락 = empty.
         /// </summary>
-        public List<WallEdgeSaveData> outdoorWallEdges = new List<WallEdgeSaveData>();
+        public List<WallEdgeSaveData> terrainWallEdges = new List<WallEdgeSaveData>();
 
         /// <summary>
-        /// 야외 OccupiedCell 등 (월드). <c>Outdoor/</c> 아래 비-floor·비-wall. 구 JSON 누락 = empty.
+        /// 야외 OccupiedCell 등 (월드). <c>Terrain/</c> 아래 비-floor·비-wall. 구 JSON 누락 = empty.
         /// fish-trap only는 루트 <see cref="tiles"/> 유지.
         /// </summary>
-        public List<TileSaveData> outdoorTiles = new List<TileSaveData>();
+        public List<TileSaveData> terrainTiles = new List<TileSaveData>();
 
         /// <summary>
-        /// schema ≥ <see cref="MapSaveSchema.OutdoorStructureLayersV5"/> 건물별 로컬 구조물.
+        /// schema ≥ <see cref="MapSaveSchema.TerrainStructureLayersV5"/> 건물별 로컬 구조물.
         /// </summary>
         public List<BuildingSaveData> buildings = new List<BuildingSaveData>();
 

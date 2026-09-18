@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.Components — 점유셀 component 배치 union bake·buildingId 지연 할당
 // ============================================================
 using System.Collections.Generic;
@@ -62,7 +62,7 @@ namespace IsoTilemap
 
         void InitComponentsFromMinCellYFloorOccCells()
         {
-            var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
+            var terrain = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
             _initFootprintProcessedScratch.Clear();
 
             foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
@@ -82,7 +82,7 @@ namespace IsoTilemap
                 var footprint = FloorRoomFloodFill.Run(
                     _topology.Index, _minCellY, x, z,
                     collectEmptyNeighbors: false,
-                    excludeCells: outdoor).Visited;
+                    excludeCells: terrain).Visited;
 
                 if (footprint.Count == 0)
                     continue;
@@ -92,7 +92,7 @@ namespace IsoTilemap
                 LogInitFootprintIfDebug(setId, x, z, footprint.Count);
                 foreach (var (fx, fz) in footprint)
                 {
-                    if (outdoor.Contains((fx, fz)))
+                    if (terrain.Contains((fx, fz)))
                         continue;
 
                     // 이미 하드 파티션(양수 id)인 바닥은 새 component에 넣지 않음.
@@ -145,7 +145,7 @@ namespace IsoTilemap
             for (int i = 0; i < _walkableFloorCellScratch.Count; i++)
             {
                 var (x, cellY, z) = _walkableFloorCellScratch[i];
-                if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                if (IsPlazaOrTerrainFloor(x, z, cellY))
                     continue;
 
                 Vector3Int cellA = WalkableFloorOccupiedCell(x, cellY, z);
@@ -156,7 +156,7 @@ namespace IsoTilemap
                 {
                     int nx = x + CardinalDirs[d].x;
                     int nz = z + CardinalDirs[d].z;
-                    if (IsPlazaOrOutdoorFloor(nx, nz, cellY))
+                    if (IsPlazaOrTerrainFloor(nx, nz, cellY))
                         continue;
 
                     if (!_topology.Index.CellHasFloor(nx, cellY, nz))
@@ -204,7 +204,7 @@ namespace IsoTilemap
                 for (int i = 0; i < _walkableFloorCellScratch.Count; i++)
                 {
                     var (x, _, z) = _walkableFloorCellScratch[i];
-                    if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                    if (IsPlazaOrTerrainFloor(x, z, cellY))
                         continue;
 
                     if (!IsFloorOccCellUntaggedForComponent(x, cellY, z))
@@ -695,7 +695,7 @@ namespace IsoTilemap
 
         void AssignOrphanComponents()
         {
-            var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
+            var terrain = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
             _zeroFootprintProcessedScratch.Clear();
 
             foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
@@ -709,7 +709,7 @@ namespace IsoTilemap
                 var footprint = FloorRoomFloodFill.Run(
                     _topology.Index, cellY, x, z,
                     collectEmptyNeighbors: false,
-                    excludeCells: cellY == _minCellY ? outdoor : null).Visited;
+                    excludeCells: cellY == _minCellY ? terrain : null).Visited;
 
                 if (footprint.Count == 0)
                     continue;
@@ -824,7 +824,7 @@ namespace IsoTilemap
                     return;
 
                 int existing = tile.identity.buildingId;
-                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(existing))
+                if (BuildingIdBakeRules.IsImmutableTerrainBuildingId(existing))
                     return;
 
                 if (existing == TileIdentity.BuildingIdUnassigned)
@@ -847,7 +847,7 @@ namespace IsoTilemap
             if (!_topology.Index.CellHasFloor(x, cellY, z))
                 return false;
 
-            if (IsPlazaOrOutdoorFloor(x, z, cellY))
+            if (IsPlazaOrTerrainFloor(x, z, cellY))
                 return false;
 
             if (!IsFloorBuildingUnassigned(x, cellY, z))

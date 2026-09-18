@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingSaveData — V5 건물 단위 직렬화 (피벗 + 로컬 tiles/walls/floors)
 // ============================================================
 
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 맵 JSON schema ≥ <see cref="MapSaveSchema.OutdoorStructureLayersV5"/> 구조물 레이어.
+    /// 맵 JSON schema ≥ <see cref="MapSaveSchema.TerrainStructureLayersV5"/> 구조물 레이어.
     /// 피벗은 월드 min(x,y,z); 목록 좌표는 로컬(월드 − 피벗). 로드 후 모델은 월드 그리드만 쓴다.
     /// </summary>
     [Serializable]

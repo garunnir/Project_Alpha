@@ -10,9 +10,9 @@
     "tiles": [],
     "wallEdges": [],
     "floorFaces": [],
-    "outdoorFloorFaces": [],
-    "outdoorWallEdges": [],
-    "outdoorTiles": [
+    "terrainFloorFaces": [],
+    "terrainWallEdges": [],
+    "terrainTiles": [
         {
             "x": 7,
             "y": -1,

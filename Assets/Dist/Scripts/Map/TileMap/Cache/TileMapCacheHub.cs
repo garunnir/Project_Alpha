@@ -87,7 +87,7 @@ namespace IsoTilemap
         public void RebuildOccupancy() => _index.RebuildOccupancy();
     }
 
-    /// <summary>buildingId·outdoor·room edge wall 역인덱스 (읽기 + Builder 쓰기).</summary>
+    /// <summary>buildingId·terrain·room edge wall 역인덱스 (읽기 + Builder 쓰기).</summary>
     public sealed class BuildingLayer
     {
         readonly BuildingGroupRegistry _registry;

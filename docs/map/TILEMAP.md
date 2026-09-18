@@ -149,7 +149,7 @@ graph TD
 
 | 경로 | 위치 | 규칙 |
 |------|------|------|
-| **쓰기** | `BuildingGroupBuilder` (`AssignAll`, slice rebuild) | outdoor·buildingId·room·BFS geometry bake — [건물 bake 논리](TILEMAP_BUILDING_BAKE.md) |
+| **쓰기** | `BuildingGroupBuilder` (`AssignAll`, slice rebuild) | terrain·buildingId·room·BFS geometry bake — [건물 bake 논리](TILEMAP_BUILDING_BAKE.md) |
 | **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`CellYGeometry` | 역할별 분리(효율) |
 | **읽기** | `TileMapCacheHub` / `BuildingLayer` | `IsOutdoorEvaluation`, `TryGetFloorBuildingRoom` — **buildingId로 야외 추론 금지** (bake: `0` 미할당, `-1` 광장 Floor, `>0` 건물) |
 

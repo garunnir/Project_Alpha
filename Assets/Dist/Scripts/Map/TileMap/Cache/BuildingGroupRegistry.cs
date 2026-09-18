@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupRegistry — buildingId 역인덱스·광장 바닥 집합·room별 EdgeWall
 // ============================================================
 using System;
@@ -16,19 +16,19 @@ namespace IsoTilemap
         readonly Dictionary<int, BuildingExtent> _extentsByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
         /// <summary>야외 레이어 walkable floor 칸 (Y 제한 없음). minCellY plaza BFS 아님.</summary>
-        readonly HashSet<Vector3Int> _outdoorFloorCells = new();
+        readonly HashSet<Vector3Int> _terrainFloorCells = new();
 
         public int NextBuildingId { get; private set; } = 1;
 
         public IReadOnlyDictionary<int, HashSet<Guid>> TilesByBuildingId => _tilesByBuildingId;
 
-        /// <summary>레거시 이름 — outdoor 레이어에 칸이 있으면 그 중 임의 Y(없으면 MinValue).</summary>
+        /// <summary>레거시 이름 — terrain 레이어에 칸이 있으면 그 중 임의 Y(없으면 MinValue).</summary>
         public int PlazaCellY
         {
             get
             {
                 int y = int.MaxValue;
-                foreach (Vector3Int c in _outdoorFloorCells)
+                foreach (Vector3Int c in _terrainFloorCells)
                 {
                     if (c.y < y)
                         y = c.y;
@@ -38,15 +38,15 @@ namespace IsoTilemap
             }
         }
 
-        public IReadOnlyCollection<Vector3Int> OutdoorFloorCells => _outdoorFloorCells;
+        public IReadOnlyCollection<Vector3Int> TerrainFloorCells => _terrainFloorCells;
 
-        /// <summary>레거시: outdoor 레이어 (x,z) 투영. 같은 XZ에 outdoor 칸이 있으면 포함.</summary>
+        /// <summary>레거시: terrain 레이어 (x,z) 투영. 같은 XZ에 terrain 칸이 있으면 포함.</summary>
         public IReadOnlyCollection<(int x, int z)> PlazaFloorXZ
         {
             get
             {
                 var set = new HashSet<(int x, int z)>();
-                foreach (Vector3Int c in _outdoorFloorCells)
+                foreach (Vector3Int c in _terrainFloorCells)
                     set.Add((c.x, c.z));
                 return set;
             }
@@ -58,35 +58,35 @@ namespace IsoTilemap
             _minCellYFloorTilesByBuildingId.Clear();
             _extentsByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
-            // outdoor 레이어는 AssignAll Clear 동안 유지 — Replace/ClearOutdoor로만 교체
+            // terrain 레이어는 AssignAll Clear 동안 유지 — Replace/ClearTerrainFloorCells로만 교체
             NextBuildingId = 1;
         }
 
-        public void ClearOutdoorFloorCells() => _outdoorFloorCells.Clear();
+        public void ClearTerrainFloorCells() => _terrainFloorCells.Clear();
 
-        public void ReplaceOutdoorFloorCells(IEnumerable<Vector3Int> cells)
+        public void ReplaceTerrainFloorCells(IEnumerable<Vector3Int> cells)
         {
-            _outdoorFloorCells.Clear();
+            _terrainFloorCells.Clear();
             if (cells == null)
                 return;
             foreach (Vector3Int c in cells)
-                _outdoorFloorCells.Add(c);
+                _terrainFloorCells.Add(c);
         }
 
-        public void AddOutdoorFloorCell(Vector3Int cell) => _outdoorFloorCells.Add(cell);
+        public void AddTerrainFloorCell(Vector3Int cell) => _terrainFloorCells.Add(cell);
 
-        public bool IsOutdoorFloorCell(Vector3Int cell) => _outdoorFloorCells.Contains(cell);
+        public bool IsTerrainFloorCell(Vector3Int cell) => _terrainFloorCells.Contains(cell);
 
-        public bool IsOutdoorFloorCell(int cellY, int x, int z) =>
-            _outdoorFloorCells.Contains(new Vector3Int(x, cellY, z));
+        public bool IsTerrainFloorCell(int cellY, int x, int z) =>
+            _terrainFloorCells.Contains(new Vector3Int(x, cellY, z));
 
         /// <summary>야외 레이어 칸이면 true (구 plaza API).</summary>
         public bool IsPlazaFloor(int cellY, int x, int z) =>
-            IsOutdoorFloorCell(cellY, x, z);
+            IsTerrainFloorCell(cellY, x, z);
 
         public bool IsPlazaXZ(int x, int z)
         {
-            foreach (Vector3Int c in _outdoorFloorCells)
+            foreach (Vector3Int c in _terrainFloorCells)
             {
                 if (c.x == x && c.z == z)
                     return true;
@@ -95,15 +95,15 @@ namespace IsoTilemap
             return false;
         }
 
-        [System.Obsolete("Use ReplaceOutdoorFloorCells — minCellY plaza BFS removed.")]
-        public void SetPlazaOutdoor(int plazaCellY, HashSet<(int x, int z)> plazaFloor)
+        [System.Obsolete("Use ReplaceTerrainFloorCells — minCellY plaza BFS removed.")]
+        public void SetPlazaTerrain(int plazaCellY, HashSet<(int x, int z)> plazaFloor)
         {
             _ = plazaCellY;
-            _outdoorFloorCells.Clear();
+            _terrainFloorCells.Clear();
             if (plazaFloor == null)
                 return;
             foreach (var (x, z) in plazaFloor)
-                _outdoorFloorCells.Add(new Vector3Int(x, 0, z));
+                _terrainFloorCells.Add(new Vector3Int(x, 0, z));
         }
 
         public int AllocateBuildingId() => NextBuildingId++;

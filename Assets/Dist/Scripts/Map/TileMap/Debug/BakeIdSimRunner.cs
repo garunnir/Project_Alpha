@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // [BakeIdSimRunner] — 직렬화 타일·step·rule로 bake ID 시뮬레이션 실행
 // ============================================================
 
@@ -57,7 +57,7 @@ namespace IsoTilemap
             for (int i = 0; i < initial.Count; i++)
                 model.SetTile(initial[i]);
 
-            registry.ReplaceOutdoorFloorCells(BakeIdPlaygroundLayout.MasterPlayground.OutdoorFloorCells);
+            registry.ReplaceTerrainFloorCells(BakeIdPlaygroundLayout.MasterPlayground.TerrainFloorCells);
             // 시드 타일은 buildingId=0 — 연결 remesh. AssignAll은 양수 하드 파티션 보존용.
             builder.RebakeAllBuildingPartitions();
 
@@ -452,7 +452,7 @@ namespace IsoTilemap
                 spaceId = sid;
                 isOutdoor = hub.Spaces.IsOutdoorSpace(sid);
             }
-            else if (buildingId == TileIdentity.BuildingIdOutdoor)
+            else if (buildingId == TileIdentity.BuildingIdTerrain)
             {
                 isOutdoor = true;
             }

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 namespace IsoTilemap
@@ -39,7 +39,7 @@ namespace IsoTilemap
 
             Debug.Log(
                 $"TileMap saved to: {fullPath} (schema: {mapDatas.schemaVersion}, tiles: {mapDatas.tiles.Count}, " +
-                $"outdoorFloorFaces: {mapDatas.outdoorFloorFaces?.Count ?? 0}, outdoorWallEdges: {mapDatas.outdoorWallEdges?.Count ?? 0}, outdoorTiles: {mapDatas.outdoorTiles?.Count ?? 0}, buildings: {mapDatas.buildings?.Count ?? 0}, " +
+                $"terrainFloorFaces: {mapDatas.terrainFloorFaces?.Count ?? 0}, terrainWallEdges: {mapDatas.terrainWallEdges?.Count ?? 0}, terrainTiles: {mapDatas.terrainTiles?.Count ?? 0}, buildings: {mapDatas.buildings?.Count ?? 0}, " +
                 $"wallEdges: {mapDatas.wallEdges.Count}, bloodStamps: {mapDatas.bloodStamps?.Count ?? 0}, plantCells: {mapDatas.plantCells?.Count ?? 0})");
         }
         // void 대신 async Task 또는 async void(이벤트성일 때만) 사용

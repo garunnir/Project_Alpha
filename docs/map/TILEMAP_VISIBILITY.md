@@ -333,7 +333,7 @@ flowchart TD
 
 | 순서 | 규칙 |
 |------|------|
-| 1 | outdoor 레이어 (`IsPlazaFloor` / outdoor 인덱스, `buildingId==-1`) → **야외** (`true`) |
+| 1 | terrain 레이어 (`IsPlazaFloor` / terrain 인덱스, `buildingId==-1`) → **야외** (`true`) |
 | 2 | **floor 없음 (empty / no-floor)** → **야외** (`true`) — **선택 A** |
 | 3 | 점유 floor에 `SpaceId` → `SpaceBakeResult.isOutdoor` |
 | 4 | building floor인데 Space 없음 → **야외** (`true`) — bake 누락·개방 area indoor pipeline 고착 방지 |
@@ -342,7 +342,7 @@ flowchart TD
 
 `isOutdoor` 산출: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) — AABB-clipped volume Space + topology leak. **`collisionFlags` leak 금지** — [대전제](TILEMAP_BUILDING_BAKE.md).
 
-**room / `roomId`와 혼동하지 않는다.** room은 building×slice floor 묶음(peek용). 실내/야외와 structural 층 단위는 Space · outdoor 레이어.
+**room / `roomId`와 혼동하지 않는다.** room은 building×slice floor 묶음(peek용). 실내/야외와 structural 층 단위는 Space · terrain 레이어.
 
 **§5.1.1 (비대칭):** 논리로 닫힌 루프면 bake 그래프상 밀폐로 볼 수 있으나, **비트가 비었다고 비밀폐로 단정하지 않음.** `isOutdoor=false`도 밀폐 증명이 아님.
 

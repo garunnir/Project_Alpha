@@ -1,5 +1,5 @@
-// ============================================================
-// TileMapDtoMapper — MapSaveJsonDto ↔ MapModelDTO (schema V5 outdoor/buildings)
+﻿// ============================================================
+// TileMapDtoMapper — MapSaveJsonDto ↔ MapModelDTO (schema V5 terrain/buildings)
 // ============================================================
 
 using System;
@@ -28,27 +28,27 @@ namespace IsoTilemap
             List<TileData> prepareData = new List<TileData>();
             bool legacyTiles = tileMapData.schemaVersion < MapSaveSchema.PlacementSlotV1;
             int schemaVersion = tileMapData.schemaVersion;
-            bool schemaV5 = schemaVersion >= MapSaveSchema.OutdoorStructureLayersV5;
+            bool schemaV5 = schemaVersion >= MapSaveSchema.TerrainStructureLayersV5;
 
             AppendRootOccupiedAndWalls(tileMapData, prepareData, legacyTiles);
 
-            List<FloorFaceSaveData> outdoorFaces;
+            List<FloorFaceSaveData> terrainFaces;
             List<FloorFaceSaveData> flatStructureFaces;
             if (schemaV5)
             {
-                outdoorFaces = tileMapData.outdoorFloorFaces;
+                terrainFaces = tileMapData.terrainFloorFaces;
                 flatStructureFaces = null;
             }
             else
-                ClassifyLegacyFloorFaces(tileMapData.floorFaces, out outdoorFaces, out flatStructureFaces);
+                ClassifyLegacyFloorFaces(tileMapData.floorFaces, out terrainFaces, out flatStructureFaces);
 
-            AppendFloorFacesWorld(outdoorFaces, schemaVersion, prepareData, replaceExistingFloor: false, asOutdoor: true);
-            AppendFloorFacesWorld(flatStructureFaces, schemaVersion, prepareData, replaceExistingFloor: true, asOutdoor: false);
+            AppendFloorFacesWorld(terrainFaces, schemaVersion, prepareData, replaceExistingFloor: false, asTerrain: true);
+            AppendFloorFacesWorld(flatStructureFaces, schemaVersion, prepareData, replaceExistingFloor: true, asTerrain: false);
 
             if (schemaV5)
             {
-                AppendWallEdgesWorld(tileMapData.outdoorWallEdges, prepareData, asOutdoor: true);
-                AppendOccupiedWorld(tileMapData.outdoorTiles, prepareData, legacyTiles, asOutdoor: true);
+                AppendWallEdgesWorld(tileMapData.terrainWallEdges, prepareData, asTerrain: true);
+                AppendOccupiedWorld(tileMapData.terrainTiles, prepareData, legacyTiles, asTerrain: true);
             }
 
             if (schemaV5 && tileMapData.buildings != null)
@@ -79,18 +79,18 @@ namespace IsoTilemap
             // V5: flat floorFaces/wallEdges는 비움. tiles는 fish-trap only용으로 유지.
             dto.floorFaces = new List<FloorFaceSaveData>();
             dto.wallEdges = new List<WallEdgeSaveData>();
-            dto.outdoorFloorFaces = new List<FloorFaceSaveData>();
-            dto.outdoorWallEdges = new List<WallEdgeSaveData>();
-            dto.outdoorTiles = new List<TileSaveData>();
+            dto.terrainFloorFaces = new List<FloorFaceSaveData>();
+            dto.terrainWallEdges = new List<WallEdgeSaveData>();
+            dto.terrainTiles = new List<TileSaveData>();
             dto.buildings = new List<BuildingSaveData>();
 
             var groups = new Dictionary<int, BuildingGroupScratch>();
 
             foreach (var ti in tiles)
             {
-                if (ti.identity.buildingId == TileIdentity.BuildingIdOutdoor)
+                if (ti.identity.buildingId == TileIdentity.BuildingIdTerrain)
                 {
-                    AppendTileToOutdoorDto(dto, ti);
+                    AppendTileToTerrainDto(dto, ti);
                     continue;
                 }
 
@@ -122,7 +122,7 @@ namespace IsoTilemap
 
         /// <summary>
         /// 뷰 하이어라키 스냅샷 저장 (remesh 없음).
-        /// <c>Outdoor/</c> → outdoor*; <c>Building_{id}</c> → buildings[].
+        /// <c>Terrain/</c> → terrain*; <c>Building_{id}</c> → buildings[].
         /// 합침은 bake가 하이어라키를 맞춘 뒤에만 반영된다.
         /// </summary>
         public MapSaveJsonDto FromHierarchyViews(IEnumerable<TileView> views)
@@ -131,9 +131,9 @@ namespace IsoTilemap
             dto.liquidAuthoringFaces = null;
             dto.floorFaces = new List<FloorFaceSaveData>();
             dto.wallEdges = new List<WallEdgeSaveData>();
-            dto.outdoorFloorFaces = new List<FloorFaceSaveData>();
-            dto.outdoorWallEdges = new List<WallEdgeSaveData>();
-            dto.outdoorTiles = new List<TileSaveData>();
+            dto.terrainFloorFaces = new List<FloorFaceSaveData>();
+            dto.terrainWallEdges = new List<WallEdgeSaveData>();
+            dto.terrainTiles = new List<TileSaveData>();
             dto.buildings = new List<BuildingSaveData>();
             dto.tiles = new List<TileSaveData>();
 
@@ -154,9 +154,9 @@ namespace IsoTilemap
                 TileData data = one[0];
                 Transform parent = view.transform.parent;
 
-                if (BuildingViewHierarchy.IsUnderOutdoorRoot(parent))
+                if (BuildingViewHierarchy.IsUnderTerrainRoot(parent))
                 {
-                    AppendTileToOutdoorDto(dto, data);
+                    AppendTileToTerrainDto(dto, data);
                     continue;
                 }
 
@@ -202,13 +202,13 @@ namespace IsoTilemap
             return dto;
         }
 
-        static void AppendTileToOutdoorDto(MapSaveJsonDto dto, in TileData ti)
+        static void AppendTileToTerrainDto(MapSaveJsonDto dto, in TileData ti)
         {
             Vector3Int p = ti.identity.GridPos;
             switch (TileIdentityUtil.GetPlacementSlot(ti.identity))
             {
                 case TilePlacementSlot.VerticalFace:
-                    dto.outdoorWallEdges.Add(new WallEdgeSaveData
+                    dto.terrainWallEdges.Add(new WallEdgeSaveData
                     {
                         x = p.x,
                         y = p.y,
@@ -218,7 +218,7 @@ namespace IsoTilemap
                     });
                     break;
                 case TilePlacementSlot.HorizontalFace:
-                    dto.outdoorFloorFaces.Add(new FloorFaceSaveData
+                    dto.terrainFloorFaces.Add(new FloorFaceSaveData
                     {
                         x = p.x,
                         y = p.y,
@@ -228,7 +228,7 @@ namespace IsoTilemap
                     });
                     break;
                 default:
-                    dto.outdoorTiles.Add(new TileSaveData
+                    dto.terrainTiles.Add(new TileSaveData
                     {
                         sizeX = ti.identity.sizeUnit.x,
                         sizeY = ti.identity.sizeUnit.y,
@@ -261,7 +261,7 @@ namespace IsoTilemap
                 if (slot == TilePlacementSlot.HorizontalFace)
                 {
                     Debug.LogWarning(
-                        $"[TileMapDtoMapper] Floor '{td.prefabId}' in tiles[] is no longer loaded. Use floorFaces[] / outdoorFloorFaces / buildings[].");
+                        $"[TileMapDtoMapper] Floor '{td.prefabId}' in tiles[] is no longer loaded. Use floorFaces[] / terrainFloorFaces / buildings[].");
                     continue;
                 }
 
@@ -311,10 +311,10 @@ namespace IsoTilemap
 
         static void ClassifyLegacyFloorFaces(
             List<FloorFaceSaveData> floorFaces,
-            out List<FloorFaceSaveData> outdoor,
+            out List<FloorFaceSaveData> terrain,
             out List<FloorFaceSaveData> structure)
         {
-            outdoor = new List<FloorFaceSaveData>();
+            terrain = new List<FloorFaceSaveData>();
             structure = new List<FloorFaceSaveData>();
             if (floorFaces == null)
                 return;
@@ -325,8 +325,8 @@ namespace IsoTilemap
                 if (ff == null)
                     continue;
 
-                if (IsOutdoorMigrationGrassFloor(ff.prefabId))
-                    outdoor.Add(ff);
+                if (IsTerrainMigrationGrassFloor(ff.prefabId))
+                    terrain.Add(ff);
                 else
                     structure.Add(ff);
             }
@@ -337,7 +337,7 @@ namespace IsoTilemap
             int schemaVersion,
             List<TileData> prepareData,
             bool replaceExistingFloor,
-            bool asOutdoor)
+            bool asTerrain)
         {
             if (faces == null)
                 return;
@@ -352,7 +352,7 @@ namespace IsoTilemap
                 if (MapLiquidAuthoringBake.IsLiquidAuthoringPrefab(ff.prefabId))
                 {
                     Debug.LogWarning(
-                        $"[TileMapDtoMapper] 물 face '{ff.prefabId}'가 floorFaces/outdoorFloorFaces에 남아 있어 무시합니다. " +
+                        $"[TileMapDtoMapper] 물 face '{ff.prefabId}'가 floorFaces/terrainFloorFaces에 남아 있어 무시합니다. " +
                         "liquidAuthoringFaces로 승격되었는지 확인하세요.");
                     continue;
                 }
@@ -361,7 +361,7 @@ namespace IsoTilemap
                 if (!TryMakeHorizontalFaceIdentity(ff.prefabId, walkable, out var identity))
                     continue;
 
-                if (asOutdoor)
+                if (asTerrain)
                 {
                     identity = new TileIdentity
                     {
@@ -372,7 +372,7 @@ namespace IsoTilemap
                         wallFace = identity.wallFace,
                         floorFace = identity.floorFace,
                         collisionFlags = identity.collisionFlags,
-                        buildingId = TileIdentity.BuildingIdOutdoor,
+                        buildingId = TileIdentity.BuildingIdTerrain,
                         roomId = 0,
                     };
                 }
@@ -386,7 +386,7 @@ namespace IsoTilemap
         static void AppendWallEdgesWorld(
             List<WallEdgeSaveData> edges,
             List<TileData> prepareData,
-            bool asOutdoor)
+            bool asTerrain)
         {
             if (edges == null)
                 return;
@@ -404,8 +404,8 @@ namespace IsoTilemap
                         out var identity))
                     continue;
 
-                if (asOutdoor)
-                    identity = WithOutdoorBuildingId(identity);
+                if (asTerrain)
+                    identity = WithTerrainBuildingId(identity);
 
                 prepareData.Add(MakeTile(identity));
             }
@@ -415,7 +415,7 @@ namespace IsoTilemap
             List<TileSaveData> tiles,
             List<TileData> prepareData,
             bool legacyTiles,
-            bool asOutdoor)
+            bool asTerrain)
         {
             if (tiles == null)
                 return;
@@ -430,15 +430,15 @@ namespace IsoTilemap
                 if (slot == TilePlacementSlot.HorizontalFace || slot == TilePlacementSlot.VerticalFace)
                 {
                     Debug.LogWarning(
-                        $"[TileMapDtoMapper] outdoorTiles entry '{td.prefabId}' has face slot — use outdoorFloorFaces / outdoorWallEdges.");
+                        $"[TileMapDtoMapper] terrainTiles entry '{td.prefabId}' has face slot — use terrainFloorFaces / terrainWallEdges.");
                     continue;
                 }
 
                 if (!TryMakeOccupiedIdentity(td.prefabId, new Vector3Int(td.x, td.y, td.z), out var occupied))
                     continue;
 
-                if (asOutdoor)
-                    occupied = WithOutdoorBuildingId(occupied);
+                if (asTerrain)
+                    occupied = WithTerrainBuildingId(occupied);
 
                 var plant = new PlantTileInstance
                 {
@@ -453,8 +453,8 @@ namespace IsoTilemap
             }
         }
 
-        static TileIdentity WithOutdoorBuildingId(in TileIdentity identity) =>
-            WithBuildingId(identity, TileIdentity.BuildingIdOutdoor);
+        static TileIdentity WithTerrainBuildingId(in TileIdentity identity) =>
+            WithBuildingId(identity, TileIdentity.BuildingIdTerrain);
 
         static TileIdentity WithBuildingId(in TileIdentity identity, int buildingId) =>
             new TileIdentity
@@ -583,8 +583,8 @@ namespace IsoTilemap
             }
         }
 
-        static bool IsOutdoorMigrationGrassFloor(string prefabId) =>
-            string.Equals(prefabId, MapSaveSchema.OutdoorMigrationGrassFloorPrefabId, StringComparison.Ordinal);
+        static bool IsTerrainMigrationGrassFloor(string prefabId) =>
+            string.Equals(prefabId, MapSaveSchema.TerrainMigrationGrassFloorPrefabId, StringComparison.Ordinal);
 
         static int ResolveBuildingGroupKey(int buildingId) =>
             buildingId > 0 ? buildingId : OrphanBuildingGroupKeyStart;

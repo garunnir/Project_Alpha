@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.Incremental — 증분 타일 편집 bake (국소 building 영향)
 // ============================================================
 using System;
@@ -42,12 +42,12 @@ namespace IsoTilemap
                     TileData removed = removals[i];
                     if (!TileIdentityUtil.IsFloorTile(removed.identity))
                         continue;
-                    if (removed.identity.buildingId == TileIdentity.BuildingIdOutdoor ||
-                        _registry.IsOutdoorFloorCell(removed.identity.GridPos))
+                    if (removed.identity.buildingId == TileIdentity.BuildingIdTerrain ||
+                        _registry.IsTerrainFloorCell(removed.identity.GridPos))
                     {
-                        var next = new HashSet<Vector3Int>(_registry.OutdoorFloorCells);
+                        var next = new HashSet<Vector3Int>(_registry.TerrainFloorCells);
                         next.Remove(removed.identity.GridPos);
-                        _registry.ReplaceOutdoorFloorCells(next);
+                        _registry.ReplaceTerrainFloorCells(next);
                     }
                 }
             }
@@ -61,7 +61,7 @@ namespace IsoTilemap
                     int buildingId = removed.identity.buildingId;
 
                     if (TileIdentityUtil.IsFloorTile(removed.identity) &&
-                        (buildingId == TileIdentity.BuildingIdOutdoor ||
+                        (buildingId == TileIdentity.BuildingIdTerrain ||
                          buildingId == TileIdentity.BuildingIdUnassigned))
                         continue;
 
@@ -89,7 +89,7 @@ namespace IsoTilemap
                 return;
 
             ComputeCellYRange();
-            SyncOutdoorLayerFromOutdoorIdTiles();
+            SyncTerrainLayerFromTerrainIdTiles();
 
             var keys = seedRoomKeys ?? new HashSet<RoomKey>();
             var extraSeeds = new HashSet<(int x, int z, int y)>();
@@ -194,7 +194,7 @@ namespace IsoTilemap
 
             foreach (var (x, z) in seeds)
             {
-                if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                if (IsPlazaOrTerrainFloor(x, z, cellY))
                     continue;
 
                 int buildingId = GetFloorBuildingId(x, cellY, z);
@@ -239,7 +239,7 @@ namespace IsoTilemap
 
             foreach (var (x, z) in seeds)
             {
-                if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                if (IsPlazaOrTerrainFloor(x, z, cellY))
                     continue;
 
                 int buildingA = GetFloorBuildingId(x, cellY, z);
@@ -250,7 +250,7 @@ namespace IsoTilemap
                 {
                     int nx = x + d.x;
                     int nz = z + d.z;
-                    if (IsPlazaOrOutdoorFloor(nx, nz, cellY))
+                    if (IsPlazaOrTerrainFloor(nx, nz, cellY))
                         continue;
 
                     if (!_topology.Index.CellHasFloor(nx, cellY, nz))

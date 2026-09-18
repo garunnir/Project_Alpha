@@ -16,7 +16,10 @@
       "Bash(ls -la \"/z/Work/Project/vscode-llm-usage-bar\" 2>&1 || echo \"NOT_EXIST\")",
       "Read(//z/Work/Project/**)",
       "Bash(npm --version)",
-      "Bash(mkdir -p /z/Work/Project/vscode-llm-usage-bar/.vscode /z/Work/Project/vscode-llm-usage-bar/src/util /z/Work/Project/vscode-llm-usage-bar/src/providers /z/Work/Project/vscode-llm-usage-bar/src/ui /z/Work/Project/vscode-llm-usage-bar/src/commands /z/Work/Project/vscode-llm-usage-bar/bridge /z/Work/Project/vscode-llm-usage-bar/scripts /z/Work/Project/vscode-llm-usage-bar/resources)"
+      "Bash(mkdir -p /z/Work/Project/vscode-llm-usage-bar/.vscode /z/Work/Project/vscode-llm-usage-bar/src/util /z/Work/Project/vscode-llm-usage-bar/src/providers /z/Work/Project/vscode-llm-usage-bar/src/ui /z/Work/Project/vscode-llm-usage-bar/src/commands /z/Work/Project/vscode-llm-usage-bar/bridge /z/Work/Project/vscode-llm-usage-bar/scripts /z/Work/Project/vscode-llm-usage-bar/resources)",
+      "Bash(git mv *)",
+      "mcp__unity-mcp__Unity_ManageEditor",
+      "mcp__unity-mcp__Unity_ManageMenuItem"
     ]
   }
 }

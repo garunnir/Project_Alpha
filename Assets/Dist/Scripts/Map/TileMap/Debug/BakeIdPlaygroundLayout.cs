@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // [BakeIdPlaygroundLayout] — Sim 씬 Import용 시드 배치 (코드 fixture)
 // ============================================================
 // Bake ID 회귀 SSOT는 BakeIdPlayground 씬 Host 직렬화. 이 파일은 빈 씬 시드용.
@@ -58,8 +58,8 @@ namespace IsoTilemap
             public static readonly Vector3Int IndoorProbe = new Vector3Int(0, 1, 11);
             public static readonly Vector3Int OutdoorShedProbe = OpenShed_A;
 
-            /// <summary>outdoor 레이어 시드 (min plaza BFS 대체).</summary>
-            public static readonly Vector3Int[] OutdoorFloorCells =
+            /// <summary>terrain 레이어 시드 (min plaza BFS 대체).</summary>
+            public static readonly Vector3Int[] TerrainFloorCells =
             {
                 Plaza_Floor,
             };

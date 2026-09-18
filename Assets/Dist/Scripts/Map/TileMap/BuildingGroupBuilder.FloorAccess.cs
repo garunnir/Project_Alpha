@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.FloorAccess — floor buildingId·roomId 읽기/쓰기
 // ============================================================
 using System.Collections.Generic;
@@ -32,7 +32,7 @@ namespace IsoTilemap
             _model.PatchTileIdentity(face.tileDefId, buildingId, roomId);
         }
         /// <summary>Init footprint·floor horizontal union·orphan 전용. structural flood traverse에 사용 금지.</summary>
-        bool IsPlazaOrOutdoorFloor(int x, int z, int cellY)
+        bool IsPlazaOrTerrainFloor(int x, int z, int cellY)
         {
             if (cellY == _minCellY && _registry.IsPlazaXZ(x, z))
                 return true;
@@ -40,7 +40,7 @@ namespace IsoTilemap
             if (!_topology.Index.CellHasFloor(x, cellY, z))
                 return false;
 
-            return GetFloorBuildingId(x, cellY, z) == TileIdentity.BuildingIdOutdoor;
+            return GetFloorBuildingId(x, cellY, z) == TileIdentity.BuildingIdTerrain;
         }
     }
 }

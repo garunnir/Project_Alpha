@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.BuildingIdSeeds — minCellY 시드·orphan·slice footprint buildingId
 // ============================================================
 using System.Collections.Generic;
@@ -32,37 +32,37 @@ namespace IsoTilemap
             if (seeds == null)
                 return;
 
-            var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
+            var terrain = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
 
             foreach (var (seedX, seedZ) in seeds)
             {
                 if (!IsFloorBuildingUnassigned(seedX, _minCellY, seedZ))
                     continue;
 
-                if (outdoor.Contains((seedX, seedZ)))
+                if (terrain.Contains((seedX, seedZ)))
                     continue;
 
                 var footprint = FloorRoomFloodFill.Run(
                     _topology.Index, _minCellY, seedX, seedZ,
                     collectEmptyNeighbors: false,
-                    excludeCells: outdoor).Visited;
+                    excludeCells: terrain).Visited;
 
                 if (footprint.Count == 0)
                     continue;
 
                 int buildingId = _registry.AllocateBuildingId();
-                AssignBuildingFootprintOnSlice(buildingId, _minCellY, footprint, outdoor);
+                AssignBuildingFootprintOnSlice(buildingId, _minCellY, footprint, terrain);
             }
         }
         void AssignBuildingFootprintOnSlice(
             int buildingId,
             int cellY,
             HashSet<(int x, int z)> footprint,
-            HashSet<(int x, int z)> outdoorExclude)
+            HashSet<(int x, int z)> terrainExclude)
         {
             foreach (var (x, z) in footprint)
             {
-                if (outdoorExclude != null && cellY == _minCellY && outdoorExclude.Contains((x, z)))
+                if (terrainExclude != null && cellY == _minCellY && terrainExclude.Contains((x, z)))
                     continue;
 
                 if (!IsFloorBuildingUnassigned(x, cellY, z))
@@ -92,18 +92,18 @@ namespace IsoTilemap
                 if (!IsFloorBuildingUnassigned(seedX, seedCellY, seedZ))
                     continue;
 
-                var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
+                var terrain = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
                 var footprint = FloorRoomFloodFill.Run(
                     _topology.Index, seedCellY, seedX, seedZ,
                     collectEmptyNeighbors: false,
-                    excludeCells: seedCellY == _minCellY ? outdoor : null).Visited;
+                    excludeCells: seedCellY == _minCellY ? terrain : null).Visited;
 
                 if (footprint.Count == 0)
                     continue;
 
                 int buildingId = _registry.AllocateBuildingId();
-                HashSet<(int x, int z)> outdoorExclude = seedCellY == _minCellY ? outdoor : null;
-                AssignBuildingFootprintOnSlice(buildingId, seedCellY, footprint, outdoorExclude);
+                HashSet<(int x, int z)> terrainExclude = seedCellY == _minCellY ? terrain : null;
+                AssignBuildingFootprintOnSlice(buildingId, seedCellY, footprint, terrainExclude);
             }
         }
         void TryAssignLocalBuildingSeeds(HashSet<(int x, int z, int y)> cells)

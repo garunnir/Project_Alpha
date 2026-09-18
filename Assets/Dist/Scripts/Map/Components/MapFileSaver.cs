@@ -1,4 +1,4 @@
-using IsoTilemap;
+﻿using IsoTilemap;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -129,7 +129,7 @@ public class MapFileSaver : MonoBehaviour
         File.WriteAllText(fullPath, JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
             $"TileMap saved to: {fullPath} (schema: {jsonDto.schemaVersion}, tiles: {jsonDto.tiles.Count}, " +
-            $"outdoorFloorFaces: {jsonDto.outdoorFloorFaces?.Count ?? 0}, outdoorWallEdges: {jsonDto.outdoorWallEdges?.Count ?? 0}, outdoorTiles: {jsonDto.outdoorTiles?.Count ?? 0}, buildings: {jsonDto.buildings?.Count ?? 0}, " +
+            $"terrainFloorFaces: {jsonDto.terrainFloorFaces?.Count ?? 0}, terrainWallEdges: {jsonDto.terrainWallEdges?.Count ?? 0}, terrainTiles: {jsonDto.terrainTiles?.Count ?? 0}, buildings: {jsonDto.buildings?.Count ?? 0}, " +
             $"wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, " +
             $"liquidAuthoringFaces: {jsonDto.liquidAuthoringFaces?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
     }

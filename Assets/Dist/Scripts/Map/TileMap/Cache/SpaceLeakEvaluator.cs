@@ -1,6 +1,6 @@
-// ============================================================
+﻿// ============================================================
 // SpaceLeakEvaluator — Space bake 후 topology 누수 → isOutdoor
-// leak seal: footprint·outdoor·structural/floor topology — buildingId 동일성 미사용
+// leak seal: footprint·terrain·structural/floor topology — buildingId 동일성 미사용
 // 천장 = walkable 셀에서 위로의 volume 통과가 막혔는가 (SpaceFloodFill3D와 동일)
 // collisionFlags leak 금지 — TILEMAP_BUILDING_BAKE.md 대전제 §1·§7.3
 // ============================================================
@@ -255,9 +255,9 @@ namespace IsoTilemap
                 return true;
             }
 
-            if (neighborBuildingId == TileIdentity.BuildingIdOutdoor)
+            if (neighborBuildingId == TileIdentity.BuildingIdTerrain)
             {
-                reason = $"neighborOutdoor({neighborBuildingId})";
+                reason = $"neighborTerrain({neighborBuildingId})";
                 return true;
             }
 

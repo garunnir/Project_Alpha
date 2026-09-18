@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.AdjacentZeroPropagate — building 인접 미할당(0) footprint 흡수
 // ============================================================
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace IsoTilemap
             {
                 var (x, _, z) = _walkableFloorCellScratch[i];
 
-                if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                if (IsPlazaOrTerrainFloor(x, z, cellY))
                     continue;
 
                 int buildingId = GetFloorBuildingId(x, cellY, z);
@@ -76,7 +76,7 @@ namespace IsoTilemap
         }
         bool IsUnassignedPropagableFloor(int x, int cellY, int z) =>
             IsFloorBuildingUnassigned(x, cellY, z) &&
-            !IsPlazaOrOutdoorFloor(x, z, cellY) &&
+            !IsPlazaOrTerrainFloor(x, z, cellY) &&
             _topology.Index.CellHasFloor(x, cellY, z);
 
         HashSet<(int x, int z)> CollectUnassignedFloorFootprint(int cellY, int startX, int startZ)

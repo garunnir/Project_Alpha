@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // SpaceFloodFill3D — building AABB 안 전방향 volume Space flood
 // ============================================================
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace IsoTilemap
 
         /// <summary>
         /// seed에서 AABB(<see cref="BuildingExtent"/>) 안만 6방 volume flood.
-        /// 빈 칸 포함; outdoor/plaza·구조 solid·타 building floor는 방문하지 않음.
+        /// 빈 칸 포함; terrain/plaza·구조 solid·타 building floor는 방문하지 않음.
         /// </summary>
         public static SpaceFloodResult Run(
             FloorMapIndex index,
@@ -93,7 +93,7 @@ namespace IsoTilemap
             if (!extent.ContainsAabb(neighbor.x, neighbor.y, neighbor.z))
                 return;
 
-            if (IsOutdoorOrPlazaCell(index, buildings, neighbor))
+            if (IsTerrainOrPlazaCell(index, buildings, neighbor))
                 return;
 
             if (IsPassageBlocked(index, cur, neighbor))
@@ -127,7 +127,7 @@ namespace IsoTilemap
             if (!extent.ContainsAabb(cell.x, cell.y, cell.z))
                 return false;
 
-            if (IsOutdoorOrPlazaCell(index, buildings, cell))
+            if (IsTerrainOrPlazaCell(index, buildings, cell))
                 return false;
 
             if (IsSolidStructuralCell(index, cell))
@@ -139,7 +139,7 @@ namespace IsoTilemap
             return true;
         }
 
-        static bool IsOutdoorOrPlazaCell(
+        static bool IsTerrainOrPlazaCell(
             FloorMapIndex index,
             BuildingGroupRegistry buildings,
             Vector3Int cell)
@@ -150,7 +150,7 @@ namespace IsoTilemap
             if (!index.TryGetFloorFaceForWalkableCell(cell.x, cell.y, cell.z, out var face))
                 return false;
 
-            return face.identity.buildingId == TileIdentity.BuildingIdOutdoor;
+            return face.identity.buildingId == TileIdentity.BuildingIdTerrain;
         }
 
         static bool HasForeignBuildingFloor(FloorMapIndex index, Vector3Int cell, int buildingId)

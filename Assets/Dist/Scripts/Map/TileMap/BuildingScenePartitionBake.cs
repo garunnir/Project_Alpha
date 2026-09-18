@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingScenePartitionBake — 에디터 씬 TileView 연결 remesh + Building_* 재부모
 // ============================================================
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace IsoTilemap
 
             cellSize = Mathf.Max(1e-4f, cellSize);
             var indoorTiles = new List<TileData>();
-            var outdoorFloorCells = new HashSet<Vector3Int>();
+            var terrainFloorCells = new HashSet<Vector3Int>();
             var indoorViews = new List<(TileView view, TileData gathered)>();
             Transform tileContainer = null;
 
@@ -36,10 +36,10 @@ namespace IsoTilemap
                 TileData data = one[0];
                 Transform parent = view.transform.parent;
 
-                if (BuildingViewHierarchy.IsUnderOutdoorRoot(parent))
+                if (BuildingViewHierarchy.IsUnderTerrainRoot(parent))
                 {
                     if (TileIdentityUtil.IsFloorTile(data.identity))
-                        outdoorFloorCells.Add(data.identity.GridPos);
+                        terrainFloorCells.Add(data.identity.GridPos);
                     continue;
                 }
 
@@ -87,8 +87,8 @@ namespace IsoTilemap
             for (int i = 0; i < indoorTiles.Count; i++)
                 model.SetTile(indoorTiles[i]);
 
-            if (outdoorFloorCells.Count > 0)
-                registry.ReplaceOutdoorFloorCells(outdoorFloorCells);
+            if (terrainFloorCells.Count > 0)
+                registry.ReplaceTerrainFloorCells(terrainFloorCells);
 
             builder.RebakeAllBuildingPartitions();
 
@@ -132,7 +132,7 @@ namespace IsoTilemap
             while (t != null)
             {
                 if (t.name == BuildingViewHierarchy.BuildingsName ||
-                    t.name == BuildingViewHierarchy.OutdoorName)
+                    t.name == BuildingViewHierarchy.TerrainName)
                     return t.parent;
                 t = t.parent;
             }

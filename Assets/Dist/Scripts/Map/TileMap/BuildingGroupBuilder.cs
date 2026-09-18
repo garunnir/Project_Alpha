@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder — buildingId·roomId bake 오케스트레이션 (partial 루트)
 // ============================================================
 using System;
@@ -90,7 +90,7 @@ namespace IsoTilemap
             _registry.RebuildIndicesFromTiles(_model.TilesSnapshot);
 
         /// <summary>
-        /// 맵 bake. <b>양수 buildingId·outdoor(-1)는 하드 파티션 — Reset하지 않음.</b>
+        /// 맵 bake. <b>양수 buildingId·terrain(-1)는 하드 파티션 — Reset하지 않음.</b>
         /// 미할당(0)만 component로 새 id. 전체 재묶기는 <see cref="RebakeAllBuildingPartitions"/>.
         /// </summary>
         public void AssignAll()
@@ -99,9 +99,9 @@ namespace IsoTilemap
             _registry.Clear();
             _topology.RebuildOccupancy();
             ComputeCellYRange();
-            SyncOutdoorLayerFromOutdoorIdTiles();
+            SyncTerrainLayerFromTerrainIdTiles();
             // 알고리즘: 저장된 양수 id를 지우지 않음. 지우면 경계를 없애고 재합침 = 버그.
-            StampOutdoorLayerFromRegistry();
+            StampTerrainLayerFromRegistry();
             BakeBuildingComponentsForMap();
             AssignBuildingIdsFromComponents();
             BakeAllRooms();
@@ -125,9 +125,9 @@ namespace IsoTilemap
             _registry.Clear();
             _topology.RebuildOccupancy();
             ComputeCellYRange();
-            SyncOutdoorLayerFromOutdoorIdTiles();
+            SyncTerrainLayerFromTerrainIdTiles();
             ResetStructuralIds();
-            StampOutdoorLayerFromRegistry();
+            StampTerrainLayerFromRegistry();
             BakeBuildingComponentsForMap();
             AssignBuildingIdsFromComponents();
             BakeAllRooms();
@@ -189,7 +189,7 @@ namespace IsoTilemap
                 }
             }
 
-            // outdoor-only / 양수 slice 없음 — room·shell·space 전량 bake 금지.
+            // terrain-only / 양수 slice 없음 — room·shell·space 전량 bake 금지.
             if (slices.Count == 0)
                 return;
 

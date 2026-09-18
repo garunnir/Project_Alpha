@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.ShellPropagation — §4 occupied-cell flood·열 상향 shell 전파
 // ============================================================
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace IsoTilemap
 
             foreach (var (x, floorCellY, z) in _topology.Index.EnumerateWalkableFloorCells())
             {
-                if (IsPlazaOrOutdoorFloor(x, z, floorCellY))
+                if (IsPlazaOrTerrainFloor(x, z, floorCellY))
                     continue;
 
                 int buildingId = GetFloorBuildingId(x, floorCellY, z);
@@ -36,11 +36,11 @@ namespace IsoTilemap
         }
         void TagWallsFromFloorAdjacencyOnSlice(int cellY)
         {
-            // BuildingIdOutdoor = Y-wide wildcard (해당 cellY의 모든 양수 building).
+            // BuildingIdTerrain = Y-wide wildcard (해당 cellY의 모든 양수 building).
             TagAllWallsFromFloorAdjacency(
                 new HashSet<(int buildingId, int cellY)>
                 {
-                    (TileIdentity.BuildingIdOutdoor, cellY)
+                    (TileIdentity.BuildingIdTerrain, cellY)
                 });
         }
 
@@ -52,8 +52,8 @@ namespace IsoTilemap
             if (sliceFilter.Contains((buildingId, cellY)))
                 return true;
 
-            // Y-wide: outdoor sentinel — TagWallsFromFloorAdjacencyOnSlice 전용.
-            return sliceFilter.Contains((TileIdentity.BuildingIdOutdoor, cellY));
+            // Y-wide: terrain sentinel — TagWallsFromFloorAdjacencyOnSlice 전용.
+            return sliceFilter.Contains((TileIdentity.BuildingIdTerrain, cellY));
         }
         void TagWallsFromFloorAdjacencyNearCells(IReadOnlyCollection<Vector3Int> changedCells)
         {

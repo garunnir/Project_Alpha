@@ -1,8 +1,8 @@
-// ============================================================
+﻿// ============================================================
 // BuildingPrefabUnpack — 건물 프리팹 → 월드 타일 펼침 (청크용)
 // ============================================================
 // 프리팹 GO는 맵에 남기지 않는다. 데이터만 타일로 풀어 IMapModel에 넣는다.
-// outdoor(-1) / Outdoor/ 아래 타일은 건물 프리팹에 두면 안 되며 건너뛴다.
+// terrain(-1) / Terrain/ 아래 타일은 건물 프리팹에 두면 안 되며 건너뛴다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,10 +41,10 @@ namespace IsoTilemap
                 if (view == null)
                     continue;
 
-                if (BuildingViewHierarchy.IsUnderOutdoorRoot(view.transform.parent))
+                if (BuildingViewHierarchy.IsUnderTerrainRoot(view.transform.parent))
                 {
                     Debug.LogWarning(
-                        $"[BuildingPrefabUnpack] Outdoor/ 아래 타일은 맵 outdoor 레이어로만 넣으세요: '{view.name}'.",
+                        $"[BuildingPrefabUnpack] Terrain/ 아래 타일은 맵 terrain 레이어로만 넣으세요: '{view.name}'.",
                         view);
                     continue;
                 }
@@ -65,10 +65,10 @@ namespace IsoTilemap
             for (int i = 0; i < snapshot.Count; i++)
             {
                 TileData td = snapshot[i];
-                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(td.identity.buildingId))
+                if (BuildingIdBakeRules.IsImmutableTerrainBuildingId(td.identity.buildingId))
                 {
                     Debug.LogWarning(
-                        $"[BuildingPrefabUnpack] outdoor(-1) 타일 '{td.identity.PrefabId}'는 건물 프리팹에 둘 수 없습니다.",
+                        $"[BuildingPrefabUnpack] terrain(-1) 타일 '{td.identity.PrefabId}'는 건물 프리팹에 둘 수 없습니다.",
                         root);
                     continue;
                 }

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.Merge — 레거시 floor merge (AssignAll 미사용)
 // ============================================================
 using System;
@@ -38,7 +38,7 @@ namespace IsoTilemap
             {
                 var (x, _, z) = _walkableFloorCellScratch[i];
 
-                if (IsPlazaOrOutdoorFloor(x, z, cellY))
+                if (IsPlazaOrTerrainFloor(x, z, cellY))
                     continue;
 
                 int buildingA = GetFloorBuildingId(x, cellY, z);
@@ -50,7 +50,7 @@ namespace IsoTilemap
                     int nx = x + d.x;
                     int nz = z + d.z;
 
-                    if (IsPlazaOrOutdoorFloor(nx, nz, cellY))
+                    if (IsPlazaOrTerrainFloor(nx, nz, cellY))
                         continue;
 
                     if (!_topology.Index.CellHasFloor(nx, cellY, nz))

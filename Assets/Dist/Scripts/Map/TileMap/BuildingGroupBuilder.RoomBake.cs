@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // BuildingGroupBuilder.RoomBake — room BFS·perimeter·edge wall 인덱스
 // ============================================================
 using System;
@@ -42,7 +42,7 @@ namespace IsoTilemap
                 if (!TileIdentityUtil.IsStructural(tile.identity))
                     return;
 
-                if (BuildingIdBakeRules.IsImmutableOutdoorBuildingId(tile.identity.buildingId))
+                if (BuildingIdBakeRules.IsImmutableTerrainBuildingId(tile.identity.buildingId))
                     return;
 
                 if (tile.identity.roomId == 0)

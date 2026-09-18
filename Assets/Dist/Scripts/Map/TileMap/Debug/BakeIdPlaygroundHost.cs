@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // [BakeIdPlaygroundHost] — 씬 직렬화 Sim 배치·probe·rule + Authoring 표시 SSOT
 // ============================================================
 
@@ -109,7 +109,7 @@ namespace IsoTilemap
             for (int i = 0; i < tiles.Count; i++)
                 _model.SetTile(tiles[i]);
 
-            registry.ReplaceOutdoorFloorCells(BakeIdPlaygroundLayout.MasterPlayground.OutdoorFloorCells);
+            registry.ReplaceTerrainFloorCells(BakeIdPlaygroundLayout.MasterPlayground.TerrainFloorCells);
             _builder.RebakeAllBuildingPartitions();
             RefreshBakeIdDisplay();
 
@@ -1181,7 +1181,7 @@ namespace IsoTilemap
                     spaceId = sid;
                     isOutdoor = _hub.Spaces.IsOutdoorSpace(sid);
                 }
-                else if (buildingId == TileIdentity.BuildingIdOutdoor)
+                else if (buildingId == TileIdentity.BuildingIdTerrain)
                 {
                     isOutdoor = true;
                 }

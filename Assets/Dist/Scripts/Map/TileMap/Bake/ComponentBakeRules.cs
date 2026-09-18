@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // ComponentBakeRules — component bake 단계 규칙 (buildingId 할당 전)
 // ============================================================
 namespace IsoTilemap
@@ -19,11 +19,11 @@ namespace IsoTilemap
             existingRoot != incomingRoot;
 
         /// <summary>
-        /// outdoor(-1)·하드 파티션(양수) incident는 component flood traverse·tag·seed 제외.
+        /// terrain(-1)·하드 파티션(양수) incident는 component flood traverse·tag·seed 제외.
         /// (AssignAll은 Reset 없이 파티션 보존 — Full Rebake만 양수를 지운 뒤 재묶음.)
         /// </summary>
         public static bool ShouldBlockComponentFloodFromIncidentTile(in TileIdentity id) =>
-            BuildingIdBakeRules.IsImmutableOutdoorBuildingId(id.buildingId) ||
+            BuildingIdBakeRules.IsImmutableTerrainBuildingId(id.buildingId) ||
             BuildingIdBakeRules.IsHardPartitionBuildingId(id.buildingId);
 
         /// <summary>

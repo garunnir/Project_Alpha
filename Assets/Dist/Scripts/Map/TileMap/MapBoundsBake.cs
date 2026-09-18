@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // MapBoundsBake — 저장 DTO 전 레이어 footprint → mapBounds SSOT
 // ============================================================
 
@@ -40,9 +40,9 @@ namespace IsoTilemap
             AccumulateTiles(dto.tiles, cells);
             AccumulateWallEdges(dto.wallEdges, cells);
             AccumulateFloorFaces(dto.floorFaces, cells, dto.schemaVersion, forFloorTiles: true);
-            AccumulateFloorFaces(dto.outdoorFloorFaces, cells, dto.schemaVersion, forFloorTiles: true);
-            AccumulateWallEdges(dto.outdoorWallEdges, cells);
-            AccumulateTiles(dto.outdoorTiles, cells);
+            AccumulateFloorFaces(dto.terrainFloorFaces, cells, dto.schemaVersion, forFloorTiles: true);
+            AccumulateWallEdges(dto.terrainWallEdges, cells);
+            AccumulateTiles(dto.terrainTiles, cells);
             AccumulateFloorFaces(dto.liquidAuthoringFaces, cells, dto.schemaVersion, forFloorTiles: false);
             AccumulateLiquidCells(dto.liquidCells, cells);
             AccumulateBuildings(dto.buildings, cells, dto.schemaVersion);

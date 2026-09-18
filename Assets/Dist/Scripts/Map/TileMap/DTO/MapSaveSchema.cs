@@ -1,9 +1,9 @@
-namespace IsoTilemap
+﻿namespace IsoTilemap
 {
     /// <summary>맵 JSON <see cref="MapSaveJsonDto.schemaVersion"/> 단계.</summary>
     public static class MapSaveSchema
     {
-        public const int Current = OutdoorStructureLayersV5;
+        public const int Current = TerrainStructureLayersV5;
 
         /// <summary>1 = placementSlot v1. 0·누락 = 레거시 tiles[].tileType.</summary>
         public const int PlacementSlotV1 = 1;
@@ -21,16 +21,16 @@ namespace IsoTilemap
         public const int TileDurabilityV4 = 4;
 
         /// <summary>
-        /// <see cref="MapSaveJsonDto.outdoorFloorFaces"/> ·
-        /// <see cref="MapSaveJsonDto.outdoorWallEdges"/> ·
-        /// <see cref="MapSaveJsonDto.outdoorTiles"/> (월드) +
+        /// <see cref="MapSaveJsonDto.terrainFloorFaces"/> ·
+        /// <see cref="MapSaveJsonDto.terrainWallEdges"/> ·
+        /// <see cref="MapSaveJsonDto.terrainTiles"/> (월드) +
         /// <see cref="MapSaveJsonDto.buildings"/> (건물별 피벗·로컬 좌표, 직렬화 전용).
         /// </summary>
-        public const int OutdoorStructureLayersV5 = 5;
+        public const int TerrainStructureLayersV5 = 5;
 
         /// <summary>
-        /// V4→V5·저장 분류용 야외 바닥 prefabId (마이그레이션 전용 — 영구 outdoor SSOT 아님).
+        /// V4→V5·저장 분류용 야외 바닥 prefabId (마이그레이션 전용 — 영구 terrain SSOT 아님).
         /// </summary>
-        public const string OutdoorMigrationGrassFloorPrefabId = "Floor/GrassFloor";
+        public const string TerrainMigrationGrassFloorPrefabId = "Floor/GrassFloor";
     }
 }
