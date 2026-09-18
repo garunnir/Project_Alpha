@@ -24,6 +24,7 @@ MonoBehaviour:
   materials: []
   breakDurability: 0
   materialThickness: 0
+  forceWalkable: 1
   occupied:
     providesLogicalFloor: 0
     blocksPassageAndOcclusion: 0

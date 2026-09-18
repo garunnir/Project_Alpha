@@ -87,15 +87,26 @@ namespace IsoTilemap
             if (def == null)
                 return 0;
 
+            byte result;
             if (slot == TilePlacementSlot.VerticalFace)
             {
-                byte flags = FlattenEdge(def.edge);
+                result = FlattenEdge(def.edge);
                 if (def.occupied.usePhysicsCollider)
-                    flags |= (byte)TileCollisionFlags.UsePhysicsCollider;
-                return flags;
+                    result |= (byte)TileCollisionFlags.UsePhysicsCollider;
+            }
+            else
+            {
+                result = FlattenOccupied(def.occupied);
             }
 
-            return FlattenOccupied(def.occupied);
+            if (def.forceWalkable)
+            {
+                result &= (byte)~(TileCollisionFlags.BlocksOccupiedCells
+                    | TileCollisionFlags.BlocksEdge
+                    | TileCollisionFlags.UsePhysicsCollider);
+            }
+
+            return result;
         }
 
         [Obsolete("Use FromDefinitionForSlot")]

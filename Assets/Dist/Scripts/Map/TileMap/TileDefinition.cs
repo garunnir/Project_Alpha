@@ -81,6 +81,13 @@ namespace IsoTilemap
 #endif
 
         [FoldoutGroup("충돌·오클루전")]
+        [PropertyOrder(-1)]
+        [LabelText("통과 가능 (문틀)")]
+        [InfoBox("켜면 blocksEdge/blocksOccupiedCells/usePhysicsCollider를 강제로 꺼서 물리·논리 통행을 모두 엽니다. 오클루전·방 분리(occludesEdge/occludesOccupiedCells/separatesRoom)는 아래 설정 그대로 유지됩니다.", InfoMessageType.None)]
+        [OnValueChanged(nameof(MarkDirty))]
+        public bool forceWalkable;
+
+        [FoldoutGroup("충돌·오클루전")]
         [PropertyOrder(0)]
         [InlineProperty, HideLabel]
         [OnValueChanged(nameof(MarkDirty))]

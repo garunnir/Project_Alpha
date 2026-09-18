@@ -10981,25 +10981,6 @@
                     "fishTrapBaitRemaining": 0,
                     "fishTrapDeployedMinute": 0,
                     "fishTrapAccumulatedFish": 0
-                },
-                {
-                    "x": 2,
-                    "y": 0,
-                    "z": 3,
-                    "sizeX": 1,
-                    "sizeY": 1,
-                    "sizeZ": 1,
-                    "prefabId": "ThickWall/Wall_NE_DoorFrame",
-                    "tileType": 0,
-                    "face": 0,
-                    "seedItemId": "",
-                    "plantedWorldMinute": 0,
-                    "fertilized": false,
-                    "lastFruitHarvestWorldMinute": 0,
-                    "fishTrapBaitId": "",
-                    "fishTrapBaitRemaining": 0,
-                    "fishTrapDeployedMinute": 0,
-                    "fishTrapAccumulatedFish": 0
                 }
             ],
             "wallEdges": [

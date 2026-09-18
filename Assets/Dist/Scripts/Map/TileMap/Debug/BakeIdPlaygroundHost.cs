@@ -23,7 +23,6 @@ namespace IsoTilemap
 
         const string VisualRootName = "BakeIdVisualRoot";
         const string AuthoringRootName = "BakeIdAuthoring";
-        const string LabelsRootName = "BakeIdLabels";
         const float IdLabelYOffsetCells = 0.55f;
 #if UNITY_EDITOR
         const string DefaultPrefabDbPath = "Assets/Dist/SOData/Tile/Tile Prefab DB.asset";
@@ -85,7 +84,6 @@ namespace IsoTilemap
                 Debug.LogWarning(
                     "[BakeIdPlayground] simTiles empty — Inspector: Import From Seed Layout, then save scene");
                 ClearLeftoverVisualRoot();
-                ClearIdLabels();
                 return;
             }
 
@@ -573,7 +571,6 @@ namespace IsoTilemap
         TileMapCacheHub _hub;
         BuildingGroupBuilder _builder;
         Transform _authoringRoot;
-        Transform _labelsRoot;
 
 #if UNITY_EDITOR
         bool _sceneGuiSubscribed;
@@ -620,6 +617,7 @@ namespace IsoTilemap
 #if UNITY_EDITOR
             SyncAuthoringLiveSubscription();
             SyncSceneMoveSubscription();
+            SceneView.RepaintAll();
 #endif
         }
 
@@ -935,7 +933,6 @@ namespace IsoTilemap
         void TearDownRuntime()
         {
             ClearLeftoverVisualRoot();
-            ClearIdLabels();
             _builder = null;
             _hub = null;
             _model = null;
@@ -1105,108 +1102,16 @@ namespace IsoTilemap
                 DestroyImmediateSafe(existing.gameObject);
         }
 
-        void EnsureLabelsRoot()
-        {
-            if (_labelsRoot != null)
-                return;
-
-            EnsureAuthoringRoot();
-            Transform existing = _authoringRoot.Find(LabelsRootName);
-            if (existing != null)
-            {
-                _labelsRoot = existing;
-                return;
-            }
-
-            var go = new GameObject(LabelsRootName);
-            go.transform.SetParent(_authoringRoot, false);
-            _labelsRoot = go.transform;
-        }
-
-        void ClearIdLabels()
-        {
-            if (_labelsRoot == null)
-            {
-                EnsureAuthoringRoot();
-                if (_authoringRoot != null)
-                {
-                    Transform existing = _authoringRoot.Find(LabelsRootName);
-                    if (existing != null)
-                        DestroyImmediateSafe(existing.gameObject);
-                }
-
-                return;
-            }
-
-            DestroyImmediateSafe(_labelsRoot.gameObject);
-            _labelsRoot = null;
-        }
-
         /// <summary>
-        /// Display SSOT = Authoring tiles. Refresh only bake ID labels (no VisualRoot tile meshes).
+        /// Display SSOT = Authoring tiles. Bake ID labels are drawn live in OnDrawGizmos (Scene view only,
+        /// same as probe labels) — nothing to spawn here.
         /// </summary>
         void RefreshBakeIdDisplay()
         {
             ClearLeftoverVisualRoot();
-            ClearIdLabels();
-            if (_model == null || _hub == null || !EnsurePrefabDb())
-                return;
-
-            if (!showIdLabels)
-                return;
-
-            float cs = Mathf.Max(1e-4f, cellSize);
-            SpawnFloorIdLabels(cs);
-        }
-
-        void SpawnFloorIdLabels(float cs)
-        {
-            if (_hub == null)
-                return;
-
-            EnsureLabelsRoot();
-
-            foreach (var (x, cellY, z) in _hub.Topology.Index.EnumerateWalkableFloorCells())
-            {
-                var cell = new Vector3Int(x, cellY, z);
-                if (!_hub.TryGetFloorFaceForWalkableCell(x, cellY, z, out TileData face))
-                    continue;
-
-                int buildingId = face.identity.buildingId;
-                int roomId = face.identity.roomId;
-                int spaceId = 0;
-                bool isOutdoor = false;
-                if (_hub.Spaces.TryGetSpaceAtFloorCell(cell, out int sid))
-                {
-                    spaceId = sid;
-                    isOutdoor = _hub.Spaces.IsOutdoorSpace(sid);
-                }
-                else if (buildingId == TileIdentity.BuildingIdTerrain)
-                {
-                    isOutdoor = true;
-                }
-                else
-                {
-                    isOutdoor = _hub.IsOutdoorEvaluation(cellY, x, z);
-                }
-
-                Vector3 world = TileWorldPointUtil.GetRepresentativeWorldPoint(face.identity, cs);
-                world.y += IdLabelYOffsetCells * cs;
-
-                var labelGo = new GameObject($"id_{cell}");
-                labelGo.transform.SetParent(_labelsRoot, worldPositionStays: true);
-                labelGo.transform.position = world;
-
-                var tm = labelGo.AddComponent<TextMesh>();
-                tm.text = $"B:{buildingId} R:{roomId} S:{spaceId} O:{(isOutdoor ? 1 : 0)}";
-                tm.fontSize = 32;
-                tm.characterSize = 0.05f * cs;
-                tm.anchor = TextAnchor.MiddleCenter;
-                tm.alignment = TextAlignment.Center;
-                tm.color = isOutdoor
-                    ? new Color(0.4f, 0.85f, 1f)
-                    : Color.white;
-            }
+#if UNITY_EDITOR
+            SceneView.RepaintAll();
+#endif
         }
 
         void SyncAuthoringViewForEditAdd(in TileData tile)
@@ -1856,6 +1761,8 @@ namespace IsoTilemap
             DrawEditCellGizmo(editCellB, "B", new Color(1f, 0.85f, 0.2f, 1f),
                 moveTarget == EditCellTarget.B && sceneMoveEditCell, cs);
 
+            DrawFloorIdGizmoLabels(cs);
+
             if (simProbes == null)
                 return;
 
@@ -1867,6 +1774,48 @@ namespace IsoTilemap
                 Vector3 world = TileHelper.ConvertGridToWorldPos(p.cell, cs);
                 world.y += 1.05f * cs;
                 Handles.Label(world, p.name, EditorStyles.boldLabel);
+            }
+        }
+
+        void DrawFloorIdGizmoLabels(float cs)
+        {
+            if (!showIdLabels || _hub == null)
+                return;
+
+            var indoorStyle = new GUIStyle(EditorStyles.miniBoldLabel) { fontSize = 9 };
+            indoorStyle.normal.textColor = Color.white;
+            var outdoorStyle = new GUIStyle(EditorStyles.miniBoldLabel) { fontSize = 9 };
+            outdoorStyle.normal.textColor = new Color(0.4f, 0.85f, 1f);
+
+            foreach (var (x, cellY, z) in _hub.Topology.Index.EnumerateWalkableFloorCells())
+            {
+                var cell = new Vector3Int(x, cellY, z);
+                if (!_hub.TryGetFloorFaceForWalkableCell(x, cellY, z, out TileData face))
+                    continue;
+
+                int buildingId = face.identity.buildingId;
+                int roomId = face.identity.roomId;
+                int spaceId = 0;
+                bool isOutdoor;
+                if (_hub.Spaces.TryGetSpaceAtFloorCell(cell, out int sid))
+                {
+                    spaceId = sid;
+                    isOutdoor = _hub.Spaces.IsOutdoorSpace(sid);
+                }
+                else if (buildingId == TileIdentity.BuildingIdTerrain)
+                {
+                    isOutdoor = true;
+                }
+                else
+                {
+                    isOutdoor = _hub.IsOutdoorEvaluation(cellY, x, z);
+                }
+
+                Vector3 world = TileWorldPointUtil.GetRepresentativeWorldPoint(face.identity, cs);
+                world.y += IdLabelYOffsetCells * cs;
+
+                Handles.Label(world, $"B:{buildingId} R:{roomId} S:{spaceId} O:{(isOutdoor ? 1 : 0)}",
+                    isOutdoor ? outdoorStyle : indoorStyle);
             }
         }
 
