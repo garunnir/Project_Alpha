@@ -74,6 +74,9 @@ public static class ConstructionService
             def == null)
             return false;
 
+        if (!TilePlaceUtil.CanPlaceOnBase(def, cell))
+            return false;
+
         return true;
     }
 

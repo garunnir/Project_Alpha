@@ -36,7 +36,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
     CatalogLocaleHub _localeHub;
     CatalogTraitBrowser _traitBrowser;
 
-    [MenuItem("Tools/Data Definitions")]
+    [MenuItem("Tools/Data Definitions", false, 100)]
     static void Open()
     {
         var window = GetWindow<DataDefinitionsWindow>();

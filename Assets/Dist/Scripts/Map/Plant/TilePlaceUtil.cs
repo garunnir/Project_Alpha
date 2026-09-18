@@ -91,5 +91,32 @@ namespace IsoTilemap
 
             return targetCell;
         }
+
+        /// <summary>
+        /// OccupiedCell installables may restrict which floor they can sit on via
+        /// <see cref="TileDefinition.requiredBaseFlags"/> (TileFlags SSOT). Floor/Wall
+        /// slots and installables with no required flags are unrestricted.
+        /// </summary>
+        public static bool CanPlaceOnBase(TileDefinition installable, Vector3Int cell)
+        {
+            if (installable == null)
+                return false;
+            if (installable.placementSlot != TilePlacementSlot.OccupiedCell)
+                return true;
+            if (installable.requiredBaseFlags == null || installable.requiredBaseFlags.Count == 0)
+                return true;
+
+            MapPlantHost host = MapPlantHost.Runtime;
+            TileDefinition baseDef = host != null ? host.GetFloorDefinition(cell) : null;
+            if (baseDef == null)
+                return false;
+
+            for (int i = 0; i < installable.requiredBaseFlags.Count; i++)
+            {
+                if (TileFlags.HasFlag(baseDef, installable.requiredBaseFlags[i]))
+                    return true;
+            }
+            return false;
+        }
     }
 }

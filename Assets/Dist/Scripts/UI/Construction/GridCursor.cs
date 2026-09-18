@@ -208,6 +208,8 @@ public class GridCursor : MonoBehaviour
         }
 
         var def = _placementState.Selected;
+        if (!TilePlaceUtil.CanPlaceOnBase(def, _cursorGridPos))
+            return;
         if (!TilePlaceUtil.TryBuildTileData(def, _cursorGridPos, out TileData tileData))
             return;
 

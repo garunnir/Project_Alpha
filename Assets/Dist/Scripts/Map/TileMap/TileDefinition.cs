@@ -35,6 +35,12 @@ namespace IsoTilemap
         [ListDrawerSettings(DraggableItems = true, ShowFoldout = false)]
         public List<string> flags = new List<string>();
 
+        [FoldoutGroup("Flags", expanded: true)]
+        [LabelText("설치 가능 베이스")]
+        [Tooltip("OccupiedCell 설치 시 대상 셀의 바닥 TileDefinition이 이 중 하나의 플래그를 가져야 설치 가능. 비어 있으면 제한 없음.")]
+        [ListDrawerSettings(DraggableItems = true, ShowFoldout = false)]
+        public List<string> requiredBaseFlags = new List<string>();
+
         [FoldoutGroup("Combat", expanded: false)]
         [LabelText("재질")]
         [Tooltip("BN MaterialData id 목록. 피해 채널(bash/cut)별 resist — Wear·구조물과 동일 SSOT.")]
